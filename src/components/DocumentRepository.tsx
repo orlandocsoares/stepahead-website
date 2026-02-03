@@ -1,7 +1,9 @@
+
 "use client";
 
 import { FileText, Download, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 const DOCUMENTS = [
   {
@@ -42,14 +44,31 @@ export function DocumentRepository() {
   return (
     <section id="documentacao" className="py-24 px-12 md:px-24 bg-neutral-100">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-16">
+        <motion.div 
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          className="mb-16"
+        >
           <h2 className="text-4xl font-black tracking-tighter uppercase leading-none mb-6">
             Documentação Pedagógica
           </h2>
-          <div className="w-20 h-2 bg-black"></div>
-        </div>
+          <motion.div 
+            initial={{ width: 0 }}
+            whileInView={{ width: 80 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, delay: 0.3 }}
+            className="h-2 bg-black"
+          />
+        </motion.div>
 
-        <div className="bg-white border border-black shadow-none p-1">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="bg-white border border-black shadow-none p-1"
+        >
           <div className="overflow-x-auto">
             <table className="w-full text-left font-body text-sm">
               <thead className="border-b-2 border-black">
@@ -61,8 +80,15 @@ export function DocumentRepository() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
-                {DOCUMENTS.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-neutral-50 transition-colors group">
+                {DOCUMENTS.map((doc, index) => (
+                  <motion.tr 
+                    key={doc.id}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.05 }}
+                    className="hover:bg-neutral-50 transition-colors group"
+                  >
                     <td className="py-6 px-4">
                       <div className="flex items-center gap-4">
                         <FileText className="text-black/40 group-hover:text-black transition-colors" size={20} />
@@ -91,12 +117,12 @@ export function DocumentRepository() {
                         </Button>
                       )}
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

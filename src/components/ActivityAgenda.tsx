@@ -1,8 +1,10 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarIcon, MapPin, Clock } from "lucide-react";
+import { motion } from "framer-motion";
 
 const ACTIVITIES = [
   {
@@ -36,8 +38,14 @@ const ACTIVITIES = [
 
 export function ActivityAgenda() {
   return (
-    <section id="agenda" className="py-24 px-12 md:px-24 bg-white border-y border-black/5">
-      <div className="max-w-7xl mx-auto">
+    <section id="agenda" className="py-24 px-12 md:px-24 bg-white border-y border-black/5 overflow-hidden">
+      <motion.div 
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="max-w-7xl mx-auto"
+      >
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
           <div className="space-y-4">
             <h2 className="text-4xl font-black tracking-tighter uppercase leading-none">
@@ -53,39 +61,47 @@ export function ActivityAgenda() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {ACTIVITIES.map((activity) => (
-            <Card key={activity.id} className="border-black/10 rounded-none shadow-none hover:border-black transition-colors group">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start mb-4">
-                  <Badge variant="outline" className="border-black text-[10px] uppercase font-bold tracking-widest rounded-none">
-                    {activity.type}
-                  </Badge>
-                  <span className="text-xs font-headline font-bold text-neutral-400">
-                    {activity.status}
-                  </span>
-                </div>
-                <CardTitle className="text-xl font-black uppercase group-hover:underline underline-offset-4 decoration-1">
-                  {activity.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 pt-4 border-t border-black/5">
-                <div className="flex items-center gap-3 text-sm text-neutral-600">
-                  <CalendarIcon size={16} className="text-black" />
-                  <span className="font-medium">{activity.date}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-neutral-600">
-                  <Clock size={16} className="text-black" />
-                  <span>{activity.time}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-neutral-600">
-                  <MapPin size={16} className="text-black" />
-                  <span>{activity.location}</span>
-                </div>
-              </CardContent>
-            </Card>
+          {ACTIVITIES.map((activity, index) => (
+            <motion.div
+              key={activity.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+            >
+              <Card className="border-black/10 rounded-none shadow-none hover:border-black transition-colors group h-full">
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start mb-4">
+                    <Badge variant="outline" className="border-black text-[10px] uppercase font-bold tracking-widest rounded-none">
+                      {activity.type}
+                    </Badge>
+                    <span className="text-xs font-headline font-bold text-neutral-400">
+                      {activity.status}
+                    </span>
+                  </div>
+                  <CardTitle className="text-xl font-black uppercase group-hover:underline underline-offset-4 decoration-1">
+                    {activity.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4 border-t border-black/5">
+                  <div className="flex items-center gap-3 text-sm text-neutral-600">
+                    <CalendarIcon size={16} className="text-black" />
+                    <span className="font-medium">{activity.date}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-neutral-600">
+                    <Clock size={16} className="text-black" />
+                    <span>{activity.time}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-neutral-600">
+                    <MapPin size={16} className="text-black" />
+                    <span>{activity.location}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
