@@ -3,8 +3,15 @@
 import { PROGRAM_INFO } from "@/lib/program-config";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export function Footer() {
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
+
   return (
     <footer className="bg-black text-white py-24 px-12 md:px-24">
       <div className="max-w-7xl mx-auto">
@@ -44,7 +51,7 @@ export function Footer() {
         </div>
 
         <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between gap-8 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-500">
-          <p>© {new Date().getFullYear()} {PROGRAM_INFO.name}. Todos os direitos reservados.</p>
+          <p>© {year || "..."} {PROGRAM_INFO.name}. Todos os direitos reservados.</p>
           <div className="flex gap-8">
             <span>Desenvolvido por Camões, I.P.</span>
             <span>Luanda - Lisboa</span>
