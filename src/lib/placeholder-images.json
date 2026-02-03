@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "educators-circle",
+      "description": "Group of educators standing in a circle outdoors for a collaborative activity.",
+      "imageUrl": "https://images.unsplash.com/photo-1616041452577-1bb802c12fca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxlZHVjYXRvcnMlMjBjaXJjbGV8ZW58MHx8fHwxNzcwMTE2NzA4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "educators circle"
+    }
+  ]
 }

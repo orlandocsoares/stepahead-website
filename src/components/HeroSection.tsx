@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -49,7 +48,7 @@ export function HeroSection() {
   };
 
   return (
-    <div ref={containerRef} className="h-[400vh] relative">
+    <div ref={containerRef} className="h-[400vh] relative z-0">
       <div className="sticky top-0 h-screen overflow-hidden bg-neutral-100">
         {/* Cinematic Parallax Background */}
         <motion.div 

@@ -5,8 +5,11 @@ import { HeroSection } from "@/components/HeroSection";
 import { ActivityAgenda } from "@/components/ActivityAgenda";
 import { DocumentRepository } from "@/components/DocumentRepository";
 import { Footer } from "@/components/Footer";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function Home() {
+  const communityImage = PlaceHolderImages.find(img => img.id === 'educators-circle');
+
   return (
     <main className="min-h-screen">
       <Navbar />
@@ -15,7 +18,7 @@ export default function Home() {
       <HeroSection />
 
       {/* Platform Core Modules - Preview/Entry points */}
-      <section id="programa" className="py-24 px-12 md:px-24 bg-white">
+      <section id="programa" className="py-24 px-12 md:px-24 bg-white relative z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
             <div className="space-y-8">
@@ -40,10 +43,10 @@ export default function Home() {
             <div className="relative aspect-square bg-neutral-100 border border-black p-4">
               <div className="absolute -top-12 -right-12 w-48 h-48 border-8 border-black/5 pointer-events-none"></div>
               <img 
-                src="https://picsum.photos/seed/sabermais/800/800" 
+                src={communityImage?.imageUrl || "https://picsum.photos/seed/sabermais/800/800"} 
                 alt="Institutional Image" 
                 className="w-full h-full object-cover grayscale"
-                data-ai-hint="classroom teaching"
+                data-ai-hint={communityImage?.imageHint || "educators circle"}
               />
             </div>
           </div>
