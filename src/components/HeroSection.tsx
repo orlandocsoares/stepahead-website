@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { PROGRAM_PHASES } from "@/lib/program-config";
+import { PROGRAM_PHASES, DASHBOARD_URL } from "@/lib/program-config";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
@@ -15,10 +15,8 @@ export function HeroSection() {
     offset: ["start start", "end end"]
   });
 
-  // Parallax transforms
-  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
   const backgroundScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
-  const opacity = useTransform(scrollYProgress, [0, 0.05, 0.95, 1], [0, 1, 1, 0]);
 
   useEffect(() => {
     const unsubscribe = scrollYProgress.on("change", (latest) => {
@@ -50,19 +48,17 @@ export function HeroSection() {
   return (
     <div ref={containerRef} className="h-[400vh] relative z-0">
       <div className="sticky top-0 h-screen overflow-hidden bg-neutral-100">
-        {/* Cinematic Parallax Background */}
         <motion.div 
           style={{ y: backgroundY, scale: backgroundScale }}
           className="absolute inset-0 bg-neutral-200"
         >
           <img
-            src={currentPhase.sequenceUrl}
+            src={currentPhase.imageUrl}
             alt="Sequence Frame"
-            className="w-full h-full object-cover grayscale opacity-50 mix-blend-multiply transition-all duration-700"
+            className="w-full h-full object-cover grayscale opacity-40 mix-blend-multiply"
           />
         </motion.div>
 
-        {/* Overlay Content with Fade Transitions */}
         <div className="relative z-10 h-full flex flex-col items-start justify-center px-12 md:px-24">
           <AnimatePresence mode="wait">
             <motion.div
@@ -83,8 +79,12 @@ export function HeroSection() {
                 {currentPhase.description}
               </p>
               <div className="flex flex-wrap gap-4 pt-8">
-                <Button size="lg" className="bg-black text-white hover:bg-black/90 rounded-none px-12 text-xs tracking-widest uppercase h-14 font-black">
-                  Aceder à Plataforma
+                <Button 
+                  asChild
+                  size="lg" 
+                  className="bg-black text-white hover:bg-black/90 rounded-none px-12 text-xs tracking-widest uppercase h-14 font-black"
+                >
+                  <a href={DASHBOARD_URL} target="_blank" rel="noopener noreferrer">Aceder à Plataforma</a>
                 </Button>
                 <Button variant="outline" size="lg" className="border-black text-black hover:bg-black/5 rounded-none px-12 text-xs tracking-widest uppercase h-14 font-black">
                   Conhecer o Programa
@@ -94,7 +94,6 @@ export function HeroSection() {
           </AnimatePresence>
         </div>
 
-        {/* Phase Navigation Controls */}
         <div className="absolute right-12 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-12">
           <div className="flex flex-col items-center gap-4">
             <button 
@@ -125,9 +124,6 @@ export function HeroSection() {
               className="absolute top-0 left-0 w-full bg-black origin-top"
               style={{ scaleY: scrollYProgress }}
             />
-          </div>
-          <div className="flex flex-col gap-2 font-headline text-[10px] tracking-widest font-bold rotate-90 origin-center whitespace-nowrap opacity-30 select-none">
-            PROGRAM SEQUENCE
           </div>
         </div>
       </div>

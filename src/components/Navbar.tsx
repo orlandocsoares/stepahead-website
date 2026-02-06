@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { PROGRAM_INFO } from "@/lib/program-config";
+import { PROGRAM_INFO, DASHBOARD_URL } from "@/lib/program-config";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -31,9 +31,14 @@ export function Navbar() {
         <Link href="#programa" className="hover:opacity-50 transition-opacity">Programa</Link>
         <Link href="#agenda" className="hover:opacity-50 transition-opacity">Agenda</Link>
         <Link href="#documentacao" className="hover:opacity-50 transition-opacity">Documentação</Link>
-        <Link href="/login" className="bg-black text-white px-4 py-2 hover:bg-black/80 transition-colors">
+        <a 
+          href={DASHBOARD_URL} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="bg-black text-white px-4 py-2 hover:bg-black/80 transition-colors"
+        >
           Entrar
-        </Link>
+        </a>
       </div>
     </nav>
   );

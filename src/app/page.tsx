@@ -14,10 +14,8 @@ export default function Home() {
     <main className="min-h-screen">
       <Navbar />
       
-      {/* Cinematic Scroll-controlled Hero */}
       <HeroSection />
 
-      {/* Platform Core Modules - Preview/Entry points */}
       <section id="programa" className="py-24 px-12 md:px-24 bg-white relative z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
@@ -53,10 +51,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Dynamic Activity Module */}
       <ActivityAgenda />
 
-      {/* Secure Repository Module */}
       <DocumentRepository />
 
       <Footer />
