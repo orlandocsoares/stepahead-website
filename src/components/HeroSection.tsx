@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -16,7 +17,7 @@ export function HeroSection() {
 
   const getFrameUrl = (index: number) => {
     const num = Math.floor(index).toString().padStart(3, '0');
-    return `${BASE_FRAME_URL}frame_${num}_delay-0.041s.webp`;
+    return `${BASE_FRAME_URL}frame_${num}_delay-0.04s.webp`;
   };
 
   const { scrollYProgress } = useScroll({
@@ -75,7 +76,7 @@ export function HeroSection() {
         </div>
 
         {/* Textos - Alinhados à Esquerda/Baixo */}
-        <div className="relative z-10 h-full flex flex-col items-start justify-end pb-32 px-12 md:px-24">
+        <div className="relative z-10 h-full flex flex-col items-start justify-end pb-16 px-12 md:px-24">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPhase.id}
@@ -101,7 +102,7 @@ export function HeroSection() {
         </div>
 
         {/* Indicador Discreto */}
-        <div className="absolute right-12 md:right-24 bottom-32 z-20 flex flex-col items-end gap-6">
+        <div className="absolute right-12 md:right-24 bottom-16 z-20 flex flex-col items-end gap-6">
           <div className="flex flex-col items-end gap-4">
             <div className="flex items-baseline gap-1">
               <span className="text-4xl font-black tracking-tighter text-black/20 italic">{currentPhase.index}</span>
