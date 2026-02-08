@@ -75,7 +75,7 @@ export function HeroSection() {
         </div>
 
         {/* Textos - Alinhados à Esquerda/Baixo */}
-        <div className="relative z-10 h-full flex flex-col items-start justify-end pb-32 px-12 md:px-32">
+        <div className="relative z-10 h-full flex flex-col items-start justify-end pb-24 px-12 md:px-32">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPhase.id}
@@ -83,11 +83,11 @@ export function HeroSection() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.5 }}
-              className="max-w-xl space-y-6"
+              className="max-w-xl space-y-4"
             >
               <p className="font-bold text-[10px] tracking-[0.5em] text-black uppercase">{currentPhase.subtitle}</p>
-              <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[0.8] text-black drop-shadow-sm">{currentPhase.name}</h1>
-              <p className="text-lg text-black/80 max-w-sm leading-relaxed font-medium">{currentPhase.description}</p>
+              <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.8] text-black drop-shadow-sm">{currentPhase.name}</h1>
+              <p className="text-base text-black/80 max-w-sm leading-relaxed font-medium">{currentPhase.description}</p>
               <div className="pt-4 flex gap-4">
                 <Button asChild size="lg" className="bg-black text-white rounded-none px-12 h-12 font-bold uppercase text-[10px] tracking-widest hover:scale-105 transition-transform">
                   <a href={DASHBOARD_URL} target="_blank" rel="noopener noreferrer">Aceder</a>
