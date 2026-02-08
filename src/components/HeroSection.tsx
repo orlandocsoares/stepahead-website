@@ -75,7 +75,7 @@ export function HeroSection() {
         </div>
 
         {/* Textos - Alinhados à Esquerda/Baixo */}
-        <div className="relative z-10 h-full flex flex-col items-start justify-end pb-24 px-12 md:px-32">
+        <div className="relative z-10 h-full flex flex-col items-start justify-end pb-32 px-12 md:px-24">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPhase.id}
@@ -83,7 +83,7 @@ export function HeroSection() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.5 }}
-              className="max-w-xl space-y-4"
+              className="max-w-lg space-y-4"
             >
               <p className="font-bold text-[10px] tracking-[0.5em] text-black uppercase">{currentPhase.subtitle}</p>
               <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.8] text-black drop-shadow-sm">{currentPhase.name}</h1>
@@ -101,14 +101,14 @@ export function HeroSection() {
         </div>
 
         {/* Indicador Discreto */}
-        <div className="absolute right-12 md:right-32 bottom-32 z-20 flex flex-col items-end gap-6">
+        <div className="absolute right-12 md:right-24 bottom-32 z-20 flex flex-col items-end gap-6">
           <div className="flex flex-col items-end gap-4">
             <div className="flex items-baseline gap-1">
               <span className="text-4xl font-black tracking-tighter text-black/20 italic">{currentPhase.index}</span>
               <span className="text-[10px] font-bold text-black/10">/ 03</span>
             </div>
 
-            <div className="flex items-center gap-6 bg-white/60 backdrop-blur-md p-2 rounded-full border border-black/10">
+            <div className="flex items-center gap-6">
               <button onClick={prevPhase} className="p-2 hover:bg-black/10 rounded-full transition-colors text-black/40 hover:text-black">
                 <ChevronLeft size={20} />
               </button>
