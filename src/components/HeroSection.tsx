@@ -1,92 +1,98 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { PROGRAM_PHASES, DASHBOARD_URL } from "@/lib/program-config";
+import { PROGRAM_PHASES, DASHBOARD_URL, BASE_FRAME_URL } from "@/lib/program-config";
 import { Button } from "@/components/ui/button";
-import { ChevronUp, ChevronDown } from "lucide-react";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useSpring, useTransform, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function HeroSection() {
-  const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const [activePhaseIndex, setActivePhaseIndex] = useState(0);
+  
+  const totalFrames = 192;
+
+  const getFrameUrl = (index: number) => {
+    const num = Math.floor(index).toString().padStart(3, '0');
+    return `${BASE_FRAME_URL}frame_${num}_delay-0.041s.webp`;
+  };
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
   });
 
-  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
-  const backgroundScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 60,
+    damping: 25,
+    restDelta: 0.001
+  });
+
+  const frameIndex = useTransform(smoothProgress, [0, 1], [0, totalFrames - 1]);
 
   useEffect(() => {
-    const unsubscribe = scrollYProgress.on("change", (latest) => {
-      const phaseCount = PROGRAM_PHASES.length;
-      const phaseIndex = Math.min(Math.floor(latest * phaseCount), phaseCount - 1);
-      setCurrentPhaseIndex(phaseIndex);
+    const unsubscribe = frameIndex.on("change", (latest) => {
+      setCurrentFrame(Math.round(latest));
     });
+
+    let count = 0;
+    for (let i = 0; i < totalFrames; i++) {
+      const img = new Image();
+      img.src = getFrameUrl(i);
+      img.onload = () => {
+        count++;
+        if (count === totalFrames) setImagesLoaded(true);
+      };
+      img.onerror = () => { count++; if (count === totalFrames) setImagesLoaded(true); };
+    }
     return () => unsubscribe();
-  }, [scrollYProgress]);
+  }, [frameIndex]);
 
-  const currentPhase = PROGRAM_PHASES[currentPhaseIndex];
+  const nextPhase = () => setActivePhaseIndex((prev) => (prev + 1) % PROGRAM_PHASES.length);
+  const prevPhase = () => setActivePhaseIndex((prev) => (prev - 1 + PROGRAM_PHASES.length) % PROGRAM_PHASES.length);
 
-  const goToNext = () => {
-    if (!containerRef.current) return;
-    const nextIndex = Math.min(currentPhaseIndex + 1, PROGRAM_PHASES.length - 1);
-    const windowHeight = window.innerHeight;
-    const targetScroll = (nextIndex / PROGRAM_PHASES.length) * (containerRef.current.scrollHeight - windowHeight);
-    window.scrollTo({ top: targetScroll + 10, behavior: "smooth" });
-  };
-
-  const goToPrev = () => {
-    if (!containerRef.current) return;
-    const prevIndex = Math.max(currentPhaseIndex - 1, 0);
-    const windowHeight = window.innerHeight;
-    const targetScroll = (prevIndex / PROGRAM_PHASES.length) * (containerRef.current.scrollHeight - windowHeight);
-    window.scrollTo({ top: targetScroll, behavior: "smooth" });
-  };
+  const currentPhase = PROGRAM_PHASES[activePhaseIndex];
 
   return (
-    <div ref={containerRef} className="h-[400vh] relative z-0">
-      <div className="sticky top-0 h-screen overflow-hidden bg-neutral-100">
-        <motion.div 
-          style={{ y: backgroundY, scale: backgroundScale }}
-          className="absolute inset-0 bg-neutral-200"
-        >
-          <img
-            src={currentPhase.imageUrl}
-            alt="Sequence Frame"
-            className="w-full h-full object-cover grayscale opacity-40 mix-blend-multiply"
-          />
-        </motion.div>
+    // Reduzi para h-[200vh] para o scroll ser mais direto e sem folgas
+    <div ref={containerRef} className="h-[200vh] relative w-full bg-white">
+      {!imagesLoaded && (
+        <div className="fixed inset-0 z-[100] bg-white flex items-center justify-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.6em] animate-pulse">Sincronizando Experiência</p>
+        </div>
+      )}
 
-        <div className="relative z-10 h-full flex flex-col items-start justify-center px-12 md:px-24">
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
+        {/* Camada WebP - Cor Original e Sem Camadas por cima */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={getFrameUrl(currentFrame)}
+            alt="Sequence"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Textos - Alinhados à Esquerda/Baixo */}
+        <div className="relative z-10 h-full flex flex-col items-start justify-end pb-32 px-12 md:px-32">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPhase.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-3xl space-y-6"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.5 }}
+              className="max-w-xl space-y-6"
             >
-              <p className="font-headline text-sm tracking-[0.3em] font-semibold text-black/60 uppercase">
-                {currentPhase.subtitle}
-              </p>
-              <h1 className="text-6xl md:text-8xl font-black leading-none uppercase tracking-tighter">
-                {currentPhase.name}
-              </h1>
-              <p className="text-lg md:text-xl text-black/80 max-w-xl font-body leading-relaxed">
-                {currentPhase.description}
-              </p>
-              <div className="flex flex-wrap gap-4 pt-8">
-                <Button 
-                  asChild
-                  size="lg" 
-                  className="bg-black text-white hover:bg-black/90 rounded-none px-12 text-xs tracking-widest uppercase h-14 font-black"
-                >
-                  <a href={DASHBOARD_URL} target="_blank" rel="noopener noreferrer">Aceder à Plataforma</a>
+              <p className="font-bold text-[10px] tracking-[0.5em] text-black uppercase">{currentPhase.subtitle}</p>
+              <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[0.8] text-black drop-shadow-sm">{currentPhase.name}</h1>
+              <p className="text-lg text-black/80 max-w-sm leading-relaxed font-medium">{currentPhase.description}</p>
+              <div className="pt-4 flex gap-4">
+                <Button asChild size="lg" className="bg-black text-white rounded-none px-12 h-12 font-bold uppercase text-[10px] tracking-widest hover:scale-105 transition-transform">
+                  <a href={DASHBOARD_URL} target="_blank" rel="noopener noreferrer">Aceder</a>
                 </Button>
-                <Button variant="outline" size="lg" className="border-black text-black hover:bg-black/5 rounded-none px-12 text-xs tracking-widest uppercase h-14 font-black">
+                <Button variant="outline" size="lg" className="border-black text-black rounded-none px-12 h-12 font-bold uppercase text-[10px] tracking-widest hover:bg-black/5 transition-all">
                   Conhecer o Programa
                 </Button>
               </div>
@@ -94,36 +100,33 @@ export function HeroSection() {
           </AnimatePresence>
         </div>
 
-        <div className="absolute right-12 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-12">
-          <div className="flex flex-col items-center gap-4">
-            <button 
-              onClick={goToPrev}
-              disabled={currentPhaseIndex === 0}
-              className="p-2 border border-black/20 hover:bg-black hover:text-white transition-all disabled:opacity-10"
-            >
-              <ChevronUp size={20} />
-            </button>
-            <motion.span 
-              key={currentPhase.index}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="font-headline text-7xl font-black tracking-tighter tabular-nums"
-            >
-              {currentPhase.index}
-            </motion.span>
-            <button 
-              onClick={goToNext}
-              disabled={currentPhaseIndex === PROGRAM_PHASES.length - 1}
-              className="p-2 border border-black/20 hover:bg-black hover:text-white transition-all disabled:opacity-10"
-            >
-              <ChevronDown size={20} />
-            </button>
-          </div>
-          <div className="h-40 w-[2px] bg-black/5 relative">
-            <motion.div 
-              className="absolute top-0 left-0 w-full bg-black origin-top"
-              style={{ scaleY: scrollYProgress }}
-            />
+        {/* Indicador Discreto */}
+        <div className="absolute right-12 md:right-32 bottom-32 z-20 flex flex-col items-end gap-6">
+          <div className="flex flex-col items-end gap-4">
+            <div className="flex items-baseline gap-1">
+              <span className="text-4xl font-black tracking-tighter text-black/20 italic">{currentPhase.index}</span>
+              <span className="text-[10px] font-bold text-black/10">/ 03</span>
+            </div>
+
+            <div className="flex items-center gap-6 bg-white/60 backdrop-blur-md p-2 rounded-full border border-black/10">
+              <button onClick={prevPhase} className="p-2 hover:bg-black/10 rounded-full transition-colors text-black/40 hover:text-black">
+                <ChevronLeft size={20} />
+              </button>
+
+              <div className="flex gap-2">
+                {PROGRAM_PHASES.map((_, i) => (
+                  <div 
+                    key={i}
+                    onClick={() => setActivePhaseIndex(i)}
+                    className={`h-[2px] cursor-pointer transition-all duration-500 ${i === activePhaseIndex ? "w-10 bg-black/60" : "w-3 bg-black/20 hover:bg-black/40"}`}
+                  />
+                ))}
+              </div>
+
+              <button onClick={nextPhase} className="p-2 hover:bg-black/10 rounded-full transition-colors text-black/40 hover:text-black">
+                <ChevronRight size={20} />
+              </button>
+            </div>
           </div>
         </div>
       </div>

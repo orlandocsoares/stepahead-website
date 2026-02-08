@@ -6,55 +6,61 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export function Footer() {
-  const [year, setYear] = useState<number | null>(null);
+  const [currentYear, setCurrentYear] = useState(2026);
 
   useEffect(() => {
-    setYear(new Date().getFullYear());
+    setCurrentYear(new Date().getFullYear());
   }, []);
 
   return (
-    <footer className="bg-black text-white py-24 px-12 md:px-24">
+    <footer className="bg-white border-t border-black/5 pt-24 pb-12 px-12 md:px-24">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-24">
-          <div className="col-span-1 lg:col-span-2 space-y-8">
-            <h3 className="text-4xl font-black tracking-tighter uppercase leading-none">
+          
+          {/* Coluna 1: Info do Programa */}
+          <div className="space-y-6">
+            <h3 className="font-black text-2xl tracking-tighter uppercase">
               {PROGRAM_INFO.name}
             </h3>
-            <p className="text-neutral-400 max-w-md font-body leading-relaxed text-sm">
+            <p className="text-black/60 leading-relaxed max-w-xs">
               {PROGRAM_INFO.description}
             </p>
-            <div className="flex items-center gap-6">
-              <a href="#" className="text-white hover:text-neutral-400 transition-colors"><Linkedin size={20} /></a>
-              <a href="#" className="text-white hover:text-neutral-400 transition-colors"><Facebook size={20} /></a>
-              <a href="#" className="text-white hover:text-neutral-400 transition-colors"><Instagram size={20} /></a>
-              <a href="#" className="text-white hover:text-neutral-400 transition-colors"><Twitter size={20} /></a>
+          </div>
+
+          {/* Coluna 2: Links Rápidos */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-black uppercase tracking-widest">Explorar</h4>
+            <nav className="flex flex-col gap-4 text-sm font-medium">
+              <Link href="#programa" className="hover:opacity-50 transition-opacity">O Programa</Link>
+              <Link href="#agenda" className="hover:opacity-50 transition-opacity">Agenda</Link>
+              <Link href="#docs" className="hover:opacity-50 transition-opacity">Documentação</Link>
+            </nav>
+          </div>
+
+          {/* Coluna 3: Redes Sociais */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-black uppercase tracking-widest">Social</h4>
+            <div className="flex gap-6">
+              <a href="#" className="hover:opacity-50 transition-opacity"><Facebook size={20} /></a>
+              <a href="#" className="hover:opacity-50 transition-opacity"><Instagram size={20} /></a>
+              <a href="#" className="hover:opacity-50 transition-opacity"><Linkedin size={20} /></a>
             </div>
           </div>
 
-          <div className="space-y-8">
-            <h4 className="text-xs font-black tracking-[0.2em] text-neutral-500 uppercase">Institucional</h4>
-            <ul className="space-y-4 font-headline text-sm font-bold uppercase tracking-tight">
-              <li><Link href="#" className="hover:opacity-60 transition-opacity">Sobre o Camões, I.P.</Link></li>
-              <li><Link href="#" className="hover:opacity-60 transition-opacity">MED Angola - INFQE</Link></li>
-              <li><Link href="#" className="hover:opacity-60 transition-opacity">Cooperação Internacional</Link></li>
-              <li><Link href="#" className="hover:opacity-60 transition-opacity">Privacidade e Termos</Link></li>
-            </ul>
-          </div>
-
-          <div className="space-y-8">
-            <h4 className="text-xs font-black tracking-[0.2em] text-neutral-500 uppercase">Impacto</h4>
-            <div className="space-y-2">
-              <p className="text-3xl font-black tracking-tighter uppercase leading-none">{PROGRAM_INFO.stats}</p>
-              <p className="text-xs text-neutral-400 uppercase font-bold tracking-widest">Compromisso com o Futuro</p>
-            </div>
+          {/* Coluna 4: Contacto */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-black uppercase tracking-widest">Contacto</h4>
+            <p className="text-sm font-medium">geral@portalsabermais.ao</p>
           </div>
         </div>
 
-        <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between gap-8 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-500">
-          <p>© {year || "..."} {PROGRAM_INFO.name}. Todos os direitos reservados.</p>
-          <div className="flex gap-8">
-            <span>Desenvolvido por Camões, I.P.</span>
-            <span>Luanda - Lisboa</span>
+        <div className="pt-12 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-8">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-black/40">
+            © {currentYear} {PROGRAM_INFO.name}. Todos os direitos reservados.
+          </p>
+          <div className="flex gap-8 text-[10px] font-black uppercase tracking-[0.2em] text-black/40">
+            <Link href="/privacidade" className="hover:text-black transition-colors">Privacidade</Link>
+            <Link href="/termos" className="hover:text-black transition-colors">Termos</Link>
           </div>
         </div>
       </div>
