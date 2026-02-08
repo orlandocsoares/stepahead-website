@@ -18,7 +18,7 @@ export function Navbar() {
 
   return (
     <nav className={cn(
-      "fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6 py-4 flex items-center justify-between border-b",
+      "fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-12 md:px-24 py-4 flex items-center justify-between border-b",
       isScrolled ? "bg-white border-black/10 py-3 shadow-sm" : "bg-transparent border-transparent"
     )}>
       <div className="flex items-center gap-2">
