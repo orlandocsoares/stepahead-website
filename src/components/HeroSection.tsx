@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -33,23 +32,40 @@ export function HeroSection() {
 
   const frameIndex = useTransform(smoothProgress, [0, 1], [0, totalFrames - 1]);
 
+  // Effect for updating the current frame from scroll progress
   useEffect(() => {
     const unsubscribe = frameIndex.on("change", (latest) => {
       setCurrentFrame(Math.round(latest));
     });
-
-    let count = 0;
-    for (let i = 0; i < totalFrames; i++) {
-      const img = new Image();
-      img.src = getFrameUrl(i);
-      img.onload = () => {
-        count++;
-        if (count === totalFrames) setImagesLoaded(true);
-      };
-      img.onerror = () => { count++; if (count === totalFrames) setImagesLoaded(true); };
-    }
     return () => unsubscribe();
   }, [frameIndex]);
+
+  // Effect for preloading all frames
+  useEffect(() => {
+    let isCancelled = false;
+    let loadedCount = 0;
+    
+    const imageUrls = Array.from({ length: totalFrames }, (_, i) => getFrameUrl(i));
+
+    const onImageLoad = () => {
+      if (isCancelled) return;
+      loadedCount++;
+      if (loadedCount === totalFrames) {
+        setImagesLoaded(true);
+      }
+    };
+
+    imageUrls.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.onload = onImageLoad;
+      img.onerror = onImageLoad; // Treat errors as loaded to not block the UI
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []); // Run only once on component mount
 
   const nextPhase = () => setActivePhaseIndex((prev) => (prev + 1) % PROGRAM_PHASES.length);
   const prevPhase = () => setActivePhaseIndex((prev) => (prev - 1 + PROGRAM_PHASES.length) % PROGRAM_PHASES.length);
@@ -76,7 +92,7 @@ export function HeroSection() {
         </div>
 
         {/* Textos - Alinhados à Esquerda/Baixo */}
-        <div className="relative z-10 h-full flex flex-col items-start justify-end pb-16 px-12 md:px-24">
+        <div className="relative z-10 h-full flex flex-col items-start justify-end pb-64 px-12 md:px-24">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPhase.id}
