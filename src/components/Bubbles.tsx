@@ -9,11 +9,12 @@ interface Bubble {
 }
 
 const BUBBLE_COUNT = 25; // Number of bubbles
+// CORES ATUALIZADAS: Ligeiramente mais opacas para melhor visibilidade
 const COLORS = [
-  'rgba(255, 255, 255, 0.05)',
-  'rgba(113, 201, 206, 0.08)',
-  'rgba(255, 182, 193, 0.08)',
-  'rgba(216, 191, 216, 0.08)',
+  'rgba(255, 255, 255, 0.1)',
+  'rgba(113, 201, 206, 0.12)',
+  'rgba(255, 182, 193, 0.12)',
+  'rgba(216, 191, 216, 0.12)',
 ];
 
 export function Bubbles() {
