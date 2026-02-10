@@ -60,7 +60,7 @@ export function HeroSection() {
           }
         };
         img.onerror = () => {
-          console.error(`Failed to load image: ${img.src}`);
+          // Silently fail on image load error.
         };
       }
     };
@@ -113,7 +113,7 @@ export function HeroSection() {
                 } else {
                   drawWidth = canvasRef.current.height * imgRatio;
                   drawHeight = canvasRef.current.height;
-                  offsetX = (canvasRef.current.width - drawWidth) / 2;
+                  offsetX = (canvas.width - drawWidth) / 2;
                   offsetY = 0;
                 }
                 context.drawImage(imgFrame, offsetX, offsetY, drawWidth, drawHeight);
