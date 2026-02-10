@@ -20,8 +20,6 @@ export function HeroSection() {
 
   // Mapeia o scroll (0 a 1) para o número do frame (0 a 99)
   const frameIndex = useTransform(scrollYProgress, [0, 1], [0, TOTAL_FRAMES - 1]);
-  // Mapeia o scroll para mudar os textos automaticamente (opcional, mantive manual também)
-  const phaseTrigger = useTransform(scrollYProgress, [0, 0.5, 1], [0, 1, 2]);
 
   // Função de URL ajustada para o formato que funciona: frame_00_delay-0.042s.webp
   const getUrl = (index: number) => {
@@ -51,10 +49,19 @@ export function HeroSection() {
           if (loadedCount === TOTAL_FRAMES) {
             setImagesLoaded(true);
             // Draw first frame
-            if (context && preloadedImages[0]) {
-              context.drawImage(preloadedImages[0], 0, 0, canvas.width, canvas.height);
+            const firstImg = preloadedImages[0];
+            if (context && firstImg && firstImg.complete && firstImg.naturalWidth > 0) {
+              context.drawImage(firstImg, 0, 0, canvas.width, canvas.height);
             }
           }
+        };
+        img.onerror = () => {
+            // If an image fails to load, we still increment the counter
+            // to prevent the loading screen from getting stuck.
+            loadedCount++;
+            if (loadedCount === TOTAL_FRAMES) {
+                setImagesLoaded(true);
+            }
         };
         preloadedImages[i] = img;
       }
@@ -66,7 +73,9 @@ export function HeroSection() {
     const unsubscribeFrame = frameIndex.on("change", (latest) => {
       const frameNum = Math.floor(latest);
       const imgFrame = preloadedImages[frameNum];
-      if (imgFrame && context) {
+
+      // FIX: Check if the image is complete and not broken before drawing
+      if (imgFrame && imgFrame.complete && imgFrame.naturalWidth > 0 && context) {
          context.clearRect(0, 0, canvas.width, canvas.height);
          context.drawImage(imgFrame, 0, 0, canvas.width, canvas.height);
       }
