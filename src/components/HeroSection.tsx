@@ -5,6 +5,7 @@ import { PROGRAM_PHASES, DASHBOARD_URL, BASE_FRAME_URL, TOTAL_FRAMES } from "@/l
 import { Button } from "@/components/ui/button";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Bubbles } from "./Bubbles";
 
 export function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,6 +145,7 @@ export function HeroSection() {
 
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+        <Bubbles />
 
         <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between px-12 md:px-24 pb-24">
           <AnimatePresence mode="wait">

@@ -53,3 +53,42 @@
 .fade-transition {
   transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
 }
+
+/* Bubble animation styles */
+.bubbles-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 5; /* Above canvas, below text */
+  pointer-events: none;
+}
+
+.bubble {
+  position: absolute;
+  bottom: -150px; /* Start from just below the viewport */
+  border-radius: 50%;
+  animation-name: rise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes rise {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.2; /* Very transparent */
+  }
+  60% {
+    opacity: 0; /* Fade out starting from around the middle */
+  }
+  100% {
+    transform: translateY(-100vh);
+    opacity: 0;
+  }
+}
