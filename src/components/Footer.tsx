@@ -1,7 +1,7 @@
 "use client";
 
 import { PROGRAM_INFO } from "@/lib/program-config";
-import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import { Facebook, Instagram, Linkedin } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -17,7 +17,6 @@ export function Footer() {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-24">
           
-          {/* Coluna 1: Info do Programa */}
           <div className="space-y-6">
             <h3 className="font-black text-2xl tracking-tighter uppercase">
               {PROGRAM_INFO.name}
@@ -27,7 +26,6 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Coluna 2: Links Rápidos */}
           <div className="space-y-6">
             <h4 className="text-xs font-black uppercase tracking-widest">Explorar</h4>
             <nav className="flex flex-col gap-4 text-sm font-medium">
@@ -37,7 +35,6 @@ export function Footer() {
             </nav>
           </div>
 
-          {/* Coluna 3: Redes Sociais */}
           <div className="space-y-6">
             <h4 className="text-xs font-black uppercase tracking-widest">Social</h4>
             <div className="flex gap-6">
@@ -47,7 +44,6 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Coluna 4: Contacto */}
           <div className="space-y-6">
             <h4 className="text-xs font-black uppercase tracking-widest">Contacto</h4>
             <p className="text-sm font-medium">geral@portalsabermais.ao</p>

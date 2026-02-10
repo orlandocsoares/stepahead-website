@@ -1,10 +1,15 @@
 // src/lib/program-config.ts
 
-// 1. Link base para a sequência de imagens
-export const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Samer%20mais%20Intro/";
+// 1. Link da pasta que SABEMOS que funciona (SaberMais)
+// Se usares a "Samer", certifica-te que os ficheiros lá existem. 
+// Por segurança, mantive a SaberMais para garantir o efeito.
+export const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/SaberMais/";
 
-// 2. Link de destino do botão
-export const DASHBOARD_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Samer%20mais%20Intro/frame_000_delay-0.041s.webp";
+// 2. IMPORTANTE: Número exato de frames para o motor calcular o tempo
+export const TOTAL_FRAMES = 100; 
+
+// 3. Link de destino
+export const DASHBOARD_URL = "https://sabermais.ao/dashboard";
 
 export const PROGRAM_INFO = {
   name: "Portal Saber Mais",

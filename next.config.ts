@@ -1,7 +1,6 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -27,6 +26,13 @@ const nextConfig: NextConfig = {
         hostname: 'picsum.photos',
         port: '',
         pathname: '/**',
+      },
+      // ADICIONADO: Supabase (Para a animação funcionar)
+      {
+        protocol: 'https',
+        hostname: 'qwaoeikvwwthlgcpagyz.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
       },
     ],
   },

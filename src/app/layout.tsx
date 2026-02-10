@@ -1,25 +1,15 @@
-
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Programa Saber Mais | Plataforma de Cooperação Educativa',
-  description: 'Plataforma institucional de cooperação na área da Educação, tutelada pelo Camões, I.P. e pelo MED Angola – INFQE.',
+  title: 'Programa Saber Mais',
+  description: 'Plataforma de Cooperação Educativa.',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased selection:bg-black selection:text-white" suppressHydrationWarning>
+    <html lang="pt">
+      <body className="font-body antialiased bg-black" suppressHydrationWarning>
         {children}
       </body>
     </html>
