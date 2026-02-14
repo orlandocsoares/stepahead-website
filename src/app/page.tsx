@@ -1,19 +1,18 @@
-"use client";
+import { Navbar } from "@/components/Navbar";
+import { HeroSection } from "@/components/HeroSection";
+import { KnowledgeTreeSection } from "@/components/KnowledgeTreeSection";
+import { ActivityAgenda } from "@/components/ActivityAgenda";
+import { DocumentRepository } from "@/components/DocumentRepository";
+import { Footer } from "@/components/Footer";
 
-import { HeroSection } from "../components/HeroSection";
-import { Navbar } from "../components/Navbar";
-import { Footer } from "../components/Footer";
-
-export default function Page() {
+export default function Home() {
   return (
-    <main className="bg-black min-h-screen relative">
-      {/* Navbar fica fixa no topo */}
+    <main className="min-h-screen relative bg-black">
       <Navbar />
-      
-      {/* Hero com a animação das imagens */}
       <HeroSection />
-      
-      {/* Footer aparece no fundo */}
+      <KnowledgeTreeSection />
+      <ActivityAgenda />
+      <DocumentRepository />
       <Footer />
     </main>
   );

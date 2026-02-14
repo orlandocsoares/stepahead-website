@@ -1,191 +1,122 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useRef } from "react";
-import { PROGRAM_PHASES, DASHBOARD_URL, BASE_FRAME_URL, TOTAL_FRAMES } from "@/lib/program-config";
-import { Button } from "@/components/ui/button";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRef, useEffect, useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 export function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-  const [activePhaseIndex, setActivePhaseIndex] = useState(0);
-  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const [images, setImages] = useState<HTMLImageElement[]>([]);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start start", "end end"]
+    offset: ["start start", "end start"]
   });
 
-  const frameIndex = useTransform(scrollYProgress, [0, 1], [0, TOTAL_FRAMES - 1]);
+  // 1. Carregamento da animação do Supabase
+  useEffect(() => {
+    const loadedImages: HTMLImageElement[] = [];
+    for (let i = 0; i < 100; i++) {
+      const img = new Image();
+      const frameNum = i.toString().padStart(2, '0');
+      img.src = `https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Video%20Intro%20MP4/frame_${frameNum}_delay-0.042s.webp`;
+      img.onload = () => {
+        loadedImages[i] = img;
+        if (i === 0) render(img); 
+      };
+    }
+    setImages(loadedImages);
+  }, []);
 
-  const getUrl = (index: number) => {
-    const padded = index.toString().padStart(2, "0");
-    return `${BASE_FRAME_URL}frame_${padded}_delay-0.042s.webp`;
-  };
+  const render = (imgFrame: HTMLImageElement) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !imgFrame) return;
+    const context = canvas.getContext('2d');
+    if (!context) return;
 
-  const handleNextPhase = () => {
-    setActivePhaseIndex((prevIndex) => (prevIndex + 1) % PROGRAM_PHASES.length);
-  };
+    const imgRatio = imgFrame.width / imgFrame.height;
+    let drawWidth = canvas.width;
+    let drawHeight = canvas.width / imgRatio;
 
-  const handlePrevPhase = () => {
-    setActivePhaseIndex((prevIndex) => (prevIndex - 1 + PROGRAM_PHASES.length) % PROGRAM_PHASES.length);
+    if (drawHeight < canvas.height) {
+      drawHeight = canvas.height;
+      drawWidth = canvas.height * imgRatio;
+    }
+
+    const offsetX = (canvas.width - drawWidth) / 2;
+    const offsetY = (canvas.height - drawHeight) / 2;
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(imgFrame, offsetX, offsetY, drawWidth, drawHeight);
   };
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    let loadedCount = 0;
-    const preloadImages = () => {
-      imagesRef.current = [];
-      for (let i = 0; i < TOTAL_FRAMES; i++) {
-        const img = new Image();
-        img.src = getUrl(i);
-        imagesRef.current[i] = img;
-        
-        img.onload = () => {
-          loadedCount++;
-          if (loadedCount === 1) { // Load first frame immediately
-            if(imagesRef.current[0].complete && imagesRef.current[0].naturalWidth > 0) {
-              context.drawImage(imagesRef.current[0], 0, 0, canvas.width, canvas.height);
-            }
-            setImagesLoaded(true);
-          }
-        };
-        img.onerror = () => {
-          // Silently fail on image load error.
-        };
-      }
-    };
-    
-    preloadImages();
-
-    const unsubscribeFrame = frameIndex.on("change", (latest) => {
-      const frameNum = Math.floor(latest);
-      const imgFrame = imagesRef.current[frameNum];
-
-      if (imgFrame && imgFrame.complete && imgFrame.naturalWidth > 0 && context) {
-         context.clearRect(0, 0, canvas.width, canvas.height);
-         
-         const imgRatio = imgFrame.naturalWidth / imgFrame.naturalHeight;
-         const canvasRatio = canvas.width / canvas.height;
-         let drawWidth, drawHeight, offsetX, offsetY;
-
-         if (canvasRatio > imgRatio) {
-           drawWidth = canvas.width;
-           drawHeight = canvas.width / imgRatio;
-           offsetX = 0;
-           offsetY = (canvas.height - drawHeight) / 2;
-         } else {
-           drawWidth = canvas.height * imgRatio;
-           drawHeight = canvas.height;
-           offsetX = (canvas.width - drawWidth) / 2;
-           offsetY = 0;
-         }
-         
-         context.drawImage(imgFrame, offsetX, offsetY, drawWidth, drawHeight);
-      }
+    const unsubscribe = scrollYProgress.on("change", (v) => {
+      const frameIndex = Math.floor(v * (images.length - 1));
+      if (images[frameIndex]) render(images[frameIndex]);
     });
-
-    const handleResize = () => {
-        if(canvasRef.current && context) {
-            canvasRef.current.width = window.innerWidth;
-            canvasRef.current.height = window.innerHeight;
-            const frameNum = Math.floor(frameIndex.get());
-            const imgFrame = imagesRef.current[frameNum];
-            if (imgFrame && imgFrame.complete && imgFrame.naturalWidth > 0) {
-                const imgRatio = imgFrame.naturalWidth / imgFrame.naturalHeight;
-                const canvasRatio = canvasRef.current.width / canvasRef.current.height;
-                let drawWidth, drawHeight, offsetX, offsetY;
-       
-                if (canvasRatio > imgRatio) {
-                  drawWidth = canvasRef.current.width;
-                  drawHeight = canvasRef.current.width / imgRatio;
-                  offsetX = 0;
-                  offsetY = (canvasRef.current.height - drawHeight) / 2;
-                } else {
-                  drawWidth = canvas.height * imgRatio;
-                  drawHeight = canvas.height;
-                  offsetX = (canvas.width - drawWidth) / 2;
-                  offsetY = 0;
-                }
-                context.drawImage(imgFrame, offsetX, offsetY, drawWidth, drawHeight);
-            }
-        }
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      unsubscribeFrame();
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [frameIndex]);
-
-  const currentPhase = PROGRAM_PHASES[activePhaseIndex];
+    return () => unsubscribe();
+  }, [images, scrollYProgress]);
 
   return (
-    <div ref={containerRef} className="relative h-[500vh] w-full bg-black">
-      
-      {!imagesLoaded && (
-        <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.6em] animate-pulse text-white">
-            Sincronizando
-          </p>
-        </div>
-      )}
+    <section ref={containerRef} className="relative h-[400vh] bg-white">
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
+        {/* Animação de Fundo (Canvas) */}
+        <canvas
+          ref={canvasRef}
+          width={1920}
+          height={1080}
+          className="w-full h-full object-cover opacity-90"
+        />
 
-      <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
-
-        <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between px-12 md:px-24 pb-24">
-          <AnimatePresence mode="wait">
+        {/* Camada de UI: Alinhamento consistente com o projeto */}
+        <div className="absolute inset-0 z-10 flex flex-col justify-center px-12 md:px-24">
+          
+          {/* Lado Esquerdo: Conteúdo Principal (Afastado do centro da imagem) */}
+          <div className="max-w-xl">
             <motion.div
-              key={currentPhase.id}
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.5 }}
-              className="max-w-lg space-y-4 pointer-events-auto"
+              transition={{ duration: 1 }}
+              className="flex flex-col items-start"
             >
-              <p className="font-bold text-[10px] tracking-[0.5em] text-white/70 uppercase">{currentPhase.subtitle}</p>
-              <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.8] text-white drop-shadow-lg">
-                {currentPhase.name}
+              <span className="text-black/40 text-[10px] md:text-xs uppercase tracking-[0.5em] font-bold mb-2">
+                O Início
+              </span>
+              <h1 className="text-black text-6xl md:text-8xl font-black uppercase tracking-tighter leading-[0.85] mb-6">
+                INTRODUÇÃO
               </h1>
-              <p className="text-base text-white/80 max-w-sm leading-relaxed font-medium">{currentPhase.description}</p>
-              
-              <div className="pt-6 flex gap-4">
-                <Button asChild size="lg" className="bg-white text-black rounded-none px-12 h-12 font-bold uppercase text-[10px] tracking-widest hover:scale-105 transition-transform hover:bg-gray-200">
-                  <a href={DASHBOARD_URL} target="_blank">Aceder</a>
-                </Button>
-                <Button variant="outline" size="lg" className="border-white text-white bg-transparent rounded-none px-12 h-12 font-bold uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all">
-                  Programa
-                </Button>
+              <p className="text-black/60 text-sm md:text-base max-w-sm leading-relaxed mb-10">
+                Explora os conceitos fundamentais e a visão do portal para o ensino secundário em Angola.
+              </p>
+
+              {/* Botões Alinhados */}
+              <div className="flex gap-4">
+                <button className="bg-black text-white px-8 py-3 font-bold text-[10px] uppercase tracking-widest hover:scale-105 transition-transform">
+                  ACEDER
+                </button>
+                <button className="border border-black text-black px-8 py-3 font-bold text-[10px] uppercase tracking-widest hover:bg-black/5 transition-colors">
+                  PROGRAMA
+                </button>
               </div>
             </motion.div>
-          </AnimatePresence>
+          </div>
 
-          <div className="flex items-center gap-4">
-            <Button onClick={handlePrevPhase} variant="ghost" size="icon" className="text-white/50 hover:text-white hover:bg-white/10 rounded-full">
-              <ChevronLeft size={20}/>
-            </Button>
-            <div className="flex items-baseline gap-1 text-center w-12 justify-center">
-              <span className="text-4xl font-black tracking-tighter text-white/80 italic">{currentPhase.index}</span>
-              <span className="text-[10px] font-bold text-white/50">/ 03</span>
+          {/* Canto Inferior Direito: Navegador de Fases Elegante */}
+          <div className="absolute bottom-12 right-12 md:bottom-20 md:right-24">
+            <div className="flex items-end gap-3 group cursor-pointer">
+              <div className="flex flex-col items-end mb-2">
+                <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-black/30">Fase</span>
+                <div className="h-[1px] w-8 bg-black/20 my-1" />
+              </div>
+              <div className="flex items-baseline">
+                <span className="text-6xl md:text-8xl font-black italic text-black leading-none">01</span>
+                <span className="text-black/30 font-bold text-sm ml-2 tracking-tighter">/ 03</span>
+              </div>
             </div>
-            <Button onClick={handleNextPhase} variant="ghost" size="icon" className="text-white/50 hover:text-white hover:bg-white/10 rounded-full">
-              <ChevronRight size={20}/>
-            </Button>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

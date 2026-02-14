@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 95%; /* #F2F2F2 approximately */
+    --background: 0 0% 95%;
     --foreground: 0 0% 0%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
@@ -23,7 +23,7 @@
     --border: 0 0% 0%;
     --input: 0 0% 0%;
     --ring: 0 0% 0%;
-    --radius: 0rem; /* Strictly professional, sharp corners or very small radius */
+    --radius: 0rem;
   }
 }
 
@@ -40,7 +40,7 @@
 }
 
 .parallax-container {
-  height: 300vh; /* Control for scroll duration */
+  height: 300vh;
 }
 
 .sticky-hero {
