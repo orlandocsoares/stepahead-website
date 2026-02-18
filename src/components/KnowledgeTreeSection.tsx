@@ -52,7 +52,6 @@ export function KnowledgeTreeSection() {
   const opacity = useTransform(smoothProgress, [0, 0.15], [0, 1]);
   const filter = useTransform(smoothProgress, [0, 0.2], ["blur(32px)", "blur(0px)"]);
 
-  // Surge apenas no final da animação, mantendo-se estático
   const contentOpacity = useTransform(smoothProgress, [0.75, 0.85, 0.98, 1], [0, 1, 1, 0]);
 
   useEffect(() => {
@@ -100,30 +99,14 @@ export function KnowledgeTreeSection() {
            >
              <div className="max-w-2xl flex gap-16 pointer-events-auto">
                
-               {/* Navegação Lateral - Dimensões do Separador /03 */}
-               <div className="flex flex-col items-center gap-6 pt-6">
-                 {TREE_CONTENT.map((item, idx) => (
-                   <button
-                     key={item.id}
-                     onClick={() => setActiveTextIndex(idx)}
-                     className="group flex flex-col items-center gap-3"
-                   >
-                     <span className={`text-[9px] font-black tabular-nums transition-all duration-700 ${activeTextIndex === idx ? 'text-white scale-110' : 'text-white/20'}`}>
-                       {item.id}
-                     </span>
-                     <div className={`w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-10 bg-white' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
-                   </button>
-                 ))}
-               </div>
-
-               {/* Conteúdo Textual - Alinhado ao Topo */}
-               <div className="flex-1 space-y-12 h-full flex flex-col">
+               {/* Conteúdo Textual - Alinhado à Direita */}
+               <div className="flex-1 space-y-12 h-full flex flex-col items-end text-right">
                  <AnimatePresence mode="wait">
                    <motion.div
                      key={activeTextIndex}
-                     initial={{ opacity: 0, x: 20 }}
+                     initial={{ opacity: 0, x: -20 }}
                      animate={{ opacity: 1, x: 0 }}
-                     exit={{ opacity: 0, x: -10 }}
+                     exit={{ opacity: 0, x: 10 }}
                      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                      className="space-y-8 flex-grow"
                    >
@@ -136,7 +119,7 @@ export function KnowledgeTreeSection() {
                        </h2>
                      </div>
 
-                     <div className="space-y-6 max-w-md">
+                     <div className="space-y-6 max-w-md ml-auto">
                         <p className="text-[13px] md:text-sm font-medium italic text-white/60 leading-relaxed text-justify whitespace-pre-line">
                           {currentItem.text}
                         </p>
@@ -144,8 +127,15 @@ export function KnowledgeTreeSection() {
                    </motion.div>
                  </AnimatePresence>
 
-                 {/* Controlos Inferiores - Alinhados com a base visual */}
-                 <div className="flex items-center gap-8 pt-12 pb-20">
+                 {/* Controlos Inferiores - Alinhados à direita */}
+                 <div className="flex items-center gap-8 pt-12 pb-20 justify-end">
+                   <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6">
+                     <div className="h-[1px] w-6 bg-white/20 group-hover:w-12 group-hover:bg-white transition-all duration-700" />
+                     <span className="text-[10px] font-black uppercase tracking-[0.6em] text-white/80 group-hover:text-white transition-all">sabermais</span>
+                   </button>
+                   
+                   <div className="h-[1px] w-16 bg-white/10" />
+
                    <div className="flex gap-4">
                      <button 
                        onClick={() => setActiveTextIndex((p) => (p - 1 + TREE_CONTENT.length) % TREE_CONTENT.length)}
@@ -160,14 +150,23 @@ export function KnowledgeTreeSection() {
                        <ChevronDown size={14} strokeWidth={1.5} className="group-hover:translate-y-0.5 transition-transform" />
                      </button>
                    </div>
-                   
-                   <div className="h-[1px] w-16 bg-white/10" />
-                   
-                   <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6">
-                     <span className="text-[10px] font-black uppercase tracking-[0.6em] text-white/80 group-hover:text-white transition-all">sabermais</span>
-                     <div className="h-[1px] w-6 bg-white/20 group-hover:w-12 group-hover:bg-white transition-all duration-700" />
-                   </button>
                  </div>
+               </div>
+
+               {/* Navegação Lateral - Agora à Direita */}
+               <div className="flex flex-col items-center gap-6 pt-6">
+                 {TREE_CONTENT.map((item, idx) => (
+                   <button
+                     key={item.id}
+                     onClick={() => setActiveTextIndex(idx)}
+                     className="group flex flex-col items-center gap-3"
+                   >
+                     <span className={`text-[9px] font-black tabular-nums transition-all duration-700 ${activeTextIndex === idx ? 'text-white scale-110' : 'text-white/20'}`}>
+                       {item.id}
+                     </span>
+                     <div className={`w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-10 bg-white' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
+                   </button>
+                 ))}
                </div>
 
              </div>
