@@ -17,10 +17,10 @@ export function AgendaSection() {
   }, []);
 
   return (
-    <section id="agenda" className="relative z-20 bg-black text-white py-32 px-12 md:px-24 border-t border-white/10">
+    <section id="agenda" className="relative z-20 bg-[#000033] text-white py-16 px-12 md:px-24 border-t border-white/10">
       <div className="max-w-[1800px] mx-auto">
         {/* Cabeçalho inspirado no estilo das Fases */}
-        <div className="mb-24 flex items-end justify-between border-b border-white/10 pb-8">
+        <div className="mb-12 flex items-end justify-between border-b border-white/10 pb-8">
           <div>
             <h2 className="text-4xl font-black uppercase tracking-tighter italic">
               Agenda do Programa
