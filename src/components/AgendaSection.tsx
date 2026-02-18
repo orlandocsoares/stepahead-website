@@ -1,12 +1,23 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 
 export function AgendaSection() {
   const [items, setItems] = useState<any[]>([]);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  // Efeito Parallax: monitoriza o scroll em relação a esta secção
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"]
+  });
+
+  // Transformação para o movimento de parallax do conteúdo
+  const yParallax = useTransform(scrollYProgress, [0, 1], [60, -60]);
+  const smoothY = useSpring(yParallax, { stiffness: 100, damping: 30 });
 
   useEffect(() => {
     const fetchAgenda = async () => {
@@ -17,10 +28,14 @@ export function AgendaSection() {
   }, []);
 
   return (
-    <section id="agenda" className="relative z-20 bg-[#000033] text-white py-16 px-12 md:px-24 border-t border-white/10">
+    <section 
+      ref={sectionRef}
+      id="agenda" 
+      className="relative z-20 bg-[#000033] text-white py-12 px-16 md:px-40 border-t border-white/10 overflow-hidden"
+    >
       <div className="max-w-[1800px] mx-auto">
-        {/* Cabeçalho inspirado no estilo das Fases */}
-        <div className="mb-12 flex items-end justify-between border-b border-white/10 pb-8">
+        {/* Cabeçalho */}
+        <div className="mb-12 flex items-end justify-between border-b border-white/10 pb-6">
           <div>
             <h2 className="text-4xl font-black uppercase tracking-tighter italic">
               Agenda do Programa
@@ -33,8 +48,11 @@ export function AgendaSection() {
           </p>
         </div>
 
-        {/* Grelha de 3 Colunas (Focada em Web/Desktop) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+        {/* Grelha de Actividades com Parallax */}
+        <motion.div 
+          style={{ y: smoothY }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-16"
+        >
           {items.map((item) => (
             <motion.div 
               key={item.id} 
@@ -43,7 +61,7 @@ export function AgendaSection() {
               viewport={{ once: true }} 
               className="group space-y-6"
             >
-              {/* Indicador de Horário com efeito hover */}
+              {/* Indicador de Horário */}
               <div className="flex items-center gap-4 border-b border-white/10 pb-4 mb-6 group-hover:border-white transition-colors duration-500">
                 <span className="text-2xl font-black text-white/20 group-hover:text-white transition-colors duration-500 tabular-nums">
                   {item.time_start}
@@ -66,7 +84,7 @@ export function AgendaSection() {
               </p>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
