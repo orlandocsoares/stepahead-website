@@ -7,7 +7,7 @@ import { ChevronUp, ChevronDown } from "lucide-react";
 const TREE_CONTENT = [
   {
     id: "01",
-    label: "Actividades",
+    label: "QUEM SOMOS",
     title: "Projectos e\nActividades",
     text: "Registo de actividades realizadas, relatórios de execução detalhados, evidências digitais e análise rigorosa dos resultados obtidos em cada etapa do processo pedagógico."
   },
@@ -43,7 +43,6 @@ export function KnowledgeTreeSection() {
   const [duration, setDuration] = useState(0);
   const [activeTextIndex, setActiveTextIndex] = useState(0);
 
-  // Aumentado para 800vh para permitir mais "runway" de scroll
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start end", "end end"] });
   const smoothProgress = useSpring(scrollYProgress, { mass: 0.1, stiffness: 100, damping: 20 });
   
@@ -51,7 +50,6 @@ export function KnowledgeTreeSection() {
   const opacity = useTransform(smoothProgress, [0, 0.15], [0, 1]);
   const filter = useTransform(smoothProgress, [0, 0.2], ["blur(32px)", "blur(0px)"]);
 
-  // Animações para o conteúdo flutuante
   const contentOpacity = useTransform(smoothProgress, [0.25, 0.35, 0.9, 1], [0, 1, 1, 0]);
   const contentY = useTransform(smoothProgress, [0.25, 0.35], [30, 0]);
 
@@ -73,11 +71,10 @@ export function KnowledgeTreeSection() {
     return () => unsubscribe();
   }, [duration, easedProgress]);
 
-  // Sincronizar o índice do texto com o scroll
   useEffect(() => {
     const unsubscribe = smoothProgress.on("change", (v) => {
       if (v > 0.3 && v < 0.9) {
-        const sectionProgress = (v - 0.3) / 0.6; // Normaliza entre 0.3 e 0.9
+        const sectionProgress = (v - 0.3) / 0.6;
         const newIndex = Math.min(Math.floor(sectionProgress * TREE_CONTENT.length), TREE_CONTENT.length - 1);
         setActiveTextIndex(newIndex);
       }
@@ -95,14 +92,12 @@ export function KnowledgeTreeSection() {
              <source src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Knowledge%20tree/Arvore%20do%20conhecimento.mp4" type="video/mp4" />
            </video>
 
-           {/* Layout Alinhado à Direita com Contentor de Texto Expandido */}
            <motion.div 
              style={{ opacity: contentOpacity, y: contentY }}
              className="absolute inset-0 flex items-center justify-end px-16 md:px-40 pointer-events-none"
            >
              <div className="max-w-2xl flex gap-12 pointer-events-auto">
                
-               {/* Numerador Elegante (Vertical) */}
                <div className="flex flex-col items-center gap-6 pt-2">
                  {TREE_CONTENT.map((item, idx) => (
                    <button
@@ -118,7 +113,6 @@ export function KnowledgeTreeSection() {
                  ))}
                </div>
 
-               {/* Conteúdo de Texto - Área Expandida */}
                <div className="flex-1 space-y-10 min-h-[400px] flex flex-col justify-center">
                  <AnimatePresence mode="wait">
                    <motion.div
@@ -144,7 +138,6 @@ export function KnowledgeTreeSection() {
                    </motion.div>
                  </AnimatePresence>
 
-                 {/* Controles de Navegação */}
                  <div className="flex items-center gap-8 pt-10">
                    <div className="flex gap-3">
                      <button 
