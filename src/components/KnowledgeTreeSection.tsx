@@ -130,8 +130,8 @@ export function KnowledgeTreeSection() {
                    </motion.div>
                  </AnimatePresence>
 
-                 {/* Botão Saber Mais - Fixado na base da página */}
-                 <div className="fixed bottom-20 left-16 md:left-40 pointer-events-auto">
+                 {/* Botão Saber Mais - Alinhado à esquerda do bloco de texto e fixado no fundo */}
+                 <div className="mt-auto self-start pointer-events-auto pb-4">
                    <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6">
                      <span className="text-[10px] font-black uppercase tracking-[0.6em] text-white/80 group-hover:text-white transition-all">sabermais</span>
                      <div className="h-[1px] w-6 bg-white/20 group-hover:w-12 group-hover:bg-white transition-all duration-700" />
