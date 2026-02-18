@@ -139,8 +139,8 @@ export function KnowledgeTreeSection() {
                  </div>
                </div>
 
-               {/* Navegação Lateral - Refinada com Profundidade Suave */}
-               <div className="relative flex flex-col items-center gap-6 py-10 px-3 bg-white/[0.01] backdrop-blur-3xl border border-white/10 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.2)] transition-all duration-1000">
+               {/* Navegação Lateral - Limpa e Fluida */}
+               <div className="relative flex flex-col items-center gap-6 py-10 px-3 transition-all duration-1000">
                  <button 
                    onClick={prevChapter}
                    className="text-white/20 hover:text-white transition-all duration-500 hover:scale-110 mb-2"
@@ -155,19 +155,6 @@ export function KnowledgeTreeSection() {
                       onClick={() => setActiveTextIndex(idx)}
                       className="group relative flex flex-col items-center gap-5"
                     >
-                      {/* Efeito de destaque de fundo para o item activo - Mais suave */}
-                      <AnimatePresence>
-                        {activeTextIndex === idx && (
-                          <motion.div
-                            layoutId="nav-active-bg"
-                            className="absolute -inset-3 bg-white/[0.03] blur-lg rounded-full z-0"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                          />
-                        )}
-                      </AnimatePresence>
-
                       <span className={`relative z-10 text-[12px] font-black tabular-nums transition-all duration-1000 ${activeTextIndex === idx ? 'text-white scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]' : 'text-white/20 group-hover:text-white/40'}`}>
                         {item.id}
                       </span>
