@@ -130,8 +130,8 @@ export function KnowledgeTreeSection() {
                    </motion.div>
                  </AnimatePresence>
 
-                 {/* Botão Saber Mais - Fixado na base */}
-                 <div className="mt-auto flex items-center justify-start w-full">
+                 {/* Botão Saber Mais - Fixado na base da página */}
+                 <div className="fixed bottom-20 left-16 md:left-40 pointer-events-auto">
                    <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6">
                      <span className="text-[10px] font-black uppercase tracking-[0.6em] text-white/80 group-hover:text-white transition-all">sabermais</span>
                      <div className="h-[1px] w-6 bg-white/20 group-hover:w-12 group-hover:bg-white transition-all duration-700" />
@@ -139,37 +139,46 @@ export function KnowledgeTreeSection() {
                  </div>
                </div>
 
-               {/* Navegação Lateral - Estilo Etéreo Refinado */}
+               {/* Navegação Lateral - Estilo Numerador (Coerente com Hero) */}
                <div className="flex flex-col items-center justify-center">
-                 <div className="flex flex-col items-center gap-8 py-8">
-                  <button 
-                    onClick={prevChapter}
-                    className="text-white/20 hover:text-white transition-all duration-500 mb-2"
-                  >
-                    <ChevronUp size={14} strokeWidth={1.5} />
-                  </button>
-
-                  <div className="flex flex-col items-center gap-8">
-                    {TREE_CONTENT.map((item, idx) => (
-                      <button
-                        key={item.id}
-                        onClick={() => setActiveTextIndex(idx)}
-                        className="group flex flex-col items-center gap-4"
+                 <div className="flex flex-col items-center gap-6 pointer-events-auto">
+                    {/* Indicador de Capítulo Atual */}
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">Cap</span>
+                      <span className="text-sm font-bold text-white/60 tabular-nums">
+                        {currentItem?.id}
+                      </span>
+                    </div>
+                    
+                    {/* Barra de Progresso Vertical */}
+                    <div className="relative h-32 w-[1px] bg-white/10 overflow-hidden">
+                      <motion.div 
+                        animate={{ height: `${((activeTextIndex + 1) / TREE_CONTENT.length) * 100}%` }} 
+                        className="absolute top-0 w-full bg-white/60 shadow-[0_0_8px_rgba(255,255,255,0.3)] transition-all duration-1000" 
+                      />
+                    </div>
+                    
+                    {/* Total de Capítulos */}
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-sm font-bold text-white/20 tabular-nums">0{TREE_CONTENT.length}</span>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-white/10">Total</span>
+                    </div>
+                    
+                    {/* Controlos de Navegação Minimalistas */}
+                    <div className="flex flex-col gap-2 mt-4">
+                      <button 
+                        onClick={prevChapter}
+                        className="p-2 text-white/20 hover:text-white transition-all duration-500 rounded-full hover:bg-white/5"
                       >
-                        <span className={`text-[12px] font-black tabular-nums transition-all duration-700 ${activeTextIndex === idx ? 'text-white scale-125' : 'text-white/20 group-hover:text-white/40'}`}>
-                          {item.id}
-                        </span>
-                        <div className={`w-[1px] transition-all duration-700 ${activeTextIndex === idx ? 'h-8 bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.4)]' : 'h-3 bg-white/5 group-hover:bg-white/20'}`} />
+                        <ChevronUp size={16} strokeWidth={1.5} />
                       </button>
-                    ))}
-                  </div>
-
-                  <button 
-                    onClick={nextChapter}
-                    className="text-white/20 hover:text-white transition-all duration-500 mt-2"
-                  >
-                    <ChevronDown size={14} strokeWidth={1.5} />
-                  </button>
+                      <button 
+                        onClick={nextChapter}
+                        className="p-2 text-white/20 hover:text-white transition-all duration-500 rounded-full hover:bg-white/5"
+                      >
+                        <ChevronDown size={16} strokeWidth={1.5} />
+                      </button>
+                    </div>
                  </div>
                </div>
 
