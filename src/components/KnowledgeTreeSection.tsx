@@ -10,31 +10,31 @@ const TREE_CONTENT = [
     id: "01",
     label: "QUEM SOMOS",
     title: "Projectos e\nActividades",
-    text: "Registo de actividades realizadas, relatórios de execução detalhados, evidências digitais e análise rigorosa dos resultados obtidos em cada etapa do processo pedagógico."
+    text: "O Programa Saber Mais nasceu da necessidade de criar pontes sólidas entre o conhecimento teórico e a prática pedagógica contemporânea. Mais do que um repositório, somos uma plataforma de cooperação viva que pulsa com a energia dos nossos educadores.\n\nRegisto de actividades realizadas, relatórios de execução detalhados, evidências digitais e análise rigorosa dos resultados obtidos em cada etapa do processo pedagógico para garantir a evolução constante e a excelência educativa."
   },
   {
     id: "02",
     label: "Agenda",
     title: "Planeamento\nEstratégico",
-    text: "Calendário completo de formações, reuniões, visitas e eventos institucionais. Inclui descrição detalhada e acesso directo a todos os documentos associados."
+    text: "O Planeamento Estratégico é o coração da nossa organização. Através de um calendário centralizado e dinâmico, garantimos que todos os agentes estão em sintonia com os objectivos globais do programa, antecipando desafios e celebrando marcos.\n\nCalendário completo de formações, reuniões, visitas e eventos institucionais. Inclui descrição detalhada e acesso directo a todos os documentos associados para uma gestão eficiente do tempo e dos recursos pedagógicos."
   },
   {
     id: "03",
     label: "Agentes",
     title: "Agentes\nSaber Mais",
-    text: "Directório completo dos agentes envolvidos: Nome, Escola e Município. Acesso a contactos institucionais e histórico detalhado de todas as actividades realizadas."
+    text: "A nossa rede estende-se por diversos municípios, unindo educadores sob um propósito comum: a transformação do ensino secundário. Cada agente é uma peça fundamental neste ecossistema de partilha e inovação.\n\nDirectório completo dos agentes envolvidos: Nome, Escola e Município. Acesso a contactos institucionais e histórico detalhado de todas as actividades realizadas, promovendo a transparência, o reconhecimento e a colaboração mútua entre pares."
   },
   {
     id: "04",
     label: "Equipa",
     title: "Equipa de\nCoordenação",
-    text: "Estrutura de apoio ao projecto: Coordenação estratégica, técnicos de suporte e o corpo de formadores dedicados à excelência educativa e acompanhamento próximo."
+    text: "A coordenação do Programa Saber Mais é composta por especialistas dedicados a remover barreiras e potenciar o talento docente. O nosso suporte é técnico na execução, mas profundamente humano na intenção.\n\nEstrutura de apoio ao projecto: Coordenação estratégica, técnicos de suporte e o corpo de formadores dedicados à excelência educativa e ao acompanhamento próximo em todas as fases da implementação nas escolas."
   },
   {
     id: "05",
     label: "Sobre",
     title: "Missão e\nParcerias",
-    text: "Missão do projecto e enquadramento institucional. Conheça os nossos parceiros estratégicos, o enquadramento legal e os canais oficiais de contacto para suporte."
+    text: "A nossa missão é clara: capacitar hoje para os desafios de amanhã. Através de parcerias estratégicas de alto nível, elevamos os padrões da educação pública, criando um legado de conhecimento eterno e acessível.\n\nMissão do projecto e enquadramento institucional. Conheça os nossos parceiros estratégicos, o enquadramento legal e os canais oficiais de contacto para suporte especializado e esclarecimento de dúvidas estruturais."
   }
 ];
 
@@ -51,9 +51,9 @@ export function KnowledgeTreeSection() {
   const opacity = useTransform(smoothProgress, [0, 0.15], [0, 1]);
   const filter = useTransform(smoothProgress, [0, 0.2], ["blur(32px)", "blur(0px)"]);
 
-  // O conteúdo agora apenas surge nos últimos 25% do scroll (fase final da animação)
+  // O conteúdo surge nos últimos 25% do scroll (fase final da animação)
   const contentOpacity = useTransform(smoothProgress, [0.75, 0.85, 0.98, 1], [0, 1, 1, 0]);
-  const contentY = useTransform(smoothProgress, [0.75, 0.85], [30, 0]);
+  const contentY = useTransform(smoothProgress, [0.75, 0.85], [40, 0]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -75,7 +75,6 @@ export function KnowledgeTreeSection() {
 
   useEffect(() => {
     const unsubscribe = smoothProgress.on("change", (v) => {
-      // Ajuste do intervalo de troca de capítulos para a fase final onde o conteúdo é visível
       if (v > 0.8 && v < 0.98) {
         const sectionProgress = (v - 0.8) / 0.18;
         const newIndex = Math.min(Math.floor(sectionProgress * TREE_CONTENT.length), TREE_CONTENT.length - 1);
@@ -101,66 +100,68 @@ export function KnowledgeTreeSection() {
            >
              <div className="max-w-2xl flex gap-12 pointer-events-auto">
                
-               <div className="flex flex-col items-center gap-6 pt-2">
+               <div className="flex flex-col items-center gap-6 pt-4">
                  {TREE_CONTENT.map((item, idx) => (
                    <button
                      key={item.id}
                      onClick={() => setActiveTextIndex(idx)}
-                     className="group flex flex-col items-center gap-2"
+                     className="group flex flex-col items-center gap-3"
                    >
-                     <span className={`text-[10px] font-bold tabular-nums transition-colors duration-500 ${activeTextIndex === idx ? 'text-white' : 'text-white/20'}`}>
+                     <span className={`text-[10px] font-black tabular-nums transition-all duration-700 ${activeTextIndex === idx ? 'text-white scale-110' : 'text-white/20'}`}>
                        {item.id}
                      </span>
-                     <div className={`w-[1px] transition-all duration-700 ${activeTextIndex === idx ? 'h-8 bg-white' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
+                     <div className={`w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-10 bg-white' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
                    </button>
                  ))}
                </div>
 
-               <div className="flex-1 space-y-10 min-h-[400px] flex flex-col justify-center">
+               <div className="flex-1 space-y-10 min-h-[500px] flex flex-col justify-center">
                  <AnimatePresence mode="wait">
                    <motion.div
                      key={activeTextIndex}
-                     initial={{ opacity: 0, x: 20 }}
+                     initial={{ opacity: 0, x: 30 }}
                      animate={{ opacity: 1, x: 0 }}
-                     exit={{ opacity: 0, x: -10 }}
-                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                     exit={{ opacity: 0, x: -15 }}
+                     transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                      className="space-y-8"
                    >
                      <div className="space-y-3">
-                       <p className="text-[9px] font-black uppercase tracking-[0.5em] text-white/30 italic">
+                       <p className="text-[10px] font-black uppercase tracking-[0.6em] text-white/40 italic">
                          Capítulo {currentItem.id} — {currentItem.label}
                        </p>
-                       <h2 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter italic leading-none text-white/90 whitespace-pre-line">
+                       <h2 className="text-4xl md:text-5xl lg:text-7xl font-black uppercase tracking-tighter italic leading-[0.9] text-white whitespace-pre-line drop-shadow-2xl">
                          {currentItem.title}
                        </h2>
                      </div>
 
-                     <p className="text-sm md:text-base font-medium italic text-white/50 leading-relaxed text-justify max-w-md">
-                       {currentItem.text}
-                     </p>
+                     <div className="space-y-6 max-w-md">
+                        <p className="text-sm md:text-base font-medium italic text-white/60 leading-relaxed text-justify whitespace-pre-line">
+                          {currentItem.text}
+                        </p>
+                     </div>
                    </motion.div>
                  </AnimatePresence>
 
-                 <div className="flex items-center gap-8 pt-10">
-                   <div className="flex gap-3">
+                 <div className="flex items-center gap-8 pt-12">
+                   <div className="flex gap-4">
                      <button 
                        onClick={() => setActiveTextIndex((p) => (p - 1 + TREE_CONTENT.length) % TREE_CONTENT.length)}
-                       className="p-3 border border-white/10 hover:border-white/40 text-white/30 hover:text-white transition-all rounded-full"
+                       className="p-4 border border-white/10 hover:border-white/40 text-white/30 hover:text-white transition-all rounded-full group bg-white/5"
                      >
-                       <ChevronUp size={16} />
+                       <ChevronUp size={18} className="group-hover:-translate-y-1 transition-transform" />
                      </button>
                      <button 
                        onClick={() => setActiveTextIndex((p) => (p + 1) % TREE_CONTENT.length)}
-                       className="p-3 border border-white/10 hover:border-white/40 text-white/30 hover:text-white transition-all rounded-full"
+                       className="p-4 border border-white/10 hover:border-white/40 text-white/30 hover:text-white transition-all rounded-full group bg-white/5"
                      >
-                       <ChevronDown size={16} />
+                       <ChevronDown size={18} className="group-hover:translate-y-1 transition-transform" />
                      </button>
                    </div>
                    <div className="h-[1px] w-24 bg-white/10" />
                    
-                   <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-4">
-                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60 group-hover:text-white transition-all">sabermais</span>
-                     <div className="h-[1px] w-6 bg-white/20 group-hover:w-10 group-hover:bg-white transition-all duration-500" />
+                   <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-5">
+                     <span className="text-[11px] font-black uppercase tracking-[0.5em] text-white group-hover:text-white transition-all">sabermais</span>
+                     <div className="h-[1px] w-8 bg-white/40 group-hover:w-14 group-hover:bg-white transition-all duration-700" />
                    </button>
                  </div>
                </div>

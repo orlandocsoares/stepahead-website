@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export function Navbar() {
   return (
@@ -25,8 +26,13 @@ export function Navbar() {
           </h1>
         </motion.div>
 
-        <div className="flex gap-12 pointer-events-auto">
-          {/* Links de navegação podem ser adicionados aqui no futuro */}
+        <div className="flex gap-12 pointer-events-auto items-center">
+          <Link 
+            href="/login" 
+            className="text-[10px] font-black uppercase tracking-[0.4em] text-black/60 hover:text-black transition-colors"
+          >
+            Entrar
+          </Link>
         </div>
       </div>
     </nav>
