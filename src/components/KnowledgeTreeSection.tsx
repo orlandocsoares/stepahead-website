@@ -130,29 +130,12 @@ export function KnowledgeTreeSection() {
                    </motion.div>
                  </AnimatePresence>
 
-                 {/* Controlos Inferiores - Alinhados à direita */}
-                 <div className="flex items-center gap-8 pt-12 pb-20 justify-end">
+                 {/* Controlos Inferiores - Alinhados à Esquerda */}
+                 <div className="flex items-center pt-12 pb-20 justify-start w-full">
                    <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6">
-                     <div className="h-[1px] w-6 bg-white/20 group-hover:w-12 group-hover:bg-white transition-all duration-700" />
                      <span className="text-[10px] font-black uppercase tracking-[0.6em] text-white/80 group-hover:text-white transition-all">sabermais</span>
+                     <div className="h-[1px] w-6 bg-white/20 group-hover:w-12 group-hover:bg-white transition-all duration-700" />
                    </button>
-                   
-                   <div className="h-[1px] w-16 bg-white/10" />
-
-                   <div className="flex gap-4">
-                     <button 
-                       onClick={prevChapter}
-                       className="p-3 border border-white/5 hover:border-white/20 text-white/20 hover:text-white transition-all rounded-full group bg-white/[0.02] shadow-[0_0_15px_rgba(255,255,255,0.05)]"
-                     >
-                       <ChevronUp size={14} strokeWidth={1.5} className="group-hover:-translate-y-0.5 transition-transform" />
-                     </button>
-                     <button 
-                       onClick={nextChapter}
-                       className="p-3 border border-white/5 hover:border-white/20 text-white/20 hover:text-white transition-all rounded-full group bg-white/[0.02] shadow-[0_0_15px_rgba(255,255,255,0.05)]"
-                     >
-                       <ChevronDown size={14} strokeWidth={1.5} className="group-hover:translate-y-0.5 transition-transform" />
-                     </button>
-                   </div>
                  </div>
                </div>
 
