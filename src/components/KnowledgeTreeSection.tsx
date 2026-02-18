@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRef, useEffect, useState } from "react";
@@ -10,31 +9,31 @@ const TREE_CONTENT = [
     id: "01",
     label: "Actividades",
     title: "Projectos e\nActividades",
-    text: "Registo de actividades realizadas, relatórios de execução detalhados, evidências digitais e análise rigorosa dos resultados obtidos em cada etapa."
+    text: "Registo de actividades realizadas, relatórios de execução detalhados, evidências digitais e análise rigorosa dos resultados obtidos em cada etapa do processo pedagógico."
   },
   {
     id: "02",
     label: "Agenda",
     title: "Planeamento\nEstratégico",
-    text: "Formações, reuniões, visitas e eventos. Inclui descrição completa e acesso directo a todos os documentos e recursos pedagógicos associados."
+    text: "Calendário completo de formações, reuniões, visitas e eventos institucionais. Inclui descrição detalhada e acesso directo a todos os documentos associados."
   },
   {
     id: "03",
     label: "Agentes",
     title: "Agentes\nSaber Mais",
-    text: "Directório completo: Nome, Escola e Município. Acesso a contactos institucionais e histórico detalhado de todas as actividades realizadas."
+    text: "Directório completo dos agentes envolvidos: Nome, Escola e Município. Acesso a contactos institucionais e histórico detalhado de todas as actividades realizadas."
   },
   {
     id: "04",
     label: "Equipa",
     title: "Equipa de\nCoordenação",
-    text: "A estrutura de apoio ao projecto: Coordenação estratégica, técnicos de suporte e o corpo de formadores dedicados à excelência educativa."
+    text: "Estrutura de apoio ao projecto: Coordenação estratégica, técnicos de suporte e o corpo de formadores dedicados à excelência educativa e acompanhamento próximo."
   },
   {
     id: "05",
     label: "Sobre",
     title: "Missão e\nParcerias",
-    text: "Missão do projecto e enquadramento institucional. Conheça os nossos parceiros estratégicos, enquadramento legal e canais oficiais de contacto."
+    text: "Missão do projecto e enquadramento institucional. Conheça os nossos parceiros estratégicos, o enquadramento legal e os canais oficiais de contacto para suporte."
   }
 ];
 
@@ -44,16 +43,17 @@ export function KnowledgeTreeSection() {
   const [duration, setDuration] = useState(0);
   const [activeTextIndex, setActiveTextIndex] = useState(0);
 
+  // Aumentado para 800vh para permitir mais "runway" de scroll
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start end", "end end"] });
   const smoothProgress = useSpring(scrollYProgress, { mass: 0.1, stiffness: 100, damping: 20 });
   
   const easedProgress = useTransform(smoothProgress, [0, 1], [0, 1], { ease: easeInOut });
-  const opacity = useTransform(smoothProgress, [0, 0.2], [0, 1]);
-  const filter = useTransform(smoothProgress, [0, 0.25], ["blur(32px)", "blur(0px)"]);
+  const opacity = useTransform(smoothProgress, [0, 0.15], [0, 1]);
+  const filter = useTransform(smoothProgress, [0, 0.2], ["blur(32px)", "blur(0px)"]);
 
   // Animações para o conteúdo flutuante
-  const contentOpacity = useTransform(smoothProgress, [0.3, 0.4, 0.9, 1], [0, 1, 1, 0]);
-  const contentY = useTransform(smoothProgress, [0.3, 0.4], [30, 0]);
+  const contentOpacity = useTransform(smoothProgress, [0.25, 0.35, 0.9, 1], [0, 1, 1, 0]);
+  const contentY = useTransform(smoothProgress, [0.25, 0.35], [30, 0]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -73,7 +73,7 @@ export function KnowledgeTreeSection() {
     return () => unsubscribe();
   }, [duration, easedProgress]);
 
-  // Sincronizar o índice do texto com o scroll para uma navegação mais imersiva
+  // Sincronizar o índice do texto com o scroll
   useEffect(() => {
     const unsubscribe = smoothProgress.on("change", (v) => {
       if (v > 0.3 && v < 0.9) {
@@ -88,19 +88,19 @@ export function KnowledgeTreeSection() {
   const currentItem = TREE_CONTENT[activeTextIndex];
 
   return (
-    <section ref={containerRef} className="relative h-[500vh] -mt-[100vh] z-0 pointer-events-none">
+    <section ref={containerRef} className="relative h-[800vh] -mt-[100vh] z-0 pointer-events-none">
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center pointer-events-auto">
         <motion.div style={{ opacity, filter }} className="relative w-full h-full bg-black">
            <video ref={videoRef} muted playsInline className="w-full h-full object-cover opacity-60" preload="auto">
              <source src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Knowledge%20tree/Arvore%20do%20conhecimento.mp4" type="video/mp4" />
            </video>
 
-           {/* Layout Elegante sem fundo - Alinhado à Direita */}
+           {/* Layout Alinhado à Direita com Contentor de Texto Expandido */}
            <motion.div 
              style={{ opacity: contentOpacity, y: contentY }}
              className="absolute inset-0 flex items-center justify-end px-16 md:px-40 pointer-events-none"
            >
-             <div className="max-w-xl flex gap-12 pointer-events-auto">
+             <div className="max-w-2xl flex gap-12 pointer-events-auto">
                
                {/* Numerador Elegante (Vertical) */}
                <div className="flex flex-col items-center gap-6 pt-2">
@@ -118,8 +118,8 @@ export function KnowledgeTreeSection() {
                  ))}
                </div>
 
-               {/* Conteúdo de Texto */}
-               <div className="flex-1 space-y-10">
+               {/* Conteúdo de Texto - Área Expandida */}
+               <div className="flex-1 space-y-10 min-h-[400px] flex flex-col justify-center">
                  <AnimatePresence mode="wait">
                    <motion.div
                      key={activeTextIndex}
@@ -127,26 +127,26 @@ export function KnowledgeTreeSection() {
                      animate={{ opacity: 1, x: 0 }}
                      exit={{ opacity: 0, x: -10 }}
                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                     className="space-y-6"
+                     className="space-y-8"
                    >
-                     <div className="space-y-2">
+                     <div className="space-y-3">
                        <p className="text-[9px] font-black uppercase tracking-[0.5em] text-white/30 italic">
                          Capítulo {currentItem.id} — {currentItem.label}
                        </p>
-                       <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter italic leading-none text-white/90 whitespace-pre-line">
+                       <h2 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter italic leading-none text-white/90 whitespace-pre-line">
                          {currentItem.title}
                        </h2>
                      </div>
 
-                     <p className="text-sm font-medium italic text-white/50 leading-relaxed text-justify max-w-sm">
+                     <p className="text-sm md:text-base font-medium italic text-white/50 leading-relaxed text-justify max-w-md">
                        {currentItem.text}
                      </p>
                    </motion.div>
                  </AnimatePresence>
 
-                 {/* Controles de Navegação Compactos */}
-                 <div className="flex items-center gap-8 pt-6">
-                   <div className="flex gap-2">
+                 {/* Controles de Navegação */}
+                 <div className="flex items-center gap-8 pt-10">
+                   <div className="flex gap-3">
                      <button 
                        onClick={() => setActiveTextIndex((p) => (p - 1 + TREE_CONTENT.length) % TREE_CONTENT.length)}
                        className="p-3 border border-white/10 hover:border-white/40 text-white/30 hover:text-white transition-all rounded-full"
@@ -162,7 +162,7 @@ export function KnowledgeTreeSection() {
                    </div>
                    <div className="h-[1px] w-24 bg-white/10" />
                    <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20 italic">
-                     Modo de Leitura Ativo
+                     Modo de Leitura Activo
                    </span>
                  </div>
                </div>
