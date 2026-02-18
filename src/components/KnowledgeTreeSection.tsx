@@ -17,7 +17,7 @@ const TREE_CONTENT = [
     id: "02",
     label: "Agenda",
     title: "Planeamento\nEstratégico",
-    text: "O Planeamento Estratégico é o coração operacional da nossa organização. Através de um calendário centralizado e dinâmico, garantimos que todos os agentes estão em total sintonia com os objectivos globais do programa.\n\nEste ecossistema permite-nos antecipar desafios e celebrar marcos fundamentais em tempo real.\n\nInclui um calendário completo de formações, reuniões, visitas e eventos institucionais de alto impacto. O acesso directo a todos os documentos associados promove uma cultura de gestão de tempo e recursos pedagógicos sem precedentes na educação pública."
+    text: "O Planeamento Estratégico é o coração operacional da nossa organization. Através de um calendário centralizado e dinâmico, garantimos que todos os agentes estão em total sintonia com os objectivos globais do programa.\n\nEste ecossistema permite-nos antecipar desafios e celebrar marcos fundamentais em tempo real.\n\nInclui um calendário completo de formações, reuniões, visitas e eventos institucionais de alto impacto. O acesso directo a todos os documentos associados promove uma cultura de gestão de tempo e recursos pedagógicos sem precedentes na educação pública."
   },
   {
     id: "03",
@@ -140,7 +140,7 @@ export function KnowledgeTreeSection() {
                </div>
 
                {/* Navegação Lateral - Estilo Numerador (Coerente com Hero) */}
-               <div className="flex flex-col items-center justify-center">
+               <div className="flex flex-col items-center justify-end pb-4">
                  <div className="flex flex-col items-center gap-6 pointer-events-auto">
                     {/* Indicador de Capítulo Atual */}
                     <div className="flex flex-col items-center gap-1">
