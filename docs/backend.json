@@ -1,0 +1,562 @@
+{
+  "entities": {
+    "Program": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Program",
+      "type": "object",
+      "description": "Represents the overall 'Saber Mais' educational program, including its branding and general configuration.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Program entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The official name of the program, e.g., 'Programa Saber Mais'."
+        },
+        "description": {
+          "type": "string",
+          "description": "A comprehensive description of the program's purpose and scope."
+        },
+        "baseBackgroundColor": {
+          "type": "string",
+          "description": "The base background color of the program's website, typically a hex code (e.g., '#F2F2F2')."
+        },
+        "themeColorPalette": {
+          "type": "string",
+          "description": "Describes the primary color palette used for the program's branding and UI (e.g., 'Black and White Only')."
+        },
+        "numberOfTeachersTrained": {
+          "type": "number",
+          "description": "The total number of teachers that have been trained through the program."
+        },
+        "dateCreated": {
+          "type": "string",
+          "description": "Timestamp when the program record was created.",
+          "format": "date-time"
+        },
+        "dateUpdated": {
+          "type": "string",
+          "description": "Timestamp when the program record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "baseBackgroundColor",
+        "themeColorPalette",
+        "numberOfTeachersTrained",
+        "dateCreated"
+      ]
+    },
+    "ProgramPhase": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ProgramPhase",
+      "type": "object",
+      "description": "Defines distinct phases within the 'Saber Mais' program, each with its own content and visual elements.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ProgramPhase entity."
+        },
+        "programId": {
+          "type": "string",
+          "description": "Reference to the Program this phase belongs to. (Relationship: Program 1:N ProgramPhase)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the program phase (e.g., 'Formação Inicial')."
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "A descriptive subtitle for the program phase (e.g., 'Capacitação Docente')."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of what this phase entails."
+        },
+        "sequenceWebpUrl": {
+          "type": "string",
+          "description": "URL to the WebP parallax sequence for this phase's background.",
+          "format": "uri"
+        },
+        "sequenceFrameCount": {
+          "type": "number",
+          "description": "The total number of frames in the WebP parallax sequence."
+        },
+        "orderIndex": {
+          "type": "number",
+          "description": "The display order of this phase within the program."
+        },
+        "primaryCallToActionText": {
+          "type": "string",
+          "description": "Text for the primary call-to-action button for this phase (e.g., 'Aceder à Plataforma')."
+        },
+        "primaryCallToActionTargetUrl": {
+          "type": "string",
+          "description": "The URL target for the primary call-to-action button.",
+          "format": "uri"
+        },
+        "secondaryCallToActionText": {
+          "type": "string",
+          "description": "Text for the secondary call-to-action button for this phase (e.g., 'Conhecer o Programa')."
+        },
+        "secondaryCallToActionTargetUrl": {
+          "type": "string",
+          "description": "The URL target for the secondary call-to-action button.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "programId",
+        "name",
+        "subtitle",
+        "description",
+        "sequenceWebpUrl",
+        "sequenceFrameCount",
+        "orderIndex",
+        "primaryCallToActionText",
+        "primaryCallToActionTargetUrl",
+        "secondaryCallToActionText",
+        "secondaryCallToActionTargetUrl"
+      ]
+    },
+    "Role": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Role",
+      "type": "object",
+      "description": "Defines the different user roles within the platform, controlling access and permissions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Role entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the role (e.g., 'Formando', 'Formador', 'Administrador')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the role's responsibilities and privileges."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Stores non-authentication related information about a user of the platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity, typically provided by an external authentication system."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "roleId": {
+          "type": "string",
+          "description": "Reference to the Role assigned to this user. (Relationship: Role 1:N UserProfile)"
+        },
+        "profileImageUrl": {
+          "type": "string",
+          "description": "URL to the user's profile picture.",
+          "format": "uri"
+        },
+        "lastLoginDate": {
+          "type": "string",
+          "description": "Timestamp of the user's last login.",
+          "format": "date-time"
+        },
+        "dateCreated": {
+          "type": "string",
+          "description": "Timestamp when the user's profile was created.",
+          "format": "date-time"
+        },
+        "dateUpdated": {
+          "type": "string",
+          "description": "Timestamp when the user's profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "roleId",
+        "dateCreated"
+      ]
+    },
+    "Activity": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Activity",
+      "type": "object",
+      "description": "Manages details for scheduled activities such as trainings, workshops, and events.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Activity entity."
+        },
+        "programId": {
+          "type": "string",
+          "description": "Reference to the Program this activity is part of. (Relationship: Program 1:N Activity)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name or title of the activity."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the activity."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of activity (e.g., 'Formação', 'Workshop', 'Evento')."
+        },
+        "startDateTime": {
+          "type": "string",
+          "description": "The start date and time of the activity.",
+          "format": "date-time"
+        },
+        "endDateTime": {
+          "type": "string",
+          "description": "The end date and time of the activity.",
+          "format": "date-time"
+        },
+        "location": {
+          "type": "string",
+          "description": "The physical or virtual location where the activity will take place."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the activity (e.g., 'Scheduled', 'Active', 'Completed', 'Canceled')."
+        },
+        "maxParticipants": {
+          "type": "number",
+          "description": "The maximum number of participants allowed for the activity."
+        },
+        "instructorIds": {
+          "type": "array",
+          "description": "References to UserProfile entities who are instructors for this activity. (Relationship: UserProfile N:N Activity)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "participantIds": {
+          "type": "array",
+          "description": "References to UserProfile entities who are registered participants for this activity. (Relationship: UserProfile N:N Activity)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "programId",
+        "name",
+        "description",
+        "type",
+        "startDateTime",
+        "location",
+        "status"
+      ]
+    },
+    "Document": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Document",
+      "type": "object",
+      "description": "Stores information about pedagogical documents available on the platform, with controlled access.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Document entity."
+        },
+        "programId": {
+          "type": "string",
+          "description": "Reference to the Program this document belongs to. (Relationship: Program 1:N Document)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the document (e.g., 'Manual de Formação Pedagógica')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the document's content."
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "The URL where the document file is stored.",
+          "format": "uri"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of document (e.g., 'Manual', 'Apresentação', 'Recurso', 'Certificado')."
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "The date and time when the document was uploaded.",
+          "format": "date-time"
+        },
+        "uploaderId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who uploaded the document. (Relationship: UserProfile 1:N Document)"
+        },
+        "minimumAccessRoleId": {
+          "type": "string",
+          "description": "Reference to the minimum Role required to access this document. (Relationship: Role 1:N Document)"
+        },
+        "tags": {
+          "type": "array",
+          "description": "An array of keywords or tags associated with the document for easier search and categorization.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "programId",
+        "title",
+        "description",
+        "fileUrl",
+        "type",
+        "uploadDate",
+        "uploaderId",
+        "minimumAccessRoleId"
+      ]
+    },
+    "PortfolioItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PortfolioItem",
+      "type": "object",
+      "description": "Represents an item submitted by a user as part of their pedagogical portfolio, such as assignments or learning evidence.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PortfolioItem entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the portfolio item (e.g., 'Evidência Prática: Plano de Aula')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the portfolio item and its purpose."
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "The URL where the portfolio item file is stored.",
+          "format": "uri"
+        },
+        "submissionDate": {
+          "type": "string",
+          "description": "The date and time when the portfolio item was submitted.",
+          "format": "date-time"
+        },
+        "submittedById": {
+          "type": "string",
+          "description": "Reference to the UserProfile (formando) who submitted this portfolio item. (Relationship: UserProfile 1:N PortfolioItem)"
+        },
+        "programPhaseId": {
+          "type": "string",
+          "description": "Reference to the ProgramPhase this portfolio item is associated with (e.g., 'Avaliação e Portfólio'). (Relationship: ProgramPhase 1:N PortfolioItem)"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the portfolio item (e.g., 'Submitted', 'Under Review', 'Approved', 'Rejected')."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "fileUrl",
+        "submissionDate",
+        "submittedById",
+        "programPhaseId"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/program/{programId}",
+        "definition": {
+          "entityName": "Program",
+          "schema": {
+            "$ref": "#/backend/entities/Program"
+          },
+          "description": "Stores the global configuration and branding for the 'Saber Mais' program. This is expected to be a singleton collection (e.g., '/program/saberMais'). Publicly readable. Admin write access required. No authorization dependencies for public read."
+        }
+      },
+      {
+        "path": "/program/{programId}/programPhases/{programPhaseId}",
+        "definition": {
+          "entityName": "ProgramPhase",
+          "schema": {
+            "$ref": "#/backend/entities/ProgramPhase"
+          },
+          "description": "Defines distinct phases within the 'Saber Mais' program. Inherits programId from the parent path for data linkage. Publicly readable. Admin write access required. No authorization dependencies for public read.",
+          "params": [
+            {
+              "name": "programId",
+              "description": "The ID of the parent Program entity (e.g., 'saberMais')."
+            },
+            {
+              "name": "programPhaseId",
+              "description": "The unique ID for the ProgramPhase entity."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles/{roleId}",
+        "definition": {
+          "entityName": "Role",
+          "schema": {
+            "$ref": "#/backend/entities/Role"
+          },
+          "description": "Stores static definitions of user roles within the platform. Publicly readable for display purposes. Admin write access required. No authorization dependencies."
+        }
+      },
+      {
+        "path": "/roles_administrador/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Dedicated collection for administrative role assignment. Existence of a document at this path signifies that 'userId' has the 'Administrador' role. Used for robust DBAC without custom claims. Admin (and possibly a Cloud Function) manages write access.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user assigned the 'Administrador' role."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_formador/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Dedicated collection for 'Formador' role assignment. Existence of a document at this path signifies that 'userId' has the 'Formador' role. Used for robust DBAC. Admin (and possibly a Cloud Function) manages write access.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user assigned the 'Formador' role."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_formando/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Dedicated collection for 'Formando' role assignment. Existence of a document at this path signifies that 'userId' has the 'Formando' role. Used for robust DBAC. Admin (and possibly a Cloud Function) manages write access.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user assigned the 'Formando' role."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/userProfiles/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores non-authentication related user information. Access is restricted to the owner ('userId' matches 'request.auth.uid') or administrators. Includes the 'roleId' field, primarily for data integrity and display. No authorization dependencies beyond direct ownership and global admin check.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user whose profile is stored."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/activities/{activityId}",
+        "definition": {
+          "entityName": "Activity",
+          "schema": {
+            "$ref": "#/backend/entities/Activity"
+          },
+          "description": "Manages details for scheduled activities. Documents include denormalized 'participantUids: {uid: true}' and 'instructorUids: {uid: true}' maps for authorization independence and QAP support. Public read for basic activity metadata; authenticated read for participants/instructors; admin or instructor write access. No authorization dependencies beyond direct membership checks.",
+          "params": [
+            {
+              "name": "activityId",
+              "description": "The unique ID for the Activity entity."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/documents/{documentId}",
+        "definition": {
+          "entityName": "Document",
+          "schema": {
+            "$ref": "#/backend/entities/Document"
+          },
+          "description": "Stores information about pedagogical documents. Includes 'uploaderId' for ownership and an 'access: {roleName: true}' map for role-based read authorization. The 'access' map is derived from 'minimumAccessRoleId' (e.g., by a Cloud Function) to support QAPs and avoid get() calls for role hierarchy checks. Admin or uploader write access. No authorization dependencies beyond direct ownership and role-based access via the 'access' map.",
+          "params": [
+            {
+              "name": "documentId",
+              "description": "The unique ID for the Document entity."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/portfolioItems/{portfolioItemId}",
+        "definition": {
+          "entityName": "PortfolioItem",
+          "schema": {
+            "$ref": "#/backend/entities/PortfolioItem"
+          },
+          "description": "Represents items submitted by users as part of their pedagogical portfolio. Includes 'submittedById' for owner-based authorization and 'reviewerUids: {uid: true}' map for review access by instructors/admins. This denormalization ensures authorization independence and QAP support for both submitters and reviewers. No authorization dependencies beyond direct ownership and membership checks.",
+          "params": [
+            {
+              "name": "portfolioItemId",
+              "description": "The unique ID for the PortfolioItem entity."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed with a strong emphasis on security, scalability, and debuggability, adhering strictly to the core design principles and strategy mandates. The approach prioritizes Authorization Independence by minimizing cross-document get() calls in security rules, leveraging structural segregation, and employing denormalization where necessary. Roles are managed through the DBAC (Database Access Control) 'existence over content' pattern for robust role-based access without custom claims.\n\nAuthorization Independence & Denormalization:\n\n1.  Program & ProgramPhase: The core Program entity is a singleton, /program/saberMais, holding global configuration. ProgramPhase documents are stored in a subcollection, /program/saberMais/programPhases/{phaseId}. These entities are public read-only, so no complex authorization dependencies exist. The programId is implicitly part of the path for ProgramPhase, ensuring clarity but not requiring denormalization of authorization context as the parent is public.\n\n2.  UserProfile: User-specific data is stored in a path-based ownership model at /userProfiles/{userId}. This ensures request.auth.uid == userId for ownership, making access rules simple and atomic for the user's own profile.\n\n3.  Roles: Role definitions are public and static in /roles/{roleId}. Crucially, active user role assignments are managed via dedicated top-level collections (e.g., /roles_administrador/{uid}, /roles_formador/{uid}, /roles_formando/{uid}). This 'existence over content' strategy allows security rules to check for a user's role using exists() rather than get() on their UserProfile, fully achieving Authorization Independence for role checks.\n\n4.  Activity: Activities are stored in a top-level collection, /activities/{activityId}. To enable collaborative access and avoid get() calls, each Activity document denormalizes relevant user UIDs into membership maps: participantUids: {uid1: true, uid2: true} and instructorUids: {uid1: true, uid2: true}. This allows direct checks like resource.data.participantUids[request.auth.uid] for authorization.\n\n5.  Document: Documents are stored in /documents/{documentId}. To facilitate role-based access for reading without relying on get() for role hierarchy and to support QAPs, each Document includes an access map (e.g., access: { 'formando': true, 'formador': true, 'administrador': true }). This map is derived from minimumAccessRoleId (likely by a Cloud Function on write) and explicitly grants read access to specific roles. For instance, if minimumAccessRoleId is 'formador', the access map would be { 'formador': true, 'administrador': true }. Security rules can then check resource.data.access[userRoleName] where userRoleName is determined by exists() checks on the dedicated role collections.\n\n6.  PortfolioItem: Portfolio items are stored in a top-level collection, /portfolioItems/{portfolioItemId}. To support both owner-specific access and reviewer access while avoiding get() calls, each document includes submittedById (for owner verification) and reviewerUids: {uid1: true, uid2: true} (a membership map for instructors/admins who need to review). This allows for efficient queries for specific users' portfolios or for all reviewable items.\n\nQAP (Queryable Access Patterns) Support:\n\n*   Program, ProgramPhase, Role: Publicly readable collections, inherently supporting QAPs for any user.\n*   UserProfile: Supports list for administrators (using exists(/roles_administrador/$(request.auth.uid))). Individual users can only get their own profile.\n*   Activity: Supports listing activities where the current user is a participant or instructor by querying activities.where('participantUids.' + request.auth.uid, '==', true) or activities.where('instructorUids.' + request.auth.uid, '==', true).\n*   Document: Supports listing documents accessible to a user's role by querying the access map, e.g., documents.where('access.formador', '==', true) for formadores (which includes documents for formandos and formadores).\n*   PortfolioItem: Supports listing items submitted by the current user (portfolioItems.where('submittedById', '==', request.auth.uid)) and listing items needing review by the current user (portfolioItems.where('reviewerUids.' + request.auth.uid, '==', true)).\n\nThis architecture ensures that security rules are straightforward, avoiding complex nested get() operations, and that common data access patterns (reads and lists) are efficiently supported without compromising security."
+  }
+}

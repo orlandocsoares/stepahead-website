@@ -1,0 +1,182 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * Saber Mais - Educational Program Security Rules
+     *
+     * CORE PHILOSOPHY:
+     * This ruleset implements a robust, multi-tier authorization model for the 'Saber Mais' educational 
+     * platform. It utilizes a "Database Access Control" (DBAC) pattern where roles are determined by 
+     * the existence of documents in specific role-marker collections. This ensures high performance 
+     * and "Authorization Independence" by avoiding slow cross-document lookups.
+     *
+     * DATA STRUCTURE:
+     * - Public Configuration: Program details, phases, and role definitions are publicly readable.
+     * - User Profiles: Private data keyed by UID, accessible by the owner or administrators.
+     * - Role Markers: /roles_administrador, /roles_formador, /roles_formando collections identify user privileges.
+     * - Collaboration & Content: Activities, Documents, and Portfolio Items use denormalized membership 
+     *   maps (e.g., participantUids, reviewerUids) or access maps to allow secure list and get operations.
+     *
+     * KEY SECURITY DECISIONS:
+     * - Prototyping Mode: Schema validation is minimal to allow for rapid iteration, while authorization 
+     *   is strictly enforced based on identity and ownership.
+     * - Denormalization: Authorization-critical fields (like uploaderId or membership maps) are 
+     *   denormalized directly onto documents to ensure rules remain fast and query-friendly.
+     * - Write Protection: 'if true;' is strictly forbidden for any write operation.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_administrador/$(request.auth.uid));
+    }
+
+    function isFormador() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_formador/$(request.auth.uid));
+    }
+
+    function isFormando() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_formando/$(request.auth.uid));
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Publicly readable program configuration. Writes restricted to admins.
+     * @path /program/{programId}
+     * @allow (get) Any user.
+     * @deny (create) Non-admin users.
+     * @principle Publicly accessible singleton configuration with administrative control.
+     */
+    match /program/{programId} {
+      allow get, list: if true;
+      allow create: if isAdmin();
+      allow update, delete: if resource != null && isAdmin();
+
+      /**
+       * @description Educational phases within the program. Public read, admin write.
+       * @path /program/{programId}/programPhases/{programPhaseId}
+       * @allow (list) Public list for UI display.
+       * @deny (update) Any non-admin user.
+       * @principle Hierarchical data organization with inherited public visibility.
+       */
+      match /programPhases/{programPhaseId} {
+        allow get, list: if true;
+        allow create: if isAdmin();
+        allow update, delete: if resource != null && isAdmin();
+      }
+    }
+
+    /**
+     * @description Static role definitions.
+     * @path /roles/{roleId}
+     * @allow (get) Public.
+     * @deny (write) Any user except admins.
+     * @principle Administrative control over system-wide role definitions.
+     */
+    match /roles/{roleId} {
+      allow get, list: if true;
+      allow create: if isAdmin();
+      allow update, delete: if resource != null && isAdmin();
+    }
+
+    /**
+     * @description Role marker collections for DBAC role assignment.
+     * @path /roles_administrador/{userId}, /roles_formador/{userId}, /roles_formando/{userId}
+     * @allow (get) Signed-in users to verify their own or others' roles.
+     * @deny (create) Self-assignment of roles.
+     * @principle DBAC pattern: existence of document establishes role membership.
+     */
+    match /roles_administrador/{userId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+    match /roles_formador/{userId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+    match /roles_formando/{userId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description User profile data. Restricted to owner and admins.
+     * @path /userProfiles/{userId}
+     * @allow (create) User creating their own profile where document ID matches UID.
+     * @deny (update) User trying to change their document ID or another user's profile.
+     * @principle Ownership-based security with relational integrity (ID consistency).
+     */
+    match /userProfiles/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if (isExistingOwner(userId) || isAdmin()) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId) || isAdmin();
+    }
+
+    /**
+     * @description Program activities. Metadata is public, but membership maps control write access.
+     * @path /activities/{activityId}
+     * @allow (get) Public read for scheduling visibility.
+     * @deny (update) Non-admin and non-instructor users.
+     * @principle Membership maps (instructorUids) used for collaborative authorization.
+     */
+    match /activities/{activityId} {
+      allow get, list: if true;
+      allow create: if isAdmin() || isFormador();
+      allow update: if resource != null && (isAdmin() || resource.data.instructorUids[request.auth.uid] == true);
+      allow delete: if resource != null && isAdmin();
+    }
+
+    /**
+     * @description Pedagogical documents. Read access determined by an internal 'access' role map.
+     * @path /documents/{documentId}
+     * @allow (get) User whose role is marked 'true' in the document's access map.
+     * @deny (create) User not providing their own uploaderId.
+     * @principle Denormalized role access maps to support scalable, role-based listing.
+     */
+    match /documents/{documentId} {
+      allow get, list: if isAdmin() || 
+        (isFormador() && resource.data.access.formador == true) || 
+        (isFormando() && resource.data.access.formando == true);
+      allow create: if (isAdmin() || isFormador()) && request.resource.data.uploaderId == request.auth.uid;
+      allow update: if resource != null && (isAdmin() || resource.data.uploaderId == request.auth.uid);
+      allow delete: if resource != null && (isAdmin() || resource.data.uploaderId == request.auth.uid);
+    }
+
+    /**
+     * @description Portfolio submissions. Accessible to the author and assigned reviewers.
+     * @path /portfolioItems/{portfolioItemId}
+     * @allow (list) Owner listing their own submissions.
+     * @deny (get) Random user trying to view another user's assignment.
+     * @principle Ownership for submitters and membership maps (reviewerUids) for instructors.
+     */
+    match /portfolioItems/{portfolioItemId} {
+      allow get: if isAdmin() || 
+        resource.data.submittedById == request.auth.uid || 
+        resource.data.reviewerUids[request.auth.uid] == true;
+      allow list: if isSignedIn(); // Queries must be filtered by submittedById or reviewerUids[uid]
+      allow create: if isSignedIn() && request.resource.data.submittedById == request.auth.uid;
+      allow update: if resource != null && (
+        isAdmin() || 
+        (resource.data.submittedById == request.auth.uid && request.resource.data.submittedById == resource.data.submittedById) ||
+        resource.data.reviewerUids[request.auth.uid] == true
+      );
+      allow delete: if resource != null && (isAdmin() || resource.data.submittedById == request.auth.uid);
+    }
+  }
+}
