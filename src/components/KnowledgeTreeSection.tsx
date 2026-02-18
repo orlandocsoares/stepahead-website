@@ -46,10 +46,10 @@ export function KnowledgeTreeSection() {
              <source src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Knowledge%20tree/Arvore%20do%20conhecimento.mp4" type="video/mp4" />
            </video>
 
-           {/* Sobreposição Estilo "Editor de Texto" */}
+           {/* Sobreposição Estilo "Editor de Texto" - Alinhado à Direita */}
            <motion.div 
              style={{ opacity: textOpacity, y: textY }}
-             className="absolute inset-0 flex items-center justify-start px-16 md:px-40 pointer-events-none"
+             className="absolute inset-0 flex items-center justify-end px-16 md:px-40 pointer-events-none"
            >
              <div className="max-w-xl bg-black/60 backdrop-blur-3xl border border-white/10 p-10 md:p-14 text-white shadow-[0_50px_100px_rgba(0,0,0,0.5)] pointer-events-auto">
                <div className="flex items-center gap-3 mb-10 opacity-30">
