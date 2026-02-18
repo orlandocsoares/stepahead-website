@@ -11,31 +11,31 @@ const TREE_CONTENT = [
     id: "01",
     label: "QUEM SOMOS",
     title: "Projectos e\nActividades",
-    text: "O Programa Saber Mais nasceu da necessidade de criar pontes sólidas entre o conhecimento teórico e a prática pedagógica contemporânea. Mais do que um repositório, somos uma plataforma de cooperação viva que pulsa com a energia dos nossos educadores.\n\nRegisto de actividades realizadas, relatórios de execução detalhados, evidências digitais e análise rigorosa dos resultados obtidos em cada etapa do processo pedagógico para garantir a evolução constante e a excelência educativa."
+    text: "O Programa Saber Mais nasceu da necessidade de criar pontes sólidas entre o conhecimento teórico e a prática pedagógica contemporânea. Mais do que um repositório, somos uma plataforma de cooperação viva que pulsa com a energia dos nossos educadores.\n\nRegisto de actividades realizadas, relatórios de execução detalhados, evidências digitais e análise rigorosa dos resultados obtidos em cada etapa do processo pedagógico para garantir a evolução constante e a excelência educativa. Através de módulos interativos e evidências digitais, construímos um futuro onde o conhecimento é acessível, dinâmico e eterno."
   },
   {
     id: "02",
     label: "Agenda",
     title: "Planeamento\nEstratégico",
-    text: "O Planeamento Estratégico é o coração da nossa organização. Através de um calendário centralizado e dinâmico, garantimos que todos os agentes estão em sintonia com os objectivos globais do programa, antecipando desafios e celebrando marcos.\n\nCalendário completo de formações, reuniões, visitas e eventos institucionais. Inclui descrição detalhada e acesso directo a todos os documentos associados para uma gestão eficiente do tempo e dos recursos pedagógicos."
+    text: "O Planeamento Estratégico é o coração da nossa organização. Através de um calendário centralizado e dinâmico, garantimos que todos os agentes estão em sintonia com os objectivos globais do programa, antecipando desafios e celebrando marcos.\n\nCalendário completo de formações, reuniões, visitas e eventos institucionais. Inclui descrição detalhada e acesso directo a todos os documentos associados para uma gestão eficiente do tempo e dos recursos pedagógicos, promovendo uma cultura de planeamento rigorosa."
   },
   {
     id: "03",
     label: "Agentes",
     title: "Agentes\nSaber Mais",
-    text: "A nossa rede estende-se por diversos municípios, unindo educadores sob um propósito comum: a transformação do ensino secundário. Cada agente é uma peça fundamental neste ecossistema de partilha e inovação.\n\nDirectório completo dos agentes envolvidos: Nome, Escola e Município. Acesso a contactos institucionais e histórico detalhado de todas as actividades realizadas, promovendo a transparência, o reconhecimento e a colaboração mútua entre pares."
+    text: "A nossa rede estende-se por diversos municípios, unindo educadores sob um propósito comum: a transformação do ensino secundário. Cada agente é uma peça fundamental neste ecossistema de partilha e inovação.\n\nDirectório completo dos agentes envolvidos: Nome, Escola e Município. Acesso a contactos institucionais e histórico detalhado de todas as actividades realizadas, promovendo a transparência, o reconhecimento e a colaboração mútua entre pares de diferentes regiões."
   },
   {
     id: "04",
     label: "Equipa",
     title: "Equipa de\nCoordenação",
-    text: "A coordenação do Programa Saber Mais é composta por especialistas dedicados a remover barreiras e potenciar o talento docente. O nosso suporte é técnico na execução, mas profundamente humano na intenção.\n\nEstrutura de apoio ao projecto: Coordenação estratégica, técnicos de suporte e o corpo de formadores dedicados à excelência educativa e ao acompanhamento próximo em todas as fases da implementação nas escolas."
+    text: "A coordenação do Programa Saber Mais é composta por especialistas dedicados a remover barreiras e potenciar o talento docente. O nosso suporte é técnico na execução, mas profundamente humano na intenção.\n\nEstrutura de apoio ao projecto: Coordenação estratégica, técnicos de suporte e o corpo de formadores dedicados à excelência educativa e ao acompanhamento próximo em todas as fases da implementação nas escolas, garantindo que ninguém fica para trás."
   },
   {
     id: "05",
     label: "Sobre",
     title: "Missão e\nParcerias",
-    text: "A nossa missão é clara: capacitar hoje para os desafios de amanhã. Através de parcerias estratégicas de alto nível, elevamos os padrões da educação pública, criando um legado de conhecimento eterno e acessível.\n\nMissão do projecto e enquadramento institucional. Conheça os nossos parceiros estratégicos, o enquadramento legal e os canais oficiais de contacto para suporte especializado e esclarecimento de dúvidas estruturais."
+    text: "A nossa missão é clara: capacitar hoje para os desafios de amanhã. Através de parcerias estratégicas de alto nível, elevamos os padrões da educação pública, criando um legado de conhecimento eterno e acessível.\n\nMissão do projecto e enquadramento institucional. Conheça os nossos parceiros estratégicos, o enquadramento legal e os canais oficiais de contacto para suporte especializado e esclarecimento de dúvidas estruturais sobre a visão a longo prazo do programa."
   }
 ];
 
@@ -142,13 +142,13 @@ export function KnowledgeTreeSection() {
                    <div className="flex gap-4">
                      <button 
                        onClick={prevChapter}
-                       className="p-3 border border-white/5 hover:border-white/20 text-white/20 hover:text-white transition-all rounded-full group bg-white/[0.02]"
+                       className="p-3 border border-white/5 hover:border-white/20 text-white/20 hover:text-white transition-all rounded-full group bg-white/[0.02] shadow-[0_0_15px_rgba(255,255,255,0.05)]"
                      >
                        <ChevronUp size={14} strokeWidth={1.5} className="group-hover:-translate-y-0.5 transition-transform" />
                      </button>
                      <button 
                        onClick={nextChapter}
-                       className="p-3 border border-white/5 hover:border-white/20 text-white/20 hover:text-white transition-all rounded-full group bg-white/[0.02]"
+                       className="p-3 border border-white/5 hover:border-white/20 text-white/20 hover:text-white transition-all rounded-full group bg-white/[0.02] shadow-[0_0_15px_rgba(255,255,255,0.05)]"
                      >
                        <ChevronDown size={14} strokeWidth={1.5} className="group-hover:translate-y-0.5 transition-transform" />
                      </button>
@@ -156,33 +156,47 @@ export function KnowledgeTreeSection() {
                  </div>
                </div>
 
-               {/* Navegação Lateral - Agora à Direita com Botões Integrados */}
-               <div className="flex flex-col items-center gap-4 pt-6">
+               {/* Navegação Lateral - Elevada com Profundidade (Glassmorphism e Sombras) */}
+               <div className="relative flex flex-col items-center gap-4 pt-8 pb-8 px-2 bg-white/[0.02] backdrop-blur-2xl border border-white/5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-700">
                  <button 
                    onClick={prevChapter}
-                   className="text-white/20 hover:text-white transition-colors mb-2"
+                   className="text-white/20 hover:text-white transition-all duration-500 hover:scale-110 mb-2"
                  >
                    <ChevronUp size={16} strokeWidth={1} />
                  </button>
 
-                 <div className="flex flex-col items-center gap-6">
+                 <div className="flex flex-col items-center gap-8">
                   {TREE_CONTENT.map((item, idx) => (
                     <button
                       key={item.id}
                       onClick={() => setActiveTextIndex(idx)}
-                      className="group flex flex-col items-center gap-3"
+                      className="group relative flex flex-col items-center gap-4"
                     >
-                      <span className={`text-[9px] font-black tabular-nums transition-all duration-700 ${activeTextIndex === idx ? 'text-white scale-110' : 'text-white/20'}`}>
+                      {/* Efeito de brilho de fundo para o item activo */}
+                      <AnimatePresence>
+                        {activeTextIndex === idx && (
+                          <motion.div
+                            layoutId="nav-active-bg"
+                            className="absolute -inset-2 bg-white/[0.05] blur-xl rounded-full z-0"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                          />
+                        )}
+                      </AnimatePresence>
+
+                      <span className={`relative z-10 text-[10px] font-black tabular-nums transition-all duration-1000 ${activeTextIndex === idx ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'text-white/20 group-hover:text-white/40'}`}>
                         {item.id}
                       </span>
-                      <div className={`w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-10 bg-white' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
+                      
+                      <div className={`relative z-10 w-[1.5px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-12 bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)]' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
                     </button>
                   ))}
                  </div>
 
                  <button 
                    onClick={nextChapter}
-                   className="text-white/20 hover:text-white transition-colors mt-2"
+                   className="text-white/20 hover:text-white transition-all duration-500 hover:scale-110 mt-2"
                  >
                    <ChevronDown size={16} strokeWidth={1} />
                  </button>
