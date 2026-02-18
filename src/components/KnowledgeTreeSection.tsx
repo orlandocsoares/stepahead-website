@@ -51,8 +51,9 @@ export function KnowledgeTreeSection() {
   const opacity = useTransform(smoothProgress, [0, 0.15], [0, 1]);
   const filter = useTransform(smoothProgress, [0, 0.2], ["blur(32px)", "blur(0px)"]);
 
-  const contentOpacity = useTransform(smoothProgress, [0.25, 0.35, 0.9, 1], [0, 1, 1, 0]);
-  const contentY = useTransform(smoothProgress, [0.25, 0.35], [30, 0]);
+  // O conteúdo agora apenas surge nos últimos 25% do scroll (fase final da animação)
+  const contentOpacity = useTransform(smoothProgress, [0.75, 0.85, 0.98, 1], [0, 1, 1, 0]);
+  const contentY = useTransform(smoothProgress, [0.75, 0.85], [30, 0]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -74,8 +75,9 @@ export function KnowledgeTreeSection() {
 
   useEffect(() => {
     const unsubscribe = smoothProgress.on("change", (v) => {
-      if (v > 0.3 && v < 0.9) {
-        const sectionProgress = (v - 0.3) / 0.6;
+      // Ajuste do intervalo de troca de capítulos para a fase final onde o conteúdo é visível
+      if (v > 0.8 && v < 0.98) {
+        const sectionProgress = (v - 0.8) / 0.18;
         const newIndex = Math.min(Math.floor(sectionProgress * TREE_CONTENT.length), TREE_CONTENT.length - 1);
         setActiveTextIndex(newIndex);
       }
