@@ -91,8 +91,8 @@ export function KnowledgeTreeSection() {
   return (
     <section ref={containerRef} className="relative h-[800vh] -mt-[100vh] z-0 pointer-events-none">
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center pointer-events-auto">
-        <motion.div style={{ opacity, filter }} className="relative w-full h-full bg-sky-900">
-           <video ref={videoRef} muted playsInline className="w-full h-full object-cover opacity-60" preload="auto">
+        <motion.div style={{ opacity, filter }} className="relative w-full h-full bg-[#000814]">
+           <video ref={videoRef} muted playsInline className="w-full h-full object-cover opacity-35" preload="auto">
              <source src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Knowledge%20tree/Arvore%20do%20conhecimento.mp4" type="video/mp4" />
            </video>
 
