@@ -1,18 +1,23 @@
 import { Navbar } from "@/components/Navbar";
 import { HeroSection } from "@/components/HeroSection";
 import { KnowledgeTreeSection } from "@/components/KnowledgeTreeSection";
-import { ActivityAgenda } from "@/components/ActivityAgenda";
-import { DocumentRepository } from "@/components/DocumentRepository";
+import { AgendaSection } from "@/components/AgendaSection";
 import { Footer } from "@/components/Footer";
+import { Bubbles } from "@/components/Bubbles"; 
 
 export default function Home() {
   return (
-    <main className="min-h-screen relative bg-black">
-      <Navbar />
-      <HeroSection />
-      <KnowledgeTreeSection />
-      <ActivityAgenda />
-      <DocumentRepository />
+    <main className="relative min-h-screen bg-white selection:bg-black selection:text-white">
+      {/* 1. Componentes Fixos e Globais */}
+      <Bubbles /> {/* Animação que aparece quando paras de mexer o rato */}
+      <Navbar />  {/* Menu fixo no topo */}
+
+      {/* 2. Fluxo da Página */}
+      <HeroSection />          {/* Galáxia e Introdução */}
+      <KnowledgeTreeSection /> {/* Vídeo da Árvore com Scroll */}
+      <AgendaSection />        {/* Horários do Supabase */}
+      
+      {/* 3. Rodapé */}
       <Footer />
     </main>
   );
