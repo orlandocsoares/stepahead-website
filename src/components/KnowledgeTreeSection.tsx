@@ -139,28 +139,28 @@ export function KnowledgeTreeSection() {
                  </div>
                </div>
 
-               {/* Navegação Lateral - Elevada com Profundidade (Glassmorphism e Sombras) */}
-               <div className="relative flex flex-col items-center gap-4 pt-8 pb-8 px-2 bg-white/[0.02] backdrop-blur-2xl border border-white/5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-700">
+               {/* Navegação Lateral - Refinada com Profundidade Suave */}
+               <div className="relative flex flex-col items-center gap-6 py-10 px-3 bg-white/[0.01] backdrop-blur-3xl border border-white/10 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.2)] transition-all duration-1000">
                  <button 
                    onClick={prevChapter}
                    className="text-white/20 hover:text-white transition-all duration-500 hover:scale-110 mb-2"
                  >
-                   <ChevronUp size={16} strokeWidth={1} />
+                   <ChevronUp size={14} strokeWidth={1} />
                  </button>
 
-                 <div className="flex flex-col items-center gap-8">
+                 <div className="flex flex-col items-center gap-10">
                   {TREE_CONTENT.map((item, idx) => (
                     <button
                       key={item.id}
                       onClick={() => setActiveTextIndex(idx)}
-                      className="group relative flex flex-col items-center gap-4"
+                      className="group relative flex flex-col items-center gap-5"
                     >
-                      {/* Efeito de brilho de fundo para o item activo */}
+                      {/* Efeito de destaque de fundo para o item activo - Mais suave */}
                       <AnimatePresence>
                         {activeTextIndex === idx && (
                           <motion.div
                             layoutId="nav-active-bg"
-                            className="absolute -inset-2 bg-white/[0.05] blur-xl rounded-full z-0"
+                            className="absolute -inset-3 bg-white/[0.03] blur-lg rounded-full z-0"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
@@ -168,11 +168,11 @@ export function KnowledgeTreeSection() {
                         )}
                       </AnimatePresence>
 
-                      <span className={`relative z-10 text-[10px] font-black tabular-nums transition-all duration-1000 ${activeTextIndex === idx ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'text-white/20 group-hover:text-white/40'}`}>
+                      <span className={`relative z-10 text-[12px] font-black tabular-nums transition-all duration-1000 ${activeTextIndex === idx ? 'text-white scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]' : 'text-white/20 group-hover:text-white/40'}`}>
                         {item.id}
                       </span>
                       
-                      <div className={`relative z-10 w-[1.5px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-12 bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)]' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
+                      <div className={`relative z-10 w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-10 bg-white shadow-[0_0_12px_rgba(255,255,255,0.6)]' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
                     </button>
                   ))}
                  </div>
@@ -181,7 +181,7 @@ export function KnowledgeTreeSection() {
                    onClick={nextChapter}
                    className="text-white/20 hover:text-white transition-all duration-500 hover:scale-110 mt-2"
                  >
-                   <ChevronDown size={16} strokeWidth={1} />
+                   <ChevronDown size={14} strokeWidth={1} />
                  </button>
                </div>
 
