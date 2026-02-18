@@ -11,31 +11,31 @@ const TREE_CONTENT = [
     id: "01",
     label: "QUEM SOMOS",
     title: "Projectos e\nActividades",
-    text: "O Programa Saber Mais nasceu da necessidade de criar pontes sólidas entre o conhecimento teórico e a prática pedagógica contemporânea. Mais do que um repositório, somos uma plataforma de cooperação viva que pulsa com a energia dos nossos educadores.\n\nRegisto de actividades realizadas, relatórios de execução detalhados, evidências digitais e análise rigorosa dos resultados obtidos em cada etapa do processo pedagógico para garantir a evolução constante e a excelência educativa. Através de módulos interativos e evidências digitais, construímos um futuro onde o conhecimento é acessível, dinâmico e eterno."
+    text: "O Programa Saber Mais nasceu da necessidade de criar pontes sólidas entre o conhecimento teórico e a prática pedagógica contemporânea.\n\nMais do que um simples repositório, somos uma plataforma de cooperação viva que pulsa com a energia e dedicação dos nossos educadores em todo o território nacional.\n\nAtravés de um registo meticuloso de actividades realizadas, relatórios de execução detalhados e evidências digitais, garantimos uma análise rigorosa dos resultados. Esta abordagem permite uma evolução constante e a manutenção da excelência educativa que nos define."
   },
   {
     id: "02",
     label: "Agenda",
     title: "Planeamento\nEstratégico",
-    text: "O Planeamento Estratégico é o coração da nossa organização. Através de um calendário centralizado e dinâmico, garantimos que todos os agentes estão em sintonia com os objectivos globais do programa, antecipando desafios e celebrando marcos.\n\nCalendário completo de formações, reuniões, visitas e eventos institucionais. Inclui descrição detalhada e acesso directo a todos os documentos associados para uma gestão eficiente do tempo e dos recursos pedagógicos, promovendo uma cultura de planeamento rigorosa."
+    text: "O Planeamento Estratégico é o coração operacional da nossa organização. Através de um calendário centralizado e dinâmico, garantimos que todos os agentes estão em total sintonia com os objectivos globais do programa.\n\nEste ecossistema permite-nos antecipar desafios e celebrar marcos fundamentais em tempo real.\n\nInclui um calendário completo de formações, reuniões, visitas e eventos institucionais de alto impacto. O acesso directo a todos os documentos associados promove uma cultura de gestão de tempo e recursos pedagógicos sem precedentes na educação pública."
   },
   {
     id: "03",
     label: "Agentes",
     title: "Agentes\nSaber Mais",
-    text: "A nossa rede estende-se por diversos municípios, unindo educadores sob um propósito comum: a transformação do ensino secundário. Cada agente é uma peça fundamental neste ecossistema de partilha e inovação.\n\nDirectório completo dos agentes envolvidos: Nome, Escola e Município. Acesso a contactos institucionais e histórico detalhado de todas as actividades realizadas, promovendo a transparência, o reconhecimento e a colaboração mútua entre pares de diferentes regiões."
+    text: "A nossa rede estende-se por diversos municípios, unindo educadores sob um propósito comum e inabalável: a transformação profunda do ensino secundário em Portugal.\n\nCada agente é uma peça fundamental e insubstituível neste ecossistema de partilha, inovação e crescimento mútuo.\n\nO nosso directório oferece uma visão transparente de quem faz acontecer: Nome, Escola e Município. Facilitamos o acesso a contactos institucionais e ao histórico detalhado de intervenções, promovendo o reconhecimento do mérito e a colaboração activa entre pares de diferentes regiões."
   },
   {
     id: "04",
     label: "Equipa",
     title: "Equipa de\nCoordenação",
-    text: "A coordenação do Programa Saber Mais é composta por especialistas dedicados a remover barreiras e potenciar o talento docente. O nosso suporte é técnico na execução, mas profundamente humano na intenção.\n\nEstrutura de apoio ao projecto: Coordenação estratégica, técnicos de suporte e o corpo de formadores dedicados à excelência educativa e ao acompanhamento próximo em todas as fases da implementação nas escolas, garantindo que ninguém fica para trás."
+    text: "A coordenação do Programa Saber Mais é composta por um corpo de especialistas dedicados a remover barreiras burocráticas e potenciar o talento docente em todas as suas vertentes.\n\nO nosso suporte é técnico na sua execução rigorosa, mas profundamente humano na sua intenção de acompanhar cada professor.\n\nEsta estrutura de apoio estratégica garante o acompanhamento próximo em todas as fases da implementação nas escolas. Desde os técnicos de suporte ao corpo de formadores, trabalhamos diariamente para que a excelência educativa seja uma realidade tangível e inclusiva para todos."
   },
   {
     id: "05",
     label: "Sobre",
     title: "Missão e\nParcerias",
-    text: "A nossa missão é clara: capacitar hoje para os desafios de amanhã. Através de parcerias estratégicas de alto nível, elevamos os padrões da educação pública, criando um legado de conhecimento eterno e acessível.\n\nMissão do projecto e enquadramento institucional. Conheça os nossos parceiros estratégicos, o enquadramento legal e os canais oficiais de contacto para suporte especializado e esclarecimento de dúvidas estruturais sobre a visão a longo prazo do programa."
+    text: "A nossa missão é clara e ambiciosa: capacitar os educadores de hoje para os desafios imprevisíveis de amanhã.\n\nAtravés de parcerias estratégicas de alto nível com instituições de referência, elevamos os padrões da educação pública a um novo patamar de qualidade global.\n\nConheça o nosso enquadramento institucional e legal, bem como os parceiros que tornam este legado de conhecimento eterno possível. Oferecemos canais oficiais de contacto para suporte especializado, garantindo a sustentabilidade da nossa visão a longo prazo."
   }
 ];
 
@@ -98,12 +98,12 @@ export function KnowledgeTreeSection() {
 
            <motion.div 
              style={{ opacity: contentOpacity }}
-             className="absolute inset-0 flex items-start justify-end px-16 md:px-40 pt-32 pointer-events-none"
+             className="absolute inset-0 flex items-stretch justify-end px-16 md:px-40 pt-32 pb-20 pointer-events-none"
            >
-             <div className="max-w-2xl flex gap-16 pointer-events-auto">
+             <div className="max-w-2xl flex gap-16 pointer-events-auto h-full">
                
                {/* Conteúdo Textual - Alinhado à Direita */}
-               <div className="flex-1 space-y-12 h-full flex flex-col items-end text-right">
+               <div className="flex-1 flex flex-col items-end text-right h-full">
                  <AnimatePresence mode="wait">
                    <motion.div
                      key={activeTextIndex}
@@ -111,13 +111,13 @@ export function KnowledgeTreeSection() {
                      animate={{ opacity: 1, x: 0 }}
                      exit={{ opacity: 0, x: 10 }}
                      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                     className="space-y-8 flex-grow"
+                     className="space-y-10"
                    >
                      <div className="space-y-2">
                        <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40 italic">
                          Capítulo {currentItem.id} — {currentItem.label}
                        </p>
-                       <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter italic leading-[1] text-white whitespace-pre-line">
+                       <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic leading-[1] text-white whitespace-pre-line">
                          {currentItem.title}
                        </h2>
                      </div>
@@ -130,8 +130,8 @@ export function KnowledgeTreeSection() {
                    </motion.div>
                  </AnimatePresence>
 
-                 {/* Controlos Inferiores - Alinhados à Esquerda */}
-                 <div className="flex items-center pt-12 pb-20 justify-start w-full">
+                 {/* Botão Saber Mais - Fixado na base */}
+                 <div className="mt-auto flex items-center justify-start w-full">
                    <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6">
                      <span className="text-[10px] font-black uppercase tracking-[0.6em] text-white/80 group-hover:text-white transition-all">sabermais</span>
                      <div className="h-[1px] w-6 bg-white/20 group-hover:w-12 group-hover:bg-white transition-all duration-700" />
@@ -139,37 +139,38 @@ export function KnowledgeTreeSection() {
                  </div>
                </div>
 
-               {/* Navegação Lateral - Limpa e Fluida */}
-               <div className="relative flex flex-col items-center gap-6 py-10 px-3 transition-all duration-1000">
-                 <button 
-                   onClick={prevChapter}
-                   className="text-white/20 hover:text-white transition-all duration-500 hover:scale-110 mb-2"
-                 >
-                   <ChevronUp size={14} strokeWidth={1} />
-                 </button>
+               {/* Navegação Lateral - Estilo Etéreo Refinado */}
+               <div className="flex flex-col items-center justify-center">
+                 <div className="flex flex-col items-center gap-8 py-8">
+                  <button 
+                    onClick={prevChapter}
+                    className="text-white/20 hover:text-white transition-all duration-500 mb-2"
+                  >
+                    <ChevronUp size={14} strokeWidth={1.5} />
+                  </button>
 
-                 <div className="flex flex-col items-center gap-10">
-                  {TREE_CONTENT.map((item, idx) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setActiveTextIndex(idx)}
-                      className="group relative flex flex-col items-center gap-5"
-                    >
-                      <span className={`relative z-10 text-[12px] font-black tabular-nums transition-all duration-1000 ${activeTextIndex === idx ? 'text-white scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]' : 'text-white/20 group-hover:text-white/40'}`}>
-                        {item.id}
-                      </span>
-                      
-                      <div className={`relative z-10 w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-10 bg-white shadow-[0_0_12px_rgba(255,255,255,0.6)]' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
-                    </button>
-                  ))}
+                  <div className="flex flex-col items-center gap-8">
+                    {TREE_CONTENT.map((item, idx) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveTextIndex(idx)}
+                        className="group flex flex-col items-center gap-4"
+                      >
+                        <span className={`text-[12px] font-black tabular-nums transition-all duration-700 ${activeTextIndex === idx ? 'text-white scale-125' : 'text-white/20 group-hover:text-white/40'}`}>
+                          {item.id}
+                        </span>
+                        <div className={`w-[1px] transition-all duration-700 ${activeTextIndex === idx ? 'h-8 bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.4)]' : 'h-3 bg-white/5 group-hover:bg-white/20'}`} />
+                      </button>
+                    ))}
+                  </div>
+
+                  <button 
+                    onClick={nextChapter}
+                    className="text-white/20 hover:text-white transition-all duration-500 mt-2"
+                  >
+                    <ChevronDown size={14} strokeWidth={1.5} />
+                  </button>
                  </div>
-
-                 <button 
-                   onClick={nextChapter}
-                   className="text-white/20 hover:text-white transition-all duration-500 hover:scale-110 mt-2"
-                 >
-                   <ChevronDown size={14} strokeWidth={1} />
-                 </button>
                </div>
 
              </div>
