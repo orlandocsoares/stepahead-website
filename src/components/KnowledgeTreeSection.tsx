@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRef, useEffect, useState } from "react";
@@ -51,7 +52,7 @@ export function KnowledgeTreeSection() {
   const opacity = useTransform(smoothProgress, [0, 0.15], [0, 1]);
   const filter = useTransform(smoothProgress, [0, 0.2], ["blur(32px)", "blur(0px)"]);
 
-  // Surge apenas no final da animação, mantendo-se estático (sem transição em Y)
+  // Surge apenas no final da animação, mantendo-se estático
   const contentOpacity = useTransform(smoothProgress, [0.75, 0.85, 0.98, 1], [0, 1, 1, 0]);
 
   useEffect(() => {
@@ -95,28 +96,28 @@ export function KnowledgeTreeSection() {
 
            <motion.div 
              style={{ opacity: contentOpacity }}
-             className="absolute inset-0 flex items-start justify-end px-16 md:px-40 pt-40 pointer-events-none"
+             className="absolute inset-0 flex items-start justify-end px-16 md:px-40 pt-32 pointer-events-none"
            >
              <div className="max-w-2xl flex gap-16 pointer-events-auto">
                
-               {/* Navegação Lateral - Dimensões ajustadas */}
-               <div className="flex flex-col items-center gap-8 pt-6">
+               {/* Navegação Lateral - Dimensões do Separador /03 */}
+               <div className="flex flex-col items-center gap-6 pt-6">
                  {TREE_CONTENT.map((item, idx) => (
                    <button
                      key={item.id}
                      onClick={() => setActiveTextIndex(idx)}
-                     className="group flex flex-col items-center gap-4"
+                     className="group flex flex-col items-center gap-3"
                    >
-                     <span className={`text-[10px] font-black tabular-nums transition-all duration-700 ${activeTextIndex === idx ? 'text-white scale-110' : 'text-white/20'}`}>
+                     <span className={`text-[9px] font-black tabular-nums transition-all duration-700 ${activeTextIndex === idx ? 'text-white scale-110' : 'text-white/20'}`}>
                        {item.id}
                      </span>
-                     <div className={`w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-12 bg-white' : 'h-6 bg-white/10 group-hover:bg-white/30'}`} />
+                     <div className={`w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-10 bg-white' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
                    </button>
                  ))}
                </div>
 
-               {/* Conteúdo Textual - Alinhado ao Topo e com Fonte Reduzida */}
-               <div className="flex-1 space-y-12">
+               {/* Conteúdo Textual - Alinhado ao Topo */}
+               <div className="flex-1 space-y-12 h-full flex flex-col">
                  <AnimatePresence mode="wait">
                    <motion.div
                      key={activeTextIndex}
@@ -124,45 +125,47 @@ export function KnowledgeTreeSection() {
                      animate={{ opacity: 1, x: 0 }}
                      exit={{ opacity: 0, x: -10 }}
                      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                     className="space-y-8"
+                     className="space-y-8 flex-grow"
                    >
-                     <div className="space-y-3">
-                       <p className="text-[10px] font-black uppercase tracking-[0.6em] text-white/40 italic">
+                     <div className="space-y-2">
+                       <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40 italic">
                          Capítulo {currentItem.id} — {currentItem.label}
                        </p>
-                       <h2 className="text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tighter italic leading-[1] text-white whitespace-pre-line">
+                       <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter italic leading-[1] text-white whitespace-pre-line">
                          {currentItem.title}
                        </h2>
                      </div>
 
                      <div className="space-y-6 max-w-md">
-                        <p className="text-sm md:text-base font-medium italic text-white/60 leading-relaxed text-justify whitespace-pre-line">
+                        <p className="text-[13px] md:text-sm font-medium italic text-white/60 leading-relaxed text-justify whitespace-pre-line">
                           {currentItem.text}
                         </p>
                      </div>
                    </motion.div>
                  </AnimatePresence>
 
-                 <div className="flex items-center gap-8 pt-8">
-                   <div className="flex gap-3">
+                 {/* Controlos Inferiores - Alinhados com a base visual */}
+                 <div className="flex items-center gap-8 pt-12 pb-20">
+                   <div className="flex gap-4">
                      <button 
                        onClick={() => setActiveTextIndex((p) => (p - 1 + TREE_CONTENT.length) % TREE_CONTENT.length)}
-                       className="p-4 border border-white/10 hover:border-white/40 text-white/30 hover:text-white transition-all rounded-full group bg-white/5"
+                       className="p-3 border border-white/5 hover:border-white/20 text-white/20 hover:text-white transition-all rounded-full group bg-white/[0.02]"
                      >
-                       <ChevronUp size={16} className="group-hover:-translate-y-1 transition-transform" />
+                       <ChevronUp size={14} strokeWidth={1.5} className="group-hover:-translate-y-0.5 transition-transform" />
                      </button>
                      <button 
                        onClick={() => setActiveTextIndex((p) => (p + 1) % TREE_CONTENT.length)}
-                       className="p-4 border border-white/10 hover:border-white/40 text-white/30 hover:text-white transition-all rounded-full group bg-white/5"
+                       className="p-3 border border-white/5 hover:border-white/20 text-white/20 hover:text-white transition-all rounded-full group bg-white/[0.02]"
                      >
-                       <ChevronDown size={16} className="group-hover:translate-y-1 transition-transform" />
+                       <ChevronDown size={14} strokeWidth={1.5} className="group-hover:translate-y-0.5 transition-transform" />
                      </button>
                    </div>
-                   <div className="h-[1px] w-20 bg-white/10" />
                    
-                   <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-5">
-                     <span className="text-[11px] font-black uppercase tracking-[0.5em] text-white group-hover:text-white transition-all">sabermais</span>
-                     <div className="h-[1px] w-8 bg-white/40 group-hover:w-14 group-hover:bg-white transition-all duration-700" />
+                   <div className="h-[1px] w-16 bg-white/10" />
+                   
+                   <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6">
+                     <span className="text-[10px] font-black uppercase tracking-[0.6em] text-white/80 group-hover:text-white transition-all">sabermais</span>
+                     <div className="h-[1px] w-6 bg-white/20 group-hover:w-12 group-hover:bg-white transition-all duration-700" />
                    </button>
                  </div>
                </div>
