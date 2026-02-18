@@ -85,6 +85,9 @@ export function KnowledgeTreeSection() {
 
   const currentItem = TREE_CONTENT[activeTextIndex];
 
+  const nextChapter = () => setActiveTextIndex((p) => (p + 1) % TREE_CONTENT.length);
+  const prevChapter = () => setActiveTextIndex((p) => (p - 1 + TREE_CONTENT.length) % TREE_CONTENT.length);
+
   return (
     <section ref={containerRef} className="relative h-[800vh] -mt-[100vh] z-0 pointer-events-none">
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center pointer-events-auto">
@@ -138,13 +141,13 @@ export function KnowledgeTreeSection() {
 
                    <div className="flex gap-4">
                      <button 
-                       onClick={() => setActiveTextIndex((p) => (p - 1 + TREE_CONTENT.length) % TREE_CONTENT.length)}
+                       onClick={prevChapter}
                        className="p-3 border border-white/5 hover:border-white/20 text-white/20 hover:text-white transition-all rounded-full group bg-white/[0.02]"
                      >
                        <ChevronUp size={14} strokeWidth={1.5} className="group-hover:-translate-y-0.5 transition-transform" />
                      </button>
                      <button 
-                       onClick={() => setActiveTextIndex((p) => (p + 1) % TREE_CONTENT.length)}
+                       onClick={nextChapter}
                        className="p-3 border border-white/5 hover:border-white/20 text-white/20 hover:text-white transition-all rounded-full group bg-white/[0.02]"
                      >
                        <ChevronDown size={14} strokeWidth={1.5} className="group-hover:translate-y-0.5 transition-transform" />
@@ -153,20 +156,36 @@ export function KnowledgeTreeSection() {
                  </div>
                </div>
 
-               {/* Navegação Lateral - Agora à Direita */}
-               <div className="flex flex-col items-center gap-6 pt-6">
-                 {TREE_CONTENT.map((item, idx) => (
-                   <button
-                     key={item.id}
-                     onClick={() => setActiveTextIndex(idx)}
-                     className="group flex flex-col items-center gap-3"
-                   >
-                     <span className={`text-[9px] font-black tabular-nums transition-all duration-700 ${activeTextIndex === idx ? 'text-white scale-110' : 'text-white/20'}`}>
-                       {item.id}
-                     </span>
-                     <div className={`w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-10 bg-white' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
-                   </button>
-                 ))}
+               {/* Navegação Lateral - Agora à Direita com Botões Integrados */}
+               <div className="flex flex-col items-center gap-4 pt-6">
+                 <button 
+                   onClick={prevChapter}
+                   className="text-white/20 hover:text-white transition-colors mb-2"
+                 >
+                   <ChevronUp size={16} strokeWidth={1} />
+                 </button>
+
+                 <div className="flex flex-col items-center gap-6">
+                  {TREE_CONTENT.map((item, idx) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTextIndex(idx)}
+                      className="group flex flex-col items-center gap-3"
+                    >
+                      <span className={`text-[9px] font-black tabular-nums transition-all duration-700 ${activeTextIndex === idx ? 'text-white scale-110' : 'text-white/20'}`}>
+                        {item.id}
+                      </span>
+                      <div className={`w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-10 bg-white' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
+                    </button>
+                  ))}
+                 </div>
+
+                 <button 
+                   onClick={nextChapter}
+                   className="text-white/20 hover:text-white transition-colors mt-2"
+                 >
+                   <ChevronDown size={16} strokeWidth={1} />
+                 </button>
                </div>
 
              </div>
