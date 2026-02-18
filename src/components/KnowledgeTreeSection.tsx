@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform, useSpring, easeInOut, AnimatePresence } from "framer-motion";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { DASHBOARD_URL } from "@/lib/program-config";
 
 const TREE_CONTENT = [
   {
@@ -135,6 +136,11 @@ export function KnowledgeTreeSection() {
                      <p className="text-sm md:text-base font-medium italic text-white/50 leading-relaxed text-justify max-w-md">
                        {currentItem.text}
                      </p>
+
+                     <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-4 pt-2">
+                       <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60 group-hover:text-white transition-all">sabermais</span>
+                       <div className="h-[1px] w-6 bg-white/20 group-hover:w-10 group-hover:bg-white transition-all duration-500" />
+                     </button>
                    </motion.div>
                  </AnimatePresence>
 
