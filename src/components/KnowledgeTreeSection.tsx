@@ -51,9 +51,8 @@ export function KnowledgeTreeSection() {
   const opacity = useTransform(smoothProgress, [0, 0.15], [0, 1]);
   const filter = useTransform(smoothProgress, [0, 0.2], ["blur(32px)", "blur(0px)"]);
 
-  // O conteúdo surge nos últimos 25% do scroll (fase final da animação)
+  // Surge apenas no final da animação, mantendo-se estático (sem transição em Y)
   const contentOpacity = useTransform(smoothProgress, [0.75, 0.85, 0.98, 1], [0, 1, 1, 0]);
-  const contentY = useTransform(smoothProgress, [0.75, 0.85], [40, 0]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -95,33 +94,35 @@ export function KnowledgeTreeSection() {
            </video>
 
            <motion.div 
-             style={{ opacity: contentOpacity, y: contentY }}
-             className="absolute inset-0 flex items-center justify-end px-16 md:px-40 pointer-events-none"
+             style={{ opacity: contentOpacity }}
+             className="absolute inset-0 flex items-start justify-end px-16 md:px-40 pt-40 pointer-events-none"
            >
-             <div className="max-w-2xl flex gap-12 pointer-events-auto">
+             <div className="max-w-2xl flex gap-16 pointer-events-auto">
                
-               <div className="flex flex-col items-center gap-6 pt-4">
+               {/* Navegação Lateral - Dimensões ajustadas */}
+               <div className="flex flex-col items-center gap-8 pt-6">
                  {TREE_CONTENT.map((item, idx) => (
                    <button
                      key={item.id}
                      onClick={() => setActiveTextIndex(idx)}
-                     className="group flex flex-col items-center gap-3"
+                     className="group flex flex-col items-center gap-4"
                    >
                      <span className={`text-[10px] font-black tabular-nums transition-all duration-700 ${activeTextIndex === idx ? 'text-white scale-110' : 'text-white/20'}`}>
                        {item.id}
                      </span>
-                     <div className={`w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-10 bg-white' : 'h-4 bg-white/10 group-hover:bg-white/30'}`} />
+                     <div className={`w-[1px] transition-all duration-1000 ${activeTextIndex === idx ? 'h-12 bg-white' : 'h-6 bg-white/10 group-hover:bg-white/30'}`} />
                    </button>
                  ))}
                </div>
 
-               <div className="flex-1 space-y-10 min-h-[500px] flex flex-col justify-center">
+               {/* Conteúdo Textual - Alinhado ao Topo e com Fonte Reduzida */}
+               <div className="flex-1 space-y-12">
                  <AnimatePresence mode="wait">
                    <motion.div
                      key={activeTextIndex}
-                     initial={{ opacity: 0, x: 30 }}
+                     initial={{ opacity: 0, x: 20 }}
                      animate={{ opacity: 1, x: 0 }}
-                     exit={{ opacity: 0, x: -15 }}
+                     exit={{ opacity: 0, x: -10 }}
                      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                      className="space-y-8"
                    >
@@ -129,7 +130,7 @@ export function KnowledgeTreeSection() {
                        <p className="text-[10px] font-black uppercase tracking-[0.6em] text-white/40 italic">
                          Capítulo {currentItem.id} — {currentItem.label}
                        </p>
-                       <h2 className="text-4xl md:text-5xl lg:text-7xl font-black uppercase tracking-tighter italic leading-[0.9] text-white whitespace-pre-line drop-shadow-2xl">
+                       <h2 className="text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tighter italic leading-[1] text-white whitespace-pre-line">
                          {currentItem.title}
                        </h2>
                      </div>
@@ -142,22 +143,22 @@ export function KnowledgeTreeSection() {
                    </motion.div>
                  </AnimatePresence>
 
-                 <div className="flex items-center gap-8 pt-12">
-                   <div className="flex gap-4">
+                 <div className="flex items-center gap-8 pt-8">
+                   <div className="flex gap-3">
                      <button 
                        onClick={() => setActiveTextIndex((p) => (p - 1 + TREE_CONTENT.length) % TREE_CONTENT.length)}
                        className="p-4 border border-white/10 hover:border-white/40 text-white/30 hover:text-white transition-all rounded-full group bg-white/5"
                      >
-                       <ChevronUp size={18} className="group-hover:-translate-y-1 transition-transform" />
+                       <ChevronUp size={16} className="group-hover:-translate-y-1 transition-transform" />
                      </button>
                      <button 
                        onClick={() => setActiveTextIndex((p) => (p + 1) % TREE_CONTENT.length)}
                        className="p-4 border border-white/10 hover:border-white/40 text-white/30 hover:text-white transition-all rounded-full group bg-white/5"
                      >
-                       <ChevronDown size={18} className="group-hover:translate-y-1 transition-transform" />
+                       <ChevronDown size={16} className="group-hover:translate-y-1 transition-transform" />
                      </button>
                    </div>
-                   <div className="h-[1px] w-24 bg-white/10" />
+                   <div className="h-[1px] w-20 bg-white/10" />
                    
                    <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-5">
                      <span className="text-[11px] font-black uppercase tracking-[0.5em] text-white group-hover:text-white transition-all">sabermais</span>
