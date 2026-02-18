@@ -17,7 +17,7 @@ const TREE_CONTENT = [
     id: "02",
     label: "Agenda",
     title: "Planeamento\nEstratégico",
-    text: "O Planeamento Estratégico é o coração operacional da nossa organization. Através de um calendário centralizado e dinâmico, garantimos que todos os agentes estão em total sintonia com os objectivos globais do programa.\n\nEste ecossistema permite-nos antecipar desafios e celebrar marcos fundamentais em tempo real.\n\nInclui um calendário completo de formações, reuniões, visitas e eventos institucionais de alto impacto. O acesso directo a todos os documentos associados promove uma cultura de gestão de tempo e recursos pedagógicos sem precedentes na educação pública."
+    text: "O Planeamento Estratégico é o coração operacional da nossa organização. Através de um calendário centralizado e dinâmico, garantimos que todos os agentes estão em total sintonia com os objectivos globais do programa.\n\nEste ecossistema permite-nos antecipar desafios e celebrar marcos fundamentais em tempo real.\n\nInclui um calendário completo de formações, reuniões, visitas e eventos institucionais de alto impacto. O acesso directo a todos os documentos associados promove uma cultura de gestão de tempo e recursos pedagógicos sem precedentes na educação pública."
   },
   {
     id: "03",
@@ -164,17 +164,17 @@ export function KnowledgeTreeSection() {
                       <span className="text-[9px] font-bold uppercase tracking-widest text-white/10">Total</span>
                     </div>
                     
-                    {/* Controlos de Navegação Minimalistas */}
-                    <div className="flex flex-col gap-2 mt-4">
+                    {/* Controlos de Navegação com Destaque Elegante */}
+                    <div className="mt-4 p-1 bg-white/[0.03] backdrop-blur-md rounded-full border border-white/5 shadow-2xl flex flex-col gap-1">
                       <button 
                         onClick={prevChapter}
-                        className="p-2 text-white/20 hover:text-white transition-all duration-500 rounded-full hover:bg-white/5"
+                        className="p-2 text-white/30 hover:text-white transition-all duration-500 rounded-full hover:bg-white/10"
                       >
                         <ChevronUp size={16} strokeWidth={1.5} />
                       </button>
                       <button 
                         onClick={nextChapter}
-                        className="p-2 text-white/20 hover:text-white transition-all duration-500 rounded-full hover:bg-white/5"
+                        className="p-2 text-white/30 hover:text-white transition-all duration-500 rounded-full hover:bg-white/10"
                       >
                         <ChevronDown size={16} strokeWidth={1.5} />
                       </button>
