@@ -3,14 +3,12 @@
 import { useIdle } from "@/hooks/use-idle";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring } from "framer-motion";
-import { supabase } from "@/lib/supabase";
 
 const BASE_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/iCons/Icons-";
 const TOTAL_ICONS = 26; 
 
 const BUBBLE_TYPES = [
   { type: 'curiosidade', text: "💡 O portal adapta-se ao seu ritmo de exploração.", color: "rgba(255, 255, 255, 0.4)" },
-  { type: 'link', text: "📅 Agenda: Verifique os novos eventos na secção abaixo.", action: "agenda", color: "rgba(59, 130, 246, 0.6)" },
   { type: 'destaque', text: "🔥 Novas atualizações disponíveis.", action: "documents", color: "rgba(239, 68, 68, 0.6)" },
 ];
 
@@ -26,8 +24,7 @@ class Bubble {
 
   constructor(canvasWidth: number, canvasHeight: number, imgs: any) {
     const rand = Math.random();
-    const type = rand < 0.7 ? 'curiosidade' : (rand < 0.9 ? 'link' : 'destaque');
-    this.content = type === 'curiosidade' ? BUBBLE_TYPES[0] : (type === 'link' ? BUBBLE_TYPES[1] : BUBBLE_TYPES[2]);
+    this.content = rand < 0.8 ? BUBBLE_TYPES[0] : BUBBLE_TYPES[1];
     
     const iconId = (Math.floor(Math.random() * TOTAL_ICONS) + 1).toString().padStart(2, "0");
     this.img = imgs[iconId];
@@ -35,15 +32,13 @@ class Bubble {
     this.x = Math.random() * canvasWidth;
     this.y = canvasHeight + 100;
     
-    // SUAVIZAÇÃO: Velocidades iniciais muito mais baixas
     this.vx = (Math.random() - 0.5) * 1.5;
-    this.vy = -(Math.random() * 0.8 + 0.6); // Subida lenta e constante
+    this.vy = -(Math.random() * 0.8 + 0.6); 
     
     this.radius = 2;
     this.maxRadius = Math.random() * 15 + 30;
     this.opacity = 0;
     
-    // MAIS TEMPO: 6 a 10 segundos no ecrã
     this.birth = Date.now();
     this.lifespan = 6000 + Math.random() * 4000;
     this.seed = Math.random() * 1000;
@@ -54,17 +49,14 @@ class Bubble {
 
     const age = Date.now() - this.birth;
     
-    // Auto-destruição suave
     if (age > this.lifespan && !isReturning) {
       this.pop();
       return;
     }
 
-    // MOVIMENTOS SUAVES: Impulsos aleatórios reduzidos
     this.vx += Math.sin(age * 0.002 + this.seed) * 0.05;
     this.vy += Math.cos(age * 0.002 + this.seed) * 0.03;
 
-    // Magnetismo delicado
     const dx = this.x - mouseX; const dy = this.y - mouseY; const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < 300) {
       const force = (300 - dist) / 300; const angle = Math.atan2(dy, dx);
@@ -76,7 +68,6 @@ class Bubble {
         this.vy = -12; 
         this.opacity -= 0.08;
     } else { 
-        // Crescimento e Opacidade mais lentos
         if (this.radius < this.maxRadius) this.radius += 0.25; 
         if (this.opacity < 1) this.opacity += 0.03; 
         
@@ -142,7 +133,6 @@ export function Bubbles() {
       const dy = e.clientY - lastMousePos.current.y;
       const speed = Math.sqrt(dx*dx + dy*dy);
       
-      // Sensibilidade do abanão ligeiramente reduzida para evitar saídas acidentais
       if (speed > 350 && sessionActive && !isReturning) handleExit();
       
       lastMousePos.current = { x: e.clientX, y: e.clientY };
@@ -162,7 +152,6 @@ export function Bubbles() {
     const loop = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // SPAWN MAIS ESPAÇADO: Menos bolhas para manter a calma
       if (!isReturning && Math.random() < 0.08 && bubblesRef.current.length < 25) {
         bubblesRef.current.push(new Bubble(canvas.width, canvas.height, loadedImages));
       }

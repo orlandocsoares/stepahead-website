@@ -1,7 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { HeroSection } from "@/components/HeroSection";
 import { KnowledgeTreeSection } from "@/components/KnowledgeTreeSection";
-import { AgendaSection } from "@/components/AgendaSection";
 import { Footer } from "@/components/Footer";
 import { Bubbles } from "@/components/Bubbles"; 
 
@@ -15,7 +14,6 @@ export default function Home() {
       {/* 2. Fluxo da Página */}
       <HeroSection />          {/* Galáxia e Introdução */}
       <KnowledgeTreeSection /> {/* Vídeo da Árvore com Scroll */}
-      <AgendaSection />        {/* Horários do Supabase */}
       
       {/* 3. Rodapé */}
       <Footer />

@@ -1,14 +1,8 @@
-
 "use client";
 
 import { motion } from "framer-motion";
 
 export function Navbar() {
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
     <nav className="fixed top-0 left-0 w-full z-50 px-16 md:px-40 py-10 pointer-events-none">
       <div className="flex justify-between items-center w-full max-w-[1800px] mx-auto">
@@ -32,15 +26,7 @@ export function Navbar() {
         </motion.div>
 
         <div className="flex gap-12 pointer-events-auto">
-          {["agenda"].map((item) => (
-            <button 
-              key={item} 
-              onClick={() => scrollTo(item)}
-              className="text-[9px] font-bold uppercase tracking-[0.3em] text-black/30 hover:text-black transition-colors"
-            >
-              {item}
-            </button>
-          ))}
+          {/* Links de navegação podem ser adicionados aqui no futuro */}
         </div>
       </div>
     </nav>
