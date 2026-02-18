@@ -8,21 +8,33 @@ import { ChevronUp, ChevronDown } from "lucide-react";
 const TREE_CONTENT = [
   {
     id: "01",
-    label: "Raízes",
-    title: "A Árvore do\nConhecimento",
-    text: "O programa foca-se na consolidação estrutural. Tal como uma árvore, a aprendizagem ramifica-se em múltiplas disciplinas, mantendo-se fiel às raízes da nossa cultura educativa."
+    label: "Actividades",
+    title: "Projectos e\nActividades",
+    text: "Registo de actividades realizadas, relatórios de execução detalhados, evidências digitais e análise rigorosa dos resultados obtidos em cada etapa."
   },
   {
     id: "02",
-    label: "Estrutura",
-    title: "Consolidação\nDigital",
-    text: "Através de módulos interativos e evidências digitais, construímos um futuro onde o conhecimento é acessível, dinâmico e eterno. A estrutura digital garante a perenidade do saber."
+    label: "Agenda",
+    title: "Planeamento\nEstratégico",
+    text: "Formações, reuniões, visitas e eventos. Inclui descrição completa e acesso directo a todos os documentos e recursos pedagógicos associados."
   },
   {
     id: "03",
-    label: "Expansão",
-    title: "Ecossistema\nde Inovação",
-    text: "A expansão do saber não conhece limites. Cada novo módulo é uma folha que capta a luz da inovação, nutrindo todo o ecossistema educativo com novas perspetivas."
+    label: "Agentes",
+    title: "Agentes\nSaber Mais",
+    text: "Directório completo: Nome, Escola e Município. Acesso a contactos institucionais e histórico detalhado de todas as actividades realizadas."
+  },
+  {
+    id: "04",
+    label: "Equipa",
+    title: "Equipa de\nCoordenação",
+    text: "A estrutura de apoio ao projecto: Coordenação estratégica, técnicos de suporte e o corpo de formadores dedicados à excelência educativa."
+  },
+  {
+    id: "05",
+    label: "Sobre",
+    title: "Missão e\nParcerias",
+    text: "Missão do projecto e enquadramento institucional. Conheça os nossos parceiros estratégicos, enquadramento legal e canais oficiais de contacto."
   }
 ];
 
@@ -61,10 +73,22 @@ export function KnowledgeTreeSection() {
     return () => unsubscribe();
   }, [duration, easedProgress]);
 
+  // Sincronizar o índice do texto com o scroll para uma navegação mais imersiva
+  useEffect(() => {
+    const unsubscribe = smoothProgress.on("change", (v) => {
+      if (v > 0.3 && v < 0.9) {
+        const sectionProgress = (v - 0.3) / 0.6; // Normaliza entre 0.3 e 0.9
+        const newIndex = Math.min(Math.floor(sectionProgress * TREE_CONTENT.length), TREE_CONTENT.length - 1);
+        setActiveTextIndex(newIndex);
+      }
+    });
+    return () => unsubscribe();
+  }, [smoothProgress]);
+
   const currentItem = TREE_CONTENT[activeTextIndex];
 
   return (
-    <section ref={containerRef} className="relative h-[400vh] -mt-[100vh] z-0 pointer-events-none">
+    <section ref={containerRef} className="relative h-[500vh] -mt-[100vh] z-0 pointer-events-none">
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center pointer-events-auto">
         <motion.div style={{ opacity, filter }} className="relative w-full h-full bg-black">
            <video ref={videoRef} muted playsInline className="w-full h-full object-cover opacity-60" preload="auto">
