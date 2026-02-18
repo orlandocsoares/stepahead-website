@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRef, useEffect, useState } from "react";
@@ -46,7 +45,7 @@ export function KnowledgeTreeSection() {
   const [activeTextIndex, setActiveTextIndex] = useState(0);
 
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start end", "end end"] });
-  const smoothProgress = useSpring(scrollYProgress, { mass: 0.1, stiffness: 100, damping: 20 });
+  const smoothProgress = useSpring(scrollYProgress, { mass: 0.1, stiffness: 120, damping: 20 });
   
   const easedProgress = useTransform(smoothProgress, [0, 1], [0, 1], { ease: easeInOut });
   const opacity = useTransform(smoothProgress, [0, 0.15], [0, 1]);
@@ -89,7 +88,7 @@ export function KnowledgeTreeSection() {
   const prevChapter = () => setActiveTextIndex((p) => (p - 1 + TREE_CONTENT.length) % TREE_CONTENT.length);
 
   return (
-    <section ref={containerRef} className="relative h-[800vh] -mt-[100vh] z-0 pointer-events-none">
+    <section ref={containerRef} className="relative h-[600vh] -mt-[100vh] z-0 pointer-events-none">
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center pointer-events-auto">
         <motion.div style={{ opacity, filter }} className="relative w-full h-full bg-[#000814]">
            <video ref={videoRef} muted playsInline className="w-full h-full object-cover opacity-35" preload="auto">
@@ -102,7 +101,6 @@ export function KnowledgeTreeSection() {
            >
              <div className="max-w-2xl flex gap-16 pointer-events-auto h-full">
                
-               {/* Conteúdo Textual - Alinhado à Direita */}
                <div className="flex-1 flex flex-col items-end text-right h-full">
                  <AnimatePresence mode="wait">
                    <motion.div
@@ -130,7 +128,6 @@ export function KnowledgeTreeSection() {
                    </motion.div>
                  </AnimatePresence>
 
-                 {/* Botão Saber Mais - Alinhado à esquerda do bloco de texto e fixado no fundo */}
                  <div className="mt-auto self-start pointer-events-auto pb-4">
                    <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6">
                      <span className="text-[10px] font-black uppercase tracking-[0.6em] text-white/80 group-hover:text-white transition-all">sabermais</span>
@@ -139,10 +136,8 @@ export function KnowledgeTreeSection() {
                  </div>
                </div>
 
-               {/* Navegação Lateral - Estilo Numerador (Coerente com Hero) */}
                <div className="flex flex-col items-center justify-end pb-4">
                  <div className="flex flex-col items-center gap-6 pointer-events-auto">
-                    {/* Indicador de Capítulo Atual */}
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">Cap</span>
                       <span className="text-sm font-bold text-white/60 tabular-nums">
@@ -150,7 +145,6 @@ export function KnowledgeTreeSection() {
                       </span>
                     </div>
                     
-                    {/* Barra de Progresso Vertical */}
                     <div className="relative h-32 w-[1px] bg-white/10 overflow-hidden">
                       <motion.div 
                         animate={{ height: `${((activeTextIndex + 1) / TREE_CONTENT.length) * 100}%` }} 
@@ -158,13 +152,11 @@ export function KnowledgeTreeSection() {
                       />
                     </div>
                     
-                    {/* Total de Capítulos */}
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-sm font-bold text-white/20 tabular-nums">0{TREE_CONTENT.length}</span>
                       <span className="text-[9px] font-bold uppercase tracking-widest text-white/10">Total</span>
                     </div>
                     
-                    {/* Controlos de Navegação com Destaque Elegante */}
                     <div className="mt-4 p-1 bg-white/[0.03] backdrop-blur-md rounded-full border border-white/5 shadow-2xl flex flex-col gap-1">
                       <button 
                         onClick={prevChapter}
