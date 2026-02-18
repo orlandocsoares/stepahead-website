@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -15,8 +14,8 @@ export function AgendaSection() {
     offset: ["start end", "end start"]
   });
 
-  // Transformação para o movimento de parallax do conteúdo
-  const yParallax = useTransform(scrollYProgress, [0, 1], [60, -60]);
+  // Transformação para o movimento de parallax do conteúdo (deslizar sobre o vídeo)
+  const yParallax = useTransform(scrollYProgress, [0, 1], [150, -150]);
   const smoothY = useSpring(yParallax, { stiffness: 100, damping: 30 });
 
   useEffect(() => {
@@ -31,7 +30,7 @@ export function AgendaSection() {
     <section 
       ref={sectionRef}
       id="agenda" 
-      className="relative z-20 bg-[#000033] text-white py-12 px-16 md:px-40 border-t border-white/10 overflow-hidden"
+      className="relative z-30 bg-[#000033] text-white py-12 px-16 md:px-40 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.5)]"
     >
       <div className="max-w-[1800px] mx-auto">
         {/* Cabeçalho */}
