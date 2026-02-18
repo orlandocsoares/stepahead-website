@@ -101,7 +101,7 @@ class Bubble {
 }
 
 export function Bubbles() {
-  const isIdle = useIdle(5000);
+  const isIdle = useIdle(10000);
   const [sessionActive, setSessionActive] = useState(false);
   const [isReturning, setIsReturning] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
