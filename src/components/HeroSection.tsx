@@ -40,7 +40,6 @@ export function HeroSection() {
       canvas.height = window.innerHeight * dpr;
       context.scale(dpr, dpr);
       context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = "high";
 
       const currentFrame = Math.floor(frameIndex.get());
       const img = imagesRef.current[currentFrame];
@@ -91,12 +90,11 @@ export function HeroSection() {
   const currentPhase = phases[activePhaseIndex];
 
   return (
-    <div ref={containerRef} className="relative h-[300vh] w-full bg-white">
+    <div ref={containerRef} className="relative h-[250vh] w-full bg-white">
       <div className="sticky top-0 h-screen w-full overflow-hidden text-left">
-        
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full contrast-110 saturate-125 brightness-105" />
         
-        <div className="absolute inset-0 z-20 flex flex-col justify-end px-16 md:px-40 pb-20 md:pb-28 pointer-events-none">
+        <div className="absolute inset-0 z-20 flex flex-col justify-end px-16 md:px-40 pb-24 pointer-events-none">
           <div className="flex justify-between items-end w-full max-w-[1800px] mx-auto">
             
             <div className="max-w-md pointer-events-auto">
@@ -119,19 +117,19 @@ export function HeroSection() {
             </div>
 
             {phases.length > 0 && (
-              <div className="flex flex-col items-center gap-4 pointer-events-auto">
+              <div className="flex flex-col items-center gap-6 pointer-events-auto mb-2">
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-black/20">Fase</span>
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-black/20 italic">Fase</span>
                   <span className="text-sm font-bold text-black/40 tabular-nums">{currentPhase?.phase_index}</span>
                 </div>
                 
-                <div className="relative h-24 w-[2px] bg-black/10 overflow-hidden">
+                <div className="relative h-28 w-[2px] bg-black/10 overflow-hidden">
                   <motion.div animate={{ height: `${((activePhaseIndex + 1) / phases.length) * 100}%` }} className="absolute top-0 w-full bg-black/60 transition-all duration-1000" />
                 </div>
                 
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-sm font-bold text-black/20 tabular-nums">0{phases.length}</span>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-black/10">Total</span>
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-black/10 italic">Total</span>
                 </div>
                 
                 <div className="flex flex-col gap-1 mt-2">

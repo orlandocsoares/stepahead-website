@@ -10,31 +10,31 @@ const TREE_CONTENT = [
     id: "01",
     label: "QUEM SOMOS",
     title: "Projectos e\nActividades",
-    text: "O Programa Saber Mais nasceu da necessidade de criar pontes sólidas entre o conhecimento teórico e a prática pedagógica contemporânea.\n\nMais do que um simples repositório, somos uma plataforma de cooperação viva que pulsa com a energia e dedicação dos nossos educadores em todo o território nacional.\n\nAtravés de um registo meticuloso de actividades realizadas, relatórios de execução detalhados e evidências digitais, garantimos uma análise rigorosa dos resultados. Esta abordagem permite uma evolução constante e a manutenção da excelência educativa que nos define."
+    text: "O Programa Saber Mais nasceu da necessidade de criar pontes sólidas entre o conhecimento teórico e a prática pedagógica contemporânea.\n\nMais do que um simples repositório, somos uma plataforma de cooperação viva que pulsa com a energia e dedicação dos nossos educadores em todo o território nacional."
   },
   {
     id: "02",
     label: "Agenda",
     title: "Planeamento\nEstratégico",
-    text: "O Planeamento Estratégico é o coração operacional da nossa organização. Através de um calendário centralizado e dinâmico, garantimos que todos os agentes estão em total sintonia com os objectivos globais do programa.\n\nEste ecossistema permite-nos antecipar desafios e celebrar marcos fundamentais em tempo real.\n\nInclui um calendário completo de formações, reuniões, visitas e eventos institucionais de alto impacto. O acesso directo a todos os documentos associados promove uma cultura de gestão de tempo e recursos pedagógicos sem precedentes na educação pública."
+    text: "O Planeamento Estratégico é o coração operacional da nossa organização. Através de um calendário centralizado e dinâmico, garantimos que todos os agentes estão em total sintonia com os objectivos globais do programa."
   },
   {
     id: "03",
     label: "Agentes",
     title: "Agentes\nSaber Mais",
-    text: "A nossa rede estende-se por diversos municípios, unindo educadores sob um propósito comum e inabalável: a transformação profunda do ensino secundário em Portugal.\n\nCada agente é uma peça fundamental e insubstituível neste ecossistema de partilha, inovação e crescimento mútuo.\n\nO nosso directório oferece uma visão transparente de quem faz acontecer: Nome, Escola e Município. Facilitamos o acesso a contactos institucionais e ao histórico detalhado de intervenções, promovendo o reconhecimento do mérito e a colaboração activa entre pares de diferentes regiões."
+    text: "A nossa rede estende-se por diversos municípios, unindo educadores sob um propósito comum e inabalável: a transformação profunda do ensino secundário em Portugal."
   },
   {
     id: "04",
     label: "Equipa",
     title: "Equipa de\nCoordenação",
-    text: "A coordenação do Programa Saber Mais é composta por um corpo de especialistas dedicados a remover barreiras burocráticas e potenciar o talento docente em todas as suas vertentes.\n\nO nosso suporte é técnico na sua execução rigorosa, mas profundamente humano na sua intenção de acompanhar cada professor.\n\nEsta estrutura de apoio estratégica garante o acompanhamento próximo em todas as fases da implementação nas escolas. Desde os técnicos de suporte ao corpo de formadores, trabalhamos diariamente para que a excelência educativa seja uma realidade tangível e inclusiva para todos."
+    text: "A coordenação do Programa Saber Mais é composta por um corpo de especialistas dedicados a remover barreiras burocráticas e potenciar o talento docente em todas as suas vertentes."
   },
   {
     id: "05",
     label: "Sobre",
     title: "Missão e\nParcerias",
-    text: "A nossa missão é clara e ambiciosa: capacitar os educadores de hoje para os desafios imprevisíveis de amanhã.\n\nAtravés de parcerias estratégicas de alto nível com instituições de referência, elevamos os padrões da educação pública a um novo patamar de qualidade global.\n\nConheça o nosso enquadramento institucional e legal, bem como os parceiros que tornam este legado de conhecimento eterno possível. Oferecemos canais oficiais de contacto para suporte especializado, garantindo a sustentabilidade da nossa visão a longo prazo."
+    text: "A nossa missão é clara e ambiciosa: capacitar os educadores de hoje para os desafios imprevisíveis de amanhã.\n\nAtravés de parcerias estratégicas de alto nível, elevamos os padrões da educação pública."
   }
 ];
 
@@ -88,47 +88,49 @@ export function KnowledgeTreeSection() {
   const prevChapter = () => setActiveTextIndex((p) => (p - 1 + TREE_CONTENT.length) % TREE_CONTENT.length);
 
   return (
-    <section ref={containerRef} className="relative h-[600vh] -mt-[100vh] z-0 pointer-events-none">
+    <section ref={containerRef} className="relative h-[450vh] -mt-[100vh] z-0 pointer-events-none">
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center pointer-events-auto">
-        <motion.div style={{ opacity, filter }} className="relative w-full h-full bg-[#000814]">
-           <video ref={videoRef} muted playsInline className="w-full h-full object-cover opacity-35" preload="auto">
+        <motion.div style={{ opacity, filter }} className="relative w-full h-full bg-[#00040a]">
+           <video ref={videoRef} muted playsInline className="w-full h-full object-cover opacity-25" preload="auto">
              <source src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Knowledge%20tree/Arvore%20do%20conhecimento.mp4" type="video/mp4" />
            </video>
 
            <motion.div 
              style={{ opacity: contentOpacity }}
-             className="absolute inset-0 flex items-stretch justify-end px-16 md:px-40 pt-32 pb-20 pointer-events-none"
+             className="absolute inset-0 flex items-stretch justify-end px-16 md:px-40 pt-32 pb-24 pointer-events-none"
            >
-             <div className="max-w-2xl flex gap-16 pointer-events-auto h-full">
+             <div className="max-w-2xl flex items-end gap-16 pointer-events-auto h-full">
                
-               <div className="flex-1 flex flex-col items-end text-right h-full">
+               {/* Coluna de Texto - Alinhamento à Esquerda */}
+               <div className="flex-1 flex flex-col items-start text-left h-full justify-center">
                  <AnimatePresence mode="wait">
                    <motion.div
                      key={activeTextIndex}
-                     initial={{ opacity: 0, x: -20 }}
-                     animate={{ opacity: 1, x: 0 }}
-                     exit={{ opacity: 0, x: 10 }}
-                     transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                     initial={{ opacity: 0, y: 10 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     exit={{ opacity: 0, y: -5 }}
+                     transition={{ duration: 0.6 }}
                      className="space-y-10"
                    >
                      <div className="space-y-2">
-                       <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40 italic">
+                       <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/30 italic">
                          Capítulo {currentItem.id} — {currentItem.label}
                        </p>
-                       <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic leading-[1] text-white whitespace-pre-line">
+                       <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter italic leading-[1] text-white whitespace-pre-line">
                          {currentItem.title}
                        </h2>
                      </div>
 
-                     <div className="space-y-6 max-w-md ml-auto">
-                        <p className="text-[13px] md:text-sm font-medium italic text-white/60 leading-relaxed text-justify whitespace-pre-line">
+                     <div className="max-w-md">
+                        <p className="text-[13px] md:text-sm font-medium italic text-white/50 leading-relaxed text-justify whitespace-pre-line">
                           {currentItem.text}
                         </p>
                      </div>
                    </motion.div>
                  </AnimatePresence>
 
-                 <div className="mt-auto self-start pointer-events-auto pb-4">
+                 {/* Botão alinhado à esquerda da caixa de texto */}
+                 <div className="mt-12">
                    <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6">
                      <span className="text-[10px] font-black uppercase tracking-[0.6em] text-white/80 group-hover:text-white transition-all">sabermais</span>
                      <div className="h-[1px] w-6 bg-white/20 group-hover:w-12 group-hover:bg-white transition-all duration-700" />
@@ -136,41 +138,28 @@ export function KnowledgeTreeSection() {
                  </div>
                </div>
 
-               <div className="flex flex-col items-center justify-end pb-4">
-                 <div className="flex flex-col items-center gap-6 pointer-events-auto">
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">Cap</span>
-                      <span className="text-sm font-bold text-white/60 tabular-nums">
-                        {currentItem?.id}
-                      </span>
-                    </div>
-                    
-                    <div className="relative h-32 w-[1px] bg-white/10 overflow-hidden">
-                      <motion.div 
-                        animate={{ height: `${((activeTextIndex + 1) / TREE_CONTENT.length) * 100}%` }} 
-                        className="absolute top-0 w-full bg-white/60 shadow-[0_0_8px_rgba(255,255,255,0.3)] transition-all duration-1000" 
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-sm font-bold text-white/20 tabular-nums">0{TREE_CONTENT.length}</span>
-                      <span className="text-[9px] font-bold uppercase tracking-widest text-white/10">Total</span>
-                    </div>
-                    
-                    <div className="mt-4 p-1 bg-white/[0.03] backdrop-blur-md rounded-full border border-white/5 shadow-2xl flex flex-col gap-1">
-                      <button 
-                        onClick={prevChapter}
-                        className="p-2 text-white/30 hover:text-white transition-all duration-500 rounded-full hover:bg-white/10"
-                      >
-                        <ChevronUp size={16} strokeWidth={1.5} />
-                      </button>
-                      <button 
-                        onClick={nextChapter}
-                        className="p-2 text-white/30 hover:text-white transition-all duration-500 rounded-full hover:bg-white/10"
-                      >
-                        <ChevronDown size={16} strokeWidth={1.5} />
-                      </button>
-                    </div>
+               {/* Navegação Lateral - Estilo Numerador do Hero */}
+               <div className="flex flex-col items-center gap-6 mb-2">
+                 <div className="flex flex-col items-center gap-1">
+                   <span className="text-[9px] font-bold uppercase tracking-widest text-white/20 italic">Cap</span>
+                   <span className="text-sm font-bold text-white/60 tabular-nums">{currentItem?.id}</span>
+                 </div>
+                 
+                 <div className="relative h-28 w-[1px] bg-white/10 overflow-hidden">
+                   <motion.div 
+                     animate={{ height: `${((activeTextIndex + 1) / TREE_CONTENT.length) * 100}%` }} 
+                     className="absolute top-0 w-full bg-white/60 transition-all duration-1000" 
+                   />
+                 </div>
+                 
+                 <div className="flex flex-col items-center gap-1">
+                   <span className="text-sm font-bold text-white/20 tabular-nums">0{TREE_CONTENT.length}</span>
+                   <span className="text-[9px] font-bold uppercase tracking-widest text-white/10 italic">Total</span>
+                 </div>
+                 
+                 <div className="mt-4 flex flex-col gap-1">
+                   <button onClick={prevChapter} className="p-2 text-white/20 hover:text-white transition-colors"><ChevronUp size={16} /></button>
+                   <button onClick={nextChapter} className="p-2 text-white/20 hover:text-white transition-colors"><ChevronDown size={16} /></button>
                  </div>
                </div>
 
