@@ -2,9 +2,14 @@
 
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase"; 
-import { DASHBOARD_URL, BASE_FRAME_URL, TOTAL_FRAMES } from "@/lib/program-config";
+import { DASHBOARD_URL, TOTAL_FRAMES } from "@/lib/program-config";
 import { motion, useScroll, useTransform, AnimatePresence, useSpring } from "framer-motion";
 import { ChevronUp, ChevronDown } from "lucide-react";
+
+// Nova URL base fornecida
+const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/LooP/";
+// Sufixo atualizado para o novo delay de 0.033s
+const FRAME_SUFFIX = "_delay-0.033s.webp";
 
 export function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -19,6 +24,7 @@ export function HeroSection() {
 
   useEffect(() => {
     const fetchPhases = async () => {
+      // Busca as fases que representam os objetivos e áreas do PSM [cite: 14, 33]
       const { data } = await supabase.from('program_phases').select('*').order('order_index', { ascending: true });
       if (data) setPhases(data);
     };
@@ -48,10 +54,11 @@ export function HeroSection() {
       }
     };
 
+    // Carregamento de imagens com a nova estrutura de URL
     for (let i = 0; i < TOTAL_FRAMES; i++) {
       const img = new Image();
-      const padded = i.toString().padStart(2, "0");
-      img.src = `${BASE_FRAME_URL}frame_${padded}_delay-0.042s.webp`;
+      const padded = i.toString().padStart(3, "0"); // Ajustado para 3 dígitos (frame_000)
+      img.src = `${BASE_FRAME_URL}frame_${padded}${FRAME_SUFFIX}`;
       imagesRef.current[i] = img;
       img.onload = () => { if (i === 0) handleResize(); };
     }
@@ -102,10 +109,13 @@ export function HeroSection() {
                 {currentPhase && (
                   <motion.div key={currentPhase.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="space-y-4">
                     <div className="space-y-1">
+                      {/* Subtítulo dinâmico: Ex: "III Ciclo - Angola" [cite: 3, 5] */}
                       <p className="text-[10px] tracking-[0.6em] text-black/40 uppercase font-bold italic">{currentPhase.subtitle}</p>
                       <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black/90 leading-none">{currentPhase.name}</h1>
                     </div>
-                    <p className="text-sm text-black/60 leading-relaxed font-medium italic">{currentPhase.description}</p>
+                    <p className="text-sm text-black/60 leading-relaxed font-medium italic">
+                      {currentPhase.description}
+                    </p>
                     
                     <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-4 pt-4">
                       <span className="text-[10px] font-black uppercase tracking-[0.4em] text-black/80 group-hover:text-black transition-all">sabermais</span>
@@ -124,7 +134,10 @@ export function HeroSection() {
                 </div>
                 
                 <div className="relative h-28 w-[2px] bg-black/10 overflow-hidden">
-                  <motion.div animate={{ height: `${((activePhaseIndex + 1) / phases.length) * 100}%` }} className="absolute top-0 w-full bg-black/60 transition-all duration-1000" />
+                  <motion.div 
+                    animate={{ height: `${((activePhaseIndex + 1) / phases.length) * 100}%` }} 
+                    className="absolute top-0 w-full bg-black/60 transition-all duration-1000" 
+                  />
                 </div>
                 
                 <div className="flex flex-col items-center gap-1">

@@ -1,6 +1,5 @@
 import { Navbar } from "@/components/Navbar";
 import { HeroSection } from "@/components/HeroSection";
-import { KnowledgeTreeSection } from "@/components/KnowledgeTreeSection";
 import { Footer } from "@/components/Footer";
 import { Bubbles } from "@/components/Bubbles"; 
 
@@ -13,7 +12,6 @@ export default function Home() {
 
       {/* 2. Fluxo da Página */}
       <HeroSection />          {/* Galáxia e Introdução */}
-      <KnowledgeTreeSection /> {/* Vídeo da Árvore com Scroll */}
       
       {/* 3. Rodapé */}
       <Footer />
