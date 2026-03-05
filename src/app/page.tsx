@@ -1,6 +1,5 @@
 import { Navbar } from "@/components/Navbar";
 import { HeroSection } from "@/components/HeroSection";
-import { Footer } from "@/components/Footer";
 import { Bubbles } from "@/components/Bubbles"; 
 
 export default function Home() {
@@ -12,9 +11,6 @@ export default function Home() {
 
       {/* 2. Fluxo da Página */}
       <HeroSection />          {/* Galáxia e Introdução */}
-      
-      {/* 3. Rodapé */}
-      <Footer />
     </main>
   );
 }
