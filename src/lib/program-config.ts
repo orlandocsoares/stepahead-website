@@ -1,5 +1,4 @@
-
-export const TOTAL_FRAMES = 201; 
+export const TOTAL_FRAMES = 280; 
 export const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Nuvem%20LooP/";
 export const DASHBOARD_URL = "#";
 

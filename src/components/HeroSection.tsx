@@ -1,16 +1,13 @@
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase"; 
-import { DASHBOARD_URL } from "@/lib/program-config";
+import { DASHBOARD_URL, TOTAL_FRAMES, BASE_FRAME_URL } from "@/lib/program-config";
 import { motion, useScroll, useTransform, AnimatePresence, useSpring } from "framer-motion";
 import { ChevronUp, ChevronDown } from "lucide-react";
 
-// Configurações actualizadas: Sequência de Nuvem em Loop
-const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Nuvem%20LooP/";
 const FRAME_SUFFIX = "_delay-0.033s.webp";
-const TOTAL_FRAMES_COUNT = 201; // Actualizado para os 201 frames detectados
+const TOTAL_FRAMES_COUNT = TOTAL_FRAMES; 
 
 export function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -19,10 +16,8 @@ export function HeroSection() {
   const [phases, setPhases] = useState<any[]>([]);
   const imagesRef = useRef<HTMLImageElement[]>([]);
 
-  // Monitorização do Scroll
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
   
-  // Física de scroll snappy e responsiva
   const smoothProgress = useSpring(scrollYProgress, { 
     mass: 0.05, 
     stiffness: 80, 
@@ -30,7 +25,6 @@ export function HeroSection() {
     restDelta: 0.001 
   });
 
-  // Mapeamento para Loop Eterno: A animação cicla 8 vezes ao longo do scroll da página
   const frameIndex = useTransform(smoothProgress, (v) => {
     const totalCycles = 8; 
     const currentFrame = Math.floor((v * TOTAL_FRAMES_COUNT * totalCycles) % TOTAL_FRAMES_COUNT);
@@ -68,7 +62,6 @@ export function HeroSection() {
       }
     };
 
-    // Pré-carregamento optimizado das 201 imagens
     for (let i = 0; i < TOTAL_FRAMES_COUNT; i++) {
       const img = new Image();
       const padded = i.toString().padStart(3, "0"); 
@@ -160,6 +153,11 @@ export function HeroSection() {
                     animate={{ height: `${((activePhaseIndex + 1) / phases.length) * 100}%` }} 
                     className="absolute top-0 w-full bg-white transition-all duration-1000" 
                   />
+                </div>
+
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-sm font-bold text-white/20 tabular-nums">0{phases.length}</span>
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-white/10 italic">Total</span>
                 </div>
                 
                 <div className="flex flex-col gap-1 mt-2">
