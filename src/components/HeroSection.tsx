@@ -273,7 +273,7 @@ export function HeroSection() {
                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                     exit={{ opacity: 0, y: -40, filter: "blur(12px)" }}
                     transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }} 
-                    className="absolute bottom-6 left-0 w-full flex flex-col gap-6 pointer-events-auto"
+                    className="absolute top-0 left-0 w-full flex flex-col gap-6 pointer-events-auto"
                   >
                     <div className="space-y-2">
                       <p className="text-[11px] tracking-[0.8em] text-white/50 uppercase font-bold italic">{phase.subtitle}</p>
