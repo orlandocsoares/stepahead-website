@@ -48,16 +48,14 @@ export function HeroSection() {
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  // MOTOR VIRTUAL INFINITO
   const targetFrameRef = useRef(PROGRAM_PHASES[0].focusFrame);
   const progressRaw = useMotionValue(PROGRAM_PHASES[0].focusFrame);
   const progressBarHeight = useMotionValue("0%");
   
-  // FÍSICA CINEMATOGRÁFICA (Pesada no início, paragem firme no fim)
   const smoothFrame = useSpring(progressRaw, { 
-    mass: 2.5,       // Muito pesado = Arranque dramático e lento
-    stiffness: 80,   // Força de atração alta para a frame destino
-    damping: 45,     // Amortecimento alto = Paragem brusca, sem ressaltos
+    mass: 2.2,       
+    stiffness: 70,   
+    damping: 40,     
     restDelta: 0.001 
   });
 
@@ -67,7 +65,6 @@ export function HeroSection() {
     return f;
   };
 
-  // ESTADOS DE CONTROLO FIRME
   const scrollIntent = useRef(0);
   const isCooldown = useRef(false);
   const intentTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -75,9 +72,8 @@ export function HeroSection() {
   const scrollToPhase = (direction: 'next' | 'prev' | number) => {
     if (!hasInteracted) setHasInteracted(true);
     
-    // BLOQUEIO ALARGADO: 1.5s para a transição épica respirar
     isCooldown.current = true;
-    setTimeout(() => { isCooldown.current = false; }, 1500);
+    setTimeout(() => { isCooldown.current = false; }, 500);
 
     let nextActive = activePhaseIndex;
     let diff = 0;
@@ -109,7 +105,6 @@ export function HeroSection() {
     progressRaw.set(targetFrameRef.current);
   };
 
-  // NAVEGAÇÃO RODA DO RATO
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -117,28 +112,23 @@ export function HeroSection() {
 
       scrollIntent.current += e.deltaY;
 
-      if (scrollIntent.current > 120) { 
+      if (scrollIntent.current > 100) { 
         scrollToPhase('next');
         scrollIntent.current = 0;
-      } else if (scrollIntent.current < -120) {
+      } else if (scrollIntent.current < -100) {
         scrollToPhase('prev');
         scrollIntent.current = 0;
       }
 
       if (intentTimeout.current) clearTimeout(intentTimeout.current);
-      intentTimeout.current = setTimeout(() => {
-        scrollIntent.current = 0;
-      }, 300);
+      intentTimeout.current = setTimeout(() => { scrollIntent.current = 0; }, 300);
     };
 
     const element = containerRef.current;
-    if (element) {
-      element.addEventListener('wheel', handleWheel, { passive: false });
-    }
+    if (element) element.addEventListener('wheel', handleWheel, { passive: false });
     return () => element?.removeEventListener('wheel', handleWheel);
   }, [activePhaseIndex, hasInteracted]);
 
-  // NAVEGAÇÃO TOUCH / SWIPE
   const isDragging = useRef(false);
   const startY = useRef(0);
 
@@ -148,38 +138,28 @@ export function HeroSection() {
     startY.current = e.clientY;
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging.current || isCooldown.current) return;
-  };
-
   const handlePointerUp = (e: React.PointerEvent) => {
     if (!isDragging.current || isCooldown.current) return;
     isDragging.current = false;
-    
     const dy = startY.current - e.clientY;
     if (dy > 80) scrollToPhase('next');
     else if (dy < -80) scrollToPhase('prev');
   };
 
-  // RENDERIZAÇÃO DO CANVAS
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext("2d", { alpha: false });
     if (!context) return;
     
-    const getDpr = () => Math.min(window.devicePixelRatio || 1, 1.5);
-
     const handleResize = () => {
-      const dpr = getDpr(); 
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5); 
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
       context.scale(dpr, dpr);
-      context.imageSmoothingEnabled = true;
-
       const actualFrame = getActualFrame(smoothFrame.get());
       const img = imagesRef.current[actualFrame];
-      if (img?.complete) draw(img, context);
+      if (img?.complete && img.naturalHeight > 0) draw(img, context);
     };
 
     const draw = (img: HTMLImageElement, ctx: CanvasRenderingContext2D) => {
@@ -198,12 +178,8 @@ export function HeroSection() {
     for (let i = 0; i < TOTAL_FRAMES_COUNT; i++) {
       const img = new Image();
       img.src = `${BASE_FRAME_URL}frame_${i.toString().padStart(3, "0")}${FRAME_SUFFIX}`;
-      img.decode().then(() => {
-        imagesRef.current[i] = img;
-        if (i === 0) handleResize();
-      }).catch(() => {
-        imagesRef.current[i] = img;
-      });
+      img.onload = () => { if (i === 0) handleResize(); };
+      imagesRef.current[i] = img;
     }
 
     let animationFrameId: number;
@@ -211,17 +187,14 @@ export function HeroSection() {
 
     const unsubscribe = smoothFrame.on("change", (v) => {
       const actualFrame = getActualFrame(v);
-      
       if (actualFrame !== lastDrawnFrame) {
         lastDrawnFrame = actualFrame;
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
-        
-        animationFrameId = requestAnimationFrame(() => {
-          const img = imagesRef.current[actualFrame];
-          if (img?.complete && context) draw(img, context);
-        });
+        const img = imagesRef.current[actualFrame];
+        if (img?.complete && img.naturalHeight > 0) {
+          if (animationFrameId) cancelAnimationFrame(animationFrameId);
+          animationFrameId = requestAnimationFrame(() => draw(img, context));
+        }
       }
-
       progressBarHeight.set(`${(activePhaseIndex / (PROGRAM_PHASES.length - 1)) * 100}%`);
     });
     
@@ -238,66 +211,51 @@ export function HeroSection() {
       ref={containerRef} 
       className="relative h-screen w-full bg-black overflow-hidden touch-none cursor-grab active:cursor-grabbing"
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
+      onPointerLeave={() => {isDragging.current = false;}}
     >
-      <canvas 
-        ref={canvasRef} 
-        className="absolute inset-0 w-full h-full contrast-115 saturate-110 brightness-95 transform-gpu will-change-transform" 
-      />
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full contrast-115 saturate-110 brightness-95 transform-gpu" />
 
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70 pointer-events-none" />
 
-      {/* LOGOTIPO NO TOPO (CONTRASTE DINÂMICO MAGIC) */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto mix-blend-difference">
+      <div className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3 pointer-events-auto w-[280px] md:w-[400px]">
         <img 
           src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Logo%20simples.png" 
           alt="Logotipo Saber Mais" 
-          className="h-24 md:h-32 w-auto object-contain cursor-pointer transition-transform duration-700 hover:scale-105 opacity-90 hover:opacity-100"
+          className="h-14 md:h-18 w-auto object-contain cursor-pointer transition-all duration-700 hover:scale-105 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
           onClick={() => scrollToPhase(0)}
-          onError={(e) => (e.currentTarget.style.display = 'none')}
         />
+        <p className="text-[6px] md:text-[8.5px] font-black uppercase tracking-[0.08em] md:tracking-[0.22em] text-white text-center whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+          Programa de Apoio ao Reforço do Ensino Secundário em Angola
+        </p>
       </div>
 
       <AnimatePresence>
         {!hasInteracted && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 15, filter: "blur(4px)" }}
-            transition={{ duration: 0.6, ease: "easeInOut" }}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center pointer-events-none"
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+            className="absolute bottom-40 md:bottom-48 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center pointer-events-none"
           >
-            <motion.div
-              animate={{ y: [0, 8, 0] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-              className="flex flex-col items-center gap-2 text-white/40"
-            >
+            <motion.div animate={{ y: [0, 8, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="flex flex-col items-center gap-2 text-white/40">
               <Mouse size={20} strokeWidth={1.5} />
               <span className="text-[9px] font-bold uppercase tracking-[0.4em]">Scroll to Explore</span>
-              <ChevronDown size={14} className="mt-[-4px]" />
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <header className="absolute bottom-0 left-0 w-full z-30 px-16 md:px-40 py-12 flex justify-between items-center pointer-events-none">
+      <header className="absolute top-0 left-0 w-full z-30 px-16 md:px-40 py-12 flex justify-between items-center pointer-events-none mt-10">
         <div className="hidden md:block w-32"></div>
-
-        <nav className="hidden md:flex gap-10 pointer-events-auto">
+        <nav className="hidden md:flex gap-12 pointer-events-auto">
           {PROGRAM_PHASES.map((phase, index) => (
             <button
               key={`header-${phase.id}`}
               onClick={() => scrollToPhase(index)}
-              className={`flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.3em] transition-all duration-500 hover:text-white ${
+              className={`flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.35em] transition-all duration-500 hover:text-white ${
                 activePhaseIndex === index ? "text-white scale-105" : "text-white/30"
               }`}
             >
-              <span className={`text-[8px] transition-all duration-500 ${activePhaseIndex === index ? "text-white/60" : "text-white/20"}`}>
-                0{index + 1}
-              </span>
-              {phase.name}
+              <span className="text-[9px]">0{index + 1}</span> {phase.name}
             </button>
           ))}
         </nav>
@@ -305,32 +263,23 @@ export function HeroSection() {
 
       <div className="absolute inset-0 z-20 flex flex-col justify-end px-16 md:px-40 pb-24 pointer-events-none">
         <div className="flex justify-between items-end w-full max-w-[1800px] mx-auto relative h-full">
-          
-          <div className="absolute bottom-0 left-0 max-w-xl pointer-events-none w-full h-[300px]">
-            <AnimatePresence>
+          <div className="absolute bottom-24 md:bottom-32 left-0 max-w-xl pointer-events-none w-full h-[300px]">
+            <AnimatePresence mode="wait">
               {PROGRAM_PHASES.map((phase, index) => (
                 index === activePhaseIndex && (
                   <motion.div 
                     key={`text-${phase.id}`}
-                    // EFEITO BLUR CINEMATOGRÁFICO NAS TRANSIÇÕES
-                    initial={{ opacity: 0, y: 40, filter: "blur(10px)" }}
+                    initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, y: -40, filter: "blur(10px)" }}
-                    transition={{ duration: 1.2, ease: [0.25, 1, 0.3, 1] }} // Transição longa e dramática
+                    exit={{ opacity: 0, y: -40, filter: "blur(12px)" }}
+                    transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }} 
                     className="absolute bottom-6 left-0 w-full flex flex-col gap-6 pointer-events-auto"
                   >
                     <div className="space-y-2">
-                      <p className="text-[11px] tracking-[0.8em] text-white/40 uppercase font-bold italic">
-                        {phase.subtitle}
-                      </p>
-                      <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-white leading-[0.85] drop-shadow-2xl">
-                        {phase.name}
-                      </h1>
+                      <p className="text-[11px] tracking-[0.8em] text-white/50 uppercase font-bold italic">{phase.subtitle}</p>
+                      <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-white leading-[0.85] drop-shadow-2xl">{phase.name}</h1>
                     </div>
-                    <p className="text-base text-white/60 leading-relaxed font-medium italic max-w-sm border-l border-white/10 pl-6">
-                      {phase.description}
-                    </p>
-                    
+                    <p className="text-base text-white/70 leading-relaxed font-medium italic max-w-sm border-l border-white/20 pl-6">{phase.description}</p>
                     <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6 pt-6 cursor-pointer w-fit">
                       <div className="h-[1px] w-12 bg-white/20 group-hover:w-20 group-hover:bg-white transition-all duration-700" />
                       <span className="text-[11px] font-black uppercase tracking-[0.5em] text-white/80 group-hover:text-white transition-all">Explorar Portal</span>
@@ -341,31 +290,18 @@ export function HeroSection() {
             </AnimatePresence>
           </div>
 
-          <div className="absolute bottom-0 right-0 flex flex-col items-center gap-8 pointer-events-auto">
+          <div className="absolute bottom-24 md:bottom-32 right-0 flex flex-col items-center gap-8 pointer-events-auto">
             <div className="flex flex-col items-center gap-2">
-              <span className="text-[10px] font-bold text-white/20 uppercase tracking-tighter">Progresso</span>
+              <span className="text-[10px] font-bold text-white/20 uppercase tracking-tighter">Fases</span>
               <div className="relative h-40 w-[1px] bg-white/10">
-                <motion.div 
-                  style={{ height: progressBarHeight }} 
-                  className="absolute top-0 w-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.5)] origin-top transition-all duration-1000 ease-out" 
-                />
+                <motion.div style={{ height: progressBarHeight }} className="absolute top-0 w-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.5)] origin-top transition-all duration-1000 ease-out" />
               </div>
             </div>
-            
             <div className="flex flex-col gap-2">
-              <button 
-                onClick={() => scrollToPhase('prev')}
-                className="p-3 bg-white/5 rounded-full text-white/30 hover:bg-white/10 hover:text-white transition-all cursor-pointer">
-                <ChevronUp size={18} />
-              </button>
-              <button 
-                onClick={() => scrollToPhase('next')}
-                className="p-3 bg-white/5 rounded-full text-white/30 hover:bg-white/10 hover:text-white transition-all cursor-pointer">
-                <ChevronDown size={18} />
-              </button>
+              <button onClick={() => scrollToPhase('prev')} className="p-3 bg-white/5 rounded-full text-white/30 hover:bg-white/10 hover:text-white transition-all"><ChevronUp size={18} /></button>
+              <button onClick={() => scrollToPhase('next')} className="p-3 bg-white/5 rounded-full text-white/30 hover:bg-white/10 hover:text-white transition-all"><ChevronDown size={18} /></button>
             </div>
           </div>
-
         </div>
       </div>
     </div>
