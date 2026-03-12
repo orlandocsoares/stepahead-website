@@ -10,7 +10,7 @@ export function Navbar() {
         <div className="flex gap-12 pointer-events-auto items-center">
           <Link 
             href="/login" 
-            className="text-[10px] font-black uppercase tracking-[0.4em] text-black/60 hover:text-black transition-colors"
+            className="text-[12px] font-black uppercase tracking-[0.4em] text-black/60 hover:text-black transition-colors"
           >
             Entrar
           </Link>
