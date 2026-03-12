@@ -176,7 +176,7 @@ export function HeroSection() {
           onClick={() => goToPhase(0)}
         />
         <p className="text-[7px] md:text-[9px] font-black uppercase tracking-[0.25em] text-white text-center leading-relaxed drop-shadow-[0_2px_5px_rgba(0,0,0,1)] opacity-90">
-          Programa de Apoio ao Reforço do <br className="hidden md:block"/> Ensino Secundário em Angola
+          Programa de Apoio ao Reforço do Ensino Secundário em Angola
         </p>
       </div>
 
@@ -197,22 +197,22 @@ export function HeroSection() {
 
       <header className="absolute top-0 left-0 w-full z-30 px-16 md:px-40 py-12 flex justify-between items-center pointer-events-none">
         <div className="w-32" />
-        <nav className="hidden md:flex gap-24 pointer-events-auto pt-[10px]">
+        <nav className="hidden md:flex gap-16 pointer-events-auto pt-[10px]">
           {PROGRAM_PHASES.map((phase, index) => (
             <button
               key={phase.id}
               onClick={() => goToPhase(index)}
-              className={`flex flex-col items-center gap-2 transition-all duration-700 group ${
+              className={`flex items-baseline gap-3 transition-all duration-700 group ${
                 activePhaseIndex === index ? "scale-105" : "hover:scale-105"
               }`}
             >
-              <span className={`text-[20px] font-black uppercase tracking-[0.4em] transition-colors duration-500 ${
+              <span className={`text-[12px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${
                 activePhaseIndex === index ? "text-white drop-shadow-[0_0_8px_white]" : "text-white/20 group-hover:text-white/40"
               }`}>
                 0{index + 1}
               </span>
-              <span className={`text-[14px] font-bold uppercase tracking-[0.3em] transition-all duration-500 ${
-                activePhaseIndex === index ? "text-white opacity-100 translate-y-0" : "text-white/0 opacity-0 -translate-y-1 group-hover:text-white/20 group-hover:opacity-100 group-hover:translate-y-0"
+              <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-all duration-500 ${
+                activePhaseIndex === index ? "text-white opacity-100" : "text-white/0 opacity-0 group-hover:text-white/20 group-hover:opacity-100"
               }`}>
                 {phase.name}
               </span>
