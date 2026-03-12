@@ -282,10 +282,10 @@ export function HeroSection() {
         )}
       </AnimatePresence>
 
-      <header className="absolute top-0 left-0 w-full z-30 px-16 md:px-40 py-12 flex justify-between items-center pointer-events-none mt-4">
+      <header className="absolute bottom-0 left-0 w-full z-30 px-16 md:px-40 py-12 flex justify-between items-center pointer-events-none">
         <div className="hidden md:block w-32"></div>
 
-        <nav className="hidden md:flex gap-10 pointer-events-auto mt-[6px]">
+        <nav className="hidden md:flex gap-10 pointer-events-auto">
           {PROGRAM_PHASES.map((phase, index) => (
             <button
               key={`header-${phase.id}`}
