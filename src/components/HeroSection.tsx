@@ -167,15 +167,15 @@ export function HeroSection() {
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full contrast-115 saturate-110 brightness-95" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70 pointer-events-none" />
 
-      {/* LOGOTIPO CENTRALIZADO */}
-      <div className="absolute bottom-20 md:bottom-28 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3 pointer-events-auto w-[300px] md:w-[450px]">
+      {/* LOGOTIPO CENTRALIZADO - Aumentado em 1X (dobro do tamanho anterior) */}
+      <div className="absolute bottom-20 md:bottom-28 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-6 pointer-events-auto w-[450px] md:w-[650px]">
         <img 
           src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Logo%20simples.png" 
           alt="Logotipo Saber Mais" 
-          className="h-16 md:h-20 w-auto object-contain cursor-pointer transition-transform duration-700 hover:scale-105 drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]"
+          className="h-32 md:h-40 w-auto object-contain cursor-pointer transition-transform duration-700 hover:scale-105 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
           onClick={() => goToPhase(0)}
         />
-        <p className="text-[7px] md:text-[9px] font-black uppercase tracking-[0.25em] text-white text-center leading-relaxed drop-shadow-[0_2px_5px_rgba(0,0,0,1)] opacity-90">
+        <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-white text-center leading-relaxed drop-shadow-[0_2px_5px_rgba(0,0,0,1)] opacity-90">
           Programa de Apoio ao Reforço do Ensino Secundário em Angola
         </p>
       </div>
