@@ -197,21 +197,21 @@ export function HeroSection() {
 
       <header className="absolute top-0 left-0 w-full z-30 px-16 md:px-40 py-12 flex justify-between items-center pointer-events-none">
         <div className="w-32" />
-        <nav className="hidden md:flex gap-12 pointer-events-auto pt-[5px]">
+        <nav className="hidden md:flex gap-24 pointer-events-auto pt-[10px]">
           {PROGRAM_PHASES.map((phase, index) => (
             <button
               key={phase.id}
               onClick={() => goToPhase(index)}
-              className={`flex flex-col items-center gap-1 transition-all duration-700 group ${
+              className={`flex flex-col items-center gap-2 transition-all duration-700 group ${
                 activePhaseIndex === index ? "scale-105" : "hover:scale-105"
               }`}
             >
-              <span className={`text-[10px] font-black uppercase tracking-[0.4em] transition-colors duration-500 ${
+              <span className={`text-[20px] font-black uppercase tracking-[0.4em] transition-colors duration-500 ${
                 activePhaseIndex === index ? "text-white drop-shadow-[0_0_8px_white]" : "text-white/20 group-hover:text-white/40"
               }`}>
                 0{index + 1}
               </span>
-              <span className={`text-[7px] font-bold uppercase tracking-[0.3em] transition-all duration-500 ${
+              <span className={`text-[14px] font-bold uppercase tracking-[0.3em] transition-all duration-500 ${
                 activePhaseIndex === index ? "text-white opacity-100 translate-y-0" : "text-white/0 opacity-0 -translate-y-1 group-hover:text-white/20 group-hover:opacity-100 group-hover:translate-y-0"
               }`}>
                 {phase.name}
