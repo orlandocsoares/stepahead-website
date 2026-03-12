@@ -167,9 +167,7 @@ export function HeroSection() {
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full contrast-115 saturate-110 brightness-95" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70 pointer-events-none" />
 
-      {/* ==================================================== */}
-      {/* LOGOTIPO CENTRALIZADO ELEVADO PARA A CAIXA AMARELA   */}
-      {/* ==================================================== */}
+      {/* LOGOTIPO CENTRALIZADO */}
       <div className="absolute bottom-20 md:bottom-28 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3 pointer-events-auto w-[300px] md:w-[450px]">
         <img 
           src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Logo%20simples.png" 
@@ -182,7 +180,7 @@ export function HeroSection() {
         </p>
       </div>
 
-      {/* AVISO DE INTERAÇÃO (Descido para a base para não chocar com o logótipo) */}
+      {/* AVISO DE INTERAÇÃO */}
       <AnimatePresence>
         {!hasInteracted && (
           <motion.div
@@ -199,7 +197,7 @@ export function HeroSection() {
 
       <header className="absolute top-0 left-0 w-full z-30 px-16 md:px-40 py-12 flex justify-between items-center pointer-events-none">
         <div className="w-32" />
-        <nav className="hidden md:flex gap-12 pointer-events-auto">
+        <nav className="hidden md:flex gap-12 pointer-events-auto pt-[5px]">
           {PROGRAM_PHASES.map((phase, index) => (
             <button
               key={phase.id}
@@ -223,9 +221,7 @@ export function HeroSection() {
         </nav>
       </header>
 
-      {/* ==================================================== */}
-      {/* TEXTO CINEMATOGRÁFICO ELEVADO PARA A CAIXA VERMELHA  */}
-      {/* ==================================================== */}
+      {/* CONTEÚDO DESCRITIVO */}
       <div className="absolute inset-0 z-20 flex flex-col justify-end px-16 md:px-40 pb-0 pointer-events-none">
         <div className="flex justify-between items-end w-full max-w-[1800px] mx-auto relative h-full">
           
@@ -237,11 +233,11 @@ export function HeroSection() {
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 exit={{ opacity: 0, y: -40, filter: "blur(15px)" }}
                 transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }} 
-                className="absolute bottom-0 left-0 w-full flex flex-col gap-6 pointer-events-auto"
+                className="absolute top-[-10px] left-0 w-full flex flex-col gap-6 pointer-events-auto"
               >
                 <div className="space-y-2">
                   <p className="text-[11px] tracking-[0.8em] text-white/40 uppercase font-bold italic">{PROGRAM_PHASES[activePhaseIndex].subtitle}</p>
-                  <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-white leading-[0.8] drop-shadow-2xl">{PROGRAM_PHASES[activePhaseIndex].name}</h1>
+                  <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white leading-[0.8] drop-shadow-2xl">{PROGRAM_PHASES[activePhaseIndex].name}</h1>
                 </div>
                 <p className="text-base text-white/60 leading-relaxed font-medium italic max-w-sm border-l border-white/20 pl-6">{PROGRAM_PHASES[activePhaseIndex].description}</p>
                 <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6 pt-6 cursor-pointer w-fit">
