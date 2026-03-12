@@ -5,6 +5,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { DASHBOARD_URL } from "@/lib/program-config";
 import { motion, useSpring, useMotionValue, AnimatePresence } from "framer-motion";
 import { ChevronUp, ChevronDown, Mouse } from "lucide-react";
+import Link from "next/link";
 
 const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Nuvem%20LooP/";
 const FRAME_SUFFIX = "_delay-0.033s.webp";
@@ -167,15 +168,24 @@ export function HeroSection() {
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full contrast-115 saturate-110 brightness-95" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70 pointer-events-none" />
 
-      {/* LOGOTIPO CENTRALIZADO - Aumentado em 1X (dobro do tamanho anterior) */}
-      <div className="absolute bottom-20 md:bottom-28 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-6 pointer-events-auto w-[450px] md:w-[650px]">
+      {/* LOGOTIPO CENTRALIZADO COM INTERAÇÃO SUSPENSA */}
+      <div className="absolute bottom-20 md:bottom-28 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-auto w-[450px] md:w-[650px] group">
+        {/* Elemento "Entrar" que aparece no hover */}
+        <Link 
+          href="/login" 
+          className="opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-700 text-[11px] font-black uppercase tracking-[0.5em] text-white/40 hover:text-white mb-6 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+        >
+          Entrar
+        </Link>
+        
         <img 
           src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Logo%20simples.png" 
           alt="Logotipo Saber Mais" 
-          className="h-32 md:h-40 w-auto object-contain cursor-pointer transition-transform duration-700 hover:scale-105 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
+          className="h-32 md:h-40 w-auto object-contain cursor-pointer transition-transform duration-700 group-hover:scale-105 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
           onClick={() => goToPhase(0)}
         />
-        <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-white text-center leading-relaxed drop-shadow-[0_2px_5px_rgba(0,0,0,1)] opacity-90">
+        
+        <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-white text-center leading-relaxed drop-shadow-[0_2px_5px_rgba(0,0,0,1)] opacity-90 mt-6">
           Programa de Apoio ao Reforço do Ensino Secundário em Angola
         </p>
       </div>
@@ -207,7 +217,7 @@ export function HeroSection() {
               }`}
             >
               <span className={`text-[12px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${
-                activePhaseIndex === index ? "text-white drop-shadow-[0_0_8px_white]" : "text-white/20 group-hover:text-white/40"
+                activePhaseIndex === index ? "text-white drop-shadow-[0_0_8px_white]" : "text-white/10 group-hover:text-white/40"
               }`}>
                 0{index + 1}
               </span>
