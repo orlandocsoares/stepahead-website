@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -50,11 +49,9 @@ export function HeroSection() {
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  // MOTOR DE POSIÇÃO ABSOLUTA
   const targetFrameValue = useMotionValue(PROGRAM_PHASES[0].focusFrame);
   const progressBarHeight = useMotionValue("25%");
   
-  // FÍSICA DE PARAGEM BRUSCA
   const smoothFrame = useSpring(targetFrameValue, { 
     mass: 3.0,       
     stiffness: 45,   
@@ -65,7 +62,6 @@ export function HeroSection() {
   const isCooldown = useRef(false);
   const scrollIntent = useRef(0);
 
-  // FUNÇÃO DE NAVEGAÇÃO SEGURA
   const goToPhase = useCallback((index: number) => {
     if (isCooldown.current) return;
     if (!hasInteracted) setHasInteracted(true);
@@ -87,7 +83,6 @@ export function HeroSection() {
     targetFrameValue.set(currentFrame + diff);
   }, [activePhaseIndex, hasInteracted, targetFrameValue]);
 
-  // CAPTURA DE SCROLL COM INSISTÊNCIA
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -109,7 +104,6 @@ export function HeroSection() {
     return () => el?.removeEventListener("wheel", handleWheel);
   }, [activePhaseIndex, goToPhase]);
 
-  // RENDERIZAÇÃO DO CANVAS
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -168,29 +162,18 @@ export function HeroSection() {
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full contrast-115 saturate-110 brightness-95" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70 pointer-events-none" />
 
-      {/* LOGOTIPO CENTRALIZADO COM INTERAÇÃO SUSPENSA */}
-      <div className="absolute bottom-20 md:bottom-28 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-auto w-[450px] md:w-[650px] group">
-        {/* Elemento "Entrar" que aparece no hover */}
-        <Link 
-          href="/login" 
-          className="opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-700 text-[11px] font-black uppercase tracking-[0.5em] text-white/40 hover:text-white mb-6 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
-        >
-          Entrar
-        </Link>
-        
+      {/* LOGOTIPO CENTRALIZADO SIMPLES */}
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-none">
         <img 
-          src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Logo%20simples.png" 
+          src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/logo%20sabermais.png" 
           alt="Logotipo Saber Mais" 
-          className="h-32 md:h-40 w-auto object-contain cursor-pointer transition-transform duration-700 group-hover:scale-105 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
-          onClick={() => goToPhase(0)}
+          className="h-20 w-auto object-contain opacity-90 drop-shadow-[0_2px_15px_rgba(0,0,0,0.8)]"
         />
-        
-        <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-white text-center leading-relaxed drop-shadow-[0_2px_5px_rgba(0,0,0,1)] opacity-90 mt-6">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mt-6 text-center leading-relaxed">
           Programa de Apoio ao Reforço do Ensino Secundário em Angola
         </p>
       </div>
 
-      {/* AVISO DE INTERAÇÃO */}
       <AnimatePresence>
         {!hasInteracted && (
           <motion.div
@@ -222,7 +205,7 @@ export function HeroSection() {
                 0{index + 1}
               </span>
               <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-all duration-500 ${
-                activePhaseIndex === index ? "text-white opacity-100" : "text-white/0 opacity-0 group-hover:text-white/20 group-hover:opacity-100"
+                activePhaseIndex === index ? "text-white opacity-100" : "text-white/0 opacity-0 group-hover:text-white/10 group-hover:opacity-100"
               }`}>
                 {phase.name}
               </span>
@@ -231,7 +214,6 @@ export function HeroSection() {
         </nav>
       </header>
 
-      {/* CONTEÚDO DESCRITIVO */}
       <div className="absolute inset-0 z-20 flex flex-col justify-end px-16 md:px-40 pb-0 pointer-events-none">
         <div className="flex justify-between items-end w-full max-w-[1800px] mx-auto relative h-full">
           
@@ -247,9 +229,9 @@ export function HeroSection() {
               >
                 <div className="space-y-2">
                   <p className="text-[11px] tracking-[0.8em] text-white/40 uppercase font-bold italic">{PROGRAM_PHASES[activePhaseIndex].subtitle}</p>
-                  <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white leading-[0.8] drop-shadow-2xl">{PROGRAM_PHASES[activePhaseIndex].name}</h1>
+                  <h1 className="text-4xl font-black uppercase tracking-tighter text-white leading-[0.8] drop-shadow-2xl">{PROGRAM_PHASES[activePhaseIndex].name}</h1>
                 </div>
-                <p className="text-base text-white/60 leading-relaxed font-medium italic max-w-sm border-l border-white/20 pl-6">{PROGRAM_PHASES[activePhaseIndex].description}</p>
+                <p className="text-base text-white/40 leading-relaxed font-medium italic max-w-sm border-l border-white/10 pl-6">{PROGRAM_PHASES[activePhaseIndex].description}</p>
                 <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6 pt-6 cursor-pointer w-fit">
                   <div className="h-[1px] w-12 bg-white/20 group-hover:w-20 group-hover:bg-white transition-all duration-700" />
                   <span className="text-[11px] font-black uppercase tracking-[0.5em] text-white/80 group-hover:text-white transition-all">Saber Mais</span>
