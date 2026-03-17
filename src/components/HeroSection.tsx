@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { DASHBOARD_URL } from "@/lib/program-config";
-import { motion, useSpring, useMotionValue, AnimatePresence } from "framer-motion";
+import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
 import { ChevronUp, ChevronDown, Mouse } from "lucide-react";
 import Link from "next/link";
 
@@ -10,34 +10,56 @@ const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/obje
 const FRAME_SUFFIX = "_delay-0.033s.webp";
 const TOTAL_FRAMES_COUNT = 280;
 
+// NOVA ESTRUTURA CORRIGIDA (Sem a Fase 04 duplicada)
 const PROGRAM_PHASES = [
   {
+    id: "fase-0",
+    focusFrame: 8, 
+    subtitle: "Acesso à Plataforma",
+    name: "Login / Entrar",
+    description: "Aceda à área reservada para professores e agentes educativos. Faça login para explorar os módulos, materiais didáticos e progresso."
+  },
+  {
     id: "fase-1",
-    focusFrame: 5, 
+    focusFrame: 39, 
     subtitle: "III Ciclo - Angola",
     name: "Saber Mais",
     description: "Programa de Cooperação Bilateral entre Portugal e Angola, tutelado pelo Camões, I.P. e pelo Ministério da Educação de Angola-INFQE."
   },
   {
     id: "fase-2",
-    focusFrame: 86, 
+    focusFrame: 66, 
     subtitle: "Objetivo Geral",
     name: "Capacitação",
     description: "Capacitar e valorizar os recursos humanos do sistema educativo angolano, priorizando os agentes do Ensino Secundário Pedagógico."
   },
   {
     id: "fase-3", 
-    focusFrame: 154, 
+    focusFrame: 86, 
     subtitle: "Modelo de Supervisão",
     name: "Par Pedagógico",
     description: "Promoção da supervisão em modelo de par pedagógico e a institucionalização de Centros de Recursos nas comunidades."
   },
   {
     id: "fase-4", 
-    focusFrame: 204, 
-    subtitle: "Áreas de Intervenção",
-    name: "Disciplinas",
-    description: "Reforço de competências em Língua Portuguesa, Matemática, Expressões e Pré-escolar e Necessidades Educativas Especiais."
+    focusFrame: 151, // Informação empurrada para cima
+    subtitle: "Impacto Regional",
+    name: "Luanda & Bié",
+    description: "O programa está presente em duas províncias chave: Bié e Luanda, com foco na elevação da qualidade do ensino no 2º ciclo."
+  },
+  {
+    id: "fase-5", 
+    focusFrame: 210, // Informação empurrada para cima
+    subtitle: "Apoio Contínuo",
+    name: "Recursos Didáticos",
+    description: "Disponibilização de materiais pedagógicos inovadores e guias práticos para apoiar os professores nas salas de aula diariamente."
+  },
+  {
+    id: "fase-6", 
+    focusFrame: 260, // Informação empurrada para cima
+    subtitle: "Avaliação de Impacto",
+    name: "Monitorização",
+    description: "Acompanhamento rigoroso dos indicadores de sucesso para garantir a eficácia e a sustentabilidade do programa a longo prazo."
   }
 ];
 
@@ -50,15 +72,8 @@ export function HeroSection() {
   const [hasInteracted, setHasInteracted] = useState(false);
 
   const targetFrameValue = useMotionValue(PROGRAM_PHASES[0].focusFrame);
-  const progressBarHeight = useMotionValue("25%");
+  const progressBarHeight = useMotionValue("0%");
   
-  const smoothFrame = useSpring(targetFrameValue, { 
-    mass: 3.0,       
-    stiffness: 45,   
-    damping: 35,     
-    restDelta: 0.001 
-  });
-
   const isCooldown = useRef(false);
   const scrollIntent = useRef(0);
 
@@ -68,8 +83,9 @@ export function HeroSection() {
 
     const nextIndex = (index + PROGRAM_PHASES.length) % PROGRAM_PHASES.length;
     
+    // INÉRCIA DE 3 SEGUNDOS
     isCooldown.current = true;
-    setTimeout(() => { isCooldown.current = false; }, 800);
+    setTimeout(() => { isCooldown.current = false; }, 3000);
 
     setActivePhaseIndex(nextIndex);
 
@@ -80,8 +96,18 @@ export function HeroSection() {
     if (diff > TOTAL_FRAMES_COUNT / 2) diff -= TOTAL_FRAMES_COUNT;
     if (diff < -TOTAL_FRAMES_COUNT / 2) diff += TOTAL_FRAMES_COUNT;
 
-    targetFrameValue.set(currentFrame + diff);
-  }, [activePhaseIndex, hasInteracted, targetFrameValue]);
+    // CURVA CINEMATOGRÁFICA (1.4s)
+    animate(targetFrameValue, currentFrame + diff, {
+      duration: 1.4,
+      ease: [0.22, 1, 0.36, 1],
+    });
+
+    animate(progressBarHeight, `${(nextIndex / (PROGRAM_PHASES.length - 1)) * 100}%`, {
+      duration: 1.4,
+      ease: [0.22, 1, 0.36, 1],
+    });
+
+  }, [activePhaseIndex, hasInteracted, targetFrameValue, progressBarHeight]);
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
@@ -139,37 +165,39 @@ export function HeroSection() {
     }
 
     let lastFrame = -1;
-    return smoothFrame.on("change", (v) => {
-      let frameIdx = Math.floor(v) % TOTAL_FRAMES_COUNT;
+    return targetFrameValue.on("change", (v) => {
+      let frameIdx = Math.round(v) % TOTAL_FRAMES_COUNT;
       if (frameIdx < 0) frameIdx += TOTAL_FRAMES_COUNT;
 
       if (frameIdx !== lastFrame) {
         lastFrame = frameIdx;
         const img = imagesRef.current[frameIdx];
         if (img?.complete && img.naturalHeight > 0) {
-          requestAnimationFrame(() => draw(img));
+          draw(img);
         }
       }
-      progressBarHeight.set(`${((activePhaseIndex + 1) / PROGRAM_PHASES.length) * 100}%`);
     });
-  }, [smoothFrame, activePhaseIndex, progressBarHeight]);
+  }, [targetFrameValue]);
 
   return (
     <div 
       ref={containerRef} 
       className="relative h-screen w-full bg-black overflow-hidden touch-none cursor-default"
     >
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full contrast-115 saturate-110 brightness-95" />
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full contrast-115 saturate-110 brightness-95 transform-gpu" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70 pointer-events-none" />
 
-      {/* LOGOTIPO CENTRALIZADO SIMPLES */}
-      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-none">
-        <img 
-          src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/logo%20sabermais.png" 
-          alt="Logotipo Saber Mais" 
-          className="h-20 w-auto object-contain opacity-90 drop-shadow-[0_2px_15px_rgba(0,0,0,0.8)]"
+      {/* LOGOTIPO CENTRALIZADO COM EFEITO FLUTUANTE 3D */}
+      <div className="absolute bottom-20 md:bottom-28 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-auto w-[450px] md:w-[650px] group">
+        <motion.img 
+          src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/sabermais%203D.png" 
+          alt="Logotipo Saber Mais 3D" 
+          onClick={() => goToPhase(0)} // Clicar leva para a Fase 0 (Login)
+          animate={{ y: [0, -12, 0] }} // Efeito Flutuante
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="h-32 md:h-40 w-auto object-contain cursor-pointer transition-transform duration-700 group-hover:scale-110 mix-blend-screen contrast-125 brightness-110 drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)]"
         />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mt-6 text-center leading-relaxed">
+        <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-white text-center leading-relaxed drop-shadow-[0_2px_5px_rgba(0,0,0,1)] opacity-90 mt-6">
           Programa de Apoio ao Reforço do Ensino Secundário em Angola
         </p>
       </div>
@@ -191,32 +219,38 @@ export function HeroSection() {
       <header className="absolute top-0 left-0 w-full z-30 px-16 md:px-40 py-12 flex justify-between items-center pointer-events-none">
         <div className="w-32" />
         <nav className="hidden md:flex gap-16 pointer-events-auto pt-[10px]">
-          {PROGRAM_PHASES.map((phase, index) => (
-            <button
-              key={phase.id}
-              onClick={() => goToPhase(index)}
-              className={`flex items-baseline gap-3 transition-all duration-700 group ${
-                activePhaseIndex === index ? "scale-105" : "hover:scale-105"
-              }`}
-            >
-              <span className={`text-[12px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${
-                activePhaseIndex === index ? "text-white drop-shadow-[0_0_8px_white]" : "text-white/10 group-hover:text-white/40"
-              }`}>
-                0{index + 1}
-              </span>
-              <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-all duration-500 ${
-                activePhaseIndex === index ? "text-white opacity-100" : "text-white/0 opacity-0 group-hover:text-white/10 group-hover:opacity-100"
-              }`}>
-                {phase.name}
-              </span>
-            </button>
-          ))}
+          {/* Mapeamento ajustado para não mostrar o "Login/Entrar" (Index 0) no menu */}
+          {PROGRAM_PHASES.map((phase, index) => {
+            if (index === 0) return null; 
+            
+            return (
+              <button
+                key={phase.id}
+                onClick={() => goToPhase(index)}
+                className={`flex items-baseline gap-3 transition-all duration-700 group ${
+                  activePhaseIndex === index ? "scale-105" : "hover:scale-105"
+                }`}
+              >
+                <span className={`text-[12px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${
+                  activePhaseIndex === index ? "text-white drop-shadow-[0_0_8px_white]" : "text-white/10 group-hover:text-white/40"
+                }`}>
+                  0{index}
+                </span>
+                <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-all duration-500 ${
+                  activePhaseIndex === index ? "text-white opacity-100" : "text-white/0 opacity-0 group-hover:text-white/10 group-hover:opacity-100"
+                }`}>
+                  {phase.name}
+                </span>
+              </button>
+            );
+          })}
         </nav>
       </header>
 
       <div className="absolute inset-0 z-20 flex flex-col justify-end px-16 md:px-40 pb-0 pointer-events-none">
         <div className="flex justify-between items-end w-full max-w-[1800px] mx-auto relative h-full">
           
+          {/* BLOCO DE TEXTO E BOTÕES */}
           <div className="absolute bottom-[30vh] lg:bottom-[35vh] left-0 max-w-xl pointer-events-none w-full h-[300px]">
             <AnimatePresence mode="wait">
               <motion.div 
@@ -229,12 +263,16 @@ export function HeroSection() {
               >
                 <div className="space-y-2">
                   <p className="text-[11px] tracking-[0.8em] text-white/40 uppercase font-bold italic">{PROGRAM_PHASES[activePhaseIndex].subtitle}</p>
-                  <h1 className="text-4xl font-black uppercase tracking-tighter text-white leading-[0.8] drop-shadow-2xl">{PROGRAM_PHASES[activePhaseIndex].name}</h1>
+                  <h1 className="text-4xl lg:text-5xl font-black uppercase tracking-tighter text-white leading-[0.85] drop-shadow-2xl">{PROGRAM_PHASES[activePhaseIndex].name}</h1>
                 </div>
-                <p className="text-base text-white/40 leading-relaxed font-medium italic max-w-sm border-l border-white/10 pl-6">{PROGRAM_PHASES[activePhaseIndex].description}</p>
+                <p className="text-base text-white/50 leading-relaxed font-medium italic max-w-sm border-l border-white/10 pl-6">{PROGRAM_PHASES[activePhaseIndex].description}</p>
+                
+                {/* O botão muda de ação e texto na Fase 0 */}
                 <button onClick={() => window.open(DASHBOARD_URL, "_blank")} className="group flex items-center gap-6 pt-6 cursor-pointer w-fit">
                   <div className="h-[1px] w-12 bg-white/20 group-hover:w-20 group-hover:bg-white transition-all duration-700" />
-                  <span className="text-[11px] font-black uppercase tracking-[0.5em] text-white/80 group-hover:text-white transition-all">Saber Mais</span>
+                  <span className="text-[11px] font-black uppercase tracking-[0.5em] text-white/80 group-hover:text-white transition-all">
+                    {activePhaseIndex === 0 ? "Aceder ao Portal" : "Saber Mais"}
+                  </span>
                 </button>
               </motion.div>
             </AnimatePresence>
@@ -244,7 +282,7 @@ export function HeroSection() {
             <div className="flex flex-col items-center gap-4">
               <span className="text-[9px] font-bold text-white/20 uppercase tracking-[0.3em]">Phase</span>
               <div className="relative h-48 w-[1px] bg-white/5">
-                <motion.div style={{ height: progressBarHeight }} className="absolute top-0 w-full bg-white shadow-[0_0_20px_white] transition-all duration-1000 ease-out" />
+                <motion.div style={{ height: progressBarHeight }} className="absolute top-0 w-full bg-white shadow-[0_0_20px_white]" />
               </div>
             </div>
             <div className="flex flex-col gap-4">
