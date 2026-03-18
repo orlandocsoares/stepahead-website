@@ -5,6 +5,20 @@ import Link from "next/link";
 import { DASHBOARD_URL } from "@/lib/program-config";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
 import { ChevronUp, ChevronDown, Mouse } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+
 
 const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Nuvem%20LooP/";
 const FRAME_SUFFIX = "_delay-0.033s.webp";
@@ -69,6 +83,28 @@ export function HeroSection() {
   
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
+
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setIsLoginOpen(false);
+      router.refresh();
+    }
+  };
 
   const targetFrameValue = useMotionValue(PROGRAM_PHASES[0].focusFrame);
   const progressBarHeight = useMotionValue("0%");
@@ -201,19 +237,59 @@ export function HeroSection() {
 
       {/* LOGOTIPO CENTRALIZADO (Largura Responsiva) */}
       <div className="absolute bottom-16 sm:bottom-20 md:bottom-28 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-auto w-[85%] max-w-[320px] sm:max-w-[450px] md:max-w-[650px] group">
-        <Link 
-          href="/login" 
-          className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40 hover:text-white transition-colors mb-6"
-        >
-          Entrar
-        </Link>
+        <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+          <DialogTrigger asChild>
+            <button className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40 hover:text-white transition-colors mb-6">
+              Entrar
+            </button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px] bg-black/80 backdrop-blur-md border-white/20 text-white rounded-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black uppercase tracking-tighter text-white">Acesso à Plataforma</DialogTitle>
+              <DialogDescription className="text-white/60">
+                Faça login para explorar os módulos e materiais didáticos.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleLogin} className="space-y-6 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-white/70">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="rounded-md border-white/20 bg-white/10 focus:border-white text-base text-white placeholder:text-white/40"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-white/70">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="rounded-md border-white/20 bg-white/10 focus:border-white text-base text-white placeholder:text-white/40"
+                />
+              </div>
+              {error && <p className="text-sm font-medium text-red-400">{error}</p>}
+              <Button type="submit" className="w-full rounded-md bg-white text-black hover:bg-white/80 font-bold uppercase tracking-widest py-6">
+                Entrar
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
         <motion.img 
           src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/sabermais%203D.png" 
           alt="Logotipo Saber Mais 3D" 
           onClick={() => goToPhase(0)} 
           animate={{ y: [0, -10, 0] }} 
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="h-24 sm:h-32 md:h-40 w-auto object-contain cursor-pointer transition-transform duration-700 group-hover:scale-105 mix-blend-screen contrast-125 brightness-110 drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)]"
+          className="h-24 sm:h-32 md:h-40 w-auto object-contain cursor-pointer mix-blend-screen contrast-125 brightness-110 drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)]"
         />
         <p className="text-[7px] sm:text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-white text-center leading-relaxed drop-shadow-[0_2px_5px_rgba(0,0,0,1)] opacity-90 mt-4 md:mt-6">
           Programa de Apoio ao Reforço do <br className="hidden sm:block" />Ensino Secundário em Angola
