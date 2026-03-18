@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import Link from "next/link";
 import { DASHBOARD_URL } from "@/lib/program-config";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
 import { ChevronUp, ChevronDown, Mouse } from "lucide-react";
@@ -200,6 +201,12 @@ export function HeroSection() {
 
       {/* LOGOTIPO CENTRALIZADO (Largura Responsiva) */}
       <div className="absolute bottom-16 sm:bottom-20 md:bottom-28 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-auto w-[85%] max-w-[320px] sm:max-w-[450px] md:max-w-[650px] group">
+        <Link 
+          href="/login" 
+          className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40 hover:text-white transition-colors mb-6"
+        >
+          Entrar
+        </Link>
         <motion.img 
           src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/sabermais%203D.png" 
           alt="Logotipo Saber Mais 3D" 
