@@ -238,11 +238,13 @@ export function HeroSection() {
       {/* LOGOTIPO CENTRALIZADO (Largura Responsiva) */}
       <div className="absolute bottom-16 sm:bottom-20 md:bottom-28 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-auto w-[85%] max-w-[320px] sm:max-w-[450px] md:max-w-[650px] group">
         <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-          <DialogTrigger asChild>
-            <button className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40 hover:text-white transition-colors mb-6">
-              Entrar
-            </button>
-          </DialogTrigger>
+          {activePhaseIndex === 0 && (
+            <DialogTrigger asChild>
+              <button className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40 hover:text-white transition-colors mb-6">
+                Entrar
+              </button>
+            </DialogTrigger>
+          )}
           <DialogContent className="sm:max-w-[425px] bg-black/80 backdrop-blur-md border-white/20 text-white rounded-lg">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black uppercase tracking-tighter text-white">Acesso à Plataforma</DialogTitle>
