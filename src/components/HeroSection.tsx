@@ -247,7 +247,10 @@ export function HeroSection() {
           )}
           <DialogContent className="sm:max-w-[425px] bg-transparent backdrop-blur-xl border border-white/10 text-white rounded-xl shadow-2xl shadow-black/40">
             <DialogHeader>
-              <DialogTitle className="text-xl font-black uppercase tracking-tighter text-white">Saber Mais | Acesso à Plataforma</DialogTitle>
+              <DialogTitle className="text-xl font-black uppercase tracking-tighter text-white">
+                <div>Saber Mais</div>
+                <div className="text-base font-normal normal-case tracking-normal text-white/70">Acesso à Plataforma</div>
+              </DialogTitle>
               <DialogDescription className="text-white/60">
                 Faça login para explorar os módulos e materiais didáticos.
               </DialogDescription>
