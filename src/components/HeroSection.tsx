@@ -245,7 +245,7 @@ export function HeroSection() {
               </button>
             </DialogTrigger>
           )}
-          <DialogContent className="sm:max-w-[425px] bg-black/80 backdrop-blur-md border-white/20 text-white rounded-lg">
+          <DialogContent className="sm:max-w-[425px] bg-black/20 backdrop-blur-xl border border-white/10 text-white rounded-xl shadow-2xl shadow-black/40">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black uppercase tracking-tighter text-white">Acesso à Plataforma</DialogTitle>
               <DialogDescription className="text-white/60">
@@ -262,7 +262,7 @@ export function HeroSection() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="rounded-md border-white/20 bg-white/10 focus:border-white text-base text-white placeholder:text-white/40"
+                  className="rounded-md border-white/20 bg-transparent focus:border-white text-base text-white placeholder:text-white/40"
                 />
               </div>
               <div className="space-y-2">
@@ -274,11 +274,11 @@ export function HeroSection() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-md border-white/20 bg-white/10 focus:border-white text-base text-white placeholder:text-white/40"
+                  className="rounded-md border-white/20 bg-transparent focus:border-white text-base text-white placeholder:text-white/40"
                 />
               </div>
               {error && <p className="text-sm font-medium text-red-400">{error}</p>}
-              <Button type="submit" className="w-full rounded-md bg-white text-black hover:bg-white/80 font-bold uppercase tracking-widest py-6">
+              <Button type="submit" className="w-full rounded-md border border-white/50 bg-white/10 text-white hover:bg-white hover:text-black font-bold uppercase tracking-widest py-6 transition-all duration-300">
                 Entrar
               </Button>
             </form>
