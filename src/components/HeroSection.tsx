@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
 const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Nuvem%20LooP/";
@@ -90,6 +91,7 @@ export function HeroSection() {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [role, setRole] = useState('formando');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -119,6 +121,7 @@ export function HeroSection() {
         data: {
           first_name: firstName,
           last_name: lastName,
+          role: role,
         },
       },
     });
@@ -140,6 +143,7 @@ export function HeroSection() {
       setPassword('');
       setFirstName('');
       setLastName('');
+      setRole('formando');
     } else {
        // Reset to login mode when dialog is closed
       setAuthMode('login');
@@ -153,6 +157,7 @@ export function HeroSection() {
       setPassword('');
       setFirstName('');
       setLastName('');
+      setRole('formando');
   }, [authMode]);
 
 
@@ -392,6 +397,19 @@ export function HeroSection() {
                     className="rounded-md border-white/20 bg-transparent focus:border-white text-base text-white placeholder:text-white/40"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-white/70">Função</Label>
+                  <RadioGroup defaultValue="formando" value={role} onValueChange={setRole} className="flex items-center gap-6 pt-2">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="formando" id="role-formando" className="border-white/50 text-white focus:ring-white"/>
+                      <Label htmlFor="role-formando" className="font-normal text-sm text-white/90 normal-case">Formando</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="formador" id="role-formador" className="border-white/50 text-white focus:ring-white"/>
+                      <Label htmlFor="role-formador" className="font-normal text-sm text-white/90 normal-case">Formador</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
                 {error && <p className="text-sm font-medium text-red-400">{error}</p>}
                 <Button type="submit" className="w-full rounded-md border border-white/50 bg-white/10 text-white hover:bg-white hover:text-black font-bold uppercase tracking-widest py-6 transition-all duration-300">
                   Registar
@@ -424,9 +442,7 @@ export function HeroSection() {
           src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/sabermais%203D.png"
           alt="Logotipo Saber Mais 3D"
           onClick={() => goToPhase(0)}
-          animate={{ y: [0, -10, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="h-24 sm:h-32 md:h-40 w-auto object-contain cursor-pointer mix-blend-screen contrast-125 brightness-110 drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)]"
+          className="h-24 sm:h-32 md:h-40 w-auto object-contain cursor-pointer mix-blend-screen contrast-125 brightness-110"
         />
         <p className="text-[7px] sm:text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-white text-center leading-relaxed drop-shadow-[0_2px_5px_rgba(0,0,0,1)] opacity-90 mt-4 md:mt-6">
           Programa de Apoio ao Reforço do <br className="hidden sm:block" />Ensino Secundário em Angola
