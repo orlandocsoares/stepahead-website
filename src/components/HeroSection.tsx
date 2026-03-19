@@ -27,49 +27,49 @@ const TOTAL_FRAMES_COUNT = 280;
 const PROGRAM_PHASES = [
   {
     id: "fase-0",
-    focusFrame: 8, 
+    focusFrame: 8,
     subtitle: "Acesso à Plataforma",
     name: "Login / Entrar",
     description: "Aceda à área reservada para professores e agentes educativos. Faça login para explorar os módulos, materiais didáticos e progresso."
   },
   {
     id: "fase-1",
-    focusFrame: 39, 
+    focusFrame: 39,
     subtitle: "III Ciclo - Angola",
     name: "Saber Mais",
     description: "Programa de Cooperação Bilateral entre Portugal e Angola, tutelado pelo Camões, I.P. e pelo Ministério da Educação de Angola-INFQE."
   },
   {
     id: "fase-2",
-    focusFrame: 66, 
+    focusFrame: 66,
     subtitle: "Objetivo Geral",
     name: "Capacitação",
     description: "Capacitar e valorizar os recursos humanos do sistema educativo angolano, priorizando os agentes do Ensino Secundário Pedagógico."
   },
   {
-    id: "fase-3", 
-    focusFrame: 86, 
+    id: "fase-3",
+    focusFrame: 86,
     subtitle: "Modelo de Supervisão",
     name: "Par Pedagógico",
     description: "Promoção da supervisão em modelo de par pedagógico e a institucionalização de Centros de Recursos nas comunidades."
   },
   {
-    id: "fase-4", 
-    focusFrame: 151, 
+    id: "fase-4",
+    focusFrame: 151,
     subtitle: "Impacto Regional",
     name: "Luanda & Bié",
     description: "O programa está presente em duas províncias chave: Bié e Luanda, com foco na elevação da qualidade do ensino no 2º ciclo."
   },
   {
-    id: "fase-5", 
-    focusFrame: 210, 
+    id: "fase-5",
+    focusFrame: 210,
     subtitle: "Apoio Contínuo",
     name: "Recursos Didáticos",
     description: "Disponibilização de materiais pedagógicos inovadores e guias práticos para apoiar os professores nas salas de aula diariamente."
   },
   {
-    id: "fase-6", 
-    focusFrame: 260, 
+    id: "fase-6",
+    focusFrame: 260,
     subtitle: "Avaliação de Impacto",
     name: "Monitorização",
     description: "Acompanhamento rigoroso dos indicadores de sucesso para garantir a eficácia e a sustentabilidade do programa a longo prazo."
@@ -80,13 +80,16 @@ export function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
-  
+
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
 
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -106,9 +109,56 @@ export function HeroSection() {
     }
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+        },
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+    } else {
+      // TODO: Add a success message, e.g. "Check your email to confirm your account"
+      setIsLoginOpen(false);
+      router.refresh();
+    }
+  };
+  
+  // Reset form when dialog opens or mode changes
+  useEffect(() => {
+    if (isLoginOpen) {
+      setError(null);
+      setEmail('');
+      setPassword('');
+      setFirstName('');
+      setLastName('');
+    } else {
+       // Reset to login mode when dialog is closed
+      setAuthMode('login');
+    }
+  }, [isLoginOpen]);
+
+  // Reset form when authMode changes
+  useEffect(() => {
+      setError(null);
+      setEmail('');
+      setPassword('');
+      setFirstName('');
+      setLastName('');
+  }, [authMode]);
+
+
   const targetFrameValue = useMotionValue(PROGRAM_PHASES[0].focusFrame);
   const progressBarHeight = useMotionValue("0%");
-  
+
   const isCooldown = useRef(false);
   const scrollIntent = useRef(0);
 
@@ -117,7 +167,7 @@ export function HeroSection() {
     if (!hasInteracted) setHasInteracted(true);
 
     const nextIndex = (index + PROGRAM_PHASES.length) % PROGRAM_PHASES.length;
-    
+
     isCooldown.current = true;
     setTimeout(() => { isCooldown.current = false; }, 3000);
 
@@ -125,7 +175,7 @@ export function HeroSection() {
 
     const currentFrame = targetFrameValue.get();
     const targetFocus = PROGRAM_PHASES[nextIndex].focusFrame;
-    
+
     let diff = targetFocus - (currentFrame % TOTAL_FRAMES_COUNT);
     if (diff > TOTAL_FRAMES_COUNT / 2) diff -= TOTAL_FRAMES_COUNT;
     if (diff < -TOTAL_FRAMES_COUNT / 2) diff += TOTAL_FRAMES_COUNT;
@@ -174,7 +224,7 @@ export function HeroSection() {
       const cw = window.innerWidth;
       const ch = window.innerHeight;
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      
+
       canvas.width = cw * dpr;
       canvas.height = ch * dpr;
       ctx.scale(dpr, dpr);
@@ -228,8 +278,8 @@ export function HeroSection() {
   }, [targetFrameValue]);
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className="relative h-screen w-full bg-black overflow-hidden touch-none cursor-default"
     >
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full contrast-115 saturate-110 brightness-95 transform-gpu" />
@@ -249,50 +299,132 @@ export function HeroSection() {
             <DialogHeader>
               <DialogTitle className="text-xl font-black uppercase tracking-tighter text-white">
                 <div>Saber Mais</div>
-                <div className="text-base font-normal normal-case tracking-normal text-white/70">Acesso à Plataforma</div>
+                <div className="text-base font-normal normal-case tracking-normal text-white/70">
+                  {authMode === 'login' ? 'Acesso à Plataforma' : 'Criar Nova Conta'}
+                </div>
               </DialogTitle>
               <DialogDescription className="text-white/60">
-                Faça login para explorar os módulos e materiais didáticos.
+                {authMode === 'login' 
+                  ? 'Faça login para explorar os módulos e materiais didáticos.'
+                  : 'Preencha os seus dados para se registar na plataforma.'
+                }
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleLogin} className="space-y-6 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-white/70">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="rounded-md border-white/20 bg-transparent focus:border-white text-base text-white placeholder:text-white/40"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-white/70">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-md border-white/20 bg-transparent focus:border-white text-base text-white placeholder:text-white/40"
-                />
-              </div>
-              {error && <p className="text-sm font-medium text-red-400">{error}</p>}
-              <Button type="submit" className="w-full rounded-md border border-white/50 bg-white/10 text-white hover:bg-white hover:text-black font-bold uppercase tracking-widest py-6 transition-all duration-300">
-                Entrar
-              </Button>
-            </form>
+
+            {authMode === 'login' ? (
+              <form onSubmit={handleLogin} className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-white/70">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="rounded-md border-white/20 bg-transparent focus:border-white text-base text-white placeholder:text-white/40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-white/70">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="rounded-md border-white/20 bg-transparent focus:border-white text-base text-white placeholder:text-white/40"
+                  />
+                </div>
+                {error && <p className="text-sm font-medium text-red-400">{error}</p>}
+                <Button type="submit" className="w-full rounded-md border border-white/50 bg-white/10 text-white hover:bg-white hover:text-black font-bold uppercase tracking-widest py-6 transition-all duration-300">
+                  Entrar
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleSignUp} className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-xs font-bold uppercase tracking-widest text-white/70">Nome</Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="Seu nome"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="rounded-md border-white/20 bg-transparent focus:border-white text-base text-white placeholder:text-white/40"
+                  />
+                </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-xs font-bold uppercase tracking-widest text-white/70">Apelido</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Seu apelido"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="rounded-md border-white/20 bg-transparent focus:border-white text-base text-white placeholder:text-white/40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email-register" className="text-xs font-bold uppercase tracking-widest text-white/70">Email</Label>
+                  <Input
+                    id="email-register"
+                    type="email"
+                    placeholder="seu@email.com"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="rounded-md border-white/20 bg-transparent focus:border-white text-base text-white placeholder:text-white/40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password-register" className="text-xs font-bold uppercase tracking-widest text-white/70">Password</Label>
+                  <Input
+                    id="password-register"
+                    type="password"
+                    placeholder="••••••••"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="rounded-md border-white/20 bg-transparent focus:border-white text-base text-white placeholder:text-white/40"
+                  />
+                </div>
+                {error && <p className="text-sm font-medium text-red-400">{error}</p>}
+                <Button type="submit" className="w-full rounded-md border border-white/50 bg-white/10 text-white hover:bg-white hover:text-black font-bold uppercase tracking-widest py-6 transition-all duration-300">
+                  Registar
+                </Button>
+              </form>
+            )}
+
+            <div className="mt-2 text-center text-sm text-white/60">
+              {authMode === 'login' ? (
+                <>
+                  Não tem conta?{' '}
+                  <button onClick={() => setAuthMode('register')} className="font-semibold underline hover:text-white">
+                    Registe-se
+                  </button>
+                </>
+              ) : (
+                <>
+                  Já tem conta?{' '}
+                  <button onClick={() => setAuthMode('login')} className="font-semibold underline hover:text-white">
+                    Entrar
+                  </button>
+                </>
+              )}
+            </div>
+
           </DialogContent>
         </Dialog>
 
-        <motion.img 
-          src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/sabermais%203D.png" 
-          alt="Logotipo Saber Mais 3D" 
-          onClick={() => goToPhase(0)} 
-          animate={{ y: [0, -10, 0] }} 
+        <motion.img
+          src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/sabermais%203D.png"
+          alt="Logotipo Saber Mais 3D"
+          onClick={() => goToPhase(0)}
+          animate={{ y: [0, -10, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           className="h-24 sm:h-32 md:h-40 w-auto object-contain cursor-pointer mix-blend-screen contrast-125 brightness-110 drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)]"
         />
@@ -321,8 +453,8 @@ export function HeroSection() {
         {/* Menu esconde em mobile muito pequeno, mostra em tablet/desktop */}
         <nav className="hidden md:flex flex-wrap justify-end gap-8 lg:gap-16 pointer-events-auto pt-[10px]">
           {PROGRAM_PHASES.map((phase, index) => {
-            if (index === 0) return null; 
-            
+            if (index === 0) return null;
+
             return (
               <button
                 key={phase.id}
@@ -350,7 +482,7 @@ export function HeroSection() {
       {/* BLOCO DE TEXTOS E BARRA DE PROGRESSO */}
       <div className="absolute inset-0 z-20 flex flex-col justify-end px-6 sm:px-12 md:px-24 lg:px-40 pb-0 pointer-events-none">
         <div className="flex justify-between items-end w-full max-w-[1800px] mx-auto relative h-full">
-          
+
           {/* CONTROLOS LATERAIS RESPONSIVOS */}
           <div className="absolute bottom-[35vh] lg:bottom-[35vh] right-0 flex flex-col items-center gap-6 md:gap-10 pointer-events-auto">
             <div className="flex flex-col items-center gap-3 md:gap-4">
