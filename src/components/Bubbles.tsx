@@ -24,7 +24,7 @@ class Bubble {
 
   constructor(canvasWidth: number, canvasHeight: number, imgs: any) {
     const rand = Math.random();
-    this.content = rand < 0.8 ? BUBBLE_TYPES[0] : BUBBLE_TYPES[1];
+    this.content = rand < 0.7 ? BUBBLE_TYPES[0] : BUBBLE_TYPES[1];
     
     const iconId = (Math.floor(Math.random() * TOTAL_ICONS) + 1).toString().padStart(2, "0");
     this.img = imgs[iconId];
@@ -32,11 +32,11 @@ class Bubble {
     this.x = Math.random() * canvasWidth;
     this.y = canvasHeight + 100;
     
-    this.vx = (Math.random() - 0.5) * 1.5;
+    this.vx = (Math.random() - 0.5) * 1.3;
     this.vy = -(Math.random() * 0.8 + 0.6); 
     
-    this.radius = 2;
-    this.maxRadius = Math.random() * 15 + 30;
+    this.radius = 1.5;
+    this.maxRadius = Math.random() * 10 + 25;
     this.opacity = 0;
     
     this.birth = Date.now();
@@ -66,7 +66,7 @@ class Bubble {
     
     if (isReturning) { 
         this.vy = -12; 
-        this.opacity -= 0.08;
+        this.opacity -= 0.18;
     } else { 
         if (this.radius < this.maxRadius) this.radius += 0.25; 
         if (this.opacity < 1) this.opacity += 0.03; 
@@ -92,7 +92,7 @@ class Bubble {
 }
 
 export function Bubbles() {
-  const isIdle = useIdle(10000);
+  const isIdle = useIdle(30000);
   const [sessionActive, setSessionActive] = useState(false);
   const [isReturning, setIsReturning] = useState(false);
   const [isMounted, setIsMounted] = useState(false);

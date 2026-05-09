@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 95%;
+    --background: 0 0% 95%; /* Mantive os teus originais */
     --foreground: 0 0% 0%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
@@ -32,13 +32,18 @@
     @apply border-border;
   }
   body {
+    /* Adicionei scrollbar-gutter para a página não saltar e forcei o fundo preto para bater com o teu design */
     @apply bg-background text-foreground font-body;
+    background-color: #000; 
+    scrollbar-gutter: stable;
+    overflow-x: hidden;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline uppercase tracking-tighter;
   }
 }
 
+/* AS TUAS CLASSES ORIGINAIS (Preservadas) */
 .parallax-container {
   height: 300vh;
 }
@@ -52,4 +57,44 @@
 
 .fade-transition {
   transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+/* --- INJEÇÃO DE IMERSÃO CRYSTAL (O que faltava) --- */
+
+/* Scrollbar Futurista */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.15); /* Azul néon muito suave */
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+/* Seleção de Texto combinando com o Radar */
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: #fff;
+}
+
+/* Forçar Dark Mode nos widgets nativos do navegador */
+input, select, textarea {
+  color-scheme: dark;
+  outline: none !important;
+}
+
+/* Remover o brilho azul padrão do Chrome em inputs focado */
+input:focus {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
 }
