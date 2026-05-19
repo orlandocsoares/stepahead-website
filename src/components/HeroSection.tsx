@@ -1,8 +1,9 @@
 "use client";
 
+import { HeroBranding } from "./HeroBranding";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, LogOut, User, Camera } from "lucide-react";
+import { LogIn, LogOut, User, Camera, GraduationCap, UserCheck, Calendar, FileText, Users, Activity } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +21,6 @@ const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/obje
 const FRAME_SUFFIX = "_delay-0.033s.webp";
 const TOTAL_FRAMES_COUNT = 280;
 
-// ARRAY EXPANDIDO PARA MAIOR VARIEDADE E MENOS REPETIÇÃO
 const EDUCATIONAL_ELEMENTS = [
 "E = mc²", "H₂O", "∫ f(x) dx", "F = ma", "πr²", "CO₂", "Ser / Estar",
 "x² + y² = z²", "∑", "NaCl", "v = d/t", "A, E, I, O, U", "∞",
@@ -31,24 +31,66 @@ const EDUCATIONAL_ELEMENTS = [
 ];
 
 const PROGRAM_PHASES = [
-{ id: "fase-0", focusFrame: 8, subtitle: "Acesso à Plataforma", name: "Login", description: "Aceda à área reservada para professores e agentes educativos. Faça login para explorar os módulos, materiais didáticos e progresso." },
+{ id: "fase-0", focusFrame: 8, subtitle: "Acesso à Plataforma", name: "Login", description: "Aceda à área reservada para professores e agentes educativos. Faça login para explorar os módulos, materiais didácticos e progresso." },
 { id: "fase-1", focusFrame: 39, subtitle: "III Ciclo - Angola", name: "Saber Mais", description: "Programa de Cooperação Bilateral entre Portugal e Angola, tutelado pelo Camões, I.P. e pelo Ministério da Educação de Angola-INFQE." },
-{ id: "fase-2", focusFrame: 66, subtitle: "Objetivo Geral", name: "Capacitação", description: "Capacitar e valorizar os recursos humanos do sistema educativo angolano, priorizando os agentes do Ensino Secundário Pedagógico." },
+{ id: "fase-2", focusFrame: 66, subtitle: "Objectivo Geral", name: "Capacitação", description: "Capacitar e valorizar os recursos humanos do sistema educativo angolano, priorizando os agentes do Ensino Secundário Pedagógico." },
 { id: "fase-3", focusFrame: 86, subtitle: "Modelo de Supervisão", name: "Par Pedagógico", description: "Promoção da supervisão em modelo de par pedagógico e a institucionalização de Centros de Recursos nas comunidades." },
-{ id: "fase-4", focusFrame: 151, subtitle: "Impacto Regional", name: "Luanda & Bié", description: "O programa está presente em duas províncias chave: Bié e Luanda, com foco na elevação da qualidade do ensino no 2º ciclo." },
+{ id: "fase-4", focusFrame: 151, subtitle: "Impacto Regional", name: "Luanda & Bié", description: "O projecto está presente em duas províncias chave: Bié e Luanda, com foco na elevação da qualidade do ensino no 2º ciclo." },
 { id: "fase-5", focusFrame: 210, subtitle: "Apoio Contínuo", name: "Recursos", description: "Disponibilização de materiais pedagógicos inovadores e guias práticos para apoiar os professores nas salas de aula diariamente." },
-{ id: "fase-6", focusFrame: 260, subtitle: "Avaliação de Impacto", name: "Monitorização", description: "Acompanhamento rigoroso dos indicadores de sucesso para garantir a eficácia e a sustentabilidade do programa a longo prazo." }
+{ id: "fase-6", focusFrame: 260, subtitle: "Avaliação de Impacto", name: "Monitorização", description: "Acompanhamento rigoroso dos indicadores de sucesso para garantir a eficácia e a sustentabilidade do projecto a longo prazo." }
 ];
 
+// COMPONENTE: LOOP DE FORMADORES (Infografia Dinâmica Refinada)
+function FormadoresLoop({ formadores }: { formadores: any[] }) {
+  const [idx, setIdx] = useState(0);
+  
+  useEffect(() => {
+    if (!formadores || formadores.length <= 1) return;
+    const interval = setInterval(() => setIdx(p => (p + 1) % formadores.length), 4500);
+    return () => clearInterval(interval);
+  }, [formadores]);
+
+  if (!formadores || formadores.length === 0) return null;
+  const f = formadores[idx];
+  const avatar = f.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${f.first_name}&backgroundColor=ffffff&textColor=000000`;
+
+  return (
+    <div className="flex items-center gap-6 bg-black/60 backdrop-blur-xl border border-white/10 p-6 rounded-3xl mt-6 shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative overflow-hidden w-fit max-w-[500px]">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+          className="flex items-center gap-6 w-full"
+        >
+          <div className="relative shrink-0">
+            <img src={avatar} className="w-20 h-20 rounded-full border-2 border-blue-400/50 object-cover shadow-[0_0_20px_rgba(59,130,246,0.4)]" alt="Formador" />
+            <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1.5 border-2 border-black">
+              <UserCheck size={14} className="text-white" />
+            </div>
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="text-xl md:text-2xl text-white font-bold tracking-tight">{f.first_name} {f.last_name}</span>
+            <span className="text-sm md:text-base text-emerald-400 uppercase tracking-[0.2em] font-medium mt-1">{f.especialidade || 'Formador Credenciado'}</span>
+            <span className="text-base text-white/60 mt-2 font-light leading-snug">Acção focal no reforço e desenvolvimento das novas metodologias de ensino activo.</span>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
 interface HeroSectionProps {
-isDashboardView?: boolean;
+  isDashboardView?: boolean;
 }
 
 export function HeroSection({ isDashboardView = false }: HeroSectionProps) {
 const containerRef = useRef<HTMLDivElement>(null);
 const router = useRouter();
 
-// ESTADOS
 const [user, setUser] = useState<any>(null);
 const [isLoginOpen, setIsLoginOpen] = useState(false);
 const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -64,32 +106,34 @@ const [hasInteracted, setHasInteracted] = useState(false);
 const [isHovering, setIsHovering] = useState(false);
 const [isLogoHovered, setIsLogoHovered] = useState(false);
 
+const [telemetry, setTelemetry] = useState<any>(null);
+
 const mouseX = useMotionValue(-100);
 const mouseY = useMotionValue(-100);
 const targetFrameValue = useMotionValue(PROGRAM_PHASES[0].focusFrame);
 const isCooldown = useRef(false);
 const scrollIntent = useRef(0);
 
-// --- BLOCO DE INTEGRAÇÃO SUPABASE (ATUALIZADO) ---
 useEffect(() => {
-  // Verificação inicial do usuário com log de diagnóstico
   supabase.auth.getUser().then(({ data, error }) => {
-    if (error) {
-      console.log("Supabase Connection: Erro ao buscar usuário", error);
-    } else {
-      console.log("Supabase Connection: OK", data.user);
-      setUser(data.user);
-    }
+    if (!error) setUser(data.user);
   });
-
-  // Listener em tempo real para mudanças de sessão
   const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-    console.log("Auth State Change:", _event, session?.user?.email);
     setUser(session?.user ?? null);
   });
-
   return () => subscription.unsubscribe();
 }, []);
+
+// CAPTURA DA TELEMETRIA + PERFIS DOS FORMADORES
+useEffect(() => {
+  const fetchTelemetry = async () => {
+    if (isDashboardView) return; 
+    const { data: telData } = await supabase.from('hero_telemetria').select('*').single();
+    const { data: formadoresData } = await supabase.from('profiles').select('*').eq('role', 'formador').limit(4);
+    if (telData) setTelemetry({ ...telData, formadores_lista: formadoresData || [] });
+  };
+  fetchTelemetry();
+}, [isDashboardView]);
 
 const handleLogout = async () => { await supabase.auth.signOut(); router.refresh(); };
 
@@ -111,7 +155,6 @@ if (error) setError(error.message);
 else { setIsLoginOpen(false); router.push("/dashboard"); }
 };
 
-// NAVEGAÇÃO ENTRE FASES
 const goToPhase = useCallback((index: number) => {
 if (isCooldown.current || isDashboardView) return;
 if (!hasInteracted) setHasInteracted(true);
@@ -128,7 +171,6 @@ if (diff < -TOTAL_FRAMES_COUNT / 2) diff += TOTAL_FRAMES_COUNT;
 animate(targetFrameValue, currentFrame + diff, { duration: 1.4, ease: [0.22, 1, 0.36, 1] });
 }, [isDashboardView, targetFrameValue, activePhaseIndex, hasInteracted]);
 
-// EVENTOS DE SCROLL E CANVAS
 useEffect(() => {
 const handleWheel = (e: WheelEvent) => {
 if (isDashboardView) return;
@@ -151,15 +193,123 @@ return () => window.removeEventListener("mousemove", moveCursor);
 
 const displayAvatarFinal = avatarPreview || (email && authMode === 'login' ? `https://api.dicebear.com/7.x/initials/svg?seed=${email}&backgroundColor=ffffff&textColor=000000` : null);
 
+// --- MAPEAMENTO NARRATIVO VISUAL (Aumento Monumental de Fonte e Contraste) ---
+const getDynamicPhaseContent = (index: number) => {
+  const base = PROGRAM_PHASES[index];
+  const defaultTextClass = "text-xl md:text-2xl font-light text-white leading-loose drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]";
+
+  if (!telemetry) return { ...base, description: <span className={defaultTextClass}>{base.description}</span> };
+
+  switch (index) {
+    case 2: // Radar / Capacitação
+      return {
+        ...base,
+        description: (
+          <div className="space-y-8">
+            <p className={defaultTextClass}>
+              Capacitar e valorizar os recursos humanos do sistema educativo angolano. O nosso acompanhamento regista uma eficácia sólida.
+            </p>
+            {telemetry.media_radar && (
+              <div className="flex items-center gap-8 p-6 bg-black/60 backdrop-blur-xl border border-white/10 rounded-3xl w-fit shadow-[0_15px_40px_rgba(0,0,0,0.5)]">
+                <div className="relative w-24 h-24 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]">
+                    <circle cx="48" cy="48" r="42" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-white/10" />
+                    <motion.circle 
+                      cx="48" cy="48" r="42" stroke="currentColor" strokeWidth="6" strokeLinecap="round" fill="transparent" 
+                      strokeDasharray="264" strokeDashoffset={264 - (264 * telemetry.media_radar) / 100} 
+                      className="text-blue-500" transition={{ duration: 2, ease: "easeOut" }} 
+                    />
+                  </svg>
+                  <span className="absolute text-2xl font-black text-white">{telemetry.media_radar}%</span>
+                </div>
+                <div className="text-left">
+                  <p className="text-xs md:text-sm uppercase tracking-[0.4em] text-blue-400 mb-2 font-bold drop-shadow-md">Média Nacional</p>
+                  <p className="text-xl md:text-2xl text-white font-medium">Radar de Integração</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      };
+    case 3: // Par Pedagógico
+      return {
+        ...base,
+        description: (
+          <div className="space-y-6">
+            <p className={defaultTextClass}>
+              A promoção da supervisão apoia-se em <strong className="text-blue-400 font-bold">{telemetry.total_formadores || 0} formadores</strong> de excelência, orientando <strong className="text-blue-400 font-bold">{telemetry.total_formandos || 0} formandos</strong> numa rede institucionalizada activa.
+            </p>
+            {telemetry.formadores_lista && <FormadoresLoop formadores={telemetry.formadores_lista} />}
+          </div>
+        )
+      };
+    case 4: // Agenda (Impacto Regional)
+      return {
+        ...base,
+        subtitle: telemetry.proximo_evento ? "Próxima Etapa na Agenda" : base.subtitle,
+        description: (
+          <div className="space-y-8">
+            <p className={defaultTextClass}>
+              O projecto consolida a sua presença em Luanda e no Bié através de marcos e actividades contínuas focadas na elevação do 2º ciclo.
+            </p>
+            {telemetry.proximo_evento && telemetry.data_proximo_evento && (
+              <div className="flex items-center gap-6 bg-gradient-to-r from-blue-900/40 to-black/60 backdrop-blur-xl p-8 border-l-4 border-blue-500 rounded-r-3xl shadow-[0_15px_40px_rgba(0,0,0,0.5)] w-fit">
+                <Calendar className="text-blue-400 w-14 h-14 shrink-0 drop-shadow-xl" />
+                <div className="text-left">
+                  <p className="text-sm md:text-base uppercase tracking-[0.3em] text-blue-300 font-bold mb-2 drop-shadow-md">
+                    Próxima Acção — {new Date(telemetry.data_proximo_evento).toLocaleDateString('pt-PT')}
+                  </p>
+                  <p className="text-xl md:text-3xl text-white font-light italic drop-shadow-lg">
+                    "{telemetry.proximo_evento}"
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      };
+    case 5: // Cofre de Recursos
+      return {
+        ...base,
+        description: (
+          <div className="space-y-8">
+            <p className={defaultTextClass}>
+              Disponibilizamos ferramentas inovadoras e um acervo didáctico de acesso imediato para elevar o ensino diário nas salas de aula.
+            </p>
+            {telemetry.total_materiais && (
+              <div className="flex items-center gap-8 bg-black/60 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.5)] w-fit">
+                <div className="p-5 bg-amber-500/20 rounded-2xl border border-amber-500/30">
+                  <FileText className="text-amber-400 w-12 h-12 drop-shadow-[0_0_15px_rgba(251,191,36,0.6)]" />
+                </div>
+                <div className="text-left">
+                  <span className="text-5xl md:text-7xl font-extralight text-white tracking-tighter drop-shadow-lg">{telemetry.total_materiais}</span>
+                  <p className="text-xs md:text-sm uppercase tracking-[0.4em] text-amber-400 font-bold mt-2 drop-shadow-md">Materiais no Cofre</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      };
+    default:
+      return { ...base, description: <span className={defaultTextClass}>{base.description}</span> };
+  }
+};
+
+const activeData = getDynamicPhaseContent(activePhaseIndex);
+
 return (
 <div ref={containerRef} className="relative h-screen w-full bg-transparent overflow-hidden touch-none font-sans md:cursor-none">
 {/* CURSOR */}
 <motion.div className="fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[100] mix-blend-difference hidden md:block" style={{ x: mouseX, y: mouseY, translateX: "-50%", translateY: "-50%" }} animate={{ scale: isHovering ? 3.5 : 1, opacity: 0.8 }} transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.2 }} />
 
+{/* NOVO: A VINHETA "CINEMASCOPE" PARA PROTECÇÃO DE LEITURA */}
+<div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent pointer-events-none z-20" />
+
 <AnimatePresence>
 {!isDashboardView && (
 <motion.div key="hero-main-ui" initial={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(20px)" }} transition={{ duration: 1 }} className="absolute inset-0 z-30" >
-{/* DIALOG DE LOGIN / REGISTER */}
+
+{/* DIALOG DE LOGIN / REGISTER MANTIDO INTACTO */}
 <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
 <DialogContent className="sm:max-w-[400px] bg-transparent backdrop-blur-2xl border border-white/5 text-white rounded-none shadow-none md:cursor-default p-8">
 <DialogHeader className="mb-2">
@@ -233,17 +383,23 @@ return (
 )}
 </motion.header>
 
-{/* TEXTOS FASES (ESQUERDA) */}
-<div className="absolute top-1/3 left-6 sm:left-12 md:left-24 lg:left-40 w-[75%] sm:w-[80%] md:max-w-xl pointer-events-auto z-40">
+{/* RECUO ESTRUTURAL E REDIMENSIONAMENTO GIGANTE: left empurrado para o meio do ecrã e max-w expandido */}
+<div className="absolute top-[25%] sm:top-[28%] left-24 sm:left-32 md:left-48 lg:left-[320px] w-[80%] md:max-w-4xl pointer-events-auto z-40">
 <AnimatePresence mode="wait">
 {activePhaseIndex !== 0 && (
-<motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 20, filter: "blur(10px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -20, filter: "blur(10px)" }} transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col gap-6 sm:gap-8">
-<div className="space-y-2">
-<p className="text-[9px] tracking-[0.6em] text-white/50 uppercase font-medium truncate">{PROGRAM_PHASES[activePhaseIndex].subtitle}</p>
-<h1 className="text-4xl sm:text-5xl lg:text-6xl font-light uppercase tracking-tight text-white leading-[0.9]">{PROGRAM_PHASES[activePhaseIndex].name}</h1>
+<motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 20, filter: "blur(10px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -20, filter: "blur(10px)" }} transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col gap-6 sm:gap-10">
+<div className="space-y-4">
+<p className="text-[12px] md:text-[14px] tracking-[0.8em] text-white/70 uppercase font-medium truncate drop-shadow-md">{activeData.subtitle}</p>
+{/* TÍTULO REESCALADO PARA IMPACTO CINEMATOGRÁFICO */}
+<h1 className="text-6xl sm:text-7xl lg:text-[6rem] font-light uppercase tracking-tighter text-white leading-[0.85] drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]">{activeData.name}</h1>
 </div>
-<p className="text-sm text-white/60 leading-relaxed font-light max-w-sm">{PROGRAM_PHASES[activePhaseIndex].description}</p>
-<button onClick={() => window.open(DASHBOARD_URL, "_blank")} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-4 pt-4 cursor-none w-fit"><span className="text-[10px] font-medium uppercase tracking-[0.3em] text-white/50 group-hover:text-white transition-colors">Saber Mais</span><div className="relative w-8 h-[1px] bg-white/20 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div></button>
+
+{/* DESCRIÇÃO DA FASE APRIMORADA */}
+<div className="w-full">
+  {activeData.description}
+</div>
+
+<button onClick={() => window.open(DASHBOARD_URL, "_blank")} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-6 pt-8 cursor-none w-fit"><span className="text-[13px] font-medium uppercase tracking-[0.4em] text-white/80 group-hover:text-white transition-colors drop-shadow-md">Saber Mais</span><div className="relative w-16 h-[1px] bg-white/30 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div></button>
 </motion.div>
 )}
 </AnimatePresence>
@@ -283,10 +439,10 @@ return (
 })}
 </AnimatePresence>
 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-<img src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105" />
+<img src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]" />
 </motion.div>
 </div>
-<p className="text-[5.5px] sm:text-[7px] md:text-[7.5px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.6em] md:tracking-[0.85em] text-white/50 text-center leading-none mt-0.5 z-20 whitespace-nowrap w-full">Programa de Apoio ao Reforço do Ensino Secundário em Angola</p>
+<p className="text-[5.5px] sm:text-[7px] md:text-[7.5px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.6em] md:tracking-[0.85em] text-white/70 text-center leading-none mt-0.5 z-20 whitespace-nowrap w-full drop-shadow-md">Programa de Apoio ao Reforço do Ensino Secundário em Angola</p>
 </motion.div>
 
 {/* CLUSTER DIREITO: SIDEBAR + NAVEGADOR INDEPENDENTE (RELÓGIO) */}
@@ -294,6 +450,8 @@ return (
 <PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} phases={PROGRAM_PHASES} setIsHovering={setIsHovering} />
 <Navigator activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} setIsHovering={setIsHovering} />
 </div>
+
+<HeroBranding />
 
 </motion.div>
 )}
