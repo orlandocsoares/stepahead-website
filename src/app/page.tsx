@@ -360,6 +360,54 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
       
       {!isDashboardView && user && !isVIPWelcomeOpen && <CommandCenter />}
 
+      {/* BOTÃO FLUTUANTE À ESQUERDA RESTITUÍDO! */}
+      {!isDashboardView && !user && (
+        <div className="fixed left-0 top-0 h-screen z-50 flex items-center pointer-events-none">
+          <motion.nav 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className="ml-6 pointer-events-auto flex flex-col items-center p-4 bg-white/[0.01] backdrop-blur-3xl border border-white/5 rounded-[3rem] shadow-[0_0_60px_rgba(0,0,0,0.8)]"
+          >
+            <div className="relative flex items-center w-full justify-center">
+              <motion.button
+                onClick={() => setIsLoginOpen(true)}
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                className="relative w-24 h-24 rounded-full outline-none group flex items-center justify-center bg-transparent transition-transform duration-500 hover:scale-105"
+              >
+                <motion.div 
+                  className="absolute inset-0 rounded-full border-[2px] border-transparent"
+                  animate={{
+                    borderColor: [
+                      "rgba(59, 130, 246, 0.8)", 
+                      "rgba(16, 185, 129, 0.8)", 
+                      "rgba(168, 85, 247, 0.8)", 
+                      "rgba(59, 130, 246, 0.8)"
+                    ],
+                    boxShadow: [
+                      "0px 0px 25px rgba(59, 130, 246, 0.6)",
+                      "0px 0px 25px rgba(16, 185, 129, 0.6)",
+                      "0px 0px 25px rgba(168, 85, 247, 0.6)",
+                      "0px 0px 25px rgba(59, 130, 246, 0.6)"
+                    ]
+                  }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                />
+
+                <LogIn size={26} strokeWidth={1.2} className="text-white/90 group-hover:text-white transition-colors duration-500 z-10" />
+                
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none flex items-center">
+                  <span className="text-[12px] font-semibold uppercase tracking-[0.5em] text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] whitespace-nowrap">
+                    Entrar
+                  </span>
+                </div>
+              </motion.button>
+            </div>
+          </motion.nav>
+        </div>
+      )}
+
       <motion.div className="fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[100] mix-blend-difference hidden md:block" style={{ x: mouseX, y: mouseY, translateX: "-50%", translateY: "-50%" }} animate={{ scale: isHovering ? 3.5 : 1, opacity: 0.8 }} transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.2 }} />
 
       <div className="absolute inset-0 z-10">
@@ -442,7 +490,6 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
               </DialogContent>
             </Dialog>
 
-            {/* RECTÂNGULO BRANCO - COTA DE CONTENÇÃO ABSOLUTA E RIGOROSA */}
             <div className="absolute top-[28vh] left-8 sm:left-24 lg:left-[160px] w-[85%] md:w-[540px] h-[320px] z-40 pointer-events-auto flex flex-col justify-between">
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
@@ -463,26 +510,24 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
               </AnimatePresence>
             </div>
 
-            {/* LOGÓTIPO CENTRAL - INTEGRADO E EM CAMADA MÁXIMA DE FLUXO DE LOGIN */}
             <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-6 md:bottom-12 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>
-                  {/* FEEDBACK DE ACÇÃO DIRECTO SOBRE O LOGO */}
-                  {isLogoHovered && (
+                  {isLogoHovered && activePhaseIndex === 0 && (
                     user ? (
-                      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute -top-20 flex flex-col items-center gap-2 z-50 pointer-events-auto">
+                      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute -top-20 flex flex-col items-center gap-2 z-50">
                         <div className="flex items-center gap-2 px-4 py-2 bg-white/[0.02] backdrop-blur-3xl border border-white/10 rounded-xl shadow-xl transition-all">
                           <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                           <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-white">Sessão: {user.user_metadata?.first_name || 'Utilizador'}</span>
                         </div>
-                        <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-[8px] uppercase tracking-widest text-white/40 hover:text-red-400 flex items-center gap-1 cursor-pointer"><LogOut size={10} /> Terminar Sessão</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-[8px] uppercase tracking-widest text-white/30 hover:text-red-400 flex items-center gap-1"><LogOut size={10} /> Terminar Sessão</button>
                       </motion.div>
                     ) : (
-                      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute -top-14 flex flex-col items-center gap-1 z-50 pointer-events-none">
-                        <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/60 drop-shadow-md">Clique para Entrar</span>
-                        <div className="w-6 h-[1px] bg-blue-500/50" />
-                      </motion.div>
+                      <motion.button initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} onClick={(e) => { e.stopPropagation(); setIsLoginOpen(true); }} className="absolute -top-16 group flex flex-col items-center gap-2 transition-all z-50 pointer-events-auto">
+                        <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/70 group-hover:text-white drop-shadow-md">Aceder ao Terminal</span>
+                        <div className="w-8 h-[1px] bg-white/20 group-hover:w-16 group-hover:bg-blue-500 transition-all duration-700" />
+                      </motion.button>
                     )
                   )}
 
@@ -495,20 +540,8 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
                   })}
                 </AnimatePresence>
 
-                {/* EVENTO DE CLIQUE TRANSFERIDO DIRECTAMENTE PARA O LOGO */}
-                <motion.div 
-                  onClick={() => {
-                    if (!user) {
-                      setIsLoginOpen(true);
-                    } else {
-                      router.push("/dashboard");
-                    }
-                  }} 
-                  className="relative z-10 flex justify-center items-center flex-col animate-float outline-none cursor-pointer pointer-events-auto" 
-                  animate={{ y: [0, -4, 0] }} 
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <img src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto mix-blend-screen contrast-125 brightness-110" />
+                <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
+                  <img src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" />
                 </motion.div>
               </div>
               <p className="text-[5.5px] sm:text-[7px] md:text-[7.5px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.6em] md:tracking-[0.85em] text-white/70 text-center leading-none mt-4 z-20 whitespace-nowrap w-full drop-shadow-md">
