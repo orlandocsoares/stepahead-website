@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -35,21 +34,28 @@ const PROGRAM_PHASES = [
   { id: "fase-2", focusFrame: 66, subtitle: "Objectivo Geral", name: "Capacitação", description: "Capacitar e valorizar os recursos humanos do sistema educativo angolano, priorizando os agentes do Ensino Secundário Pedagógico." },
   { id: "fase-3", focusFrame: 86, subtitle: "Modelo de Supervisão", name: "Par Pedagógico", description: "Promoção da supervisão em modelo de par pedagógico e a institucionalização de Centros de Recursos nas comunidades." },
   { id: "fase-4", focusFrame: 151, subtitle: "Impacto Regional", name: "Luanda & Bié", description: "O projecto está presente em duas províncias chave: Bié e Luanda, com foco na elevação da qualidade do ensino no 2º ciclo." },
-  { id: "fase-5", focusFrame: 210, subtitle: "Apoio Contínuo", name: "Recursos", description: "Disponibilização de materiais pedagógicos inovadores e guias práticos para apoiar os professores nas salas de aula diariamente." },
+  { id: "fase-5", focusFrame: 210, subtitle: "Apoio Contínuo", name: "Recursos", description: "Disponibilização de materiais pedagógicos inovadores e guias práticos para apoiar os professores nas salas diárias." },
   { id: "fase-6", focusFrame: 260, subtitle: "Avaliação de Impacto", name: "Monitorização", description: "Acompanhamento rigoroso dos indicadores de sucesso para garantir a eficácia e a sustentabilidade do projecto a longo prazo." }
+];
+
+const SIMULATED_FORMADORES = [
+  { first_name: "Ana", last_name: "Kiala", especialidade: "Matemática e Física", biografia: "Especialista em metodologias de ensino activo para ciências exactas no II Ciclo.", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=AnaKiala&backgroundColor=b6e3f4" },
+  { first_name: "Carlos", last_name: "Mendes", especialidade: "Língua Portuguesa", biografia: "Mestre em linguística aplicada, focado na capacitação de leitura e interpretação textual.", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=CarlosMendes&backgroundColor=c0aede" },
+  { first_name: "Fátima", last_name: "Dumbumba", especialidade: "Biologia e Química", biografia: "Investigadora em didáctica das ciências, promovendo laboratórios práticos locais.", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=FatimaD&backgroundColor=ffdfbf" }
 ];
 
 function FormadoresLoop({ formadores }: { formadores: any[] }) {
   const [idx, setIdx] = useState(0);
+  const data = formadores && formadores.length > 0 ? formadores : SIMULATED_FORMADORES;
   
   useEffect(() => {
-    if (!formadores || formadores.length <= 1) return;
-    const interval = setInterval(() => setIdx(p => (p + 1) % formadores.length), 5500);
+    if (!data || data.length <= 1) return;
+    const interval = setInterval(() => setIdx(p => (p + 1) % data.length), 5500);
     return () => clearInterval(interval);
-  }, [formadores]);
+  }, [data]);
 
-  if (!formadores || formadores.length === 0) return null;
-  const f = formadores[idx];
+  if (!data || data.length === 0) return null;
+  const f = data[idx];
   const avatar = f.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${f.first_name}&backgroundColor=ffffff&textColor=000000`;
 
   return (
@@ -330,11 +336,11 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-              {telemetry.total_materiais && (
+              {telemetry.total_materials && (
                 <div className="flex items-center gap-4 mt-3">
                   <FileText className="text-amber-400 w-10 h-10" />
                   <div className="text-left">
-                    <span className="text-4xl font-bold text-white tracking-tighter">{telemetry.total_materiais}</span>
+                    <span className="text-4xl font-bold text-white tracking-tighter">{telemetry.total_materials}</span>
                     <p className="text-[9px] uppercase tracking-[0.3em] text-amber-400 font-bold">Materiais no Cofre</p>
                   </div>
                 </div>
@@ -436,6 +442,7 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
               </DialogContent>
             </Dialog>
 
+            {/* RECTÂNGULO BRANCO - COTA DE CONTENÇÃO ABSOLUTA E RIGOROSA */}
             <div className="absolute top-[28vh] left-8 sm:left-24 lg:left-[160px] w-[85%] md:w-[540px] h-[320px] z-40 pointer-events-auto flex flex-col justify-between">
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
@@ -456,24 +463,26 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
               </AnimatePresence>
             </div>
 
+            {/* LOGÓTIPO CENTRAL - INTEGRADO E EM CAMADA MÁXIMA DE FLUXO DE LOGIN */}
             <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-6 md:bottom-12 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>
-                  {isLogoHovered && activePhaseIndex === 0 && (
+                  {/* FEEDBACK DE ACÇÃO DIRECTO SOBRE O LOGO */}
+                  {isLogoHovered && (
                     user ? (
-                      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute -top-20 flex flex-col items-center gap-2 z-50">
+                      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute -top-20 flex flex-col items-center gap-2 z-50 pointer-events-auto">
                         <div className="flex items-center gap-2 px-4 py-2 bg-white/[0.02] backdrop-blur-3xl border border-white/10 rounded-xl shadow-xl transition-all">
                           <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                           <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-white">Sessão: {user.user_metadata?.first_name || 'Utilizador'}</span>
                         </div>
-                        <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-[8px] uppercase tracking-widest text-white/30 hover:text-red-400 flex items-center gap-1"><LogOut size={10} /> Terminar Sessão</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-[8px] uppercase tracking-widest text-white/40 hover:text-red-400 flex items-center gap-1 cursor-pointer"><LogOut size={10} /> Terminar Sessão</button>
                       </motion.div>
                     ) : (
-                      <motion.button initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} onClick={(e) => { e.stopPropagation(); setIsLoginOpen(true); }} className="absolute -top-16 group flex flex-col items-center gap-2 transition-all z-50 pointer-events-auto">
-                        <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/70 group-hover:text-white drop-shadow-md">Aceder ao Terminal</span>
-                        <div className="w-8 h-[1px] bg-white/20 group-hover:w-16 group-hover:bg-blue-500 transition-all duration-700" />
-                      </motion.button>
+                      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute -top-14 flex flex-col items-center gap-1 z-50 pointer-events-none">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/60 drop-shadow-md">Clique para Entrar</span>
+                        <div className="w-6 h-[1px] bg-blue-500/50" />
+                      </motion.div>
                     )
                   )}
 
@@ -486,8 +495,20 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
                   })}
                 </AnimatePresence>
 
-                <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" />
+                {/* EVENTO DE CLIQUE TRANSFERIDO DIRECTAMENTE PARA O LOGO */}
+                <motion.div 
+                  onClick={() => {
+                    if (!user) {
+                      setIsLoginOpen(true);
+                    } else {
+                      router.push("/dashboard");
+                    }
+                  }} 
+                  className="relative z-10 flex justify-center items-center flex-col animate-float outline-none cursor-pointer pointer-events-auto" 
+                  animate={{ y: [0, -4, 0] }} 
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <img src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto mix-blend-screen contrast-125 brightness-110" />
                 </motion.div>
               </div>
               <p className="text-[5.5px] sm:text-[7px] md:text-[7.5px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.6em] md:tracking-[0.85em] text-white/70 text-center leading-none mt-4 z-20 whitespace-nowrap w-full drop-shadow-md">
