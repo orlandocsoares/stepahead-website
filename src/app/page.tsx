@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,24 +39,17 @@ const PROGRAM_PHASES = [
   { id: "fase-6", focusFrame: 260, subtitle: "Avaliação de Impacto", name: "Monitorização", description: "Acompanhamento rigoroso dos indicadores de sucesso para garantir a eficácia e a sustentabilidade do projecto a longo prazo." }
 ];
 
-const SIMULATED_FORMADORES = [
-  { first_name: "Ana", last_name: "Kiala", especialidade: "Matemática e Física", biografia: "Especialista em metodologias de ensino activo para ciências exactas no II Ciclo.", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=AnaKiala&backgroundColor=b6e3f4" },
-  { first_name: "Carlos", last_name: "Mendes", especialidade: "Língua Portuguesa", biografia: "Mestre em linguística aplicada, focado na capacitação de leitura e interpretação textual.", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=CarlosMendes&backgroundColor=c0aede" },
-  { first_name: "Fátima", last_name: "Dumbumba", especialidade: "Biologia e Química", biografia: "Investigadora em didáctica das ciências, promovendo laboratórios práticos locais.", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=FatimaD&backgroundColor=ffdfbf" }
-];
-
 function FormadoresLoop({ formadores }: { formadores: any[] }) {
   const [idx, setIdx] = useState(0);
-  const data = formadores && formadores.length > 0 ? formadores : SIMULATED_FORMADORES;
   
   useEffect(() => {
-    if (!data || data.length <= 1) return;
-    const interval = setInterval(() => setIdx(p => (p + 1) % data.length), 5500);
+    if (!formadores || formadores.length <= 1) return;
+    const interval = setInterval(() => setIdx(p => (p + 1) % formadores.length), 5500);
     return () => clearInterval(interval);
-  }, [data]);
+  }, [formadores]);
 
-  if (!data || data.length === 0) return null;
-  const f = data[idx];
+  if (!formadores || formadores.length === 0) return null;
+  const f = formadores[idx];
   const avatar = f.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${f.first_name}&backgroundColor=ffffff&textColor=000000`;
 
   return (
@@ -73,7 +67,7 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
           <div className="flex flex-col text-left">
             <span className="text-xl text-white font-bold tracking-tight drop-shadow-md">{f.first_name} {f.last_name}</span>
             <span className="text-[10px] text-emerald-400 uppercase tracking-[0.2em] font-bold mt-0.5 drop-shadow-sm">{f.especialidade || 'Área Pedagógica'}</span>
-            <p className="text-[11px] text-white/80 mt-1 font-light leading-snug line-clamp-2 drop-shadow-sm">{f.biografia || 'Síntese de acção: Foco no reforço das metodologias de ensino.'}</p>
+            <p className="text-[11px] text-white/80 mt-1 font-light leading-snug line-clamp-2 drop-shadow-sm">{f.biografia || 'Reforço das metodologias de ensino activo.'}</p>
           </div>
         </motion.div>
       </AnimatePresence>
@@ -147,24 +141,10 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
     fetchTelemetry();
   }, [isDashboardView]);
 
-  useEffect(() => {
-    if (!isDashboardView) return;
-    const initialTimeout = setTimeout(() => {
-      let currentPhase = 0;
-      const interval = setInterval(() => {
-        currentPhase = (currentPhase + 1) % PROGRAM_PHASES.length;
-        const targetFocus = PROGRAM_PHASES[currentPhase].focusFrame;
-        const currentFrame = targetFrameValue.get();
-        let diff = targetFocus - (currentFrame % TOTAL_FRAMES_COUNT);
-        if (diff > TOTAL_FRAMES_COUNT / 2) diff -= TOTAL_FRAMES_COUNT;
-        if (diff < -TOTAL_FRAMES_COUNT / 2) diff += TOTAL_FRAMES_COUNT;
-        
-        animate(targetFrameValue, currentFrame + diff, { duration: 2.8, ease: "easeInOut" });
-      }, 78000); 
-      return () => clearInterval(interval);
-    }, 60000); 
-    return () => clearTimeout(initialTimeout);
-  }, [isDashboardView, targetFrameValue]);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.refresh();
+  };
 
   const triggerVIPTransition = async () => {
     setIsLoginOpen(false);
@@ -249,14 +229,13 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
       ctx.drawImage(img, oX, oY, rW, rH);
     };
 
-    const handleResize = () => {
+    window.addEventListener("resize", () => {
       let f = Math.round(targetFrameValue.get()) % TOTAL_FRAMES_COUNT;
       if (f < 0) f += TOTAL_FRAMES_COUNT;
       const img = imagesRef.current[f];
       if (img?.complete) draw(img);
-    };
+    });
 
-    window.addEventListener("resize", handleResize);
     for (let i = 0; i < TOTAL_FRAMES_COUNT; i++) {
       const img = new Image();
       img.src = `${BASE_FRAME_URL}frame_${i.toString().padStart(3, "0")}${FRAME_SUFFIX}`;
@@ -270,7 +249,7 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
       const img = imagesRef.current[frameIdx];
       if (img?.complete) draw(img);
     });
-    return () => { window.removeEventListener("resize", handleResize); unsubscribe(); };
+    return () => { unsubscribe(); };
   }, [targetFrameValue]);
 
   useEffect(() => {
@@ -284,7 +263,6 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
     ? `${profileData?.first_name || ""} ${profileData?.last_name || ""}`.trim() || email
     : `${firstName} ${lastName}`.trim();
 
-  // --- MAPEAMENTO NARRATIVO VISUAL (Limite Rígido e Gráficos Limpos) ---
   const getDynamicPhaseContent = (index: number) => {
     const base = PROGRAM_PHASES[index];
     const defaultTextClass = "text-[13px] font-bold text-white/95 leading-snug drop-shadow-md";
@@ -292,85 +270,72 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
     if (!telemetry) return { ...base, description: <span className={defaultTextClass}>{base.description}</span> };
 
     switch (index) {
-      case 2: // Radar / Capacitação
+      case 2:
         return {
           ...base,
           description: (
             <div className="space-y-4">
-              <p className={defaultTextClass}>
-                Capacitar e valorizar os recursos humanos do sistema educativo angolano. O nosso acompanhamento regista uma eficácia sólida.
-              </p>
+              <p className={defaultTextClass}>{base.description}</p>
               {telemetry.media_radar && (
-                <div className="flex items-center gap-4 bg-transparent p-0 mt-3 w-fit">
+                <div className="flex items-center gap-4 mt-3 w-fit">
                   <div className="relative w-14 h-14 flex items-center justify-center">
-                    <svg className="w-full h-full transform -rotate-90 drop-shadow-md">
+                    <svg className="w-full h-full transform -rotate-90">
                       <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/20" />
                       <motion.circle 
                         cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="transparent" 
                         strokeDasharray="150" strokeDashoffset={150 - (150 * telemetry.media_radar) / 100} 
-                        className="text-blue-500" transition={{ duration: 2, ease: "easeOut" }} 
+                        className="text-blue-500" transition={{ duration: 2 }} 
                       />
                     </svg>
-                    <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 4 }} className="absolute text-sm font-bold text-white drop-shadow-md">{telemetry.media_radar}%</motion.div>
+                    <span className="absolute text-sm font-bold text-white">{telemetry.media_radar}%</span>
                   </div>
-                  <div className="text-left z-10">
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-blue-300 mb-0.5 font-bold drop-shadow-sm">Média Nacional</p>
-                    <p className="text-[15px] text-white font-bold drop-shadow-md">Radar de Integração</p>
+                  <div className="text-left">
+                    <p className="text-[9px] uppercase tracking-[0.3em] text-blue-300 font-bold">Média Nacional</p>
+                    <p className="text-[15px] text-white font-bold">Radar de Integração</p>
                   </div>
                 </div>
               )}
             </div>
           )
         };
-      case 3: // Par Pedagógico (Loop de Perfis)
+      case 3:
         return {
           ...base,
           description: (
             <div className="space-y-2">
-              <p className={defaultTextClass}>
-                A promoção da supervisão apoia-se em <strong className="text-blue-300 font-extrabold">{telemetry.total_formadores || 3} formadores</strong> de excelência, orientando <strong className="text-blue-300 font-extrabold">{telemetry.total_formandos || 12} formandos</strong> numa rede institucionalizada activa.
-              </p>
+              <p className={defaultTextClass}>A promoção da supervisão apoia-se em <strong className="text-blue-300">{telemetry.total_formadores || 3} formadores</strong> de excelência.</p>
               <FormadoresLoop formadores={telemetry.formadores_lista} />
             </div>
           )
         };
-      case 4: // Agenda Regional
+      case 4:
         return {
           ...base,
-          subtitle: "Agenda Operacional",
           description: (
             <div className="space-y-4">
-              <p className={defaultTextClass}>
-                O projecto consolida a sua presença em Luanda e no Bié através de marcos e actividades contínuas focadas na elevação do 2º ciclo.
-              </p>
-              <div className="flex items-center gap-4 bg-transparent p-0 mt-3 w-fit max-w-full">
-                <Calendar className="text-blue-400 w-10 h-10 shrink-0 drop-shadow-md" />
+              <p className={defaultTextClass}>{base.description}</p>
+              <div className="flex items-center gap-4 mt-3">
+                <Calendar className="text-blue-400 w-10 h-10" />
                 <div className="text-left">
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-blue-300 font-bold mb-1 drop-shadow-md">
-                    {telemetry.data_proximo_evento ? `Próxima Acção — ${new Date(telemetry.data_proximo_evento).toLocaleDateString('pt-PT')}` : 'Agenda Operacional'}
-                  </p>
-                  <p className="text-[15px] text-white font-bold italic drop-shadow-md">
-                    {telemetry.proximo_evento ? `"${telemetry.proximo_evento}"` : 'Sem eventos agendados no momento.'}
-                  </p>
+                  <p className="text-[9px] uppercase tracking-[0.2em] text-blue-300 font-bold">Próxima Acção</p>
+                  <p className="text-[15px] text-white font-bold italic">{telemetry.proximo_evento || 'Agendada'}</p>
                 </div>
               </div>
             </div>
           )
         };
-      case 5: // Cofre de Recursos
+      case 5:
         return {
           ...base,
           description: (
             <div className="space-y-4">
-              <p className={defaultTextClass}>
-                Disponibilizamos ferramentas inovadoras e um acervo didáctico de acesso imediato para elevar o ensino diário nas salas de aula.
-              </p>
+              <p className={defaultTextClass}>{base.description}</p>
               {telemetry.total_materiais && (
-                <div className="flex items-center gap-4 bg-transparent p-0 mt-3 w-fit">
-                  <FileText className="text-amber-400 w-10 h-10 shrink-0 drop-shadow-md" />
+                <div className="flex items-center gap-4 mt-3">
+                  <FileText className="text-amber-400 w-10 h-10" />
                   <div className="text-left">
-                    <span className="text-4xl font-bold text-white tracking-tighter drop-shadow-md">{telemetry.total_materiais}</span>
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-amber-400 font-bold mt-0.5 drop-shadow-sm">Materiais no Cofre</p>
+                    <span className="text-4xl font-bold text-white tracking-tighter">{telemetry.total_materiais}</span>
+                    <p className="text-[9px] uppercase tracking-[0.3em] text-amber-400 font-bold">Materiais no Cofre</p>
                   </div>
                 </div>
               )}
@@ -385,56 +350,9 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
   const activeData = getDynamicPhaseContent(activePhaseIndex);
 
   return (
-    <div ref={containerRef} className="relative h-screen w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30 selection:text-white">
+    <div ref={containerRef} className="relative h-screen w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
       
       {!isDashboardView && user && !isVIPWelcomeOpen && <CommandCenter />}
-
-      {!isDashboardView && !user && (
-        <div className="fixed left-0 top-0 h-screen z-50 flex items-center pointer-events-none">
-          <motion.nav 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="ml-6 pointer-events-auto flex flex-col items-center p-4 bg-white/[0.01] backdrop-blur-3xl border border-white/5 rounded-[3rem] shadow-[0_0_60px_rgba(0,0,0,0.8)]"
-          >
-            <div className="relative flex items-center w-full justify-center">
-              <motion.button
-                onClick={() => setIsLoginOpen(true)}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-                className="relative w-24 h-24 rounded-full outline-none group flex items-center justify-center bg-transparent transition-transform duration-500 hover:scale-105"
-              >
-                <motion.div 
-                  className="absolute inset-0 rounded-full border-[2px] border-transparent"
-                  animate={{
-                    borderColor: [
-                      "rgba(59, 130, 246, 0.8)", 
-                      "rgba(16, 185, 129, 0.8)", 
-                      "rgba(168, 85, 247, 0.8)", 
-                      "rgba(59, 130, 246, 0.8)"
-                    ],
-                    boxShadow: [
-                      "0px 0px 25px rgba(59, 130, 246, 0.6)",
-                      "0px 0px 25px rgba(16, 185, 129, 0.6)",
-                      "0px 0px 25px rgba(168, 85, 247, 0.6)",
-                      "0px 0px 25px rgba(59, 130, 246, 0.6)"
-                    ]
-                  }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                />
-
-                <LogIn size={26} strokeWidth={1.2} className="text-white/90 group-hover:text-white transition-colors duration-500 z-10" />
-                
-                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none flex items-center">
-                  <span className="text-[12px] font-semibold uppercase tracking-[0.5em] text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] whitespace-nowrap">
-                    Entrar
-                  </span>
-                </div>
-              </motion.button>
-            </div>
-          </motion.nav>
-        </div>
-      )}
 
       <motion.div className="fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[100] mix-blend-difference hidden md:block" style={{ x: mouseX, y: mouseY, translateX: "-50%", translateY: "-50%" }} animate={{ scale: isHovering ? 3.5 : 1, opacity: 0.8 }} transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.2 }} />
 
@@ -445,19 +363,12 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
 
       <AnimatePresence>
         {!isDashboardView && (
-          <motion.div key="hero-main-ui" initial={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(20px)" }} transition={{ duration: 1 }} className="absolute inset-0 z-30 pointer-events-none" >
+          <motion.div key="hero-main-ui" initial={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(20px)" }} className="absolute inset-0 z-30 pointer-events-none" >
             
             <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-              <DialogContent className="w-[95vw] sm:max-w-[440px] bg-black/10 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200] shadow-[0_0_60px_rgba(0,0,0,0.7)]">
+              <DialogContent className="w-[95vw] sm:max-w-[440px] bg-black/10 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200]">
                 <AnimatePresence mode="wait">
-                  <motion.div
-                    key={authMode}
-                    initial={{ opacity: 0, scale: 0.97, y: 15, filter: "blur(8px)" }}
-                    animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, scale: 0.97, y: -15, filter: "blur(8px)" }}
-                    transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
-                    className="w-full flex flex-col"
-                  >
+                  <motion.div key={authMode} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} className="w-full flex flex-col">
                     <DialogHeader className="mb-6 text-center">
                       <DialogTitle className="flex flex-col items-center gap-1">
                         <span className="text-xl font-light uppercase tracking-[0.3em] italic">Portal Saber Mais</span>
@@ -481,7 +392,7 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
                     <div className="flex justify-center my-4">
                       <div className="relative w-20 h-20 rounded-full border border-white/10 flex items-center justify-center overflow-hidden group cursor-pointer" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
                         {displayAvatarFinal ? <img src={displayAvatarFinal} alt="Perfil" className="w-full h-full object-cover" /> : <User size={24} className="text-white/30" />}
-                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100">
                           <Camera size={16} className="text-white mb-1" />
                           <input type="file" accept="image/*" onChange={(e) => {if(e.target.files?.[0]) setAvatarPreview(URL.createObjectURL(e.target.files[0]))}} className="absolute inset-0 w-full h-full opacity-0" />
                         </div>
@@ -493,31 +404,10 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
                         <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none"/></div>
                         <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none"/></div>
                         {error && <p className="text-[10px] text-red-400 uppercase tracking-widest text-center">{error}</p>}
-                        
-                        <motion.button 
-                          type="submit" 
-                          animate={{
-                            boxShadow: [
-                              "0px 0px 20px rgba(59, 130, 246, 0.15)", 
-                              "0px 0px 20px rgba(16, 185, 129, 0.15)", 
-                              "0px 0px 20px rgba(168, 85, 247, 0.15)", 
-                              "0px 0px 20px rgba(59, 130, 246, 0.15)"  
-                            ],
-                            borderColor: [
-                              "rgba(59, 130, 246, 0.3)",
-                              "rgba(16, 185, 129, 0.3)",
-                              "rgba(168, 85, 247, 0.3)",
-                              "rgba(59, 130, 246, 0.3)"
-                            ]
-                          }}
-                          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                          className="w-full rounded-2xl border bg-white/5 hover:bg-white hover:text-black font-medium uppercase tracking-[0.3em] py-6 text-[11px] shadow-none transition-all mt-4"
-                        >
-                          Entrar
-                        </motion.button>
+                        <Button type="submit" className="w-full rounded-2xl border bg-white/5 hover:bg-white hover:text-black font-medium uppercase tracking-[0.3em] py-6 text-[11px] shadow-none mt-4 transition-all">Entrar</Button>
                       </form>
                     ) : (
-                      <form onSubmit={handleSignUp} className="space-y-4 max-h-[45vh] overflow-y-auto pr-2 custom-scrollbar">
+                      <form onSubmit={handleSignUp} className="space-y-4 max-h-[45vh] overflow-y-auto pr-2">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Nome</Label><Input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
                           <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Apelido</Label><Input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
@@ -525,65 +415,68 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
                         <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
                         <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
                         {userRole === 'formando' ? (
-                          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                          <div className="space-y-4">
                             <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-blue-400">Província</Label><Input placeholder="Ex: Bié" required value={provincia} onChange={(e) => setProvincia(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
                             <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
-                          </motion.div>
+                          </div>
                         ) : (
-                          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                          <div className="space-y-4">
                             <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-emerald-400">Especialidade</Label><Input placeholder="Ex: Supervisão Pedagógica" required value={especialidade} onChange={(e) => setEspecialidade(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
-                          </motion.div>
+                          </div>
                         )}
                         {error && <p className="text-[10px] text-red-400 uppercase tracking-widest text-center">{error}</p>}
                         <Button type="submit" className="w-full rounded-xl border border-white/20 bg-white/5 hover:bg-white hover:text-black font-light uppercase tracking-[0.2em] py-6 shadow-none mt-4 transition-all">Finalizar Inscrição</Button>
                       </form>
                     )}
                     <div className="text-center text-[10px] text-white/40 mt-6">
-                      {authMode === 'login' ? (<>Não tem conta? <button type="button" onClick={() => setAuthMode('register')} className="font-medium hover:text-white ml-1 bg-transparent border-0 outline-none">Registe-se</button></>) : (<>Já tem conta? <button type="button" onClick={() => setAuthMode('login')} className="font-medium hover:text-white ml-1 bg-transparent border-0 outline-none">Entrar</button></>)}
+                      {authMode === 'login' ? (<>Não tem conta? <button type="button" onClick={() => setAuthMode('register')} className="font-medium hover:text-white ml-1 bg-transparent">Registe-se</button></>) : (<>Já tem conta? <button type="button" onClick={() => setAuthMode('login')} className="font-medium hover:text-white ml-1 bg-transparent">Entrar</button></>)}
                     </div>
                   </motion.div>
                 </AnimatePresence>
               </DialogContent>
             </Dialog>
 
-            {/* CAIXA DE LIMITE RIGOROSA E POSICIONAMENTO À ESQUERDA - O RETÂNGULO BRANCO */}
-            {/* O limite exacto: top-[28vh] centrado verticalmente, left encostado ao botão, dimensões estritas h-[320px] e w-[540px] */}
             <div className="absolute top-[28vh] left-8 sm:left-24 lg:left-[160px] w-[85%] md:w-[540px] h-[320px] z-40 pointer-events-auto flex flex-col justify-between">
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
-                  <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }} className="relative flex flex-col w-full h-full">
-                    
-                    {/* TOPO: Subtítulo e Título */}
+                  <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">
                     <div className="shrink-0">
                       <p className="text-[10px] md:text-[11px] tracking-[0.6em] text-white/70 uppercase font-medium truncate drop-shadow-md">{activeData.subtitle}</p>
-                      {/* TÍTULO CONTROLADO: Proporção elegante que não esmaga o layout */}
-                      <h1 className="text-4xl sm:text-5xl font-bold uppercase tracking-tight text-white leading-none mt-2 drop-shadow-lg">{activeData.name}</h1>
+                      <h1 className="text-4xl sm:text-5xl font-bold uppercase tracking-tight text-white mt-2 drop-shadow-lg">{activeData.name}</h1>
                     </div>
-                    
-                    {/* MEIO: Descrição e Gráficos Puros */}
-                    <div className="flex-1 mt-4">
-                      {activeData.description}
-                    </div>
-
-                    {/* BASE FIXA: O Botão "Saber Mais" CHUMBADO ao fundo */}
-                    <div className="shrink-0 pt-2 border-t border-white/0 mt-auto">
-                      <button onClick={() => window.open(DASHBOARD_URL, "_blank")} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-4 cursor-none w-fit outline-none">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80 group-hover:text-white transition-colors drop-shadow-md">Saber Mais</span>
-                        <div className="relative w-12 h-[1px] bg-white/30 overflow-hidden">
-                          <div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" />
-                        </div>
+                    <div className="flex-1 mt-4">{activeData.description}</div>
+                    <div className="shrink-0 pt-2 mt-auto">
+                      <button onClick={() => window.open(DASHBOARD_URL, "_blank")} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-4 w-fit outline-none">
+                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80 group-hover:text-white transition-colors">Saber Mais</span>
+                        <div className="relative w-12 h-[1px] bg-white/30 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div>
                       </button>
                     </div>
-
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* LOGO CENTRAL E TAGLINE - MANTIDOS INTACTOS */}
-            <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }} className="absolute bottom-6 md:bottom-12 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
+            <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-6 md:bottom-12 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
+                
                 <AnimatePresence>
+                  {isLogoHovered && activePhaseIndex === 0 && (
+                    user ? (
+                      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute -top-20 flex flex-col items-center gap-2 z-50">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-white/[0.02] backdrop-blur-3xl border border-white/10 rounded-xl shadow-xl transition-all">
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                          <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-white">Sessão: {user.user_metadata?.first_name || 'Utilizador'}</span>
+                        </div>
+                        <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-[8px] uppercase tracking-widest text-white/30 hover:text-red-400 flex items-center gap-1"><LogOut size={10} /> Terminar Sessão</button>
+                      </motion.div>
+                    ) : (
+                      <motion.button initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} onClick={(e) => { e.stopPropagation(); setIsLoginOpen(true); }} className="absolute -top-16 group flex flex-col items-center gap-2 transition-all z-50 pointer-events-auto">
+                        <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/70 group-hover:text-white drop-shadow-md">Aceder ao Terminal</span>
+                        <div className="w-8 h-[1px] bg-white/20 group-hover:w-16 group-hover:bg-blue-500 transition-all duration-700" />
+                      </motion.button>
+                    )
+                  )}
+
                   {isLogoHovered && EDUCATIONAL_ELEMENTS.map((item, i) => {
                     const angle = (i * 360 / EDUCATIONAL_ELEMENTS.length) * (Math.PI / 180);
                     const maxRadius = window.innerWidth < 768 ? 160 : 350; 
@@ -592,8 +485,9 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
                     );
                   })}
                 </AnimatePresence>
+
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]" />
+                  <img src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" />
                 </motion.div>
               </div>
               <p className="text-[5.5px] sm:text-[7px] md:text-[7.5px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.6em] md:tracking-[0.85em] text-white/70 text-center leading-none mt-4 z-20 whitespace-nowrap w-full drop-shadow-md">
@@ -614,29 +508,11 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
 
       <AnimatePresence>
         {isVIPWelcomeOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.9 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-xl z-[300] flex flex-col items-center justify-center text-center p-6 pointer-events-auto"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.99, filter: "blur(15px)" }}
-              animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-              transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col items-center"
-            >
-              <motion.img 
-                src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" 
-                alt="Saber Mais"
-                animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }}
-                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none pointer-events-none"
-              />
-              <h2 className="text-5xl font-extralight uppercase tracking-tighter text-white italic leading-none">
-                Bem-vindo
-              </h2>
-              <h3 className="text-3xl font-bold uppercase tracking-tight text-blue-500 mt-3 drop-shadow-[0_0_20px_rgba(59,130,246,0.3)] font-sans">
-                {finalFullName}
-              </h3>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.9 }} className="fixed inset-0 bg-black/50 backdrop-blur-xl z-[300] flex flex-col items-center justify-center text-center p-6 pointer-events-auto">
+            <motion.div initial={{ opacity: 0, y: 30, scale: 0.99, filter: "blur(15px)" }} animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }} transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center">
+              <motion.img src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ repeat: Infinity, duration: 4 }} className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none mix-blend-screen" />
+              <h2 className="text-5xl font-extralight uppercase tracking-tighter text-white italic leading-none">Bem-vindo</h2>
+              <h3 className="text-3xl font-bold uppercase tracking-tight text-blue-500 mt-3 drop-shadow-[0_0_20px_rgba(59,130,246,0.3)]">{finalFullName}</h3>
             </motion.div>
           </motion.div>
         )}
