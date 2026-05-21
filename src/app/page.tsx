@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2 } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import { PhasesSidebar } from "@/components/PhasesSidebar";
 import { Navigator } from "@/components/Navigator";
 import { CommandCenter } from "@/components/CommandCenter";
 import { HeroBranding } from "@/components/HeroBranding";
+import { QRCodeSVG } from "qrcode.react";
 
 const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Nuvem%20LooP/";
 const FRAME_SUFFIX = "_delay-0.033s.webp";
@@ -91,12 +92,28 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isVIPWelcomeOpen, setIsVIPWelcomeOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   
+  const [userRole, setUserRole] = useState<'formando' | 'formador'>('formando');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [provincia, setProvincia] = useState('');
+  const [escola, setEscola] = useState('');       
+  const [especialidade, setEspecialidade] = useState('');
+  const [bio, setBio] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   
+  // Imagem e QR Code
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [remoteImageUrl, setRemoteImageUrl] = useState<string | null>(null);
+  const [uploadMode, setUploadMode] = useState<"local" | "qr">("local");
+  const [sessionId, setSessionId] = useState<string>("");
+
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
@@ -109,6 +126,27 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
   const targetFrameValue = useMotionValue(PROGRAM_PHASES[0].focusFrame);
   const isCooldown = useRef(false);
   const scrollIntent = useRef(0);
+
+  // Geração de Sessão para QR Code
+  useEffect(() => {
+    setSessionId(Math.random().toString(36).substring(2, 11) + Date.now().toString(36));
+  }, []);
+
+  // Escuta do Telemóvel
+  useEffect(() => {
+    if (!sessionId || userRole !== 'formador' || authMode !== 'register') return;
+
+    const channel = supabase.channel(`camera-${sessionId}`);
+    channel.on('broadcast', { event: 'photo_captured' }, (payload: any) => {
+        if (payload.payload?.url) {
+          setAvatarPreview(payload.payload.url);
+          setRemoteImageUrl(payload.payload.url);
+          setUploadMode("local");
+        }
+      }).subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [sessionId, userRole, authMode]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -153,9 +191,7 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
       setProfileData(data);
     }
     setIsVIPWelcomeOpen(true);
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 3200); 
+    setTimeout(() => { router.push("/dashboard"); }, 3200); 
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -163,12 +199,70 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
     setError(null);
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else { 
-      await triggerVIPTransition(); 
+    if (error) { setError(error.message); setLoading(false); }
+    else { await triggerVIPTransition(); }
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+      setRemoteImageUrl(null);
     }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    // Validação Estrita do Formador
+    if (userRole === 'formador') {
+      if (!avatarPreview && !remoteImageUrl) { setError("Fotografia de perfil é obrigatória."); return; }
+      if (!especialidade.trim()) { setError("Especialidade é obrigatória."); return; }
+      if (!bio.trim()) { setError("Síntese Biográfica é obrigatória."); return; }
+    }
+
+    setLoading(true);
+
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email, password, options: { data: { first_name: firstName, role: userRole } }
+    });
+
+    if (authError) { setError(authError.message); setLoading(false); return; }
+
+    if (authData.user) {
+      let finalAvatarUrl = remoteImageUrl;
+
+      if (userRole === 'formador' && avatarFile && !finalAvatarUrl) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const fileName = `${authData.user.id}-${Math.random()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage.from('avatars').upload(`formadores/${fileName}`, avatarFile);
+        if (!uploadError && uploadData) {
+          finalAvatarUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${uploadData.path}`;
+        }
+      }
+
+      const profilePayload: any = { first_name: firstName, last_name: lastName, role: userRole, status: 'pendente' };
+
+      if (userRole === 'formando') {
+        profilePayload.provincia = provincia;
+        profilePayload.escola = escola;
+      } else {
+        profilePayload.especialidade = especialidade;
+        profilePayload.biografia = bio;
+        if (finalAvatarUrl) profilePayload.avatar_url = finalAvatarUrl;
+      }
+
+      const { error: profileError } = await supabase.from('profiles').update(profilePayload).eq('id', authData.user.id);
+
+      if (!profileError) {
+        setIsSuccess(true); // Mostra o ecrã de email dentro do pop-up
+      } else {
+        setError("Erro ao gravar perfil.");
+      }
+    }
+    setLoading(false);
   };
 
   const goToPhase = useCallback((index: number) => {
@@ -248,6 +342,8 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
     return () => window.removeEventListener("mousemove", moveCursor);
   }, [mouseX, mouseY]);
 
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const qrCodeUrl = `${origin}/camera/${sessionId}`;
   const finalFullName = `${profileData?.first_name || ""} ${profileData?.last_name || ""}`.trim() || email;
 
   const getDynamicPhaseContent = (index: number) => {
@@ -341,7 +437,6 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
       
       {!isDashboardView && user && !isVIPWelcomeOpen && <CommandCenter />}
 
-      {/* BOTÃO FLUTUANTE À ESQUERDA RESTITUÍDO! */}
       {!isDashboardView && !user && (
         <div className="fixed left-0 top-0 h-screen z-50 flex items-center pointer-events-none">
           <motion.nav 
@@ -352,7 +447,7 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
           >
             <div className="relative flex items-center w-full justify-center">
               <motion.button
-                onClick={() => setIsLoginOpen(true)}
+                onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
                 className="relative w-24 h-24 rounded-full outline-none group flex items-center justify-center bg-transparent transition-transform duration-500 hover:scale-105"
@@ -360,28 +455,14 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
                 <motion.div 
                   className="absolute inset-0 rounded-full border-[2px] border-transparent"
                   animate={{
-                    borderColor: [
-                      "rgba(59, 130, 246, 0.8)", 
-                      "rgba(16, 185, 129, 0.8)", 
-                      "rgba(168, 85, 247, 0.8)", 
-                      "rgba(59, 130, 246, 0.8)"
-                    ],
-                    boxShadow: [
-                      "0px 0px 25px rgba(59, 130, 246, 0.6)",
-                      "0px 0px 25px rgba(16, 185, 129, 0.6)",
-                      "0px 0px 25px rgba(168, 85, 247, 0.6)",
-                      "0px 0px 25px rgba(59, 130, 246, 0.6)"
-                    ]
+                    borderColor: ["rgba(59, 130, 246, 0.8)", "rgba(16, 185, 129, 0.8)", "rgba(168, 85, 247, 0.8)", "rgba(59, 130, 246, 0.8)"],
+                    boxShadow: ["0px 0px 25px rgba(59, 130, 246, 0.6)", "0px 0px 25px rgba(16, 185, 129, 0.6)", "0px 0px 25px rgba(168, 85, 247, 0.6)", "0px 0px 25px rgba(59, 130, 246, 0.6)"]
                   }}
                   transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
                 />
-
                 <LogIn size={26} strokeWidth={1.2} className="text-white/90 group-hover:text-white transition-colors duration-500 z-10" />
-                
                 <div className="absolute left-full top-1/2 -translate-y-1/2 ml-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none flex items-center">
-                  <span className="text-[12px] font-semibold uppercase tracking-[0.5em] text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] whitespace-nowrap">
-                    Entrar
-                  </span>
+                  <span className="text-[12px] font-semibold uppercase tracking-[0.5em] text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] whitespace-nowrap">Entrar</span>
                 </div>
               </motion.button>
             </div>
@@ -400,50 +481,116 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
         {!isDashboardView && (
           <motion.div key="hero-main-ui" initial={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(20px)" }} className="absolute inset-0 z-30 pointer-events-none" >
             
-            {/* NOVO DIALOGO POP-UP EXCLUSIVO PARA LOGIN */}
+            {/* O SEU POP-UP ORIGINAL, AGORA COM TUDO LÁ DENTRO */}
             <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-              <DialogContent className="w-[95vw] sm:max-w-[400px] bg-black/10 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200]">
-                <div className="w-full flex flex-col">
-                  <DialogHeader className="mb-8 text-center">
-                    <DialogTitle className="flex flex-col items-center gap-2">
-                      <span className="text-xl font-light uppercase tracking-[0.3em] italic">Portal Saber Mais</span>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">
-                        Acesso ao Terminal
-                      </span>
-                    </DialogTitle>
-                  </DialogHeader>
-
-                  <form onSubmit={handleLogin} className="space-y-6">
-                    <div className="space-y-1">
-                      <Label className="text-[9px] uppercase tracking-widest text-white/40">E-mail Institucional</Label>
-                      <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none text-sm"/>
+              <DialogContent className="w-[95vw] sm:max-w-[440px] bg-[#0a0a0a]/80 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200]">
+                
+                {isSuccess ? (
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center text-center space-y-6 py-8">
+                    <ShieldCheck size={56} className="text-blue-500" />
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-light uppercase tracking-[0.2em]">Verifique o E-mail</h2>
+                      <p className="text-[10px] uppercase tracking-widest text-white/50 leading-relaxed">
+                        Enviámos um link de activação para <span className="text-white">{email}</span>. Confirme para validar a autenticidade dos dados.
+                      </p>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-[9px] uppercase tracking-widest text-white/40">Palavra-Passe</Label>
-                      <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none text-sm"/>
-                    </div>
-                    
-                    {error && <p className="text-[10px] text-red-400 uppercase tracking-widest text-center mt-4">{error}</p>}
-                    
-                    <Button type="submit" disabled={loading} className="w-full rounded-2xl border bg-white/5 hover:bg-white hover:text-black font-bold uppercase tracking-[0.3em] py-6 text-[11px] shadow-none mt-8 transition-all">
-                      {loading ? <Loader2 className="animate-spin" /> : "Iniciar Sessão"}
-                    </Button>
-                  </form>
+                    <Button onClick={() => setIsLoginOpen(false)} className="rounded-full bg-white text-black hover:bg-blue-500 hover:text-white uppercase tracking-[0.2em] text-[9px] px-8">Fechar</Button>
+                  </motion.div>
+                ) : (
+                  <AnimatePresence mode="wait">
+                    <motion.div key={authMode} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} className="w-full flex flex-col">
+                      <DialogHeader className="mb-6 text-center">
+                        <DialogTitle className="flex flex-col items-center gap-1">
+                          <span className="text-xl font-light uppercase tracking-[0.3em] italic">Portal Saber Mais</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                            {authMode === 'login' ? 'Acesso Restrito' : 'Categorização de Utilizador'}
+                          </span>
+                        </DialogTitle>
+                      </DialogHeader>
 
-                  <div className="text-center text-[10px] text-white/40 mt-8 pt-6 border-t border-white/10">
-                    Ainda não tem credenciais? 
-                    <button 
-                      type="button" 
-                      onClick={() => {
-                        setIsLoginOpen(false);
-                        router.push('/register');
-                      }} 
-                      className="font-bold text-white hover:text-blue-400 ml-2 transition-colors uppercase tracking-widest"
-                    >
-                      Registe-se
-                    </button>
-                  </div>
-                </div>
+                      {authMode === 'register' && (
+                        <div className="flex bg-white/5 p-1 rounded-xl mb-6 border border-white/5">
+                          <button type="button" onClick={() => setUserRole('formando')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[9px] uppercase tracking-widest transition-all ${userRole === 'formando' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'}`}><GraduationCap size={14} /> Formando</button>
+                          <button type="button" onClick={() => setUserRole('formador')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[9px] uppercase tracking-widest transition-all ${userRole === 'formador' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'}`}><UserCheck size={14} /> Formador</button>
+                        </div>
+                      )}
+
+                      {authMode === 'login' ? (
+                        <form onSubmit={handleLogin} className="space-y-6">
+                          <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none"/></div>
+                          <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none"/></div>
+                          {error && <p className="text-[10px] text-red-400 uppercase tracking-widest text-center">{error}</p>}
+                          <Button type="submit" disabled={loading} className="w-full rounded-2xl border bg-white/5 hover:bg-white hover:text-black font-medium uppercase tracking-[0.3em] py-6 text-[11px] shadow-none mt-4 transition-all">
+                            {loading ? <Loader2 className="animate-spin" /> : "Entrar"}
+                          </Button>
+                        </form>
+                      ) : (
+                        <form onSubmit={handleSignUp} className="space-y-5 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Nome</Label><Input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                            <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Apelido</Label><Input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                          </div>
+                          
+                          <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                          <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                          
+                          {userRole === 'formando' ? (
+                            <>
+                              <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Província</Label><Input placeholder="Ex: Bié" required value={provincia} onChange={(e) => setProvincia(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                              <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                            </>
+                          ) : (
+                            <div className="space-y-6 pt-2">
+                              {/* ZONA DO FORMADOR (FOTO + QR + ESPEC + BIO) */}
+                              <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-4">
+                                <Label className="text-[8px] uppercase tracking-widest text-emerald-400 block mb-2">Fotografia (Obrigatório)</Label>
+                                <div className="flex gap-4 items-center">
+                                  <div className="w-14 h-14 rounded-full border border-white/20 flex shrink-0 items-center justify-center overflow-hidden bg-black/50">
+                                    {avatarPreview ? <img src={avatarPreview} className="w-full h-full object-cover" /> : <Camera size={16} className="text-white/30" />}
+                                  </div>
+                                  <div className="flex flex-col gap-2 w-full">
+                                    <button type="button" onClick={() => setUploadMode("local")} className={`text-[8px] py-1.5 rounded uppercase tracking-widest border transition-all ${uploadMode === 'local' ? 'bg-white text-black border-white' : 'border-white/20 text-white/50'}`}>Webcam / Ficheiro</button>
+                                    <button type="button" onClick={() => setUploadMode("qr")} className={`text-[8px] py-1.5 rounded uppercase tracking-widest border transition-all ${uploadMode === 'qr' ? 'bg-emerald-500 text-black border-emerald-500' : 'border-white/20 text-white/50'}`}>Usar Telemóvel</button>
+                                  </div>
+                                </div>
+
+                                {uploadMode === 'local' && (
+                                  <input type="file" accept="image/*" capture="user" onChange={handleAvatarChange} className="text-[9px] w-full text-white/50 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[8px] file:uppercase file:tracking-widest file:bg-white/10 file:text-white" />
+                                )}
+
+                                {uploadMode === 'qr' && (
+                                  <div className="flex items-center gap-4 bg-black/40 p-3 rounded-xl border border-white/5">
+                                    <div className="bg-white p-1 rounded shrink-0"><QRCodeSVG value={qrCodeUrl} size={50} /></div>
+                                    <p className="text-[8px] text-white/50 leading-relaxed uppercase tracking-widest">Aponte a câmara do telemóvel para capturar a foto.</p>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-emerald-400">Especialidade (Obrigatório)</Label><Input placeholder="Ex: Supervisão Pedagógica" required value={especialidade} onChange={(e) => setEspecialidade(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                              
+                              <div className="space-y-1">
+                                <Label className="text-[8px] uppercase tracking-widest text-emerald-400">Síntese Biográfica (Obrigatório)</Label>
+                                <textarea required rows={2} placeholder="Escreva um breve resumo do seu perfil..." value={bio} onChange={e => setBio(e.target.value)} className="w-full bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs text-white outline-none resize-none pt-2"/>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {error && <p className="text-[9px] text-red-400 uppercase tracking-widest text-center mt-2">{error}</p>}
+                          
+                          <Button type="submit" disabled={loading} className="w-full rounded-xl border border-white/20 bg-white/5 hover:bg-white hover:text-black font-medium uppercase tracking-[0.2em] py-6 shadow-none mt-4 transition-all text-[10px]">
+                            {loading ? <Loader2 className="animate-spin" /> : "Finalizar Inscrição"}
+                          </Button>
+                        </form>
+                      )}
+                      
+                      <div className="text-center text-[9px] text-white/40 mt-6 pt-4 border-t border-white/10">
+                        {authMode === 'login' ? (<>Ainda não tem credenciais? <button type="button" onClick={() => { setAuthMode('register'); setError(null); }} className="font-bold text-white hover:text-blue-400 ml-1 uppercase tracking-widest transition-colors">Registe-se</button></>) : (<>Já tem conta? <button type="button" onClick={() => { setAuthMode('login'); setError(null); }} className="font-bold text-white hover:text-blue-400 ml-1 uppercase tracking-widest transition-colors">Entrar</button></>)}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                )}
+
               </DialogContent>
             </Dialog>
 
@@ -481,7 +628,7 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
                         <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-[8px] uppercase tracking-widest text-white/30 hover:text-red-400 flex items-center gap-1"><LogOut size={10} /> Terminar Sessão</button>
                       </motion.div>
                     ) : (
-                      <motion.button initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} onClick={(e) => { e.stopPropagation(); setIsLoginOpen(true); }} className="absolute -top-16 group flex flex-col items-center gap-2 transition-all z-50 pointer-events-auto">
+                      <motion.button initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} onClick={(e) => { e.stopPropagation(); setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} className="absolute -top-16 group flex flex-col items-center gap-2 transition-all z-50 pointer-events-auto">
                         <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/70 group-hover:text-white drop-shadow-md">Aceder ao Terminal</span>
                         <div className="w-8 h-[1px] bg-white/20 group-hover:w-16 group-hover:bg-blue-500 transition-all duration-700" />
                       </motion.button>
