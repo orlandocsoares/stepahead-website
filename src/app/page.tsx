@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -91,18 +91,11 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isVIPWelcomeOpen, setIsVIPWelcomeOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   
-  const [userRole, setUserRole] = useState<'formando' | 'formador'>('formando');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [provincia, setProvincia] = useState('');
-  const [escola, setEscola] = useState('');       
-  const [especialidade, setEspecialidade] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -168,23 +161,14 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setError(error.message);
-    else { await triggerVIPTransition(); }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const metadata = {
-      first_name: firstName,
-      last_name: lastName,
-      role: userRole,
-      ...(userRole === 'formando' ? { provincia, escola } : { especialidade })
-    };
-    const { error } = await supabase.auth.signUp({ email, password, options: { data: metadata } });
-    if (error) setError(error.message);
-    else { await triggerVIPTransition(); }
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else { 
+      await triggerVIPTransition(); 
+    }
   };
 
   const goToPhase = useCallback((index: number) => {
@@ -264,10 +248,7 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
     return () => window.removeEventListener("mousemove", moveCursor);
   }, [mouseX, mouseY]);
 
-  const displayAvatarFinal = avatarPreview || (email && authMode === 'login' ? `https://api.dicebear.com/7.x/initials/svg?seed=${email}&backgroundColor=ffffff&textColor=000000` : null);
-  const finalFullName = authMode === 'login' 
-    ? `${profileData?.first_name || ""} ${profileData?.last_name || ""}`.trim() || email
-    : `${firstName} ${lastName}`.trim();
+  const finalFullName = `${profileData?.first_name || ""} ${profileData?.last_name || ""}`.trim() || email;
 
   const getDynamicPhaseContent = (index: number) => {
     const base = PROGRAM_PHASES[index];
@@ -419,74 +400,50 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
         {!isDashboardView && (
           <motion.div key="hero-main-ui" initial={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(20px)" }} className="absolute inset-0 z-30 pointer-events-none" >
             
+            {/* NOVO DIALOGO POP-UP EXCLUSIVO PARA LOGIN */}
             <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-              <DialogContent className="w-[95vw] sm:max-w-[440px] bg-black/10 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200]">
-                <AnimatePresence mode="wait">
-                  <motion.div key={authMode} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} className="w-full flex flex-col">
-                    <DialogHeader className="mb-6 text-center">
-                      <DialogTitle className="flex flex-col items-center gap-1">
-                        <span className="text-xl font-light uppercase tracking-[0.3em] italic">Portal Saber Mais</span>
-                        <span className="text-[10px] font-light uppercase tracking-widest text-white/40">
-                          {authMode === 'login' ? 'Acesso Restrito' : 'Categorização de Utilizador'}
-                        </span>
-                      </DialogTitle>
-                    </DialogHeader>
+              <DialogContent className="w-[95vw] sm:max-w-[400px] bg-black/10 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200]">
+                <div className="w-full flex flex-col">
+                  <DialogHeader className="mb-8 text-center">
+                    <DialogTitle className="flex flex-col items-center gap-2">
+                      <span className="text-xl font-light uppercase tracking-[0.3em] italic">Portal Saber Mais</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">
+                        Acesso ao Terminal
+                      </span>
+                    </DialogTitle>
+                  </DialogHeader>
 
-                    {authMode === 'register' && (
-                      <div className="flex bg-white/5 p-1 rounded-xl mb-6 border border-white/5">
-                        <button type="button" onClick={() => setUserRole('formando')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] uppercase tracking-widest transition-all ${userRole === 'formando' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'}`}>
-                          <GraduationCap size={14} /> Formando
-                        </button>
-                        <button type="button" onClick={() => setUserRole('formador')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] uppercase tracking-widest transition-all ${userRole === 'formador' ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60'}`}>
-                          <UserCheck size={14} /> Formador
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="flex justify-center my-4">
-                      <div className="relative w-20 h-20 rounded-full border border-white/10 flex items-center justify-center overflow-hidden group cursor-pointer" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-                        {displayAvatarFinal ? <img src={displayAvatarFinal} alt="Perfil" className="w-full h-full object-cover" /> : <User size={24} className="text-white/30" />}
-                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100">
-                          <Camera size={16} className="text-white mb-1" />
-                          <input type="file" accept="image/*" onChange={(e) => {if(e.target.files?.[0]) setAvatarPreview(URL.createObjectURL(e.target.files[0]))}} className="absolute inset-0 w-full h-full opacity-0" />
-                        </div>
-                      </div>
+                  <form onSubmit={handleLogin} className="space-y-6">
+                    <div className="space-y-1">
+                      <Label className="text-[9px] uppercase tracking-widest text-white/40">E-mail Institucional</Label>
+                      <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none text-sm"/>
                     </div>
-
-                    {authMode === 'login' ? (
-                      <form onSubmit={handleLogin} className="space-y-6">
-                        <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none"/></div>
-                        <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none"/></div>
-                        {error && <p className="text-[10px] text-red-400 uppercase tracking-widest text-center">{error}</p>}
-                        <Button type="submit" className="w-full rounded-2xl border bg-white/5 hover:bg-white hover:text-black font-medium uppercase tracking-[0.3em] py-6 text-[11px] shadow-none mt-4 transition-all">Entrar</Button>
-                      </form>
-                    ) : (
-                      <form onSubmit={handleSignUp} className="space-y-4 max-h-[45vh] overflow-y-auto pr-2">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Nome</Label><Input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
-                          <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Apelido</Label><Input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
-                        </div>
-                        <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
-                        <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
-                        {userRole === 'formando' ? (
-                          <div className="space-y-4">
-                            <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-blue-400">Província</Label><Input placeholder="Ex: Bié" required value={provincia} onChange={(e) => setProvincia(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
-                            <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-emerald-400">Especialidade</Label><Input placeholder="Ex: Supervisão Pedagógica" required value={especialidade} onChange={(e) => setEspecialidade(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
-                          </div>
-                        )}
-                        {error && <p className="text-[10px] text-red-400 uppercase tracking-widest text-center">{error}</p>}
-                        <Button type="submit" className="w-full rounded-xl border border-white/20 bg-white/5 hover:bg-white hover:text-black font-light uppercase tracking-[0.2em] py-6 shadow-none mt-4 transition-all">Finalizar Inscrição</Button>
-                      </form>
-                    )}
-                    <div className="text-center text-[10px] text-white/40 mt-6">
-                      {authMode === 'login' ? (<>Não tem conta? <button type="button" onClick={() => setAuthMode('register')} className="font-medium hover:text-white ml-1 bg-transparent">Registe-se</button></>) : (<>Já tem conta? <button type="button" onClick={() => setAuthMode('login')} className="font-medium hover:text-white ml-1 bg-transparent">Entrar</button></>)}
+                    <div className="space-y-1">
+                      <Label className="text-[9px] uppercase tracking-widest text-white/40">Palavra-Passe</Label>
+                      <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none text-sm"/>
                     </div>
-                  </motion.div>
-                </AnimatePresence>
+                    
+                    {error && <p className="text-[10px] text-red-400 uppercase tracking-widest text-center mt-4">{error}</p>}
+                    
+                    <Button type="submit" disabled={loading} className="w-full rounded-2xl border bg-white/5 hover:bg-white hover:text-black font-bold uppercase tracking-[0.3em] py-6 text-[11px] shadow-none mt-8 transition-all">
+                      {loading ? <Loader2 className="animate-spin" /> : "Iniciar Sessão"}
+                    </Button>
+                  </form>
+
+                  <div className="text-center text-[10px] text-white/40 mt-8 pt-6 border-t border-white/10">
+                    Ainda não tem credenciais? 
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setIsLoginOpen(false);
+                        router.push('/register');
+                      }} 
+                      className="font-bold text-white hover:text-blue-400 ml-2 transition-colors uppercase tracking-widest"
+                    >
+                      Registe-se
+                    </button>
+                  </div>
+                </div>
               </DialogContent>
             </Dialog>
 
