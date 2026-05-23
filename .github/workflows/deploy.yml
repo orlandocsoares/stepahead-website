@@ -26,8 +26,17 @@ jobs:
           script: |
             set -e
 
+            APP_DIR=/opt/apps/sabermais
+
+            # Se o directório não existir, clona o repo pela primeira vez
+            if [ ! -d "$APP_DIR/.git" ]; then
+              echo "==> Primeira instalação: a clonar repositório..."
+              mkdir -p "$APP_DIR"
+              git clone https://github.com/${{ github.repository }}.git "$APP_DIR"
+            fi
+
             echo "==> A ir para o directório da aplicação..."
-            cd /opt/sabermais
+            cd "$APP_DIR"
 
             echo "==> A buscar o código mais recente..."
             git pull origin main
