@@ -46,7 +46,7 @@ jobs:
             docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-deps web
 
             echo "==> A recarregar o nginx (config + volumes)..."
-            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-deps nginx
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-deps --force-recreate nginx
 
             echo "==> A limpar imagens antigas..."
             docker image prune -f
