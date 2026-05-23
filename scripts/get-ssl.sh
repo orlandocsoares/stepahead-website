@@ -10,7 +10,7 @@ set -e
 DOMAIN="sabermais.edu.ao"
 EMAIL="admin@sabermais.edu.ao"   # ← muda para o teu email real
 
-cd /opt/sabermais
+cd /opt/apps/sabermais
 
 echo "==> A verificar se o Certbot está instalado..."
 if ! command -v certbot &> /dev/null; then
@@ -40,7 +40,7 @@ docker compose -f docker-compose.prod.yml restart nginx
 
 # Renova automaticamente (cron job)
 echo "==> A configurar renovação automática..."
-(crontab -l 2>/dev/null; echo "0 3 * * * certbot renew --quiet && cp /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /opt/sabermais/nginx/ssl/live/${DOMAIN}/fullchain.pem && cp /etc/letsencrypt/live/${DOMAIN}/privkey.pem /opt/sabermais/nginx/ssl/live/${DOMAIN}/privkey.pem && docker compose -f /opt/sabermais/docker-compose.prod.yml restart nginx") | crontab -
+(crontab -l 2>/dev/null; echo "0 3 * * * certbot renew --quiet && cp /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /opt/apps/sabermais/nginx/ssl/live/${DOMAIN}/fullchain.pem && cp /etc/letsencrypt/live/${DOMAIN}/privkey.pem /opt/apps/sabermais/nginx/ssl/live/${DOMAIN}/privkey.pem && docker compose -f /opt/apps/sabermais/docker-compose.prod.yml restart nginx") | crontab -
 
 echo ""
 echo "✅ SSL configurado com sucesso!"
