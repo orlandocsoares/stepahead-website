@@ -28,13 +28,6 @@ jobs:
 
             APP_DIR=/opt/apps/sabermais/sabermais.edu.ao
 
-            # Se o directório não existir, clona o repo pela primeira vez
-            if [ ! -d "$APP_DIR/.git" ]; then
-              echo "==> Primeira instalação: a clonar repositório..."
-              mkdir -p "$APP_DIR"
-              git clone https://github.com/${{ github.repository }}.git "$APP_DIR"
-            fi
-
             echo "==> A ir para o directório da aplicação..."
             cd "$APP_DIR"
 
