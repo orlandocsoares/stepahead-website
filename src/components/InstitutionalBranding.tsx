@@ -8,25 +8,25 @@ const INSTITUTIONAL_PARTNERS = [
     name: "Governo de Angola",
     subtitle: "Ministério da Educação",
     summary: "Tutela governamental responsável pela definição, condução e execução da política nacional do systema educativo.",
-    src: "/storage/v1/object/public/Logo%20Institutos/med.png"
+    src: "/storage/v1/object/public/logo-institutos/med.png"
   },
   {
     name: "República de Angola",
     subtitle: "Insígnia Oficial",
     summary: "Símbolo máximo de soberania nacional, reflectindo a história, a identidade e os valores do Estado Angolano.",
-    src: "/storage/v1/object/public/Logo%20Institutos/insignia.png"
+    src: "/storage/v1/object/public/logo-institutos/insignia.png"
   },
   {
     name: "INFQE",
     subtitle: "Instituto de Formação",
     summary: "Instituto Nacional de Formação de Quadros da Educação, pivot na valorização dos agentes del ensino.",
-    src: "/storage/v1/object/public/Logo%20Institutos/infqe.png"
+    src: "/storage/v1/object/public/logo-institutos/infqe.png"
   },
   {
     name: "Camões, I.P.",
     subtitle: "Cooperação Portuguesa",
     summary: "Instituto da Cooperação e da Língua, organismo supervisor da parceria bilateral e do apoio ao reforço pedagógico.",
-    src: "/storage/v1/object/public/Logo%20Institutos/icamoes.png"
+    src: "/storage/v1/object/public/logo-institutos/icamoes.png"
   }
 ];
 

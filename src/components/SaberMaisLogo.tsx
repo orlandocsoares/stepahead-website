@@ -10,7 +10,7 @@ export function SaberMaisLogo({ size = 120 }) {
       className="flex flex-col items-center gap-3 px-6 pointer-events-none"
     >
       <img
-        src="/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png"
+        src="/storage/v1/object/public/logo-sabermais/Sabermais_Logo.png"
         alt="Logotipo Saber Mais"
         style={{ height: size, mixBlendMode: "screen" }}
         className="object-contain"

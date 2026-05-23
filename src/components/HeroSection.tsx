@@ -17,7 +17,7 @@ import { DASHBOARD_URL } from "@/lib/program-config";
 import { PhasesSidebar } from "./PhasesSidebar";
 import { Navigator } from "./Navigator";
 
-const BASE_FRAME_URL = "/storage/v1/object/public/Nuvem%20LooP/";
+const BASE_FRAME_URL = "/storage/v1/object/public/nuvem-loop/";
 const FRAME_SUFFIX = "_delay-0.033s.webp";
 const TOTAL_FRAMES_COUNT = 280;
 
@@ -439,7 +439,7 @@ return (
 })}
 </AnimatePresence>
 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-<img src="/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]" />
+<img src="/storage/v1/object/public/logo-sabermais/Sabermais_Logo.png" alt="Logotipo" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]" />
 </motion.div>
 </div>
 <p className="text-[5.5px] sm:text-[7px] md:text-[7.5px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.6em] md:tracking-[0.85em] text-white/70 text-center leading-none mt-0.5 z-20 whitespace-nowrap w-full drop-shadow-md">Programa de Apoio ao Reforço do Ensino Secundário em Angola</p>
