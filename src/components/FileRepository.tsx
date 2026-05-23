@@ -23,7 +23,7 @@ function FileCard({ doc, index }: { doc: any; index: number }) {
 
   const handleDownload = (name: string) => {
     playSound("click");
-    const publicURL = `https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/materiais/${name}`;
+    const publicURL = `/storage/v1/object/public/materiais/${encodeURIComponent(name)}`;
     window.open(publicURL, '_blank');
   };
 

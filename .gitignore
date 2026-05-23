@@ -38,7 +38,16 @@ yarn-error.log*
 next-env.d.ts
 
 .genkit/*
+
+# Variáveis de ambiente — NUNCA fazer commit
 .env*
+!.env.example
+
+# Storage local
+/storage/
+
+# Certificados SSL — gerados na VPS, não no repo
+/nginx/ssl/
 
 # firebase
 firebase-debug.log

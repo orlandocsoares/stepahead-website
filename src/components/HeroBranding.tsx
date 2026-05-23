@@ -8,25 +8,25 @@ const HERO_PARTNERS = [
     name: "Ministério da Educação",
     subtitle: "Governo de Angola",
     summary: "Tutela governamental responsável pela definição, condução e execução da política nacional do systema educativo.",
-    src: "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Institutos/med.png"
+    src: "/storage/v1/object/public/Logo%20Institutos/med.png"
   },
   {
     name: "República de Angola",
     subtitle: "Insígnia Oficial",
     summary: "Símbolo máximo de soberania nacional, reflectindo a história, a identidade e os valores do Estado Angolano.",
-    src: "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Institutos/insignia.png"
+    src: "/storage/v1/object/public/Logo%20Institutos/insignia.png"
   },
   {
     name: "INFQE",
     subtitle: "Instituto de Formação",
     summary: "Instituto Nacional de Formação de Quadros da Educação, pivot na valorização dos agentes do ensino.",
-    src: "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Institutos/infqe.png"
+    src: "/storage/v1/object/public/Logo%20Institutos/infqe.png"
   },
   {
     name: "Camões, I.P.",
     subtitle: "Cooperação Portuguesa",
     summary: "Instituto da Cooperação e da Língua, organismo supervisor da parceria bilateral e do apoio ao reforço pedagógico.",
-    src: "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Institutos/icamoes.png"
+    src: "/storage/v1/object/public/Logo%20Institutos/icamoes.png"
   }
 ];
 

@@ -27,13 +27,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      // ADICIONADO: Supabase (Para a animação funcionar)
-      {
-        protocol: 'https',
-        hostname: 'qwaoeikvwwthlgcpagyz.supabase.co',
-        port: '',
-        pathname: '/storage/v1/object/public/**',
-      },
     ],
   },
 };

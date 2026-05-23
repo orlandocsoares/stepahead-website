@@ -1,0 +1,68 @@
+# docker-compose para PRODUÇÃO (VPS)
+# Uso: docker compose -f docker-compose.prod.yml up -d
+# Requer ficheiro .env.production na mesma pasta
+
+services:
+  db:
+    image: postgres:16
+    container_name: sabermais-postgres
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # NOTA: sem "ports" — Postgres NÃO é exposto para a internet
+    # Apenas acessível internamente pelo Docker (hostname: db)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - internal
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sabermais-web:latest
+    container_name: sabermais-next
+    depends_on:
+      - db
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      SESSION_SECRET: ${SESSION_SECRET}
+      NODE_ENV: production
+    # NOTA: apenas expõe para o NGINX (localhost), não para a internet
+    ports:
+      - "127.0.0.1:9002:9002"
+    volumes:
+      - ./storage:/app/storage
+    networks:
+      - internal
+
+  nginx:
+    image: nginx:alpine
+    container_name: sabermais-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot_webroot:/var/www/certbot:ro
+    depends_on:
+      - web
+    networks:
+      - internal
+
+volumes:
+  postgres_data:
+  certbot_webroot:
+
+networks:
+  internal:
+    driver: bridge

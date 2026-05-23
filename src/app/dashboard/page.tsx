@@ -203,7 +203,7 @@ export default function DashboardPage() {
           
                     <a 
                       key={f.id} 
-                      href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/materiais/${f.nome_arquivo}`} 
+                      href={`/storage/v1/object/public/materiais/${f.nome_arquivo}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="p-6 rounded-3xl bg-white/[0.01] border border-white/5 hover:border-blue-500/40 hover:bg-black/50 transition-all duration-500 group flex flex-col justify-between h-40 shadow-xl"

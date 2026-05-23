@@ -197,7 +197,7 @@ export default function SuperAdminPage() {
 
       const csvRows = [
         headersKeys.map(k => headersMap[k]).join(";"),
-        ...exportData.map(row =>
+        ...exportData.map((row: any) =>
           headersKeys.map(key => {
             let val = row[key];
             if (key === "created_at" && val) val = new Date(val).toLocaleDateString("pt-PT");

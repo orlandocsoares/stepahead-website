@@ -15,7 +15,7 @@ import { Navigator } from "@/components/Navigator";
 import { CommandCenter } from "@/components/CommandCenter";
 import { HeroBranding } from "@/components/HeroBranding";
 
-const BASE_FRAME_URL = "https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Nuvem%20LooP/";
+const BASE_FRAME_URL = "/storage/v1/object/public/Nuvem%20LooP/";
 const FRAME_SUFFIX = "_delay-0.033s.webp";
 const TOTAL_FRAMES_COUNT = 280;
 
@@ -81,7 +81,8 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
   );
 }
 
-export default function HeroSection({ isDashboardView = false }: { isDashboardView?: boolean }) {
+export default function HeroSection() {
+  const isDashboardView = false;
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
@@ -541,7 +542,7 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" />
+                  <img src="/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" />
                 </motion.div>
               </div>
               <p className="text-[5.5px] sm:text-[7px] md:text-[7.5px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.6em] md:tracking-[0.85em] text-white/70 text-center leading-none mt-4 z-20 whitespace-nowrap w-full drop-shadow-md">
@@ -564,7 +565,7 @@ export default function HeroSection({ isDashboardView = false }: { isDashboardVi
         {isVIPWelcomeOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.9 }} className="fixed inset-0 bg-black/50 backdrop-blur-xl z-[300] flex flex-col items-center justify-center text-center p-6 pointer-events-auto">
             <motion.div initial={{ opacity: 0, y: 30, scale: 0.99, filter: "blur(15px)" }} animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }} transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center">
-              <motion.img src="https://qwaoeikvwwthlgcpagyz.supabase.co/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ repeat: Infinity, duration: 4 }} className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none mix-blend-screen" />
+              <motion.img src="/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ repeat: Infinity, duration: 4 }} className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none mix-blend-screen" />
               <h2 className="text-5xl font-extralight uppercase tracking-tighter text-white italic leading-none">Bem-vindo</h2>
               <h3 className="text-3xl font-bold uppercase tracking-tight text-blue-500 mt-3 drop-shadow-[0_0_20px_rgba(59,130,246,0.3)]">{finalFullName}</h3>
             </motion.div>

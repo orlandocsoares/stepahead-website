@@ -1,5 +1,4 @@
 'use client';
-import { getAuth, type User } from 'firebase/auth';
 
 type SecurityRuleContext = {
   path: string;
@@ -20,6 +19,16 @@ interface FirebaseAuthToken {
   };
 }
 
+type UserLike = {
+  displayName: string | null;
+  email: string | null;
+  emailVerified: boolean;
+  phoneNumber: string | null;
+  uid: string;
+  providerData: Array<{ providerId?: string | null; uid?: string | null }>;
+  tenantId: string | null;
+};
+
 interface FirebaseAuthObject {
   uid: string;
   token: FirebaseAuthToken;
@@ -39,7 +48,7 @@ interface SecurityRuleRequest {
  * @param currentUser The currently authenticated Firebase user.
  * @returns An object that mirrors request.auth in security rules, or null.
  */
-function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
+function buildAuthObject(currentUser: UserLike | null): FirebaseAuthObject | null {
   if (!currentUser) {
     return null;
   }
@@ -51,9 +60,9 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
     phone_number: currentUser.phoneNumber,
     sub: currentUser.uid,
     firebase: {
-      identities: currentUser.providerData.reduce((acc, p) => {
+      identities: currentUser.providerData.reduce((acc: Record<string, string[]>, p: { providerId?: string | null; uid?: string | null }) => {
         if (p.providerId) {
-          acc[p.providerId] = [p.uid];
+          acc[p.providerId] = [p.uid || ''];
         }
         return acc;
       }, {} as Record<string, string[]>),
@@ -75,18 +84,7 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
  * @returns A structured request object.
  */
 function buildRequestObject(context: SecurityRuleContext): SecurityRuleRequest {
-  let authObject: FirebaseAuthObject | null = null;
-  try {
-    // Safely attempt to get the current user.
-    const firebaseAuth = getAuth();
-    const currentUser = firebaseAuth.currentUser;
-    if (currentUser) {
-      authObject = buildAuthObject(currentUser);
-    }
-  } catch {
-    // This will catch errors if the Firebase app is not yet initialized.
-    // In this case, we'll proceed without auth information.
-  }
+  const authObject: FirebaseAuthObject | null = null;
 
   return {
     auth: authObject,

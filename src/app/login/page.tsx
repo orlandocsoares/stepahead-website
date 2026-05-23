@@ -121,7 +121,7 @@ export default function LoginPage() {
               <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-blue-500 transition-all" size={18} />
               <input 
                 required type="email" placeholder="E-MAIL INSTITUCIONAL" 
-                className="w-full h-16 bg-white/[0.02] border border-white/5 rounded-2xl pl-14 pr-6 text-[10px] text-white uppercase tracking-widest outline-none focus:border-blue-500/40 focus:bg-white/[0.04] transition-all"
+                className="w-full h-16 bg-white/[0.02] border border-white/5 rounded-2xl pl-14 pr-6 text-[10px] text-white tracking-widest outline-none focus:border-blue-500/40 focus:bg-white/[0.04] transition-all"
                 value={email} onChange={(e) => setEmail(e.target.value)}
               />
             </div>
@@ -131,7 +131,7 @@ export default function LoginPage() {
               <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-blue-500 transition-all" size={18} />
               <input 
                 required type="password" placeholder="PALAVRA-PASSE" 
-                className="w-full h-16 bg-white/[0.02] border border-white/5 rounded-2xl pl-14 pr-6 text-[10px] text-white uppercase tracking-widest outline-none focus:border-blue-500/40 focus:bg-white/[0.04] transition-all"
+                className="w-full h-16 bg-white/[0.02] border border-white/5 rounded-2xl pl-14 pr-6 text-[10px] text-white tracking-widest outline-none focus:border-blue-500/40 focus:bg-white/[0.04] transition-all"
                 value={password} onChange={(e) => setPassword(e.target.value)}
               />
             </div>

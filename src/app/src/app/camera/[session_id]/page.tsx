@@ -31,7 +31,7 @@ export default function MobileCameraPage() {
     }
 
     // Gerar o link público da imagem
-    const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${data.path}`;
+    const imageUrl = `/storage/v1/object/public/avatars/${data.path}`;
 
     // 2. Avisar o computador em tempo real que a foto chegou!
     const channel = supabase.channel(`camera-${session_id}`);

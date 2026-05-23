@@ -255,7 +255,7 @@ export default function RepositorioPage() {
               {filtered.map((file, index) => {
                 const fileName = file.nome_arquivo || "";
                 const encodedFileName = encodeURIComponent(fileName);
-                const fileUrl = fileName ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/materiais/${encodedFileName}` : "#";
+                const fileUrl = fileName ? `/storage/v1/object/public/materiais/${encodedFileName}` : "#";
                 
                 const parts = fileName.split(".");
                 const extension = parts.length > 1 ? parts.pop().toUpperCase() : "DOC";

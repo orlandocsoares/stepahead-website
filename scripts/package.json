@@ -1,0 +1,11 @@
+{
+  "name": "sabermais-migration-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Scripts de migração do Supabase para o servidor local",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
+    "pg": "^8.16.3"
+  }
+}

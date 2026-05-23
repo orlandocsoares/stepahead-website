@@ -115,7 +115,7 @@ export default function RegisterPage() {
           .upload(`formadores/${fileName}`, avatarFile);
           
         if (!uploadError && uploadData) {
-          finalAvatarUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${uploadData.path}`;
+          finalAvatarUrl = `/storage/v1/object/public/avatars/${uploadData.path}`;
         }
       }
 
