@@ -16,8 +16,9 @@ import { DASHBOARD_URL } from "@/lib/program-config";
 // IMPORTS EXTERNOS
 import { PhasesSidebar } from "./PhasesSidebar";
 import { Navigator } from "./Navigator";
+import { HelpGuide } from "./HelpGuide";
+import { BASE_FRAME_URL } from "@/lib/program-config";
 
-const BASE_FRAME_URL = "/storage/v1/object/public/nuvem-loop/";
 const FRAME_SUFFIX = "_delay-0.033s.webp";
 const TOTAL_FRAMES_COUNT = 280;
 
@@ -105,6 +106,7 @@ const [activePhaseIndex, setActivePhaseIndex] = useState(0);
 const [hasInteracted, setHasInteracted] = useState(false);
 const [isHovering, setIsHovering] = useState(false);
 const [isLogoHovered, setIsLogoHovered] = useState(false);
+const [helpOpen, setHelpOpen] = useState(false);
 
 const [telemetry, setTelemetry] = useState<any>(null);
 
@@ -298,7 +300,7 @@ const getDynamicPhaseContent = (index: number) => {
 const activeData = getDynamicPhaseContent(activePhaseIndex);
 
 return (
-<div ref={containerRef} className="relative h-screen w-full bg-transparent overflow-hidden touch-none font-sans md:cursor-none">
+<div ref={containerRef} className="relative h-[100dvh] w-full bg-transparent overflow-hidden touch-none font-sans md:cursor-none">
 {/* CURSOR */}
 <motion.div className="fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[100] mix-blend-difference hidden md:block" style={{ x: mouseX, y: mouseY, translateX: "-50%", translateY: "-50%" }} animate={{ scale: isHovering ? 3.5 : 1, opacity: 0.8 }} transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.2 }} />
 
@@ -376,12 +378,17 @@ return (
 </button>
 </div>
 ) : (
-<button onClick={() => setIsLoginOpen(true)} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group relative flex items-center gap-2 px-6 py-2.5 bg-white/[0.02] backdrop-blur-3xl border border-white/10 rounded-xl hover:border-white/40 transition-all duration-500 cursor-none shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.15)]">
-<LogIn size={14} strokeWidth={1.5} className="text-white/50 group-hover:text-white transition-colors" />
-<span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-white/70 group-hover:text-white transition-colors">Entrar</span>
+<button onClick={() => setIsLoginOpen(true)} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group relative inline-flex items-center justify-center w-24 h-24 rounded-full bg-white/[0.08] border border-white/10 hover:border-white/40 transition-all duration-500 cursor-none shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.15)] overflow-hidden">
+<LogIn size={14} strokeWidth={1.5} className="relative z-10 text-white/50 group-hover:text-white transition-colors group-hover:drop-shadow-[0_0_16px_rgba(59,130,246,0.55)]" />
+<span className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 rounded-full bg-slate-950/20 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.3em] text-white opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none shadow-[0_0_18px_rgba(59,130,246,0.35)] ring-1 ring-sky-400/20 group-hover:animate-pulse">Entrar</span>
 </button>
 )}
+<button onClick={() => setHelpOpen(true)} className="ml-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/25 text-white/80 transition hover:border-sky-400/40 hover:text-white hover:shadow-[0_0_20px_rgba(56,189,248,0.25)]">
+<span className="text-sm font-bold">?</span>
+<span className="sr-only">Abrir guia de ajuda</span>
+</button>
 </motion.header>
+<HelpGuide open={helpOpen} setOpen={setHelpOpen} />
 
 {/* RECUO ESTRUTURAL E REDIMENSIONAMENTO GIGANTE: left empurrado para o meio do ecrã e max-w expandido */}
 <div className="absolute top-[25%] sm:top-[28%] left-24 sm:left-32 md:left-48 lg:left-[320px] w-[80%] md:max-w-4xl pointer-events-auto z-40">
@@ -389,24 +396,26 @@ return (
 {activePhaseIndex !== 0 && (
 <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 20, filter: "blur(10px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -20, filter: "blur(10px)" }} transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col gap-6 sm:gap-10">
 <div className="space-y-4">
-<p className="text-[12px] md:text-[14px] tracking-[0.8em] text-white/70 uppercase font-medium truncate drop-shadow-md">{activeData.subtitle}</p>
-{/* TÍTULO REESCALADO PARA IMPACTO CINEMATOGRÁFICO */}
-<h1 className="text-6xl sm:text-7xl lg:text-[6rem] font-light uppercase tracking-tighter text-white leading-[0.85] drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]">{activeData.name}</h1>
+<p className="text-[12px] md:text-[14px] uppercase tracking-[0.28em] text-white/95 font-semibold truncate drop-shadow-[0_0_20px_rgba(0,0,0,0.35)]">{activeData.subtitle}</p>
+          {/* TÍTULO REESCALADO PARA IMPACTO CINEMATOGRÁFICO */}
+          <h1 className="text-6xl sm:text-7xl lg:text-[6rem] font-light uppercase tracking-tighter text-white leading-[0.85] drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]">{activeData.name}</h1>
+        </div>
+
+        {/* DESCRIÇÃO DA FASE APRIMORADA */}
+        <div className="w-full">
+          <p className="max-w-3xl rounded-[2rem] bg-black/20 px-6 py-5 text-[15px] md:text-[16px] leading-8 text-white/95 tracking-normal shadow-[0_0_35px_rgba(0,0,0,0.2)] backdrop-blur-sm">
+            {activeData.description}
+          </p>
 </div>
 
-{/* DESCRIÇÃO DA FASE APRIMORADA */}
-<div className="w-full">
-  {activeData.description}
-</div>
-
-<button onClick={() => window.open(DASHBOARD_URL, "_blank")} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-6 pt-8 cursor-none w-fit"><span className="text-[13px] font-medium uppercase tracking-[0.4em] text-white/80 group-hover:text-white transition-colors drop-shadow-md">Saber Mais</span><div className="relative w-16 h-[1px] bg-white/30 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div></button>
+<button onClick={() => window.open(DASHBOARD_URL, "_blank")} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-6 pt-8 cursor-none w-fit"><span className="text-[13px] font-medium uppercase tracking-[0.4em] text-white/95 group-hover:text-white transition-colors drop-shadow-md">Saber Mais</span><div className="relative w-16 h-[1px] bg-white/30 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div></button>
 </motion.div>
 )}
 </AnimatePresence>
 </div>
 
 {/* LOGO + TAGLINE BOLD + FÓRMULAS SUPERNOVA */}
-<motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }} className="absolute bottom-6 md:bottom-12 left-1/2 z-50 flex flex-col items-center pointer-events-auto group w-[320px] sm:w-[500px] md:w-[750px]" >
+<motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }} className="absolute bottom-10 sm:bottom-12 md:bottom-16 left-1/2 z-50 flex flex-col items-center pointer-events-auto group w-[320px] sm:w-[500px] md:w-[750px]" >
 <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
 <AnimatePresence>
 {/* BLOCO DE LOGIN DO LOGO */}
@@ -420,9 +429,9 @@ user ? (
 <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-[8px] uppercase tracking-widest text-white/30 hover:text-red-400 transition-colors flex items-center gap-1 opacity-0 group-hover/logomenu:opacity-100 cursor-none"><LogOut size={10} /> Terminar Sessão</button>
 </motion.div>
 ) : (
-<motion.button initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} onClick={(e) => { e.stopPropagation(); setIsLoginOpen(true); }} className="absolute -top-12 group flex items-center gap-2 px-5 py-2 bg-white/[0.02] backdrop-blur-3xl border border-white/10 rounded-xl hover:border-white/40 transition-all duration-500 z-50 pointer-events-auto cursor-none shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.15)]">
-<LogIn size={14} strokeWidth={1.5} className="text-white/50 group-hover:text-white transition-colors" />
-<span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/70 group-hover:text-white transition-colors">Entrar</span>
+<motion.button initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} onClick={(e) => { e.stopPropagation(); setIsLoginOpen(true); }} className="absolute -top-12 group inline-flex items-center justify-center w-24 h-24 rounded-full bg-white/[0.08] backdrop-blur-3xl border border-white/10 hover:border-white/40 transition-all duration-500 z-50 pointer-events-auto cursor-none shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.15)] overflow-hidden">
+  <LogIn size={14} strokeWidth={1.5} className="relative z-10 text-white/50 group-hover:text-white transition-colors group-hover:drop-shadow-[0_0_16px_rgba(59,130,246,0.55)]" />
+  <span className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 rounded-full bg-slate-950/20 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.35em] text-white opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none shadow-[0_0_18px_rgba(59,130,246,0.35)] ring-1 ring-sky-400/20 group-hover:animate-pulse">Entrar</span>
 </motion.button>
 )
 )}
@@ -439,14 +448,14 @@ return (
 })}
 </AnimatePresence>
 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-<img src="/storage/v1/object/public/logo-sabermais/Sabermais_Logo.png" alt="Logotipo" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]" />
+<img src="/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]" />
 </motion.div>
 </div>
 <p className="text-[5.5px] sm:text-[7px] md:text-[7.5px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.6em] md:tracking-[0.85em] text-white/70 text-center leading-none mt-0.5 z-20 whitespace-nowrap w-full drop-shadow-md">Programa de Apoio ao Reforço do Ensino Secundário em Angola</p>
 </motion.div>
 
 {/* CLUSTER DIREITO: SIDEBAR + NAVEGADOR INDEPENDENTE (RELÓGIO) */}
-<div className="fixed right-6 sm:right-12 md:right-16 bottom-[35vh] z-50 flex flex-col items-end gap-10">
+<div className="fixed right-6 sm:right-12 md:right-16 top-1/2 -translate-y-1/2 z-50 flex flex-col items-end gap-6 sm:gap-10">
 <PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} phases={PROGRAM_PHASES} setIsHovering={setIsHovering} />
 <Navigator activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} setIsHovering={setIsHovering} />
 </div>

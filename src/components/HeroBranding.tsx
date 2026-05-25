@@ -8,25 +8,25 @@ const HERO_PARTNERS = [
     name: "Ministério da Educação",
     subtitle: "Governo de Angola",
     summary: "Tutela governamental responsável pela definição, condução e execução da política nacional do systema educativo.",
-    src: "/storage/v1/object/public/logo-institutos/med.png"
+    src: "/storage/v1/object/public/Logo%20Institutos/med.png"
   },
   {
     name: "República de Angola",
     subtitle: "Insígnia Oficial",
     summary: "Símbolo máximo de soberania nacional, reflectindo a história, a identidade e os valores do Estado Angolano.",
-    src: "/storage/v1/object/public/logo-institutos/insignia.png"
+    src: "/storage/v1/object/public/Logo%20Institutos/insignia.png"
   },
   {
     name: "INFQE",
     subtitle: "Instituto de Formação",
     summary: "Instituto Nacional de Formação de Quadros da Educação, pivot na valorização dos agentes do ensino.",
-    src: "/storage/v1/object/public/logo-institutos/infqe.png"
+    src: "/storage/v1/object/public/Logo%20Institutos/infqe.png"
   },
   {
     name: "Camões, I.P.",
     subtitle: "Cooperação Portuguesa",
     summary: "Instituto da Cooperação e da Língua, organismo supervisor da parceria bilateral e do apoio ao reforço pedagógico.",
-    src: "/storage/v1/object/public/logo-institutos/icamoes.png"
+    src: "/storage/v1/object/public/Logo%20Institutos/icamoes.png"
   }
 ];
 
@@ -43,8 +43,7 @@ export function HeroBranding() {
   const activePartner = HERO_PARTNERS[index];
 
   return (
-    /* ALINHAMENTO: right-6 sm:right-16 (Igual ao Relógio) | bottom-6 md:bottom-10 (Mancha Amarela) */
-    <div className="fixed right-6 sm:right-16 bottom-6 md:bottom-10 z-40 flex items-end pointer-events-none hidden xl:flex select-none">
+    <div className="flex items-end pointer-events-none hidden xl:flex select-none">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

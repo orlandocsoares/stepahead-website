@@ -4,6 +4,12 @@ import path from "path";
 
 const STORAGE_ROOT = path.join(process.cwd(), "storage");
 
+const BUCKET_ALIAS_MAP: Record<string, string> = {
+  "logo-sabermais": "Logo Sabermais",
+  "logo-institutos": "Logo Institutos",
+  "nuvem-loop": "Nuvem LooP",
+};
+
 function inferContentType(fileName: string) {
   const lower = fileName.toLowerCase();
   if (lower.endsWith(".png")) return "image/png";
@@ -22,9 +28,10 @@ export async function GET(
   try {
     const { bucket, filePath } = await context.params;
     const normalizedBucket = String(bucket);
+    const bucketName = BUCKET_ALIAS_MAP[normalizedBucket] ?? normalizedBucket;
     const relative = filePath.map((part) => decodeURIComponent(part)).join("/");
 
-    const bucketDir = path.join(STORAGE_ROOT, normalizedBucket);
+    const bucketDir = path.join(STORAGE_ROOT, bucketName);
     const absolute = path.join(bucketDir, relative);
 
     if (!absolute.startsWith(bucketDir)) {

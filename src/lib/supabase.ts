@@ -27,7 +27,31 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 		...init,
 	});
 
-	const payload = await response.json();
+	const text = await response.text();
+	if (!text.trim()) {
+		if (response.ok) {
+			return {} as T;
+		}
+
+		throw new Error(`Request failed: ${response.status} ${response.statusText} (${url}) - empty response body`);
+	}
+
+	let payload: unknown;
+	try {
+		payload = JSON.parse(text);
+	} catch (error) {
+		throw new Error(
+			`Failed to parse JSON from ${url}: ${error instanceof Error ? error.message : String(error)} - response body: ${text}`
+		);
+	}
+
+	if (!response.ok) {
+		const message = typeof payload === "object" && payload !== null && "error" in payload
+			? JSON.stringify(payload)
+			: text;
+		throw new Error(`Request failed: ${response.status} ${response.statusText} (${url}) - ${message}`);
+	}
+
 	return payload as T;
 }
 

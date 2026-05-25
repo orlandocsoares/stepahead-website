@@ -73,7 +73,7 @@ export default function WelcomePage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="pt-2">
-          <button onClick={() => router.push('/')} className="px-10 py-5 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-blue-600 hover:text-white transition-all">
+          <button onClick={() => router.push('/')} className="px-6 md:px-10 py-5 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-blue-600 hover:text-white transition-all">
             Voltar ao Menu Principal
           </button>
         </motion.div>

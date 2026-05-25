@@ -9,14 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { DASHBOARD_URL } from "@/lib/program-config";
+import { BASE_FRAME_URL, DASHBOARD_URL } from "@/lib/program-config";
 import { PhasesSidebar } from "@/components/PhasesSidebar"; 
 import { Navigator } from "@/components/Navigator";
 import { CommandCenter } from "@/components/CommandCenter";
 import { HeroBranding } from "@/components/HeroBranding";
+import { HelpGuide } from "@/components/HelpGuide";
 import { QRCodeSVG } from "qrcode.react";
 
-const BASE_FRAME_URL = "/storage/v1/object/public/nuvem-loop/";
 const FRAME_SUFFIX = "_delay-0.033s.webp";
 const TOTAL_FRAMES_COUNT = 280;
 
@@ -93,6 +93,7 @@ export default function HeroSection() {
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isVIPWelcomeOpen, setIsVIPWelcomeOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   
   const [userRole, setUserRole] = useState<'formando' | 'formador'>('formando');
@@ -434,7 +435,7 @@ export default function HeroSection() {
   const activeData = getDynamicPhaseContent(activePhaseIndex);
 
   return (
-    <div ref={containerRef} className="relative h-screen w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
+    <div ref={containerRef} className="relative h-[100dvh] w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
       
       {!isDashboardView && user && !isVIPWelcomeOpen && <CommandCenter />}
 
@@ -451,7 +452,7 @@ export default function HeroSection() {
                 onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
-                className="relative w-24 h-24 rounded-full outline-none group flex items-center justify-center bg-transparent transition-transform duration-500 hover:scale-105"
+                className="relative w-24 h-24 rounded-full outline-none group inline-flex items-center justify-center overflow-hidden bg-white/[0.08] border border-white/10 hover:border-white/40 transition-all duration-500 hover:scale-105 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_28px_rgba(59,130,246,0.18)]"
               >
                 <motion.div 
                   className="absolute inset-0 rounded-full border-[2px] border-transparent"
@@ -461,10 +462,8 @@ export default function HeroSection() {
                   }}
                   transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
                 />
-                <LogIn size={26} strokeWidth={1.2} className="text-white/90 group-hover:text-white transition-colors duration-500 z-10" />
-                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none flex items-center">
-                  <span className="text-[12px] font-semibold uppercase tracking-[0.5em] text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] whitespace-nowrap">Entrar</span>
-                </div>
+                <LogIn size={26} strokeWidth={1.2} className="relative z-10 text-white/90 group-hover:text-white transition-colors duration-500 group-hover:drop-shadow-[0_0_18px_rgba(59,130,246,0.6)]" />
+                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 rounded-full bg-slate-950/20 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.5em] text-white opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none shadow-[0_0_22px_rgba(59,130,246,0.35)] ring-1 ring-sky-400/20 group-hover:animate-pulse">Entrar</span>
               </motion.button>
             </div>
           </motion.nav>
@@ -484,7 +483,7 @@ export default function HeroSection() {
             
             {/* O SEU POP-UP ORIGINAL, AGORA COM TUDO LÁ DENTRO */}
             <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-              <DialogContent className="w-[95vw] sm:max-w-[440px] bg-[#0a0a0a]/80 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200]">
+              <DialogContent className="w-[95vw] md:w-[70vw] lg:w-[50vw] sm:max-w-[440px] bg-[#0a0a0a]/80 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200]">
                 
                 {isSuccess ? (
                   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center text-center space-y-6 py-8">
@@ -595,6 +594,31 @@ export default function HeroSection() {
               </DialogContent>
             </Dialog>
 
+            <HelpGuide open={helpOpen} setOpen={setHelpOpen} />
+
+            {/* BARRA DIREITA UNIFICADA (Evita sobreposição em ecrãs de menor altura) */}
+            <div className="fixed top-0 right-6 sm:right-16 md:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-6 sm:py-10 pointer-events-none">
+              
+              {/* TOPO: Botão de Ajuda */}
+              <div className="pointer-events-auto shrink-0">
+                <button onClick={() => setHelpOpen(true)} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white transition hover:border-sky-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-400/50">
+                  <span className="text-lg font-black">?</span>
+                  <span className="sr-only">Abrir guia de ajuda</span>
+                </button>
+              </div>
+
+              {/* CENTRO: Fases e Navegador */}
+              <div className="flex flex-col items-end gap-4 md:gap-8 pointer-events-auto my-auto shrink-0 transform-gpu min-[1000px]:scale-100 scale-90 origin-right">
+                <PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} phases={PROGRAM_PHASES} setIsHovering={setIsHovering} />
+                <Navigator activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} setIsHovering={setIsHovering} />
+              </div>
+
+              {/* BASE: HeroBranding */}
+              <div className="pointer-events-auto shrink-0">
+                <HeroBranding />
+              </div>
+            </div>
+
             <div className="absolute top-[28vh] left-8 sm:left-24 lg:left-[160px] w-[85%] md:w-[540px] h-[320px] z-40 pointer-events-auto flex flex-col justify-between">
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
@@ -615,7 +639,7 @@ export default function HeroSection() {
               </AnimatePresence>
             </div>
 
-            <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-6 md:bottom-12 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
+            <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-10 sm:bottom-12 md:bottom-16 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>
@@ -646,20 +670,13 @@ export default function HeroSection() {
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="/storage/v1/object/public/logo-sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" />
+                  <img src="/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" />
                 </motion.div>
               </div>
-              <p className="text-[5.5px] sm:text-[7px] md:text-[7.5px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.6em] md:tracking-[0.85em] text-white/70 text-center leading-none mt-4 z-20 whitespace-nowrap w-full drop-shadow-md">
+              <p className="text-[9px] sm:text-[10px] md:text-[11px] font-medium uppercase tracking-[0.35em] sm:tracking-[0.45em] md:tracking-[0.6em] text-white/80 text-center leading-none mt-0 z-20 whitespace-nowrap w-fit drop-shadow-md">
                 Programa de Apoio ao Reforço do Ensino Secundário em Angola
               </p>
             </motion.div>
-
-            <div className="fixed right-6 sm:right-16 bottom-[10vh] sm:bottom-[30vh] z-50 flex flex-col items-end gap-10 pointer-events-auto">
-              <PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} phases={PROGRAM_PHASES} setIsHovering={setIsHovering} />
-              <Navigator activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} setIsHovering={setIsHovering} />
-            </div>
-
-            <HeroBranding />
 
           </motion.div>
         )}
@@ -669,7 +686,7 @@ export default function HeroSection() {
         {isVIPWelcomeOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.9 }} className="fixed inset-0 bg-black/50 backdrop-blur-xl z-[300] flex flex-col items-center justify-center text-center p-6 pointer-events-auto">
             <motion.div initial={{ opacity: 0, y: 30, scale: 0.99, filter: "blur(15px)" }} animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }} transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center">
-              <motion.img src="/storage/v1/object/public/logo-sabermais/Sabermais_Logo.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ repeat: Infinity, duration: 4 }} className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none mix-blend-screen" />
+              <motion.img src="/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ repeat: Infinity, duration: 4 }} className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none mix-blend-screen" />
               <h2 className="text-5xl font-extralight uppercase tracking-tighter text-white italic leading-none">Bem-vindo</h2>
               <h3 className="text-3xl font-bold uppercase tracking-tight text-blue-500 mt-3 drop-shadow-[0_0_20px_rgba(59,130,246,0.3)]">{finalFullName}</h3>
             </motion.div>

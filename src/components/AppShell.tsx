@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { BASE_FRAME_URL } from "@/lib/program-config";
 
-const BASE_FRAME_URL = "/storage/v1/object/public/nuvem-loop/";
 const FRAME_SUFFIX = "_delay-0.033s.webp";
 const TOTAL_FRAMES_COUNT = 280;
 

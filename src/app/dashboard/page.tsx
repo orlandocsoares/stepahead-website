@@ -64,7 +64,7 @@ export default function DashboardPage() {
 
   return (
     // ESTRUTURA GLOBAL: Enquadramento com altura de ecrã limitada e scroll interno
-    <div className="h-screen flex flex-col max-w-[1400px] mx-auto pt-24 pb-10 px-10 md:pl-48 relative z-10 selection:bg-blue-500/30 overflow-hidden">
+    <div className="h-screen flex flex-col max-w-[1400px] mx-auto pt-24 pb-10 px-4 md:px-10 md:pl-48 relative z-10 selection:bg-blue-500/30 overflow-hidden">
       
       {/* Ocultar a Scrollbar Nativa para deixar brilhar a Calha de Néon */}
       <style dangerouslySetInnerHTML={{__html: `

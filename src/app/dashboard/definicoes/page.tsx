@@ -89,7 +89,7 @@ export default function PerfilPage() {
           <div className="flex justify-end items-center gap-6">
              <p className="text-[10px] text-white/20 uppercase tracking-widest italic">As alterações serão validadas pela coordenação</p>
              <MagneticButton strength={0.2}>
-                <button className="px-10 py-5 rounded-[1.5rem] bg-white text-black text-[11px] uppercase font-black tracking-[0.2em] hover:bg-blue-500 hover:text-white transition-all duration-700 flex items-center gap-4 group shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                <button className="w-full sm:w-auto px-10 py-5 rounded-[1.5rem] bg-white text-black text-[11px] uppercase font-black tracking-[0.2em] hover:bg-blue-500 hover:text-white transition-all duration-700 flex items-center gap-4 group shadow-[0_0_30px_rgba(255,255,255,0.1)] justify-center">
                   <Save size={18} className="group-hover:scale-125 transition-transform duration-500" /> Gravar Definições
                 </button>
              </MagneticButton>

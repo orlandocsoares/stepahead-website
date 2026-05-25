@@ -1,6 +1,4 @@
-# docker-compose para PRODUÇÃO (VPS)
-# Uso: docker compose -f docker-compose.prod.yml up -d
-# Requer ficheiro .env.production na mesma pasta
+version: '3.8'
 
 services:
   db:
@@ -12,8 +10,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    # NOTA: sem "ports" — Postgres NÃO é exposto para a internet
-    # Apenas acessível internamente pelo Docker (hostname: db)
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
@@ -35,7 +31,7 @@ services:
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
       SESSION_SECRET: ${SESSION_SECRET}
       NODE_ENV: production
-    # NOTA: apenas expõe para o NGINX (localhost), não para a internet
+      PORT: 9002 # Garantimos que o Next.js escuta na porta correta
     ports:
       - "127.0.0.1:9002:9002"
     volumes:

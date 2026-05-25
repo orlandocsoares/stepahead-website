@@ -35,7 +35,7 @@ export function RadarSection() {
   }, []);
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-20 px-10">
+    <div className="w-full max-w-7xl mx-auto py-20 px-4 md:px-10">
       <div className="flex justify-between items-start mb-20">
         <div>
           <p className="text-[10px] tracking-[0.5em] text-blue-500 uppercase font-black mb-2">Impact Monitoring // 2026</p>

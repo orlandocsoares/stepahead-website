@@ -33,7 +33,7 @@ export function AgendaSection() {
   }, []);
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-32 px-10 font-sans">
+    <div className="w-full max-w-7xl mx-auto py-32 px-4 md:px-10 font-sans">
       
       {/* CABEÇALHO DA SECÇÃO */}
       <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
