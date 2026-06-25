@@ -1,304 +1,190 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  BarChart3, Calendar, FileText, ShieldCheck, MapPin, 
-  ChevronRight, Loader2, Download, BookOpen, GraduationCap, Award
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAdminUser } from "@/hooks/useAdminUser";
+import { Users, FolderOpen, FileText, Calendar, Loader2, Clock, ChevronRight } from "lucide-react";
+import Link from "next/link";
+
+type Stat = { label: string; value: number | string; icon: React.ElementType; color: string; href: string };
+
+function StatCard({ label, value, icon: Icon, color, href }: Stat) {
+  return (
+    <Link
+      href={href}
+      className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 flex items-center gap-4 hover:border-white/[0.12] hover:bg-[#16162a] transition-colors group"
+    >
+      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
+        <Icon size={18} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xl font-semibold text-white">{value}</p>
+        <p className="text-xs text-white/40 mt-0.5">{label}</p>
+      </div>
+      <ChevronRight size={14} className="text-white/20 group-hover:text-white/50 transition-colors shrink-0" />
+    </Link>
+  );
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("pt-PT", {
+    day: "2-digit", month: "short", year: "numeric",
+  });
+}
 
 export default function DashboardPage() {
-  const [profile, setProfile] = useState<any>(null);
-  const [stats, setStats] = useState<any[]>([]);
-  const [agenda, setAgenda] = useState<any[]>([]);
+  const { user, loading: userLoading } = useAdminUser();
+  const [counts, setCounts] = useState({ utilizadores: 0, ficheiros: 0, tickets: 0, agenda: 0 });
   const [recentFiles, setRecentFiles] = useState<any[]>([]);
+  const [recentAgenda, setRecentAgenda] = useState<any[]>([]);
+  const [recentTickets, setRecentTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-
-  // REFINAMENTO UNIFORME: Rastreador de Direcção para a Calha de Néon (O Cometa)
-  const [scrollDirection, setScrollDirection] = useState<'down' | 'up'>('down');
-  const lastScrollY = useRef(0);
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const currentScrollY = e.currentTarget.scrollTop;
-    if (currentScrollY > lastScrollY.current) {
-      setScrollDirection('down');
-    } else if (currentScrollY < lastScrollY.current) {
-      setScrollDirection('up');
-    }
-    lastScrollY.current = currentScrollY;
-  };
 
   useEffect(() => {
-    fetchData();
-    const channel = supabase.channel('db-live').on('postgres_changes', { event: '*', schema: 'public' }, () => fetchData()).subscribe();
-    return () => { supabase.removeChannel(channel); };
+    async function load() {
+      try {
+        const [profRes, arquivosRes, agendaRes, ticketsRes] = await Promise.all([
+          fetch("/api/db/profiles"),
+          fetch("/api/db/arquivos?orderBy=created_at&ascending=false&limit=5"),
+          fetch("/api/db/agenda_atividades?orderBy=data_evento&ascending=true&limit=3"),
+          fetch("/api/db/tickets?orderBy=created_at&ascending=false&limit=5"),
+        ]);
+
+        const [profData, arquivosData, agendaData, ticketsData] = await Promise.all([
+          profRes.json(), arquivosRes.json(), agendaRes.json(), ticketsRes.json(),
+        ]);
+
+        setCounts({
+          utilizadores: profData.data?.length ?? 0,
+          ficheiros: arquivosData.data?.length ?? 0,
+          tickets: ticketsData.data?.filter((t: any) => t.status === "Pendente").length ?? 0,
+          agenda: agendaData.data?.length ?? 0,
+        });
+        setRecentFiles(arquivosData.data ?? []);
+        setRecentAgenda(agendaData.data ?? []);
+        setRecentTickets(ticketsData.data ?? []);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
-  async function fetchData() {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return router.push("/");
-    
-    const [prof, st, ag, fl] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('dashboard_stats').select('*').order('provincia'),
-      supabase.from('agenda_atividades').select('*').order('data_evento').limit(3),
-      supabase.from('arquivos').select('*').order('created_at', { ascending: false }).limit(3)
-    ]);
-
-    if (prof.data) setProfile(prof.data);
-    if (st.data) setStats(st.data);
-    if (ag.data) setAgenda(ag.data);
-    if (fl.data) setRecentFiles(fl.data);
-    loading && setLoading(false);
+  if (userLoading || loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 size={24} className="animate-spin text-blue-500" />
+      </div>
+    );
   }
 
-  if (loading && !profile) return (
-    <div className="h-screen flex items-center justify-center bg-transparent">
-      <Loader2 className="animate-spin text-blue-500" size={32} />
-    </div>
-  );
+  const stats: Stat[] = [
+    { label: "Utilizadores", value: counts.utilizadores, icon: Users, color: "bg-blue-500/10 text-blue-400", href: "/dashboard/utilizadores" },
+    { label: "Ficheiros", value: counts.ficheiros, icon: FolderOpen, color: "bg-emerald-500/10 text-emerald-400", href: "/dashboard/ficheiros" },
+    { label: "Tickets pendentes", value: counts.tickets, icon: FileText, color: "bg-amber-500/10 text-amber-400", href: "/dashboard/suporte" },
+    { label: "Próximas actividades", value: counts.agenda, icon: Calendar, color: "bg-purple-500/10 text-purple-400", href: "/dashboard/agenda" },
+  ];
 
   return (
-    // ESTRUTURA GLOBAL: Enquadramento com altura de ecrã limitada e scroll interno
-    <div className="h-screen flex flex-col max-w-[1400px] mx-auto pt-24 pb-10 px-4 md:px-10 md:pl-48 relative z-10 selection:bg-blue-500/30 overflow-hidden">
-      
-      {/* Ocultar a Scrollbar Nativa para deixar brilhar a Calha de Néon */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .hide-native-scroll::-webkit-scrollbar {
-          width: 2px;
-        }
-       
-        .hide-native-scroll::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .hide-native-scroll::-webkit-scrollbar-thumb {
-          background: transparent;
-        }
-      `}} />
+    <div className="space-y-6 w-full">
 
-      {/* CABEÇALHO FIXO NO TOPO (Focado em Informação de Acesso) */}
-      <header className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 shrink-0">
-        <div className="space-y-3 text-left">
-   
-          <p className="text-[9px] tracking-[0.8em] text-blue-500 uppercase font-black italic">
-            User Terminal // {new Date().toLocaleDateString('pt-PT')}
-          </p>
-          <h1 className="text-5xl font-extralight text-white uppercase tracking-tighter italic leading-none drop-shadow-2xl">
-            Olá, <span className="opacity-30 not-italic font-bold">{profile?.first_name}</span>
-          </h1>
-        </div>
-        
- 
-        <div className="flex items-center gap-6 bg-white/[0.01] border border-white/5 p-4 rounded-2xl backdrop-blur-3xl shadow-xl">
-          <div className="text-right">
-            <p className="text-[8px] uppercase tracking-widest text-white/20 font-black">Identidade Operacional</p>
-            <p className="text-[10px] uppercase tracking-widest text-blue-500 font-black italic">
-              {profile?.role === 'super-admin' ? "Super Admin" : profile?.role === 'formador' ? "Formador Credenciado" : "Formando Activo"}
-            </p>
+      {/* Boas-vindas */}
+      <div>
+        <h2 className="text-lg font-semibold text-white">
+          Olá, {user?.first_name ?? "utilizador"} 👋
+        </h2>
+        <p className="text-sm text-white/40 mt-0.5">Aqui está o resumo do sistema.</p>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s) => <StatCard key={s.label} {...s} />)}
+      </div>
+
+      {/* Conteúdo inferior: ficheiros + agenda + tickets */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        {/* Ficheiros recentes */}
+        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-white">Ficheiros recentes</h3>
+            <Link href="/dashboard/ficheiros" className="text-xs text-blue-400 hover:text-blue-300">Ver todos</Link>
           </div>
-          <ShieldCheck className="text-blue-500" size={24} />
+          {recentFiles.length === 0 ? (
+            <p className="text-xs text-white/30 py-4 text-center">Sem ficheiros.</p>
+          ) : (
+            <ul className="space-y-3">
+              {recentFiles.map((f) => (
+                <li key={f.id} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <FolderOpen size={14} className="text-emerald-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-white truncate">{f.label}</p>
+                    <p className="text-[10px] text-white/30">{f.area} · {formatDate(f.created_at)}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      </header>
 
-      {/* ÁREA CENTRAL DESLIZANTE COM O SISTEMA COMETA */}
-      <div className="flex-1 relative flex gap-8 min-h-0">
-        
-       
-        {/* CONTENTOR DE INFORMAÇÃO OPERACIONAL */}
-        <div 
-          className="flex-1 overflow-y-auto hide-native-scroll pb-10 pr-2"
-          onScroll={handleScroll}
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            {/* PAINEL OPERACIONAL PRINCIPAL (Esquerda) */}
-         
-            <div className="lg:col-span-8 space-y-8">
-              
-              {/* CARD DE BOAS-VINDAS CONTEXTUALIZADO (O SALTO DE MESTRE EM UX) */}
-              <section className="p-8 rounded-[2.5rem] bg-gradient-to-r from-blue-950/20 via-black/40 to-transparent border border-white/5 backdrop-blur-3xl text-left space-y-4">
-                <div className="flex items-center gap-3">
-            
-                  {profile?.role === 'super-admin' ? (
-                    <Award className="text-blue-400 shrink-0" size={18} />
-                  ) : profile?.role === 'formador' ? (
-                    <BookOpen className="text-emerald-400 shrink-0" size={18} />
-                  ) : (
-                    <GraduationCap className="text-amber-400 shrink-0" size={18} />
-                  )}
-              
-                  <span className="text-[10px] tracking-widest font-black uppercase text-white/40">Estatuto de Transmissão</span>
-                </div>
-                
-                <h2 className="text-2xl font-light tracking-tight text-white uppercase italic">
-                  {profile?.role === 'super-admin' ? (
-                    <>Modo de <span className="font-bold text-blue-400">Governação Activo</span></>
-                  ) : profile?.role === 'formador' ? (
-                    <>Supervisão e <span className="font-bold text-emerald-400">Acompanhamento</span></>
-                  ) : (
-                    <>Jornada de <span className="font-bold text-amber-400">Capacitação Pedagógica</span></>
-                  )}
-             
-                </h2>
-                
-                <p className="text-[11px] leading-relaxed text-white/50 tracking-widest uppercase font-light">
-                  {profile?.role === 'super-admin' ? (
-                    "O teu terminal de administrador dá-te total autoridade para validar candidaturas, autorizar poderes na agenda e gerir os recursos educacionais das províncias."
-                  ) : profile?.role === 'formador' ? (
-                    "Tens acesso autorizado para analisar relatórios pedagógicos, orientar os formandos nas províncias e submeter novos materiais didácticos de apoio às turmas."
-                  ) : (
-                    "Fazes parte da rede integrada de educação. O teu objectivo é acompanhar as sessões planeadas na agenda operacional e descarregar os materiais do repositório."
-                  )}
-                </p>
-              </section>
-
-              {/* TELEMETRIA DE MONITORIZAÇÃO (RADAR) */}
-              <section className="p-10 rounded-[3.5rem] bg-white/[0.01] border border-white/5 backdrop-blur-3xl text-left">
-         
-                <div className="flex justify-between items-center mb-10">
-                  <h3 className="text-[11px] uppercase tracking-[0.5em] text-white/40 font-black flex items-center gap-4">
-                    <BarChart3 size={18} className="text-blue-500" /> Radar de Integração
-                  </h3>
-                  <span className="text-[9px] text-white/20 uppercase tracking-widest font-mono italic">Métricas de Cooperação</span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {stats.map(s => (
-                    <div key={s.id} className="p-8 rounded-3xl bg-black/40 border border-white/5 shadow-2xl relative overflow-hidden group hover:border-blue-500/20 transition-all duration-500">
-    
-                      {/* Efeito luminoso de fundo */}
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-2xl rounded-full pointer-events-none group-hover:bg-blue-500/10 transition-colors" />
-                      
-                     
-                      <p className="text-[10px] uppercase tracking-[0.4em] text-white/30 font-bold mb-3">{s.provincia}</p>
-                      <div className="flex items-end gap-6">
-                        <span className="text-5xl font-extralight text-white tracking-tighter italic leading-none">{s.valor}%</span>
-                        <div className="flex-1 h-[2px] bg-white/5 mb-2 rounded-full overflow-hidden relative">
-       
-                           <motion.div 
-                            initial={{ width: 0 }} 
-                            animate={{ width: `${s.valor}%` }} 
-                
-                            transition={{ duration: 1.5, ease: "easeOut" }}
-                            className="h-full bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.8)]" 
-                          />
-                        </div>
-  
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-            
-              {/* BIBLIOTECA DE ACESSO RÁPIDO (RECURSOS RECENTES) */}
-              <section className="space-y-6 text-left">
-                <h3 className="text-[10px] uppercase tracking-[0.5em] text-white/40 font-black italic ml-4">Recursos Recentes Disponibilizados</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {recentFiles.map(f => (
-          
-                    <a 
-                      key={f.id} 
-                      href={`/storage/v1/object/public/materiais/${f.nome_arquivo}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="p-6 rounded-3xl bg-white/[0.01] border border-white/5 hover:border-blue-500/40 hover:bg-black/50 transition-all duration-500 group flex flex-col justify-between h-40 shadow-xl"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-all duration-500">
-       
-                           <FileText size={18} />
-                        </div>
-                        <Download size={14} className="text-white/10 group-hover:text-white/40 transition-colors" />
-                      </div>
-    
-                      <div className="space-y-1">
-                        <p className="text-[10px] text-white uppercase font-bold truncate max-w-full" title={f.label}>{f.label}</p>
-                        <p className="text-[7.5px] text-white/20 uppercase tracking-widest font-mono">Cofre Digital</p>
-                    
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </section>
-            </div>
-
-            {/* CRONOLOGIA DE EVENTOS (Direita) */}
- 
-            <div className="lg:col-span-4 w-full">
-              <section className="p-8 sm:p-10 rounded-[3.5rem] bg-white/[0.01] border border-white/5 backdrop-blur-3xl text-left">
-                <div className="flex justify-between items-center mb-10 pb-6 border-b border-white/5">
-                  <h3 className="text-[11px] uppercase tracking-[0.5em] text-white/40 font-black flex items-center gap-4">
-                
-                    <Calendar size={18} className="text-blue-500" /> Agenda Operacional
-                  </h3>
-                  <span className="text-[8px] text-white/20 font-mono italic">3 Próximos</span>
-                </div>
-
-                <div className="space-y-10 relative pl-2">
-               
-                  {/* Linha vertical de ligação física */}
-                  <div className="absolute left-[13px] top-2 bottom-12 w-[1px] bg-white/5" />
-
-                  {agenda.map(a => (
-                    <div key={a.id} className="relative pl-10 group cursor-pointer">
-                     
-                      {/* Ponto de ligação de néon */}
-                      <div className="absolute left-1 top-1.5 w-[11px] h-[11px] rounded-full border border-white/20 bg-[#0c0c0e] group-hover:border-blue-500 transition-all duration-500 flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-white/20 group-hover:bg-blue-500 transition-colors" />
-                      </div>
-   
-                     
-                      <div className="space-y-2">
-                        <p className="text-[9px] text-blue-500 font-black uppercase tracking-widest font-mono">
-                          {new Date(a.data_evento).toLocaleDateString('pt-PT')}
- 
-                        </p>
-                        <h4 className="text-lg font-light text-white uppercase tracking-tighter italic leading-snug group-hover:text-blue-400 transition-colors">
-                          {a.titulo}
-                  
-                        </h4>
-                        <p className="text-[8px] text-white/30 uppercase tracking-widest flex items-center gap-2">
-                          <MapPin size={10} className="text-white/20" /> {a.local}
-                        </p>
-         
-                      </div>
-                    </div>
-                  ))}
-
-                  {agenda.length === 0 && (
-                    <p className="text-[9px] uppercase tracking-widest text-white/20 italic py-10 text-center">
-                      Sem actividades planeadas na rede.
-                    </p>
-                  )}
-                </div>
-              </section>
-            </div>
-
+        {/* Agenda */}
+        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-white">Próximas actividades</h3>
+            <Link href="/dashboard/agenda" className="text-xs text-blue-400 hover:text-blue-300">Ver todas</Link>
           </div>
+          {recentAgenda.length === 0 ? (
+            <p className="text-xs text-white/30 py-4 text-center">Sem actividades.</p>
+          ) : (
+            <ul className="space-y-3">
+              {recentAgenda.map((a) => (
+                <li key={a.id} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                    <Calendar size={14} className="text-purple-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-white truncate">{a.titulo}</p>
+                    <p className="text-[10px] text-white/30">{a.local} · {formatDate(a.data_evento)}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
-        {/* CALHA DE SCROLL NÉON INTEGRADA (O COMETA) */}
- 
-        <div className="w-[3px] rounded-full bg-white/[0.02] relative overflow-hidden shrink-0 hidden md:block mb-10">
-          <motion.div
-            key={scrollDirection}
-            animate={
-              scrollDirection === 'down' 
-                ? { top: ['-20%', '120%'] } 
-                : { top: ['120%', '-20%'] }
-            }
-            transition={{ repeat: Infinity, duration: 1.8, ease: "linear" }}
-            className={`absolute left-0 w-full h-[15%] rounded-full shadow-[0_0_15px_rgba(59,130,246,0.8)] ${
-              scrollDirection === 'down'
-                ? 'bg-gradient-to-b from-transparent via-blue-500/80 to-white'
-                : 'bg-gradient-to-t from-transparent via-blue-500/80 to-white'
-            }`}
-          />
+        {/* Tickets recentes */}
+        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-white">Tickets de suporte</h3>
+            <Link href="/dashboard/suporte" className="text-xs text-blue-400 hover:text-blue-300">Ver todos</Link>
+          </div>
+          {recentTickets.length === 0 ? (
+            <p className="text-xs text-white/30 py-4 text-center">Sem tickets.</p>
+          ) : (
+            <ul className="space-y-3">
+              {recentTickets.map((t) => (
+                <li key={t.id} className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Clock size={14} className="text-amber-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-white truncate">{t.subject}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        t.status === "Pendente" ? "bg-amber-500/10 text-amber-400"
+                        : t.status === "Resolvido" ? "bg-emerald-500/10 text-emerald-400"
+                        : "bg-white/5 text-white/30"
+                      }`}>
+                        {t.status}
+                      </span>
+                      <span className="text-[10px] text-white/30">{t.category}</span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
       </div>
