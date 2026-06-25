@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Send, Search, Loader2, MessageSquare, ArrowLeft } from "lucide-react";
@@ -45,7 +45,7 @@ function Avatar({ name, url, size = 8 }: { name: string; url?: string; size?: nu
   );
 }
 
-export default function MensagensPage() {
+function MensagensInner() {
   const { user } = useAdminUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -301,5 +301,13 @@ export default function MensagensPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function MensagensPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 size={24} className="animate-spin text-blue-500" /></div>}>
+      <MensagensInner />
+    </Suspense>
   );
 }

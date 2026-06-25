@@ -7,7 +7,7 @@ import { getSessionUser } from "@/lib/server-auth";
 // GET /api/mensagens?conversations=1 → lista de conversas (última mensagem por interlocutor)
 export async function GET(request: Request) {
   try {
-    const session = await getSessionUser(request);
+    const session = await getSessionUser();
     if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
     const url = new URL(request.url);
@@ -76,7 +76,7 @@ export async function GET(request: Request) {
 // POST /api/mensagens  { to_user_id, content }
 export async function POST(request: Request) {
   try {
-    const session = await getSessionUser(request);
+    const session = await getSessionUser();
     if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
     const { to_user_id, content } = await request.json();
