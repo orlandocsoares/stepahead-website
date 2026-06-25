@@ -96,8 +96,8 @@ export default function FicheirosPage() {
 
   const filtered = useMemo(() => {
     return files.filter((f) => {
-      const inScope = visibleCategories.includes(f.area) || f.area === "Geral";
-      const matchCat = activeCategory === "Geral" ? true : f.area === activeCategory;
+      const inScope = visibleCategories.includes(f.area);
+      const matchCat = f.area === activeCategory;
       const matchSearch = f.label?.toLowerCase().includes(search.toLowerCase());
       return inScope && matchCat && matchSearch;
     });

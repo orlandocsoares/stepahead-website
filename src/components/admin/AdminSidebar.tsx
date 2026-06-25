@@ -40,7 +40,8 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
     : user?.email ?? "";
 
   const roleLabel =
-    user?.role === "admin" ? "Administrador"
+    user?.role === "super-admin" ? "Super Admin"
+    : user?.role === "admin" ? "Administrador"
     : user?.role === "formador" ? "Formador"
     : "Formando";
 

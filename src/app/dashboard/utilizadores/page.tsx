@@ -9,7 +9,7 @@ function formatDate(d: string) {
 }
 
 const ROLE_LABEL: Record<string, string> = {
-  admin: "Administrador", formador: "Formador", formando: "Formando",
+  "super-admin": "Super Admin", admin: "Administrador", formador: "Formador", formando: "Formando",
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -34,8 +34,8 @@ export default function UtilizadoresPage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("formando");
 
-  // Só o admin pode criar utilizadores
-  const isAdmin = currentUser?.role === "admin";
+  // Só admin e super-admin podem criar utilizadores
+  const isAdmin = currentUser?.role === "admin" || currentUser?.role === "super-admin";
 
   async function fetchUsers() {
     const res = await fetch("/api/db/profiles?orderBy=created_at&ascending=false");
