@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck, Trash2, Calendar, FileText,
   BarChart3, Loader2, Key, Plus, Clock, X, MapPin, Target,
-  Users, Activity, Database, Search, User, Download
+  Users, Activity, Database, Search, User, Download, Pencil
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
@@ -27,6 +27,10 @@ export default function SuperAdminPage() {
   const [agendaForm, setAgendaForm] = useState({ titulo: "", local: "Luanda", data_evento: "", tipo: "Global" });
   const [powerForm, setPowerForm] = useState({ poder: "", data_expiracao: "" });
   const [exportFilters, setExportFilters] = useState({ role: "all", period: "all", startDate: "", endDate: "" });
+
+  // Edição de agenda/ficheiros
+  const [editItem, setEditItem] = useState<any>(null);
+  const [editForm, setEditForm] = useState<any>({});
 
 
 
@@ -182,6 +186,27 @@ export default function SuperAdminPage() {
     fetchData();
   };
 
+  const openEditModal = (item: any) => {
+    setEditItem(item);
+    if (activeTab === "agenda") {
+      setEditForm({
+        titulo: item.titulo || "",
+        local: item.local || "Luanda",
+        data_evento: item.data_evento ? item.data_evento.split("T")[0] : "",
+        tipo: item.tipo || "Global",
+      });
+    } else if (activeTab === "arquivos") {
+      setEditForm({ label: item.label || "", area: item.area || "Geral" });
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editItem) return;
+    await handleUpdate(editItem.id, editForm);
+    setEditItem(null);
+  };
+
   const openPowerModal = (user: any) => {
     setSelectedUser(user);
     setPowerForm({ poder: user.temporary_power || "", data_expiracao: user.power_expires_at ? user.power_expires_at.split("T")[0] : "" });
@@ -332,9 +357,14 @@ export default function SuperAdminPage() {
                         {activeTab === "arquivos" && `${item.area} · ${item.tamanho || "—"}`}
                       </p>
                     </div>
-                    <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0">
-                      <Trash2 size={13} />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button onClick={() => openEditModal(item)} className="p-1.5 rounded-lg text-white/20 hover:text-blue-400 hover:bg-blue-500/10 transition-colors">
+                        <Pencil size={13} />
+                      </button>
+                      <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </motion.div>
                 ))}
                 {filteredData.length === 0 && !loading && (
@@ -348,6 +378,77 @@ export default function SuperAdminPage() {
         </div>
 
       </div>
+
+      {/* MODAL: EDIÇÃO de agenda ou ficheiro */}
+      {editItem && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEditItem(null)} />
+          <div className="relative w-full max-w-md bg-[#0d0d14] border border-white/[0.08] rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/[0.06]">
+              <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                <Pencil size={15} className="text-blue-400" />
+                {activeTab === "agenda" ? "Editar evento" : "Editar ficheiro"}
+              </h3>
+              <button onClick={() => setEditItem(null)} className="text-white/30 hover:text-white"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="px-6 py-5 space-y-4">
+              {activeTab === "agenda" && (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-white/40">Título</label>
+                    <input required value={editForm.titulo} onChange={e => setEditForm({...editForm, titulo: e.target.value})}
+                      className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-white/40">Local</label>
+                      <select value={editForm.local} onChange={e => setEditForm({...editForm, local: e.target.value})}
+                        className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none">
+                        {["Luanda","Bié","Online"].map(l => <option key={l} className="bg-[#0d0d14]">{l}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-white/40">Data</label>
+                      <input required type="date" value={editForm.data_evento} onChange={e => setEditForm({...editForm, data_evento: e.target.value})}
+                        className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none [color-scheme:dark]" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-white/40">Âmbito</label>
+                    <select value={editForm.tipo} onChange={e => setEditForm({...editForm, tipo: e.target.value})}
+                      className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none">
+                      <option value="Global" className="bg-[#0d0d14]">Global</option>
+                      <option value="Restrito" className="bg-[#0d0d14]">Restrito</option>
+                    </select>
+                  </div>
+                </>
+              )}
+              {activeTab === "arquivos" && (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-white/40">Nome do ficheiro</label>
+                    <input required value={editForm.label} onChange={e => setEditForm({...editForm, label: e.target.value})}
+                      className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-white/40">Área</label>
+                    <select value={editForm.area} onChange={e => setEditForm({...editForm, area: e.target.value})}
+                      className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none">
+                      {["Geral","Matemática","Língua Portuguesa","Física","Química","Pedagogia"].map(a => (
+                        <option key={a} className="bg-[#0d0d14]">{a}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setEditItem(null)} className="flex-1 py-2.5 rounded-lg border border-white/[0.06] text-sm text-white/50">Cancelar</button>
+                <button type="submit" className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">Guardar alterações</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: AGENDA */}
       {isAgendaModalOpen && (
