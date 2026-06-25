@@ -8,14 +8,15 @@ import {
 } from "lucide-react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 
+// roles: undefined = todos | "admin" = admin e super-admin | "staff" = admin + formador
 const NAV = [
   { label: "Dashboard",    icon: LayoutDashboard, path: "/dashboard" },
   { label: "Conteúdos",    icon: FileText,         path: "/dashboard/conteudos" },
   { label: "Ficheiros",    icon: FolderOpen,       path: "/dashboard/ficheiros" },
-  { label: "Utilizadores", icon: Users,            path: "/dashboard/utilizadores" },
+  { label: "Utilizadores", icon: Users,            path: "/dashboard/utilizadores", adminOnly: true },
   { label: "Agenda",       icon: Calendar,         path: "/dashboard/agenda" },
   { label: "Comunidade",   icon: MessageSquare,    path: "/dashboard/comunidade" },
-  { label: "Permissões",   icon: Shield,           path: "/dashboard/admin" },
+  { label: "Permissões",   icon: Shield,           path: "/dashboard/admin",        adminOnly: true },
   { label: "Suporte",      icon: LifeBuoy,         path: "/dashboard/suporte" },
   { label: "Perfil",       icon: UserCircle,       path: "/dashboard/perfil" },
   { label: "Definições",   icon: Settings,         path: "/dashboard/definicoes" },
@@ -81,7 +82,10 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
 
       {/* Nav */}
       <nav className="dashboard-sidebar flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {NAV.map(({ label, icon: Icon, path }) => {
+        {NAV.filter(({ adminOnly }) => {
+          if (!adminOnly) return true;
+          return user?.role === "admin" || user?.role === "super-admin";
+        }).map(({ label, icon: Icon, path }) => {
           const active = isActive(path);
           return (
             <Link
