@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Send, Search, Loader2, MessageSquare, ArrowLeft } from "lucide-react";
+import { Send, Search, Loader2, MessageSquare, ArrowLeft, Smile } from "lucide-react";
 
 type Conversation = {
   other_id: string;
@@ -35,6 +35,12 @@ type Profile = {
   avatar_url?: string;
 };
 
+const EMOJIS = [
+  "😊","😂","❤️","👍","🙏","👏","🎉","🔥","✅","💪",
+  "😅","🤔","😍","😢","😮","🥳","😎","🤝","💡","📚",
+  "✏️","📝","🎓","⭐","🙌","😁","🥰","😬","🤗","💬",
+];
+
 function Avatar({ name, url, size = 8 }: { name: string; url?: string; size?: number }) {
   const cls = `w-${size} h-${size} rounded-full shrink-0 flex items-center justify-center text-xs font-bold`;
   if (url) return <img src={url} alt={name} className={`${cls} object-cover`} />;
@@ -60,6 +66,8 @@ function MensagensInner() {
   const [sending, setSending] = useState(false);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [showEmojis, setShowEmojis] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -295,9 +303,43 @@ function MensagensInner() {
               </div>
             )}
 
+            {/* Picker de emojis */}
+            {showEmojis && (
+              <div className="mx-4 mb-2 p-3 bg-[#0d0d14] border border-white/[0.08] rounded-xl grid grid-cols-10 gap-1">
+                {EMOJIS.map(emoji => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => {
+                      const ta = textareaRef.current;
+                      if (!ta) { setText(t => t + emoji); return; }
+                      const start = ta.selectionStart;
+                      const end = ta.selectionEnd;
+                      const next = text.slice(0, start) + emoji + text.slice(end);
+                      setText(next);
+                      // repõe o cursor depois do emoji
+                      setTimeout(() => { ta.focus(); ta.setSelectionRange(start + emoji.length, start + emoji.length); }, 0);
+                      setShowEmojis(false);
+                    }}
+                    className="text-lg hover:bg-white/[0.08] rounded-lg p-1 transition-colors leading-none"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Input */}
             <form onSubmit={handleSend} className="flex items-end gap-3 p-4 border-t border-white/[0.06] shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowEmojis(s => !s)}
+                className={`p-2.5 rounded-xl transition-colors shrink-0 ${showEmojis ? "bg-blue-600/20 text-blue-400" : "text-white/30 hover:text-white hover:bg-white/[0.06]"}`}
+              >
+                <Smile size={18} />
+              </button>
               <textarea
+                ref={textareaRef}
                 value={text}
                 onChange={e => setText(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(e); } }}
