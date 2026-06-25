@@ -59,6 +59,7 @@ function MensagensInner() {
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -103,14 +104,23 @@ function MensagensInner() {
     e.preventDefault();
     if (!text.trim() || !activeId || !user) return;
     setSending(true);
-    await fetch("/api/mensagens", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to_user_id: activeId, content: text.trim() }),
-    });
-    setText("");
-    await fetchMessages(activeId);
-    setSending(false);
+    setSendError(null);
+    try {
+      const res = await fetch("/api/mensagens", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to_user_id: activeId, content: text.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) throw new Error(json.error ?? "Erro ao enviar mensagem.");
+      setText("");
+      await fetchMessages(activeId);
+    } catch (err: any) {
+      setSendError(err.message);
+      setTimeout(() => setSendError(null), 5000);
+    } finally {
+      setSending(false);
+    }
   }
 
   const filteredUsers = allUsers.filter(u => {
@@ -277,6 +287,13 @@ function MensagensInner() {
               )}
               <div ref={bottomRef} />
             </div>
+
+            {/* Erro de envio */}
+            {sendError && (
+              <div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+                {sendError}
+              </div>
+            )}
 
             {/* Input */}
             <form onSubmit={handleSend} className="flex items-end gap-3 p-4 border-t border-white/[0.06] shrink-0">
