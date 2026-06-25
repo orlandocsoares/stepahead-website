@@ -109,6 +109,7 @@ export default function RegisterPage() {
 
     if (authError) {
       alert("Erro no registo: " + authError.message);
+      // TODO: Considerar uma UI de notificação (Toast) em vez de alert().
       setLoading(false);
       return;
     }
@@ -124,7 +125,15 @@ export default function RegisterPage() {
           .from('avatars')
           .upload(`formadores/${fileName}`, avatarFile);
           
-        if (!uploadError && uploadData) {
+        if (uploadError) {
+          // Se o upload falhar, o ideal seria apagar o utilizador recém-criado para evitar inconsistências.
+          // NOTA: Esta operação requer privilégios de admin e deve ser feita numa server-side function por segurança.
+          // await supabase.auth.admin.deleteUser(authData.user.id);
+          alert("Erro ao carregar a fotografia: " + uploadError.message);
+          setLoading(false);
+          return;
+        }
+        if (uploadData) {
           finalAvatarUrl = `/storage/v1/object/public/avatars/${uploadData.path}`;
         }
       }
@@ -157,8 +166,9 @@ export default function RegisterPage() {
       if (!profileError) {
         setIsSuccess(true);
       } else {
+        // O mesmo que no upload, idealmente apagar o user de auth se o perfil falhar.
         console.error(profileError);
-        alert("Erro ao gravar os dados do perfil.");
+        alert("Erro ao gravar os dados do perfil: " + profileError.message);
       }
     }
     setLoading(false);

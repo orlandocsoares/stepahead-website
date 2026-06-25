@@ -83,7 +83,7 @@
 }
 
 /* Seleção de Texto combinando com o Radar */
-::selection {
+*::selection {
   background: rgba(59, 130, 246, 0.3);
   color: #fff;
 }
