@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FileText, FolderOpen, Users, Calendar,
-  Shield, Settings, LogOut, ChevronLeft, ChevronRight, Globe, X, UserCircle, LifeBuoy, MessageSquare,
+  Shield, Settings, LogOut, ChevronLeft, ChevronRight, Globe, X, UserCircle, LifeBuoy, MessageSquare, Mail,
 } from "lucide-react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 
@@ -16,6 +16,7 @@ const NAV = [
   { label: "Utilizadores", icon: Users,            path: "/dashboard/utilizadores", adminOnly: true },
   { label: "Agenda",       icon: Calendar,         path: "/dashboard/agenda" },
   { label: "Comunidade",   icon: MessageSquare,    path: "/dashboard/comunidade" },
+  { label: "Mensagens",    icon: Mail,             path: "/dashboard/mensagens" },
   { label: "Permissões",   icon: Shield,           path: "/dashboard/admin",        adminOnly: true },
   { label: "Suporte",      icon: LifeBuoy,         path: "/dashboard/suporte" },
   { label: "Perfil",       icon: UserCircle,       path: "/dashboard/perfil" },

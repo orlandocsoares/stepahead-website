@@ -46,7 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           }`}
         >
           <AdminTopbar onMobileMenuToggle={() => setMobileOpen((o) => !o)} />
-          <main className="dashboard-main flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+          <main className="dashboard-main flex-1 overflow-y-auto p-4 md:p-6 flex flex-col">{children}</main>
         </div>
       </div>
     </>
