@@ -30,25 +30,26 @@ export default function SuperAdminPage() {
 
 
 
+  const isAdminOrSuper = (role?: string) => role === "admin" || role === "super-admin";
+
   const isPowerActive = useMemo(() => {
     if (!profile) return false;
-    if (profile.role === "admin") return true;
-    return false;
+    return isAdminOrSuper(profile.role);
   }, [profile]);
 
   const visibleTabs = useMemo(() => {
-    if (profile?.role === "admin") return ["users", "agenda", "arquivos", "stats"] as const;
+    if (isAdminOrSuper(profile?.role)) return ["users", "agenda", "arquivos", "stats"] as const;
     return [] as const;
   }, [profile]);
 
   useEffect(() => {
-    if (!profileLoading && profile?.role !== "admin") {
+    if (!profileLoading && !isAdminOrSuper(profile?.role)) {
       router.push("/dashboard");
     }
   }, [profile, profileLoading, router]);
 
   useEffect(() => {
-    if (profile?.role === "admin") fetchData();
+    if (isAdminOrSuper(profile?.role)) fetchData();
   }, [activeTab, profile]);
 
   async function fetchData() {
@@ -93,9 +94,10 @@ export default function SuperAdminPage() {
   const groupedUsers = useMemo(() => {
     if (activeTab !== "users") return null;
     return [
-      { title: "Administradores", data: filteredData.filter(u => u.role === "admin"), color: "text-red-500" },
-      { title: "Formadores Oficiais", data: filteredData.filter(u => u.role === "formador"), color: "text-blue-500" },
-      { title: "Formandos Inscritos", data: filteredData.filter(u => u.role === "formando"), color: "text-emerald-500" },
+      { title: "Super Admins", data: filteredData.filter(u => u.role === "super-admin"), color: "text-purple-400" },
+      { title: "Administradores", data: filteredData.filter(u => u.role === "admin"), color: "text-red-400" },
+      { title: "Formadores Oficiais", data: filteredData.filter(u => u.role === "formador"), color: "text-blue-400" },
+      { title: "Formandos Inscritos", data: filteredData.filter(u => u.role === "formando"), color: "text-emerald-400" },
     ];
   }, [filteredData, activeTab]);
 
