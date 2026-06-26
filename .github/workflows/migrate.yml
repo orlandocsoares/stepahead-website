@@ -28,6 +28,12 @@ jobs:
             echo "==> Utilizador: $DB_USER  Base de dados: $DB_NAME"
 
             docker exec sabermais-postgres psql -U "$DB_USER" -d "$DB_NAME" -c "
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_name TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS provincia TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS escola TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS especialidade TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS biografia TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
               CREATE TABLE IF NOT EXISTS password_reset_tokens (
                 token      TEXT PRIMARY KEY,
                 user_id    UUID NOT NULL UNIQUE REFERENCES auth_users(id) ON DELETE CASCADE,
