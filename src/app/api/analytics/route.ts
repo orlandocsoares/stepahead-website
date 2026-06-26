@@ -6,6 +6,8 @@ export async function GET() {
   const session = await getSessionUser();
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
+  const safe = (p: Promise<any>) => p.catch(() => ({ rows: [] }));
+
   const [
     totals,
     topUploaders,
@@ -74,7 +76,7 @@ export async function GET() {
     dbQuery(`SELECT role, COUNT(*) AS total FROM profiles GROUP BY role`),
 
     // Crescimento mensal de registos (últimos 6 meses)
-    dbQuery(`
+    safe(dbQuery(`
       SELECT
         TO_CHAR(DATE_TRUNC('month', created_at), 'Mon') AS mes,
         DATE_TRUNC('month', created_at) AS mes_date,
@@ -83,10 +85,9 @@ export async function GET() {
       WHERE created_at >= NOW() - INTERVAL '6 months'
       GROUP BY mes_date, mes
       ORDER BY mes_date ASC
-    `),
+    `)),
 
-    // Utilizadores inativos (sem uploads nem posts)
-    dbQuery(`
+    safe(dbQuery(`
       SELECT p.first_name, p.last_name, p.role, p.created_at
       FROM profiles p
       WHERE p.role IN ('formador', 'formando')
@@ -94,34 +95,30 @@ export async function GET() {
         AND NOT EXISTS (SELECT 1 FROM comunidade_posts WHERE user_id = p.id)
       ORDER BY p.created_at DESC
       LIMIT 10
-    `),
+    `)),
 
-    // Tickets por categoria
-    dbQuery(`
+    safe(dbQuery(`
       SELECT category, COUNT(*) AS total,
         SUM(CASE WHEN status = 'Resolvido' THEN 1 ELSE 0 END) AS resolvidos
       FROM tickets
       GROUP BY category ORDER BY total DESC
-    `),
+    `)),
 
-    // Ficheiros por visibilidade
-    dbQuery(`
+    safe(dbQuery(`
       SELECT COALESCE(visibilidade, 'publico') AS visibilidade, COUNT(*) AS total
       FROM arquivos
       GROUP BY visibilidade ORDER BY total DESC
-    `),
+    `)),
 
-    // Ficheiros por tipo (extensão)
-    dbQuery(`
+    safe(dbQuery(`
       SELECT
         LOWER(SPLIT_PART(REVERSE(SPLIT_PART(REVERSE(COALESCE(url, label, '')), '.', 1)), '.', 1)) AS extensao,
         COUNT(*) AS total
       FROM arquivos
       GROUP BY extensao ORDER BY total DESC LIMIT 8
-    `),
+    `)),
 
-    // Eventos por tipo e formato
-    dbQuery(`
+    safe(dbQuery(`
       SELECT
         tipo,
         SUM(CASE WHEN local = 'Online' THEN 1 ELSE 0 END) AS online,
@@ -129,10 +126,9 @@ export async function GET() {
         COUNT(*) AS total
       FROM agenda_atividades
       GROUP BY tipo
-    `),
+    `)),
 
-    // Comunidade: posts sem comentários, média de comentários
-    dbQuery(`
+    safe(dbQuery(`
       SELECT
         COUNT(DISTINCT cp.id) AS total_posts,
         COUNT(cc.id) AS total_comentarios,
@@ -143,7 +139,7 @@ export async function GET() {
       LEFT JOIN (
         SELECT post_id, COUNT(*) AS n_comentarios FROM comunidade_comentarios GROUP BY post_id
       ) sub ON sub.post_id = cp.id
-    `),
+    `)),
   ]);
 
   const usersByRole: Record<string, number> = {};
@@ -164,6 +160,6 @@ export async function GET() {
     ficheirosPorVisibilidade: ficheirosPorVisibilidade.rows,
     ficheirosPorTipo: ficheirosPorTipo.rows,
     eventosPorTipo: eventosPorTipo.rows,
-    comunidadeStats: comunidadeStats.rows[0] ?? {},
+    comunidadeStats: (comunidadeStats.rows ?? [])[0] ?? {},
   });
 }

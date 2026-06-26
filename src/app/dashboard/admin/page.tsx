@@ -107,7 +107,10 @@ export default function SuperAdminPage() {
 
   useEffect(() => {
     if (isAdminOrSuper(profile?.role) && activeTab === "stats" && !statsData) {
-      fetch("/api/analytics").then(r => r.json()).then(setStatsData);
+      fetch("/api/analytics")
+        .then(r => r.json())
+        .then(setStatsData)
+        .catch(() => setStatsData({}));
     }
   }, [activeTab, profile, statsData]);
 
