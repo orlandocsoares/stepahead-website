@@ -201,20 +201,23 @@ export default function HeroSection() {
     setSessionId(Math.random().toString(36).substring(2, 11) + Date.now().toString(36));
   }, []);
 
-  // Escuta do Telemóvel
+  // Escuta do Telemóvel via SSE
   useEffect(() => {
     if (!sessionId || userRole !== 'formador' || authMode !== 'register') return;
 
-    const channel = supabase.channel(`camera-${sessionId}`);
-    channel.on('broadcast', { event: 'photo_captured' }, (payload: any) => {
-        if (payload.payload?.url) {
-          setAvatarPreview(payload.payload.url);
-          setRemoteImageUrl(payload.payload.url);
+    const es = new EventSource(`/api/sse/camera/${sessionId}`);
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data?.url) {
+          setAvatarPreview(data.url);
+          setRemoteImageUrl(data.url);
           setUploadMode("local");
         }
-      }).subscribe();
+      } catch {}
+    };
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { es.close(); };
   }, [sessionId, userRole, authMode]);
 
   useEffect(() => {
@@ -311,7 +314,7 @@ export default function HeroSection() {
         first_name: firstName,
         last_name: lastName,
         role: userRole,
-        ...(userRole === 'formando' ? { provincia, escola } : { especialidade, biografia }),
+        ...(userRole === 'formando' ? { provincia, escola } : { especialidade, biografia: bio }),
       }),
     });
     const syncData = await syncRes.json();
