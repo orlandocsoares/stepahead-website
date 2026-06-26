@@ -26,6 +26,9 @@ export default function SuperAdminPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const [statsData, setStatsData] = useState<any>(null);
+  const [mediaRadar, setMediaRadar] = useState<string>("");
+  const [mediaRadarSaving, setMediaRadarSaving] = useState(false);
+  const [mediaRadarSaved, setMediaRadarSaved] = useState(false);
 
   const [agendaForm, setAgendaForm] = useState({ titulo: "", local: "Luanda", data_evento: "", tipo: "Global" });
   const [powerForm, setPowerForm] = useState({ poder: "", data_expiracao: "" });
@@ -41,6 +44,23 @@ export default function SuperAdminPage() {
   const [showNewUserPwd, setShowNewUserPwd] = useState(false);
   const [newUserSubmitting, setNewUserSubmitting] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  async function saveMediaRadar() {
+    const val = parseInt(mediaRadar);
+    if (isNaN(val) || val < 0 || val > 100) return;
+    setMediaRadarSaving(true);
+    try {
+      await fetch("/api/admin/hero-telemetria", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ media_radar: val }),
+      });
+      setMediaRadarSaved(true);
+      setTimeout(() => setMediaRadarSaved(false), 2500);
+    } finally {
+      setMediaRadarSaving(false);
+    }
+  }
 
   function showToast(type: "success" | "error", text: string) {
     setToast({ type, text });
@@ -106,6 +126,12 @@ export default function SuperAdminPage() {
   }, [activeTab, profile]);
 
   useEffect(() => {
+    if (isAdminOrSuper(profile?.role) && activeTab === "stats" && mediaRadar === "") {
+      fetch("/api/public/hero")
+        .then(r => r.json())
+        .then(d => { if (d.media_radar != null) setMediaRadar(String(d.media_radar)); })
+        .catch(() => {});
+    }
     if (isAdminOrSuper(profile?.role) && activeTab === "stats" && !statsData) {
       fetch("/api/analytics")
         .then(r => r.json())
@@ -373,6 +399,39 @@ export default function SuperAdminPage() {
 
                   return (
                     <>
+                      {/* Configurações do Site Público */}
+                      <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Target size={15} className="text-blue-400" />
+                          <h3 className="text-sm font-semibold text-white">Configurações do Site Público</h3>
+                          <span className="text-[10px] text-white/30 ml-1">Valores apresentados na página inicial</span>
+                        </div>
+                        <div className="flex items-end gap-3 max-w-xs">
+                          <div className="flex-1 space-y-1.5">
+                            <label className="text-[11px] text-white/40 uppercase tracking-wider">Radar de Integração (%)</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number" min="0" max="100"
+                                value={mediaRadar}
+                                onChange={e => setMediaRadar(e.target.value)}
+                                placeholder="0 – 100"
+                                className="w-24 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500/50 transition-colors"
+                              />
+                              <span className="text-white/30 text-sm">%</span>
+                            </div>
+                            <p className="text-[10px] text-white/25">Aparece na Fase 2 "Capacitação" do site público</p>
+                          </div>
+                          <button
+                            onClick={saveMediaRadar}
+                            disabled={mediaRadarSaving || mediaRadar === ""}
+                            className="px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white"
+                          >
+                            {mediaRadarSaving ? <Loader2 size={13} className="animate-spin" /> : mediaRadarSaved ? <CheckCircle2 size={13} className="text-emerald-400" /> : null}
+                            {mediaRadarSaved ? "Guardado!" : "Guardar"}
+                          </button>
+                        </div>
+                      </div>
+
                       {/* Linha 1: Crescimento + Saúde da comunidade */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
