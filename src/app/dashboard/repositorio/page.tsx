@@ -5,7 +5,8 @@ import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileText, Video, Search, Download, 
-  Loader2, Sparkles, Plus, ExternalLink, BookOpen, Shield, HelpCircle, X
+  Loader2, Sparkles, Plus, ExternalLink, BookOpen, Shield, HelpCircle, X,
+  Globe, Lock, Mail, GraduationCap, UserCheck, Eye, EyeOff, Check, User
 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,6 +24,12 @@ export default function RepositorioPage() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Geral");
+  
+  // Novos estados para o controlo de partilha e filtros
+  const [docStatus, setDocStatus] = useState("publicado");
+  const [visibilidade, setVisibilidade] = useState("publico");
+  const [destinatarioEmail, setDestinatarioEmail] = useState("");
+  const [activeShareFilter, setActiveShareFilter] = useState("todos"); // 'todos', 'meus', 'partilhados'
 
   // REFINAMENTO UNIFORME: Rastreador de Direcção para a Calha de Néon (O Cometa)
   const [scrollDirection, setScrollDirection] = useState<'down' | 'up'>('down');
@@ -63,7 +70,7 @@ export default function RepositorioPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('arquivos')
-        .select('*')
+        .select('*, profiles(*)')
         .order('created_at', { ascending: false });
         
       if (error) throw error;
@@ -74,6 +81,20 @@ export default function RepositorioPage() {
       setLoading(false);
     }
   }
+
+  const handlePublish = async (fileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('arquivos')
+        .update({ status: 'publicado' })
+        .eq('id', fileId);
+      if (error) throw error;
+      fetchFiles();
+    } catch (err) {
+      console.error("Erro ao publicar:", err);
+      alert("Erro ao publicar o rascunho.");
+    }
+  };
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,14 +117,16 @@ export default function RepositorioPage() {
         nome_arquivo: fileName,
         area: category,
         tamanho: (uploadFile.size / (1024 * 1024)).toFixed(2) + " MB",
-        tipo: uploadFile.type.includes("video") ? "video" : "pdf"
+        tipo: uploadFile.type.includes("video") ? "video" : "pdf",
+        status: docStatus,
+        visibilidade: visibilidade,
+        destinatario_email: visibilidade === "especifico" ? destinatarioEmail : null
       });
       
       if (dbError) throw dbError;
 
       setIsModalOpen(false);
-      setTitle("");
-      setUploadFile(null);
+      resetForm();
       fetchFiles();
     } catch (err) {
       console.error(err);
@@ -113,13 +136,78 @@ export default function RepositorioPage() {
     }
   };
 
+  const resetForm = () => {
+    setTitle("");
+    setUploadFile(null);
+    setDocStatus("publicado");
+    setVisibilidade("publico");
+    setDestinatarioEmail("");
+  };
+
+  const getVisibilidadeHelperText = () => {
+    const userSpecialty = profile?.specialization || profile?.especialidade || "sua disciplina";
+    switch (visibilidade) {
+      case "publico":
+        return "Qualquer utilizador autenticado (alunos, professores e administradores) poderá aceder a este ficheiro.";
+      case "area_todos":
+        return `Apenas alunos e professores da especialidade de ${userSpecialty} terão acesso a este ficheiro.`;
+      case "area_alunos":
+        return `Apenas alunos da especialidade de ${userSpecialty} terão acesso. Professores e outros alunos não o verão.`;
+      case "area_professores":
+        return `Apenas professores (formadores) da especialidade de ${userSpecialty} terão acesso. Oculto para alunos.`;
+      case "professores":
+        return "Todos os professores (formadores) da plataforma poderão ver. Oculto para todos os alunos.";
+      case "especifico":
+        return "Apenas você e o utilizador com o e-mail indicado abaixo poderão visualizar este ficheiro.";
+      case "privado":
+        return "Apenas você (autor do upload) terá acesso a este ficheiro.";
+      default:
+        return "";
+    }
+  };
+
+  const getBadgeStyles = (vis: string) => {
+    switch (vis) {
+      case "publico":
+        return { label: "Público", color: "text-blue-400 bg-blue-500/10 border-blue-500/20", icon: <Globe size={10} className="shrink-0" /> };
+      case "area_todos":
+        return { label: "Minha Área", color: "text-purple-400 bg-purple-500/10 border-purple-500/20", icon: <BookOpen size={10} className="shrink-0" /> };
+      case "area_professores":
+        return { label: "Minha Área (Professores)", color: "text-violet-400 bg-violet-500/10 border-violet-500/20", icon: <UserCheck size={10} className="shrink-0" /> };
+      case "area_alunos":
+        return { label: "Minha Área (Alunos)", color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20", icon: <GraduationCap size={10} className="shrink-0" /> };
+      case "professores":
+        return { label: "Todos os Professores", color: "text-orange-400 bg-orange-500/10 border-orange-500/20", icon: <Shield size={10} className="shrink-0" /> };
+      case "especifico":
+        return { label: "Partilhado", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", icon: <Mail size={10} className="shrink-0" /> };
+      case "privado":
+        return { label: "Privado", color: "text-gray-400 bg-gray-500/10 border-gray-500/20", icon: <Lock size={10} className="shrink-0" /> };
+      default:
+        return { label: "Público", color: "text-blue-400 bg-blue-500/10 border-blue-500/20", icon: <Globe size={10} className="shrink-0" /> };
+    }
+  };
+
   const filtered = useMemo(() => {
     return files.filter(f => {
       const matchesCat = activeCategory === "Geral" || f.area === activeCategory;
       const matchesSearch = f.label?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCat && matchesSearch;
+      
+      let matchesShare = true;
+      if (activeShareFilter === "meus") {
+        matchesShare = f.uploader_id === profile?.id;
+      } else if (activeShareFilter === "partilhados") {
+        matchesShare = f.uploader_id !== profile?.id && (
+          f.destinatario_email?.toLowerCase() === profile?.email?.toLowerCase() ||
+          f.visibilidade === "area_todos" ||
+          f.visibilidade === "area_alunos" ||
+          f.visibilidade === "area_professores" ||
+          f.visibilidade === "professores"
+        );
+      }
+      
+      return matchesCat && matchesSearch && matchesShare;
     });
-  }, [files, activeCategory, searchQuery]);
+  }, [files, activeCategory, searchQuery, activeShareFilter, profile]);
 
   if (loading && files.length === 0) return (
     <div className="h-screen flex flex-col items-center justify-center bg-transparent">
@@ -186,13 +274,47 @@ export default function RepositorioPage() {
               onClick={() => setActiveCategory(cat)} 
               className={`px-10 py-4 rounded-full text-[9px] uppercase tracking-[0.3em] font-black transition-all border whitespace-nowrap shrink-0 ${
                 activeCategory === cat 
-                  ? "bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.1)] scale-105" 
+                  ? "bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.1)]" 
                   : "bg-white/[0.02] text-white/30 border-white/5 hover:border-white/20 hover:text-white"
               }`}
             >
               {cat}
             </button>
           ))}
+        </div>
+
+        {/* FILTROS OPERACIONAIS DE VISIBILIDADE */}
+        <div className="flex flex-wrap gap-3 border-t border-white/5 pt-6 pb-2">
+          <button 
+            onClick={() => setActiveShareFilter("todos")} 
+            className={`px-6 py-3 rounded-xl text-[9px] uppercase tracking-wider font-black transition-all border whitespace-nowrap ${
+              activeShareFilter === "todos" 
+                ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.15)]" 
+                : "bg-white/[0.02] text-white/40 border-white/5 hover:border-white/20 hover:text-white"
+            }`}
+          >
+            Todos os Recursos
+          </button>
+          <button 
+            onClick={() => setActiveShareFilter("meus")} 
+            className={`px-6 py-3 rounded-xl text-[9px] uppercase tracking-wider font-black transition-all border whitespace-nowrap ${
+              activeShareFilter === "meus" 
+                ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.15)]" 
+                : "bg-white/[0.02] text-white/40 border-white/5 hover:border-white/20 hover:text-white"
+            }`}
+          >
+            Os Meus Recursos
+          </button>
+          <button 
+            onClick={() => setActiveShareFilter("partilhados")} 
+            className={`px-6 py-3 rounded-xl text-[9px] uppercase tracking-wider font-black transition-all border whitespace-nowrap ${
+              activeShareFilter === "partilhados" 
+                ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.15)]" 
+                : "bg-white/[0.02] text-white/40 border-white/5 hover:border-white/20 hover:text-white"
+            }`}
+          >
+            Partilhados Comigo
+          </button>
         </div>
       </header>
 
@@ -261,6 +383,8 @@ export default function RepositorioPage() {
                 const extension = parts.length > 1 ? parts.pop().toUpperCase() : "DOC";
                 const isImage = ["JPG", "JPEG", "PNG", "WEBP", "GIF"].includes(extension);
 
+                const badge = getBadgeStyles(file.visibilidade);
+
                 return (
                   <motion.div 
                     key={file.id} 
@@ -274,7 +398,7 @@ export default function RepositorioPage() {
                     <div className="absolute -right-10 -top-10 w-32 h-32 bg-blue-500/5 blur-[50px] group-hover:bg-blue-500/10 transition-all z-0" />
 
                     <div className="relative z-10 text-left">
-                      <div className="flex justify-between items-start mb-12">
+                      <div className="flex justify-between items-start mb-8 gap-4">
                         
                         {/* Capa Automática no Ícone Original */}
                         <div className={`w-20 h-20 rounded-[1.5rem] overflow-hidden border border-white/5 transition-all duration-500 group-hover:scale-105 group-hover:border-blue-500/30 flex items-center justify-center bg-white/5 ${file.tipo === 'video' ? 'shadow-[0_0_20px_rgba(249,115,22,0.1)] text-orange-500' : 'shadow-[0_0_20px_rgba(59,130,246,0.1)] text-blue-500'}`}>
@@ -285,20 +409,33 @@ export default function RepositorioPage() {
                           )}
                         </div>
 
-                        <div className="text-right">
-                          <span className="text-[8px] uppercase tracking-[0.4em] text-blue-500 font-black italic block mb-1">
+                        <div className="text-right flex flex-col items-end gap-1.5 min-w-0">
+                          <span className="text-[8px] uppercase tracking-[0.4em] text-blue-500 font-black italic block truncate max-w-full">
                             {file.area}
                           </span>
+                          
+                          {/* Badge de Visibilidade */}
+                          <span className={`px-2.5 py-1 rounded-full text-[7px] uppercase tracking-wider font-bold border flex items-center gap-1 leading-none ${badge.color}`}>
+                            {badge.icon}
+                            {badge.label}
+                          </span>
+
+                          {file.status === 'rascunho' && (
+                            <span className="px-2.5 py-1 rounded-full text-[7px] uppercase tracking-wider font-bold bg-red-500/15 text-red-400 border border-red-500/20 flex items-center gap-1 leading-none">
+                              <EyeOff size={10} /> Rascunho
+                            </span>
+                          )}
+
                           <span className="text-[7px] uppercase tracking-widest text-white/10 block font-mono">
                             REF: {file.id.slice(0, 8)}
                           </span>
-                          <span className="text-[7px] uppercase tracking-widest text-white/40 block font-mono mt-1">
+                          <span className="text-[7px] uppercase tracking-widest text-white/40 block font-mono">
                             {extension}
                           </span>
                         </div>
                       </div>
 
-                      <div className="mb-12">
+                      <div className="mb-8">
                         <h3 className="text-2xl font-light text-white uppercase tracking-tighter leading-tight group-hover:text-blue-200 transition-colors mb-4 italic line-clamp-2">
                           {file.label}
                         </h3>
@@ -309,6 +446,43 @@ export default function RepositorioPage() {
                           </span>
                         </div>
                       </div>
+
+                      {/* Informações do Uploader */}
+                      {file.profiles ? (
+                        <div className="flex items-center gap-2 mb-8 bg-white/[0.02] border border-white/5 py-2.5 px-4 rounded-xl">
+                          <div className="w-5 h-5 rounded-full overflow-hidden bg-white/10 flex items-center justify-center shrink-0">
+                            {file.profiles.avatar_url ? (
+                              <img src={file.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <User size={10} className="text-white/40" />
+                            )}
+                          </div>
+                          <span className="text-[8px] uppercase tracking-widest text-white/50 truncate">
+                            Prof: {file.profiles.first_name} {file.profiles.last_name || ""}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 mb-8 bg-white/[0.02] border border-white/5 py-2.5 px-4 rounded-xl">
+                          <User size={10} className="text-white/20 shrink-0" />
+                          <span className="text-[8px] uppercase tracking-widest text-white/30 truncate">
+                            Coordenação Saber Mais
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Fast Publish Button */}
+                      {file.status === 'rascunho' && (file.uploader_id === profile?.id || profile?.role === 'super-admin') && (
+                        <button
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await handlePublish(file.id);
+                          }}
+                          className="mb-8 w-full py-3.5 bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/20 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                        >
+                          <Check size={12} /> Publicar Rascunho
+                        </button>
+                      )}
                     </div>
 
                     <a 
@@ -367,15 +541,18 @@ export default function RepositorioPage() {
       </div>
 
       {/* MODAL DE UPLOAD */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-black/95 border border-white/10 text-white backdrop-blur-3xl p-10 rounded-none max-w-lg">
+      <Dialog open={isModalOpen} onOpenChange={(open) => {
+        setIsModalOpen(open);
+        if (!open) resetForm();
+      }}>
+        <DialogContent className="bg-black/95 border border-white/10 text-white backdrop-blur-3xl p-10 rounded-none max-w-lg overflow-y-auto max-h-[90vh] scrollbar-hide">
           <DialogHeader>
             <DialogTitle className="text-xl font-light uppercase tracking-[0.3em] flex items-center gap-4">
               <Plus className="text-blue-500" /> Registar Novo Recurso
             </DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleUpload} className="space-y-8 mt-10 text-left">
+          <form onSubmit={handleUpload} className="space-y-6 mt-8 text-left">
             <div className="space-y-2">
               <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Título do Material</label>
               <input required value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-white/5 border-0 border-b border-white/10 py-4 px-4 text-sm focus:ring-0 focus:border-blue-500 outline-none transition-all" placeholder="EX: GUIA PEDAGÓGICO III" />
@@ -388,9 +565,56 @@ export default function RepositorioPage() {
               </select>
             </div>
 
+            {/* Novo: Estado (Draft vs Publicado) */}
+            <div className="space-y-2">
+              <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Estado de Publicação</label>
+              <select value={docStatus} onChange={e => setDocStatus(e.target.value)} className="w-full bg-white/5 border-0 border-b border-white/10 py-4 px-4 text-[10px] uppercase tracking-widest outline-none">
+                <option value="publicado" className="bg-black">Publicar Imediatamente</option>
+                <option value="rascunho" className="bg-black">Guardar como Rascunho</option>
+              </select>
+            </div>
+
+            {/* Novo: Visibilidade Combobox */}
+            <div className="space-y-2">
+              <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Visibilidade do Documento</label>
+              <select value={visibilidade} onChange={e => setVisibilidade(e.target.value)} className="w-full bg-white/5 border-0 border-b border-white/10 py-4 px-4 text-[10px] uppercase tracking-widest outline-none">
+                <option value="publico" className="bg-black">Público (Todos os utilizadores)</option>
+                <option value="area_todos" className="bg-black">Alunos e Professores da minha Área</option>
+                <option value="area_alunos" className="bg-black">Apenas Alunos da minha Área</option>
+                <option value="area_professores" className="bg-black">Apenas Professores da minha Área</option>
+                <option value="professores" className="bg-black">Todos os Professores (Qualquer área)</option>
+                <option value="especifico" className="bg-black">Partilhar por E-mail (Utilizador específico)</option>
+                <option value="privado" className="bg-black">Privado (Apenas eu)</option>
+              </select>
+              
+              {/* Helper Text Explicativo */}
+              <p className="text-[8.5px] uppercase tracking-wider text-blue-400/70 mt-2 px-2 leading-relaxed">
+                {getVisibilidadeHelperText()}
+              </p>
+            </div>
+
+            {/* Novo: E-mail do Destinatário Condicional */}
+            {visibilidade === "especifico" && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="space-y-2"
+              >
+                <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">E-mail do Destinatário</label>
+                <input 
+                  type="email" 
+                  required 
+                  value={destinatarioEmail} 
+                  onChange={e => setDestinatarioEmail(e.target.value)} 
+                  className="w-full bg-white/5 border-0 border-b border-white/10 py-4 px-4 text-sm focus:ring-0 focus:border-blue-500 outline-none transition-all" 
+                  placeholder="EX: formando@sabermais.edu.ao" 
+                />
+              </motion.div>
+            )}
+
             <div className="space-y-2">
               <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Ficheiro Técnico</label>
-              <div className="relative border-2 border-dashed border-white/5 p-10 text-center rounded-3xl hover:border-blue-500/30 transition-all">
+              <div className="relative border-2 border-dashed border-white/5 p-8 text-center rounded-3xl hover:border-blue-500/30 transition-all">
                 <input type="file" required onChange={e => setUploadFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                 <Download className="mx-auto text-white/10 mb-4" />
                 <p className="text-[8px] uppercase tracking-widest text-white/40">{uploadFile ? uploadFile.name : "Arraste ou clique para seleccionar"}</p>

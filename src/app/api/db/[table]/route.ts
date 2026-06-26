@@ -23,7 +23,7 @@ function parseTable(params: { table: string }) {
 }
 
 function mapJoinedRows(table: string, rows: any[]) {
-  if (table !== "tickets" && table !== "comunidade_posts") {
+  if (table !== "tickets" && table !== "comunidade_posts" && table !== "arquivos") {
     return rows;
   }
 
@@ -57,9 +57,61 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
     const tableSql = assertIdentifier(table);
     const url = new URL(request.url);
 
+    // Obter sessão e perfil do utilizador para verificação de segurança
+    const sessionUser = await getSessionUser();
+    let userRole = "formando";
+    let userSpecialization = "";
+    
+    if (sessionUser) {
+      const profileRes = await dbQuery(
+        `SELECT role, specialization, especialidade FROM profiles WHERE id = $1 LIMIT 1`,
+        [sessionUser.id]
+      );
+      if (profileRes.rows[0]) {
+        userRole = profileRes.rows[0].role || "formando";
+        userSpecialization = profileRes.rows[0].specialization || profileRes.rows[0].especialidade || "";
+      }
+    }
+
     const filters: string[] = [];
     const values: unknown[] = [];
     let valueIndex = 1;
+
+    // Filtros de segurança para a tabela "arquivos"
+    if (table === "arquivos") {
+      if (sessionUser) {
+        if (userRole !== "super-admin" && userRole !== "administrador") {
+          // O uploader pode sempre ver os seus próprios ficheiros (incluindo rascunhos e privados).
+          // Para outros, o arquivo tem de estar publicado e respeitar as regras de visibilidade.
+          const securityFilter = `(
+            ${tableSql}.uploader_id = $${valueIndex++}
+            OR (
+              ${tableSql}.status = 'publicado'
+              AND (
+                ${tableSql}.visibilidade = 'publico'
+                OR (${tableSql}.visibilidade = 'area_todos' AND LOWER(${tableSql}.area) = LOWER($${valueIndex++}))
+                OR (${tableSql}.visibilidade = 'area_professores' AND $${valueIndex++} = 'formador' AND LOWER(${tableSql}.area) = LOWER($${valueIndex++}))
+                OR (${tableSql}.visibilidade = 'area_alunos' AND $${valueIndex++} = 'formando' AND LOWER(${tableSql}.area) = LOWER($${valueIndex++}))
+                OR (${tableSql}.visibilidade = 'professores' AND $${valueIndex++} = 'formador')
+                OR (LOWER(${tableSql}.destinatario_email) = LOWER($${valueIndex++}))
+              )
+            )
+          )`;
+          filters.push(securityFilter);
+          values.push(sessionUser.id);
+          values.push(userSpecialization);
+          values.push(userRole);
+          values.push(userSpecialization);
+          values.push(userRole);
+          values.push(userSpecialization);
+          values.push(userRole);
+          values.push(sessionUser.email);
+        }
+      } else {
+        // Visitantes não autenticados só vêem arquivos publicados públicos sem destinatário específico
+        filters.push(`(${tableSql}.status = 'publicado' AND ${tableSql}.visibilidade = 'publico' AND ${tableSql}.destinatario_email IS NULL)`);
+      }
+    }
 
     for (const [key, value] of url.searchParams.entries()) {
       if (key.startsWith("eq.")) {
@@ -92,6 +144,11 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
 
     if (table === "comunidade_posts" && selectRequested.includes("profiles(")) {
       fromSql += ` LEFT JOIN profiles ON profiles.id = ${tableSql}.user_id`;
+      selectSql += `, profiles.first_name AS profile_first_name, profiles.last_name AS profile_last_name, profiles.role AS profile_role, profiles.avatar_url AS profile_avatar_url`;
+    }
+
+    if (table === "arquivos" && selectRequested.includes("profiles(")) {
+      fromSql += ` LEFT JOIN profiles ON profiles.id = ${tableSql}.uploader_id`;
       selectSql += `, profiles.first_name AS profile_first_name, profiles.last_name AS profile_last_name, profiles.role AS profile_role, profiles.avatar_url AS profile_avatar_url`;
     }
 
@@ -143,6 +200,9 @@ export async function POST(request: Request, context: { params: Promise<{ table:
     const insertedRows: any[] = [];
 
     for (const item of payload) {
+      if (table === "arquivos") {
+        item.uploader_id = sessionUser.id;
+      }
       const entries = Object.entries(item ?? {});
       if (!entries.length) continue;
 

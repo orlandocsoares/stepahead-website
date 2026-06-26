@@ -100,6 +100,10 @@ CREATE TABLE IF NOT EXISTS arquivos (
   area TEXT NOT NULL DEFAULT 'Geral',
   tamanho TEXT,
   tipo TEXT,
+  uploader_id UUID REFERENCES auth_users(id) ON DELETE SET NULL,
+  status TEXT NOT NULL DEFAULT 'publicado',
+  visibilidade TEXT NOT NULL DEFAULT 'publico',
+  destinatario_email TEXT DEFAULT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
