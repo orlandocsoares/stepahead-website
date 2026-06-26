@@ -8,8 +8,8 @@ export async function GET() {
     safe(dbQuery(`
       SELECT id, first_name, last_name, specialization AS especialidade, biografia, avatar_url
       FROM profiles
-      WHERE role = 'formador' AND status = 'activo'
-      LIMIT 6
+      WHERE role = 'formador' AND status IN ('activo', 'email_confirmado')
+      ORDER BY first_name ASC
     `)),
     safe(dbQuery(`
       SELECT titulo AS proximo_evento
