@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 
+const BASE = process.env.APP_URL || "https://sabermais.edu.ao";
+
+function redirect(path: string) {
+  return NextResponse.redirect(`${BASE}${path}`);
+}
+
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
-  if (!token) return NextResponse.redirect(new URL("/confirm-email?erro=token_invalido", req.url));
+  if (!token) return redirect("/confirm-email?erro=token_invalido");
 
   try {
     const result = await dbQuery<{ user_id: string; expires_at: string }>(
@@ -12,20 +18,18 @@ export async function GET(req: NextRequest) {
     );
 
     const row = result.rows[0];
-    if (!row) return NextResponse.redirect(new URL("/confirm-email?erro=token_invalido", req.url));
-    if (new Date(row.expires_at) < new Date()) return NextResponse.redirect(new URL("/confirm-email?erro=token_expirado", req.url));
+    if (!row) return redirect("/confirm-email?erro=token_invalido");
+    if (new Date(row.expires_at) < new Date()) return redirect("/confirm-email?erro=token_expirado");
 
-    // Actualizar status para email_confirmado (só se ainda estiver pendente)
     await dbQuery(
       "UPDATE profiles SET status = 'email_confirmado' WHERE id = $1 AND status = 'pendente'",
       [row.user_id]
     );
 
-    // Invalidar token
     await dbQuery("DELETE FROM email_confirm_tokens WHERE user_id = $1", [row.user_id]);
 
-    return NextResponse.redirect(new URL("/confirm-email?sucesso=1", req.url));
+    return redirect("/confirm-email?sucesso=1");
   } catch {
-    return NextResponse.redirect(new URL("/confirm-email?erro=server", req.url));
+    return redirect("/confirm-email?erro=server");
   }
 }
