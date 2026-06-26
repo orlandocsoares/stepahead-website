@@ -320,26 +320,19 @@ export default function HeroSection() {
     const syncData = await syncRes.json();
     if (!syncRes.ok) { setError(syncData.error ?? "Erro ao criar conta."); setLoading(false); return; }
 
-    // Tentar também registar no Supabase (pode falhar se já existir — ignoramos)
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email, password, options: { data: { first_name: firstName, role: userRole } }
-    });
-
-    if (authError && authError.message !== "User already registered") {
-      console.warn("Supabase signUp aviso:", authError.message);
-    }
-
-    // Upload avatar formador para Supabase Storage (se disponível)
-    if (authData?.user && userRole === 'formador' && avatarFile) {
-      const fileExt = avatarFile.name.split('.').pop();
-      const fileName = `${authData.user.id}-${Math.random()}.${fileExt}`;
-      const { data: uploadData } = await supabase.storage.from('avatars').upload(`formadores/${fileName}`, avatarFile);
-      if (uploadData) {
-        const avatarUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${uploadData.path}`;
+    // Upload avatar formador para a nossa API de storage
+    if (userRole === 'formador' && avatarFile) {
+      const form = new FormData();
+      form.append("bucket", "avatars");
+      form.append("path", `formadores/${Math.random().toString(36).slice(2)}.${avatarFile.name.split('.').pop()}`);
+      form.append("file", avatarFile);
+      const upRes = await fetch("/api/storage/upload", { method: "POST", body: form });
+      const upData = await upRes.json();
+      if (upRes.ok && upData.data?.path) {
         await fetch("/api/auth/sync-profile", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, role: userRole, avatar_url: avatarUrl }),
+          body: JSON.stringify({ email, role: userRole, avatar_url: `/storage/v1/object/public/avatars/${upData.data.path}` }),
         });
       }
     }
