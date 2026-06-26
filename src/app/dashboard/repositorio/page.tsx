@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
@@ -633,3 +634,6 @@ export default function RepositorioPage() {
     </div>
   );
 }
+=======
+export { default } from "@/app/dashboard/ficheiros/page";
+>>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879

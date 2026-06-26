@@ -1,0 +1,43 @@
+name: Correr migrações SQL
+
+on:
+  workflow_dispatch:  # execução manual pelo GitHub
+
+jobs:
+  migrate:
+    name: Aplicar migrações
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Executar SQL no servidor
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            echo "==> A aplicar migrações..."
+
+            APP_DIR=/opt/apps/sabermais/sabermais.edu.ao
+
+            # Ler as variáveis de ambiente do .env.production
+            DB_USER=$(grep '^POSTGRES_USER=' "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
+            DB_NAME=$(grep '^POSTGRES_DB='   "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
+
+            echo "==> Utilizador: $DB_USER  Base de dados: $DB_NAME"
+
+            docker exec sabermais-postgres psql -U "$DB_USER" -d "$DB_NAME" -c "
+              CREATE TABLE IF NOT EXISTS mensagens (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                from_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                to_user_id   UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                content      TEXT NOT NULL,
+                read         BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_mensagens_to   ON mensagens(to_user_id, read);
+              CREATE INDEX IF NOT EXISTS idx_mensagens_conv ON mensagens(from_user_id, to_user_id, created_at DESC);
+            "
+
+            echo "✅ Migrações concluídas!"

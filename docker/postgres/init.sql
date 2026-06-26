@@ -125,6 +125,17 @@ CREATE INDEX IF NOT EXISTS idx_posts_created_at ON comunidade_posts(created_at D
 CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_arquivos_created_at ON arquivos(created_at DESC);
 
+CREATE TABLE IF NOT EXISTS mensagens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  from_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  to_user_id   UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  content      TEXT NOT NULL,
+  read         BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_mensagens_to   ON mensagens(to_user_id, read);
+CREATE INDEX IF NOT EXISTS idx_mensagens_conv ON mensagens(from_user_id, to_user_id, created_at DESC);
+
 INSERT INTO hero_telemetria (total_alunos, total_formadores, taxa_conclusao)
 SELECT 2000, 120, 87.5
 WHERE NOT EXISTS (SELECT 1 FROM hero_telemetria);
