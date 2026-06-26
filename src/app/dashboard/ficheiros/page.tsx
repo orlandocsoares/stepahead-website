@@ -63,7 +63,7 @@ export default function FicheirosPage() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [uploadCategory, setUploadCategory] = useState("Geral");
-  const [visibilidade, setVisibilidade] = useState("privado");
+  const [visibilidade, setVisibilidade] = useState("publico");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
