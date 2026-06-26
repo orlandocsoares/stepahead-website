@@ -72,6 +72,12 @@ jobs:
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
               );
               CREATE INDEX IF NOT EXISTS idx_com_comentarios_post ON comunidade_comentarios(post_id, created_at ASC);
+              CREATE TABLE IF NOT EXISTS comunidade_gostos (
+                post_id    UUID NOT NULL REFERENCES comunidade_posts(id) ON DELETE CASCADE,
+                user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (post_id, user_id)
+              );
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             echo "==> A construir e reiniciar o container web..."

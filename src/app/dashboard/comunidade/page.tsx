@@ -27,6 +27,11 @@ export default function ComunidadePage() {
   const [commentText, setCommentText] = useState("");
   const [commentSubmitting, setCommentSubmitting] = useState(false);
 
+  // Gostos
+  const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+  const [likeLoading, setLikeLoading] = useState<string | null>(null);
+
   async function fetchPosts() {
     setLoading(true);
     const res = await fetch("/api/db/comunidade_posts?orderBy=created_at&ascending=false&select=*,profiles(first_name,last_name)");
@@ -35,12 +40,51 @@ export default function ComunidadePage() {
     setLoading(false);
   }
 
+  async function fetchLikes(postIds: string[]) {
+    if (!user?.id || postIds.length === 0) return;
+    const [myRes, allRes] = await Promise.all([
+      fetch(`/api/db/comunidade_gostos?eq.user_id=${user.id}`),
+      fetch(`/api/db/comunidade_gostos`),
+    ]);
+    const { data: myData } = await myRes.json();
+    const { data: allData } = await allRes.json();
+    setMyLikes(new Set((myData ?? []).map((g: any) => g.post_id)));
+    const counts: Record<string, number> = {};
+    for (const g of (allData ?? [])) counts[g.post_id] = (counts[g.post_id] ?? 0) + 1;
+    setLikeCounts(counts);
+  }
+
   useEffect(() => { fetchPosts(); }, []);
+  useEffect(() => { if (posts.length && user) fetchLikes(posts.map(p => p.id)); }, [posts, user]);
 
   async function fetchComments(postId: string) {
     const res = await fetch(`/api/db/comunidade_comentarios?eq.post_id=${postId}&orderBy=created_at&ascending=true&select=*,profiles(first_name,last_name)`);
     const { data } = await res.json();
     setComments(prev => ({ ...prev, [postId]: data ?? [] }));
+  }
+
+  async function toggleLike(postId: string) {
+    if (!user?.id || likeLoading === postId) return;
+    setLikeLoading(postId);
+    const liked = myLikes.has(postId);
+    if (liked) {
+      await fetch("/api/db/comunidade_gostos", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eq: { post_id: postId, user_id: user.id } }),
+      });
+      setMyLikes(prev => { const s = new Set(prev); s.delete(postId); return s; });
+      setLikeCounts(prev => ({ ...prev, [postId]: Math.max((prev[postId] ?? 1) - 1, 0) }));
+    } else {
+      await fetch("/api/db/comunidade_gostos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: postId, user_id: user.id }),
+      });
+      setMyLikes(prev => new Set([...prev, postId]));
+      setLikeCounts(prev => ({ ...prev, [postId]: (prev[postId] ?? 0) + 1 }));
+    }
+    setLikeLoading(null);
   }
 
   async function toggleComments(postId: string) {
@@ -158,7 +202,14 @@ export default function ComunidadePage() {
                   <p className="text-xs text-white/40 leading-relaxed line-clamp-3">{post.content}</p>
                 </div>
                 <div className="flex items-center gap-4 pt-2 border-t border-white/[0.04]">
-                  <button className="flex items-center gap-1.5 text-xs text-white/20 hover:text-blue-400 transition-colors"><Heart size={12} /> Gosto</button>
+                  <button
+                    onClick={() => toggleLike(post.id)}
+                    disabled={likeLoading === post.id}
+                    className={`flex items-center gap-1.5 text-xs transition-colors ${myLikes.has(post.id) ? "text-red-400" : "text-white/20 hover:text-red-400"}`}
+                  >
+                    <Heart size={12} fill={myLikes.has(post.id) ? "currentColor" : "none"} />
+                    Gosto {(likeCounts[post.id] ?? 0) > 0 && `(${likeCounts[post.id]})`}
+                  </button>
                   <button
                     onClick={() => toggleComments(post.id)}
                     className={`flex items-center gap-1.5 text-xs transition-colors ${isOpen ? "text-blue-400" : "text-white/20 hover:text-blue-400"}`}
