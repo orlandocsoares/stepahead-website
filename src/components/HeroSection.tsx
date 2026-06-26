@@ -144,7 +144,15 @@ e.preventDefault();
 setError(null);
 const { error } = await supabase.auth.signInWithPassword({ email, password });
 if (error) setError(error.message);
-else { setIsLoginOpen(false); router.push("/dashboard"); }
+else {
+  await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  setIsLoginOpen(false);
+  router.push("/dashboard");
+}
 };
 
 const handleSignUp = async (e: React.FormEvent) => {
