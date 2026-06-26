@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       await dbQuery(
         `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
          VALUES ($1, 'novo_formando', 'Novo formando aguarda aprovação',
-           $2, '/dashboard/turmas')`,
+           $2, '/dashboard/admin')`,
         [p.formador_id, `${p.first_name} ${p.last_name} (${p.email}) confirmou o email e aguarda a sua aprovação.`]
       );
     }
