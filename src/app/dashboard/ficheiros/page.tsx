@@ -4,25 +4,32 @@ import { useEffect, useState, useMemo } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   FileText, Video, Search, Download, Loader2, Plus, FolderOpen, Lock,
+  Globe, Users, Eye,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const CATEGORIES = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
+const VISIBILIDADE_OPTIONS = [
+  { value: "privado",    label: "Só eu",         icon: Lock,  color: "text-white/40" },
+  { value: "formadores", label: "Formadores",     icon: Users, color: "text-blue-400" },
+  { value: "publico",    label: "Todos",          icon: Globe, color: "text-emerald-400" },
+];
+
+function VisibilidadeBadge({ v, small }: { v: string; small?: boolean }) {
+  const opt = VISIBILIDADE_OPTIONS.find(o => o.value === v) ?? VISIBILIDADE_OPTIONS[0];
+  const Icon = opt.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 ${small ? "text-[9px]" : "text-[10px]"} ${opt.color}`}>
+      <Icon size={small ? 9 : 10} /> {opt.label}
+    </span>
+  );
+}
+
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-/*
-  Controlo de acesso por especialização:
-  - admin  → vê e faz upload para todas as categorias
-  - formador com especialização → só vê "Geral" + as suas áreas; upload restrito às suas áreas
-  - formador sem especialização / formando → vê tudo, sem restrição de upload
-  A especialização é guardada em profiles.specialization como JSON array (ex: '["Matemática","Física"]')
-  ou como string simples (formato antigo). parseSpecializations() lida com ambos.
-*/
-
-/** Parse seguro: aceita JSON array ["Mat","Fís"] ou string simples "Mat" */
 function parseSpecializations(raw?: string): string[] {
   if (!raw) return [];
   try {
@@ -40,7 +47,7 @@ function getVisibleCategories(role?: string, specialization?: string): string[] 
 }
 
 function getUploadAreas(role?: string, specialization?: string): string[] | null {
-  if (role === "admin") return null; // null = admin escolhe livremente entre tudo
+  if (role === "admin") return null;
   const areas = parseSpecializations(specialization);
   return role === "formador" && areas.length > 0 ? areas : null;
 }
@@ -50,58 +57,67 @@ export default function FicheirosPage() {
   const [files, setFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("Geral");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [uploadCategory, setUploadCategory] = useState("Geral");
+  const [visibilidade, setVisibilidade] = useState("privado");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
 
   const visibleCategories = useMemo(
-    () => getVisibleCategories(user?.role, user?.specialization),
-    [user?.role, user?.specialization]
+    () => getVisibleCategories(user?.role, user?.especialidade),
+    [user?.role, user?.especialidade]
   );
-
-  // Áreas permitidas para upload (null = admin, array = formador restrito)
   const uploadAreas = useMemo(
-    () => getUploadAreas(user?.role, user?.specialization),
-    [user?.role, user?.specialization]
+    () => getUploadAreas(user?.role, user?.especialidade),
+    [user?.role, user?.especialidade]
   );
-
   const isRestricted = user?.role === "formador" && uploadAreas !== null;
 
-  const [activeCategory, setActiveCategory] = useState("Geral");
-
-  useEffect(() => {
-    if (user && !visibleCategories.includes(activeCategory)) {
-      setActiveCategory(visibleCategories[0] ?? "Geral");
-    }
-  }, [visibleCategories, user]);
-
   function openUploadModal() {
-    // Pré-selecciona: se tiver áreas restritas, a primeira delas; senão a aba activa
+    setTitle("");
+    setUploadFile(null);
+    setVisibilidade("privado");
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
     setIsModalOpen(true);
   }
 
   async function fetchFiles() {
     const res = await fetch("/api/db/arquivos?orderBy=created_at&ascending=false");
-    const { data } = await res.json();
+    const data = await res.json();
     setFiles(data ?? []);
     setLoading(false);
   }
 
   useEffect(() => { fetchFiles(); }, []);
 
+  // Filtro: visibilidade + categoria + search
   const filtered = useMemo(() => {
     return files.filter((f) => {
-      const inScope = visibleCategories.includes(f.area);
-      const matchCat = f.area === activeCategory;
-      const matchSearch = f.label?.toLowerCase().includes(search.toLowerCase());
-      return inScope && matchCat && matchSearch;
+      // Controlo de visibilidade
+      const isOwner = f.uploader_id === user?.id;
+      const isAdmin = user?.role === "admin" || user?.role === "super-admin";
+      const isFormador = user?.role === "formador";
+
+      if (!isAdmin && !isOwner) {
+        if (f.visibilidade === "privado") return false;
+        if (f.visibilidade === "formadores" && !isFormador) return false;
+      }
+
+      // Categoria
+      if (!visibleCategories.includes(f.area)) return false;
+      if (activeCategory !== "Geral" && f.area !== activeCategory) return false;
+
+      // Pesquisa
+      if (search && !f.label?.toLowerCase().includes(search.toLowerCase())) return false;
+
+      return true;
     });
-  }, [files, activeCategory, search, visibleCategories]);
+  }, [files, search, activeCategory, visibleCategories, user]);
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
@@ -117,7 +133,6 @@ export default function FicheirosPage() {
       const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: form });
       if (!uploadRes.ok) throw new Error("Erro no upload do ficheiro.");
 
-      // Garante que a área registada está dentro das áreas permitidas
       const areaFinal = uploadAreas && !uploadAreas.includes(uploadCategory)
         ? uploadAreas[0]
         : uploadCategory;
@@ -131,13 +146,12 @@ export default function FicheirosPage() {
           area: areaFinal,
           tamanho: (uploadFile.size / (1024 * 1024)).toFixed(2) + " MB",
           tipo: uploadFile.type.includes("video") ? "video" : "pdf",
+          visibilidade,
         }),
       });
       if (!dbRes.ok) throw new Error("Erro ao registar o ficheiro.");
 
       setIsModalOpen(false);
-      setTitle("");
-      setUploadFile(null);
       fetchFiles();
     } catch (err: any) {
       alert(err.message ?? "Erro desconhecido.");
@@ -146,9 +160,22 @@ export default function FicheirosPage() {
     }
   }
 
-  // Opções de área no modal de upload
+  async function handleVisibilidadeChange(id: string, newVis: string) {
+    setUpdatingId(id);
+    try {
+      await fetch(`/api/db/arquivos?id=${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visibilidade: newVis }),
+      });
+      setFiles(prev => prev.map(f => f.id === id ? { ...f, visibilidade: newVis } : f));
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
   const uploadCategoryOptions = uploadAreas ?? CATEGORIES;
-  const uploadAreaLocked = uploadAreas?.length === 1; // 1 especialização = bloqueado
+  const uploadAreaLocked = uploadAreas?.length === 1;
 
   return (
     <div className="space-y-6 w-full">
@@ -177,10 +204,8 @@ export default function FicheirosPage() {
             />
           </div>
           {canUpload && (
-            <button
-              onClick={openUploadModal}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors"
-            >
+            <button onClick={openUploadModal}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
               <Plus size={14} /> Upload
             </button>
           )}
@@ -190,23 +215,15 @@ export default function FicheirosPage() {
       {/* Filtros de categoria */}
       <div className="flex gap-2 flex-wrap">
         {visibleCategories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
+          <button key={cat} onClick={() => setActiveCategory(cat)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               activeCategory === cat
                 ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
                 : "bg-white/[0.03] text-white/40 border border-white/[0.06] hover:text-white/70"
-            }`}
-          >
+            }`}>
             {cat}
           </button>
         ))}
-        {isRestricted && (
-          <span className="px-3 py-1.5 rounded-lg text-xs text-white/20 border border-white/[0.04] flex items-center gap-1.5 cursor-default select-none">
-            <Lock size={10} /> {CATEGORIES.length - visibleCategories.length} área{CATEGORIES.length - visibleCategories.length !== 1 ? "s" : ""} sem acesso
-          </span>
-        )}
       </div>
 
       {/* Tabela */}
@@ -234,9 +251,9 @@ export default function FicheirosPage() {
                 <tr className="border-b border-white/[0.06]">
                   <th className="text-left text-xs text-white/30 font-medium px-5 py-3">Nome</th>
                   <th className="text-left text-xs text-white/30 font-medium px-5 py-3 hidden sm:table-cell">Área</th>
-                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3 hidden md:table-cell">Tipo</th>
                   <th className="text-left text-xs text-white/30 font-medium px-5 py-3 hidden md:table-cell">Tamanho</th>
                   <th className="text-left text-xs text-white/30 font-medium px-5 py-3 hidden lg:table-cell">Data</th>
+                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3">Visibilidade</th>
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
@@ -244,6 +261,9 @@ export default function FicheirosPage() {
                 {filtered.map((f) => {
                   const ext = f.nome_arquivo?.split(".").pop()?.toUpperCase() ?? "—";
                   const isVideo = f.tipo === "video";
+                  const isOwner = f.uploader_id === user?.id;
+                  const isAdmin = user?.role === "admin" || user?.role === "super-admin";
+                  const canChangeVis = isOwner || isAdmin;
                   const fileUrl = f.nome_arquivo
                     ? `/storage/v1/object/public/materiais/${encodeURIComponent(f.nome_arquivo)}`
                     : "#";
@@ -261,9 +281,24 @@ export default function FicheirosPage() {
                         </div>
                       </td>
                       <td className="px-5 py-3 text-white/40 hidden sm:table-cell">{f.area}</td>
-                      <td className="px-5 py-3 text-white/40 hidden md:table-cell capitalize">{f.tipo ?? "—"}</td>
                       <td className="px-5 py-3 text-white/40 hidden md:table-cell">{f.tamanho ?? "—"}</td>
                       <td className="px-5 py-3 text-white/40 hidden lg:table-cell">{formatDate(f.created_at)}</td>
+                      <td className="px-5 py-3">
+                        {canChangeVis ? (
+                          <select
+                            value={f.visibilidade ?? "publico"}
+                            onChange={(e) => handleVisibilidadeChange(f.id, e.target.value)}
+                            disabled={updatingId === f.id}
+                            className="bg-transparent border border-white/[0.08] rounded-lg px-2 py-1 text-[11px] text-white/60 outline-none cursor-pointer hover:border-white/20 transition-colors disabled:opacity-40"
+                          >
+                            {VISIBILIDADE_OPTIONS.map(o => (
+                              <option key={o.value} value={o.value} className="bg-[#0d0d14]">{o.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <VisibilidadeBadge v={f.visibilidade ?? "publico"} small />
+                        )}
+                      </td>
                       <td className="px-5 py-3 text-right">
                         <a href={fileUrl} target="_blank" rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors">
@@ -291,13 +326,9 @@ export default function FicheirosPage() {
           <form onSubmit={handleUpload} className="px-6 py-5 space-y-5">
             <div className="space-y-1.5">
               <label className="text-xs text-white/40">Título</label>
-              <input
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+              <input required value={title} onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ex: Guia Pedagógico III"
-                className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50 transition-colors"
-              />
+                className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50 transition-colors" />
             </div>
 
             <div className="space-y-1.5">
@@ -310,23 +341,46 @@ export default function FicheirosPage() {
                 )}
               </label>
               {uploadAreaLocked ? (
-                // 1 especialização: campo bloqueado
                 <div className="w-full bg-white/[0.02] border border-white/[0.04] rounded-lg px-3 py-2.5 text-sm text-white/50 flex items-center justify-between cursor-not-allowed">
-                  <span>{uploadAreas![0]}</span>
-                  <Lock size={12} className="text-white/20" />
+                  <span>{uploadAreas![0]}</span><Lock size={12} className="text-white/20" />
                 </div>
               ) : (
-                // admin ou formador com várias áreas: dropdown restrito às suas áreas
-                <select
-                  value={uploadCategory}
-                  onChange={(e) => setUploadCategory(e.target.value)}
-                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50 transition-colors"
-                >
+                <select value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value)}
+                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50 transition-colors">
                   {uploadCategoryOptions.map((c) => (
                     <option key={c} value={c} className="bg-[#0d0d14]">{c}</option>
                   ))}
                 </select>
               )}
+            </div>
+
+            {/* Visibilidade */}
+            <div className="space-y-2">
+              <label className="text-xs text-white/40">Visibilidade</label>
+              <div className="grid grid-cols-3 gap-2">
+                {VISIBILIDADE_OPTIONS.map((opt) => {
+                  const Icon = opt.icon;
+                  return (
+                    <button key={opt.value} type="button"
+                      onClick={() => setVisibilidade(opt.value)}
+                      className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border text-center transition-all ${
+                        visibilidade === opt.value
+                          ? "border-blue-500/50 bg-blue-500/10"
+                          : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]"
+                      }`}>
+                      <Icon size={16} className={visibilidade === opt.value ? "text-blue-400" : "text-white/30"} />
+                      <span className={`text-[10px] font-medium ${visibilidade === opt.value ? "text-blue-300" : "text-white/40"}`}>
+                        {opt.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-white/25 leading-relaxed">
+                {visibilidade === "privado" && "Só você tem acesso a este documento."}
+                {visibilidade === "formadores" && "Você e todos os formadores podem ver este documento."}
+                {visibilidade === "publico" && "Todos os utilizadores da plataforma podem ver este documento."}
+              </p>
             </div>
 
             <div className="space-y-1.5">
