@@ -538,7 +538,7 @@ export default function HeroSection() {
             
             {/* O SEU POP-UP ORIGINAL, AGORA COM TUDO LÁ DENTRO */}
             <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-              <DialogContent className="w-[95vw] md:w-[70vw] lg:w-[50vw] sm:max-w-[440px] bg-[#0a0a0a]/80 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200]">
+              <DialogContent className="w-[95vw] sm:max-w-[520px] bg-[#0a0a0a]/80 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200]">
                 
                 {isSuccess ? (
                   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center text-center space-y-6 py-8">
