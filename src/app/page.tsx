@@ -765,7 +765,7 @@ export default function HeroSection() {
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" />
+                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
                 </motion.div>
               </div>
             </motion.div>
