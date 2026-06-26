@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Menu, MessageSquare } from "lucide-react";
+import { Menu, MessageSquare, Globe } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const PAGE_TITLES: Record<string, string> = {
@@ -62,6 +62,16 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
       <h1 className="flex-1 text-sm md:text-base font-semibold text-white text-center md:text-left">{title}</h1>
 
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
+        {/* Voltar ao site público */}
+        <a
+          href="/"
+          className="p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors"
+          aria-label="Ver site público"
+          title="Ver site público"
+        >
+          <Globe size={18} />
+        </a>
+
         {/* Badge de mensagens não lidas */}
         <button
           onClick={() => router.push("/dashboard/mensagens")}
