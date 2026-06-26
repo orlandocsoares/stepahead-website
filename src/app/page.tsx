@@ -110,7 +110,7 @@ function ForgotPasswordLink() {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="w-full text-center text-[9px] uppercase tracking-widest text-white/25 hover:text-white/60 transition-colors mt-1">
-        Esqueci a password
+        Recuperar password
       </button>
       {open && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
@@ -126,7 +126,7 @@ function ForgotPasswordLink() {
               <>
                 <div>
                   <h3 className="text-sm font-semibold text-white">Recuperar password</h3>
-                  <p className="text-[10px] text-white/40 mt-1">Introduza o seu email e enviaremos um link para redefinir a password.</p>
+                  <p className="text-[10px] text-white/40 mt-1">Introduza o seu e-mail e enviaremos um link para repor a password.</p>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <input
@@ -302,56 +302,46 @@ export default function HeroSection() {
 
     setLoading(true);
 
+    // Tentar registo directo na nossa API (não depende do Supabase)
+    const syncRes = await fetch("/api/auth/sync-profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        role: userRole,
+        ...(userRole === 'formando' ? { provincia, escola } : { especialidade, biografia }),
+      }),
+    });
+    const syncData = await syncRes.json();
+    if (!syncRes.ok) { setError(syncData.error ?? "Erro ao criar conta."); setLoading(false); return; }
+
+    // Tentar também registar no Supabase (pode falhar se já existir — ignoramos)
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email, password, options: { data: { first_name: firstName, role: userRole } }
     });
 
-    if (authError) { setError(authError.message); setLoading(false); return; }
+    if (authError && authError.message !== "User already registered") {
+      console.warn("Supabase signUp aviso:", authError.message);
+    }
 
-    if (authData.user) {
-      let finalAvatarUrl = remoteImageUrl;
-
-      if (userRole === 'formador' && avatarFile && !finalAvatarUrl) {
-        const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${authData.user.id}-${Math.random()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage.from('avatars').upload(`formadores/${fileName}`, avatarFile);
-        if (!uploadError && uploadData) {
-          finalAvatarUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${uploadData.path}`;
-        }
-      }
-
-      const profilePayload: any = { first_name: firstName, last_name: lastName, role: userRole, status: 'pendente' };
-
-      if (userRole === 'formando') {
-        profilePayload.provincia = provincia;
-        profilePayload.escola = escola;
-      } else {
-        profilePayload.especialidade = especialidade;
-        profilePayload.biografia = bio;
-        if (finalAvatarUrl) profilePayload.avatar_url = finalAvatarUrl;
-      }
-
-      const { error: profileError } = await supabase.from('profiles').update(profilePayload).eq('id', authData.user.id);
-
-      // Sincronizar com a nossa DB para garantir role correcto
-      await fetch("/api/auth/sync-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          first_name: firstName,
-          last_name: lastName,
-          role: userRole,
-          ...(userRole === 'formando' ? { provincia, escola } : { especialidade, biografia, avatar_url: finalAvatarUrl }),
-        }),
-      });
-
-      if (!profileError) {
-        setIsSuccess(true); // Mostra o ecrã de email dentro do pop-up
-      } else {
-        setError("Erro ao gravar perfil.");
+    // Upload avatar formador para Supabase Storage (se disponível)
+    if (authData?.user && userRole === 'formador' && avatarFile) {
+      const fileExt = avatarFile.name.split('.').pop();
+      const fileName = `${authData.user.id}-${Math.random()}.${fileExt}`;
+      const { data: uploadData } = await supabase.storage.from('avatars').upload(`formadores/${fileName}`, avatarFile);
+      if (uploadData) {
+        const avatarUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${uploadData.path}`;
+        await fetch("/api/auth/sync-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, role: userRole, avatar_url: avatarUrl }),
+        });
       }
     }
+
+    setIsSuccess(true);
     setLoading(false);
   };
 

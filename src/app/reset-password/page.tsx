@@ -102,7 +102,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-sm bg-[#13131f] border border-white/[0.06] rounded-2xl p-8 space-y-6">
         <div className="space-y-1">
           <h1 className="text-lg font-semibold text-white">Redefinir password</h1>
-          <p className="text-xs text-white/40">Introduza a sua nova password para a conta SaberMais.</p>
+          <p className="text-xs text-white/40">Introduza a sua nova password para aceder à conta SaberMais.</p>
         </div>
         <Suspense fallback={<div className="flex justify-center"><Loader2 size={20} className="animate-spin text-blue-500" /></div>}>
           <ResetPasswordForm />

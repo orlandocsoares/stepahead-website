@@ -45,7 +45,7 @@ export async function POST(request: Request) {
           <img src="https://sabermais.edu.ao/logo-sabermais.png" alt="SaberMais" style="height:48px;margin-bottom:24px;" />
           <h2 style="font-size:18px;font-weight:600;margin-bottom:8px;">Recuperação de password</h2>
           <p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.6;margin-bottom:24px;">
-            Recebemos um pedido para redefinir a password da sua conta. Clique no botão abaixo para criar uma nova password. O link é válido durante <strong style="color:#fff;">1 hora</strong>.
+            Recebemos um pedido para repor a password da sua conta. Clique no botão abaixo para definir uma nova password. O link é válido durante <strong style="color:#fff;">1 hora</strong>.
           </p>
           <a href="${resetUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">
             Redefinir password
