@@ -543,10 +543,13 @@ export default function HeroSection() {
                 {isSuccess ? (
                   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center text-center space-y-6 py-8">
                     <ShieldCheck size={56} className="text-emerald-500" />
-                    <div className="space-y-2">
-                      <h2 className="text-xl font-light uppercase tracking-[0.2em]">Registo Submetido</h2>
+                    <div className="space-y-3">
+                      <h2 className="text-xl font-light uppercase tracking-[0.2em]">Verifique o seu email</h2>
                       <p className="text-[10px] uppercase tracking-widest text-white/50 leading-relaxed">
-                        O seu pedido de acesso foi recebido. A conta <span className="text-white">{email}</span> será analisada e aprovada por um administrador. Receberá uma notificação quando a conta estiver activa.
+                        Enviámos um email para <span className="text-white">{email}</span>. Clique no link de confirmação para verificar que é dono deste endereço.
+                      </p>
+                      <p className="text-[10px] uppercase tracking-widest text-amber-400/80 leading-relaxed">
+                        Só após confirmar o email é que o administrador poderá aprovar a sua conta.
                       </p>
                     </div>
                     <Button onClick={() => setIsLoginOpen(false)} className="rounded-full bg-white text-black hover:bg-blue-500 hover:text-white uppercase tracking-[0.2em] text-[9px] px-8">Fechar</Button>
