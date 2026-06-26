@@ -344,152 +344,220 @@ export default function SuperAdminPage() {
         <div className="flex-1 overflow-y-auto hide-native-scroll pb-6 pr-2">
           <AnimatePresence mode="wait">
             {activeTab === "stats" ? (
-              <motion.div key="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+              <motion.div key="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5 pb-6">
                 {!statsData ? (
                   <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-blue-500" /></div>
                 ) : (() => {
                   const t = statsData.totals ?? {};
-                  const uploaders: any[] = statsData.topUploaders ?? [];
-                  const areas: any[] = statsData.topAreas ?? [];
-                  const contrib: any[] = statsData.recentLogins ?? [];
-                  const maxU = Number(uploaders[0]?.total) || 1;
-                  const maxA = Number(areas[0]?.total) || 1;
-                  const maxC = Number(contrib[0]?.contribuicoes) || 1;
-                  const AREA_COLORS = ["bg-blue-500","bg-emerald-500","bg-purple-500","bg-amber-500","bg-red-500","bg-pink-500"];
-                  const ticketRate = Number(t.tickets_pendentes) + 10 > 0
-                    ? Math.round((10 / (Number(t.tickets_pendentes) + 10)) * 100) : 100;
+                  const crescimento: any[] = statsData.crescimentoMensal ?? [];
+                  const inativos: any[] = statsData.utilizadoresInativos ?? [];
+                  const ticketsCat: any[] = statsData.ticketsPorCategoria ?? [];
+                  const visibilidade: any[] = statsData.ficheirosPorVisibilidade ?? [];
+                  const tipos: any[] = statsData.ficheirosPorTipo ?? [];
+                  const eventosTipo: any[] = statsData.eventosPorTipo ?? [];
+                  const com = statsData.comunidadeStats ?? {};
+                  const maxCrescimento = Math.max(...crescimento.map((m: any) => Number(m.total)), 1);
+                  const maxTicketCat = Math.max(...ticketsCat.map((c: any) => Number(c.total)), 1);
+                  const maxTipo = Math.max(...tipos.map((t: any) => Number(t.total)), 1);
+
+                  const VIS_LABEL: Record<string, string> = { publico: "Público", privado: "Privado", formadores: "Formadores", turma: "Turma" };
+                  const VIS_COLOR: Record<string, string> = { publico: "bg-emerald-500", privado: "bg-red-500", formadores: "bg-blue-500", turma: "bg-amber-500" };
+
+                  // Taxa de resolução real
+                  const totalTickets = ticketsCat.reduce((s: number, c: any) => s + Number(c.total), 0);
+                  const resolvidos = ticketsCat.reduce((s: number, c: any) => s + Number(c.resolvidos), 0);
+                  const taxaResolucao = totalTickets > 0 ? Math.round((resolvidos / totalTickets) * 100) : 100;
 
                   return (
                     <>
-                      {/* KPIs principais */}
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        {[
-                          { icon: Users, color: "bg-blue-500/10 text-blue-400", title: "Utilizadores", value: t.total_users ?? "—", sub: `${t.users_activos ?? 0} activos` },
-                          { icon: Database, color: "bg-emerald-500/10 text-emerald-400", title: "Ficheiros", value: t.total_ficheiros ?? "—", sub: "na plataforma" },
-                          { icon: Calendar, color: "bg-purple-500/10 text-purple-400", title: "Eventos (30d)", value: t.eventos_mes ?? "—", sub: `${t.total_eventos ?? 0} no total` },
-                          { icon: MessageSquare, color: "bg-amber-500/10 text-amber-400", title: "Publicações", value: t.total_posts ?? "—", sub: `${t.tickets_pendentes ?? 0} tickets pendentes` },
-                        ].map((k, i) => (
-                          <div key={i} className="bg-[#13131f] border border-white/[0.06] rounded-xl p-4 space-y-2">
-                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${k.color}`}><k.icon size={16} /></div>
-                            <p className="text-2xl font-bold text-white">{k.value}</p>
-                            <div>
-                              <p className="text-xs text-white/50">{k.title}</p>
-                              <p className="text-[10px] text-white/25">{k.sub}</p>
-                            </div>
+                      {/* Linha 1: Crescimento + Saúde da comunidade */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                        {/* Crescimento mensal */}
+                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp size={14} className="text-blue-400" />
+                            <span className="text-sm font-semibold text-white">Novos registos por mês</span>
+                            <span className="text-[10px] text-white/25 ml-auto">últimos 6 meses</span>
                           </div>
-                        ))}
+                          {crescimento.length === 0 ? (
+                            <p className="text-xs text-white/25 text-center py-6">Sem dados.</p>
+                          ) : (
+                            <div className="flex items-end gap-2 h-24">
+                              {crescimento.map((m: any, i: number) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                  <span className="text-[9px] text-white/40">{m.total}</span>
+                                  <div className="w-full bg-blue-500/60 rounded-t-sm" style={{ height: `${Math.max((Number(m.total) / maxCrescimento) * 80, 4)}px` }} />
+                                  <span className="text-[9px] text-white/30">{m.mes}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Saúde da comunidade */}
+                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare size={14} className="text-purple-400" />
+                            <span className="text-sm font-semibold text-white">Saúde da comunidade</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { label: "Publicações", value: com.total_posts ?? 0, color: "text-white" },
+                              { label: "Comentários", value: com.total_comentarios ?? 0, color: "text-white" },
+                              { label: "Média comentários/post", value: com.media_comentarios ?? "0", color: Number(com.media_comentarios) >= 1 ? "text-emerald-400" : "text-amber-400" },
+                              { label: "Posts sem resposta", value: com.posts_sem_resposta ?? 0, color: Number(com.posts_sem_resposta) > 0 ? "text-red-400" : "text-emerald-400" },
+                            ].map((s, i) => (
+                              <div key={i} className="bg-white/[0.03] rounded-lg p-3">
+                                <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+                                <p className="text-[10px] text-white/30 mt-0.5">{s.label}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Taxa de resolução de tickets */}
-                      <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-3">
+                      {/* Linha 2: Tickets + Visibilidade ficheiros */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                        {/* Tickets por categoria */}
+                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <LifeBuoy size={14} className="text-amber-400" />
+                              <span className="text-sm font-semibold text-white">Tickets por categoria</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-xs font-bold ${taxaResolucao >= 80 ? "text-emerald-400" : taxaResolucao >= 50 ? "text-amber-400" : "text-red-400"}`}>{taxaResolucao}%</span>
+                              <span className="text-[10px] text-white/25">resolvidos</span>
+                            </div>
+                          </div>
+                          {ticketsCat.length === 0 ? (
+                            <p className="text-xs text-white/25 text-center py-4">Sem tickets.</p>
+                          ) : (
+                            <div className="space-y-3">
+                              {ticketsCat.map((c: any, i: number) => (
+                                <div key={i} className="space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-white/70">{c.category}</span>
+                                    <span className="text-xs text-white/40">{c.resolvidos}/{c.total}</span>
+                                  </div>
+                                  <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden relative">
+                                    <div className="h-full bg-white/10 rounded-full absolute inset-0" style={{ width: `${(Number(c.total)/maxTicketCat)*100}%` }} />
+                                    <div className="h-full bg-emerald-500/70 rounded-full absolute inset-0" style={{ width: `${(Number(c.resolvidos)/maxTicketCat)*100}%` }} />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Ficheiros por visibilidade */}
+                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+                          <div className="flex items-center gap-2">
+                            <Database size={14} className="text-emerald-400" />
+                            <span className="text-sm font-semibold text-white">Ficheiros por visibilidade</span>
+                          </div>
+                          {visibilidade.length === 0 ? (
+                            <p className="text-xs text-white/25 text-center py-4">Sem dados.</p>
+                          ) : (
+                            <div className="space-y-3">
+                              {visibilidade.map((v: any, i: number) => {
+                                const maxV = Math.max(...visibilidade.map((x: any) => Number(x.total)));
+                                return (
+                                  <div key={i} className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs text-white/70">{VIS_LABEL[v.visibilidade] ?? v.visibilidade}</span>
+                                      <span className="text-xs text-white/40">{v.total} ficheiros</span>
+                                    </div>
+                                    <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+                                      <div className={`h-full rounded-full ${VIS_COLOR[v.visibilidade] ?? "bg-white"}/60`} style={{ width: `${(Number(v.total)/maxV)*100}%` }} />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Linha 3: Tipos de ficheiro + Eventos */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                        {/* Tipos de ficheiro */}
+                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+                          <div className="flex items-center gap-2">
+                            <FileText size={14} className="text-blue-400" />
+                            <span className="text-sm font-semibold text-white">Tipos de ficheiro</span>
+                          </div>
+                          {tipos.length === 0 ? (
+                            <p className="text-xs text-white/25 text-center py-4">Sem dados.</p>
+                          ) : (
+                            <div className="grid grid-cols-2 gap-2">
+                              {tipos.filter((t: any) => t.extensao).map((t: any, i: number) => (
+                                <div key={i} className="bg-white/[0.03] rounded-lg px-3 py-2 flex items-center justify-between">
+                                  <span className="text-xs text-white/60 uppercase font-mono">.{t.extensao}</span>
+                                  <span className="text-xs font-bold text-white/80">{t.total}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Eventos por tipo/formato */}
+                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={14} className="text-purple-400" />
+                            <span className="text-sm font-semibold text-white">Eventos por tipo</span>
+                          </div>
+                          {eventosTipo.length === 0 ? (
+                            <p className="text-xs text-white/25 text-center py-4">Sem dados.</p>
+                          ) : (
+                            <div className="space-y-3">
+                              {eventosTipo.map((e: any, i: number) => (
+                                <div key={i} className="bg-white/[0.03] rounded-lg px-3 py-2.5 space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-white/70">{e.tipo}</span>
+                                    <span className="text-xs text-white/40">{e.total} total</span>
+                                  </div>
+                                  <div className="flex gap-3 text-[10px] text-white/35">
+                                    <span>🏢 {e.presencial} presencial</span>
+                                    <span>💻 {e.online} online</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Utilizadores inativos */}
+                      <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <LifeBuoy size={14} className="text-blue-400" />
-                            <span className="text-sm font-semibold text-white">Taxa de resolução de tickets</span>
+                            <Users size={14} className="text-red-400" />
+                            <span className="text-sm font-semibold text-white">Utilizadores sem actividade</span>
+                            <span className="text-[10px] text-white/25">(sem uploads nem publicações)</span>
                           </div>
-                          <span className={`text-sm font-bold ${ticketRate >= 80 ? "text-emerald-400" : ticketRate >= 50 ? "text-amber-400" : "text-red-400"}`}>{ticketRate}%</span>
+                          <span className="text-xs text-red-400 font-medium">{inativos.length} identificados</span>
                         </div>
-                        <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full transition-all duration-700 ${ticketRate >= 80 ? "bg-emerald-500" : ticketRate >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${ticketRate}%` }} />
-                        </div>
-                        <p className="text-[10px] text-white/25">{t.tickets_pendentes ?? 0} pendente{Number(t.tickets_pendentes) !== 1 ? "s" : ""} em aberto</p>
-                      </div>
-
-                      {/* Rankings lado a lado */}
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                        {/* Top uploaders */}
-                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
-                          <div className="flex items-center gap-2">
-                            <Upload size={14} className="text-emerald-400" />
-                            <span className="text-sm font-semibold text-white">Top contribuidores</span>
+                        {inativos.length === 0 ? (
+                          <p className="text-xs text-emerald-400 text-center py-2">✓ Todos os utilizadores têm actividade.</p>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {inativos.map((u: any, i: number) => (
+                              <div key={i} className="flex items-center gap-2.5 bg-white/[0.02] rounded-lg px-3 py-2">
+                                <div className="w-6 h-6 rounded-full bg-red-500/10 flex items-center justify-center text-red-400 text-[10px] font-bold shrink-0">
+                                  {(u.first_name?.[0] || "?").toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs text-white/60 truncate">{u.first_name} {u.last_name}</p>
+                                  <p className="text-[9px] text-white/25 capitalize">{u.role} · desde {new Date(u.created_at).toLocaleDateString("pt-PT", { month: "short", year: "numeric" })}</p>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                          {uploaders.length === 0 ? <p className="text-xs text-white/25 text-center py-4">Sem dados.</p> : (
-                            <ol className="space-y-3">
-                              {uploaders.map((u, i) => (
-                                <li key={i} className="space-y-1">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-xs text-white/70">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i+1}.`} {u.first_name} {u.last_name}</span>
-                                    <span className="text-xs text-white/40">{u.total} fich.</span>
-                                  </div>
-                                  <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
-                                    <div className="h-full bg-emerald-500/60 rounded-full" style={{ width: `${(Number(u.total)/maxU)*100}%` }} />
-                                  </div>
-                                </li>
-                              ))}
-                            </ol>
-                          )}
-                        </div>
-
-                        {/* Áreas */}
-                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
-                          <div className="flex items-center gap-2">
-                            <BarChart3 size={14} className="text-blue-400" />
-                            <span className="text-sm font-semibold text-white">Áreas mais activas</span>
-                          </div>
-                          {areas.length === 0 ? <p className="text-xs text-white/25 text-center py-4">Sem dados.</p> : (
-                            <ol className="space-y-3">
-                              {areas.map((a, i) => (
-                                <li key={i} className="space-y-1">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-xs text-white/70">{a.area}</span>
-                                    <span className="text-xs text-white/40">{a.total}</span>
-                                  </div>
-                                  <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
-                                    <div className={`h-full rounded-full ${AREA_COLORS[i % AREA_COLORS.length]}/60`} style={{ width: `${(Number(a.total)/maxA)*100}%` }} />
-                                  </div>
-                                </li>
-                              ))}
-                            </ol>
-                          )}
-                        </div>
-
-                        {/* Mais activos na plataforma */}
-                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
-                          <div className="flex items-center gap-2">
-                            <Trophy size={14} className="text-amber-400" />
-                            <span className="text-sm font-semibold text-white">Mais activos (uploads+posts)</span>
-                          </div>
-                          {contrib.length === 0 ? <p className="text-xs text-white/25 text-center py-4">Sem dados.</p> : (
-                            <ol className="space-y-3">
-                              {contrib.map((u, i) => (
-                                <li key={i} className="space-y-1">
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <span className="text-xs text-white/70">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i+1}.`} {u.first_name} {u.last_name}</span>
-                                      <span className="text-[9px] text-white/25 ml-1.5 capitalize">{u.role}</span>
-                                    </div>
-                                    <span className="text-xs text-white/40">{u.contribuicoes}</span>
-                                  </div>
-                                  <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
-                                    <div className="h-full bg-amber-500/60 rounded-full" style={{ width: `${(Number(u.contribuicoes)/maxC)*100}%` }} />
-                                  </div>
-                                </li>
-                              ))}
-                            </ol>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Distribuição por cargo */}
-                      <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp size={14} className="text-purple-400" />
-                          <span className="text-sm font-semibold text-white">Distribuição de utilizadores por cargo</span>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          {[
-                            { label: "Formandos", value: statsData.usersByRole?.formando ?? 0, color: "text-emerald-400 bg-emerald-500/10" },
-                            { label: "Formadores", value: statsData.usersByRole?.formador ?? 0, color: "text-blue-400 bg-blue-500/10" },
-                            { label: "Admins", value: (statsData.usersByRole?.admin ?? 0) + (statsData.usersByRole?.["super-admin"] ?? 0), color: "text-red-400 bg-red-500/10" },
-                            { label: "Total", value: t.total_users ?? 0, color: "text-white/60 bg-white/5" },
-                          ].map((r, i) => (
-                            <div key={i} className={`rounded-xl p-4 text-center ${r.color}`}>
-                              <p className="text-2xl font-bold">{r.value}</p>
-                              <p className="text-[10px] mt-1 opacity-70">{r.label}</p>
-                            </div>
-                          ))}
-                        </div>
+                        )}
                       </div>
                     </>
                   );
