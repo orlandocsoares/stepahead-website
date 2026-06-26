@@ -27,17 +27,19 @@ export async function POST(request: Request) {
     } else {
       const tempPassword = randomBytes(16).toString("hex");
       const created = await dbQuery<{ id: string }>(
-        "INSERT INTO auth_users (email, password_hash) VALUES ($1, $2) RETURNING id",
+        `INSERT INTO auth_users (email, password_hash) VALUES ($1, $2)
+         ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email
+         RETURNING id`,
         [clean, hashPassword(tempPassword)]
       );
       userId = created.rows[0].id;
     }
 
-    // Criar ou actualizar profiles com role correcto
+    // Criar ou actualizar profiles com role correcto (conflict em email OU id)
     await dbQuery(
       `INSERT INTO profiles (id, email, first_name, last_name, role, status, provincia, escola, especialidade, biografia, avatar_url)
        VALUES ($1,$2,$3,$4,$5,'pendente',$6,$7,$8,$9,$10)
-       ON CONFLICT (id) DO UPDATE SET
+       ON CONFLICT (email) DO UPDATE SET
          role         = EXCLUDED.role,
          first_name   = COALESCE(EXCLUDED.first_name, profiles.first_name),
          last_name    = COALESCE(EXCLUDED.last_name,  profiles.last_name),
