@@ -6,7 +6,7 @@ import {
   ShieldCheck, Trash2, Calendar, FileText,
   BarChart3, Loader2, Key, Plus, Clock, X, MapPin, Target,
   Users, Activity, Database, Search, User, Download, Pencil,
-  Eye, EyeOff, CheckCircle2, AlertCircle
+  Eye, EyeOff, CheckCircle2, AlertCircle, Upload, Trophy, LifeBuoy, MessageSquare, TrendingUp
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
@@ -24,6 +24,8 @@ export default function SuperAdminPage() {
   const [isPowerModalOpen, setIsPowerModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+
+  const [statsData, setStatsData] = useState<any>(null);
 
   const [agendaForm, setAgendaForm] = useState({ titulo: "", local: "Luanda", data_evento: "", tipo: "Global" });
   const [powerForm, setPowerForm] = useState({ poder: "", data_expiracao: "" });
@@ -102,6 +104,12 @@ export default function SuperAdminPage() {
   useEffect(() => {
     if (isAdminOrSuper(profile?.role)) fetchData();
   }, [activeTab, profile]);
+
+  useEffect(() => {
+    if (isAdminOrSuper(profile?.role) && activeTab === "stats" && !statsData) {
+      fetch("/api/analytics").then(r => r.json()).then(setStatsData);
+    }
+  }, [activeTab, profile, statsData]);
 
   async function fetchData() {
     setLoading(true);
@@ -336,19 +344,156 @@ export default function SuperAdminPage() {
         <div className="flex-1 overflow-y-auto hide-native-scroll pb-6 pr-2">
           <AnimatePresence mode="wait">
             {activeTab === "stats" ? (
-              <motion.div key="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { icon: Users, color: "bg-blue-500/10 text-blue-400", label: "total_users", title: "Utilizadores Activos", default: "—" },
-                  { icon: ShieldCheck, color: "bg-emerald-500/10 text-emerald-400", label: "approval_rate", title: "Saúde da Rede", default: "—" },
-                  { icon: Calendar, color: "bg-amber-500/10 text-amber-400", label: "event_engagement", title: "Taxa de Presença", default: "—" },
-                  { icon: Database, color: "bg-purple-500/10 text-purple-400", label: "total_files", title: "Activos Digitais", default: "—" },
-                ].map((kpi, i) => (
-                  <div key={i} className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${kpi.color}`}><kpi.icon size={18} /></div>
-                    <p className="text-xs text-white/40">{kpi.title}</p>
-                    <p className="text-2xl font-semibold text-white">{data.find(d => d.label === kpi.label)?.valor || kpi.default}</p>
-                  </div>
-                ))}
+              <motion.div key="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                {!statsData ? (
+                  <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-blue-500" /></div>
+                ) : (() => {
+                  const t = statsData.totals ?? {};
+                  const uploaders: any[] = statsData.topUploaders ?? [];
+                  const areas: any[] = statsData.topAreas ?? [];
+                  const contrib: any[] = statsData.recentLogins ?? [];
+                  const maxU = Number(uploaders[0]?.total) || 1;
+                  const maxA = Number(areas[0]?.total) || 1;
+                  const maxC = Number(contrib[0]?.contribuicoes) || 1;
+                  const AREA_COLORS = ["bg-blue-500","bg-emerald-500","bg-purple-500","bg-amber-500","bg-red-500","bg-pink-500"];
+                  const ticketRate = Number(t.tickets_pendentes) + 10 > 0
+                    ? Math.round((10 / (Number(t.tickets_pendentes) + 10)) * 100) : 100;
+
+                  return (
+                    <>
+                      {/* KPIs principais */}
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        {[
+                          { icon: Users, color: "bg-blue-500/10 text-blue-400", title: "Utilizadores", value: t.total_users ?? "—", sub: `${t.users_activos ?? 0} activos` },
+                          { icon: Database, color: "bg-emerald-500/10 text-emerald-400", title: "Ficheiros", value: t.total_ficheiros ?? "—", sub: "na plataforma" },
+                          { icon: Calendar, color: "bg-purple-500/10 text-purple-400", title: "Eventos (30d)", value: t.eventos_mes ?? "—", sub: `${t.total_eventos ?? 0} no total` },
+                          { icon: MessageSquare, color: "bg-amber-500/10 text-amber-400", title: "Publicações", value: t.total_posts ?? "—", sub: `${t.tickets_pendentes ?? 0} tickets pendentes` },
+                        ].map((k, i) => (
+                          <div key={i} className="bg-[#13131f] border border-white/[0.06] rounded-xl p-4 space-y-2">
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${k.color}`}><k.icon size={16} /></div>
+                            <p className="text-2xl font-bold text-white">{k.value}</p>
+                            <div>
+                              <p className="text-xs text-white/50">{k.title}</p>
+                              <p className="text-[10px] text-white/25">{k.sub}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Taxa de resolução de tickets */}
+                      <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <LifeBuoy size={14} className="text-blue-400" />
+                            <span className="text-sm font-semibold text-white">Taxa de resolução de tickets</span>
+                          </div>
+                          <span className={`text-sm font-bold ${ticketRate >= 80 ? "text-emerald-400" : ticketRate >= 50 ? "text-amber-400" : "text-red-400"}`}>{ticketRate}%</span>
+                        </div>
+                        <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full transition-all duration-700 ${ticketRate >= 80 ? "bg-emerald-500" : ticketRate >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${ticketRate}%` }} />
+                        </div>
+                        <p className="text-[10px] text-white/25">{t.tickets_pendentes ?? 0} pendente{Number(t.tickets_pendentes) !== 1 ? "s" : ""} em aberto</p>
+                      </div>
+
+                      {/* Rankings lado a lado */}
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                        {/* Top uploaders */}
+                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+                          <div className="flex items-center gap-2">
+                            <Upload size={14} className="text-emerald-400" />
+                            <span className="text-sm font-semibold text-white">Top contribuidores</span>
+                          </div>
+                          {uploaders.length === 0 ? <p className="text-xs text-white/25 text-center py-4">Sem dados.</p> : (
+                            <ol className="space-y-3">
+                              {uploaders.map((u, i) => (
+                                <li key={i} className="space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-white/70">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i+1}.`} {u.first_name} {u.last_name}</span>
+                                    <span className="text-xs text-white/40">{u.total} fich.</span>
+                                  </div>
+                                  <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                                    <div className="h-full bg-emerald-500/60 rounded-full" style={{ width: `${(Number(u.total)/maxU)*100}%` }} />
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+
+                        {/* Áreas */}
+                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+                          <div className="flex items-center gap-2">
+                            <BarChart3 size={14} className="text-blue-400" />
+                            <span className="text-sm font-semibold text-white">Áreas mais activas</span>
+                          </div>
+                          {areas.length === 0 ? <p className="text-xs text-white/25 text-center py-4">Sem dados.</p> : (
+                            <ol className="space-y-3">
+                              {areas.map((a, i) => (
+                                <li key={i} className="space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-white/70">{a.area}</span>
+                                    <span className="text-xs text-white/40">{a.total}</span>
+                                  </div>
+                                  <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full ${AREA_COLORS[i % AREA_COLORS.length]}/60`} style={{ width: `${(Number(a.total)/maxA)*100}%` }} />
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+
+                        {/* Mais activos na plataforma */}
+                        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+                          <div className="flex items-center gap-2">
+                            <Trophy size={14} className="text-amber-400" />
+                            <span className="text-sm font-semibold text-white">Mais activos (uploads+posts)</span>
+                          </div>
+                          {contrib.length === 0 ? <p className="text-xs text-white/25 text-center py-4">Sem dados.</p> : (
+                            <ol className="space-y-3">
+                              {contrib.map((u, i) => (
+                                <li key={i} className="space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <span className="text-xs text-white/70">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i+1}.`} {u.first_name} {u.last_name}</span>
+                                      <span className="text-[9px] text-white/25 ml-1.5 capitalize">{u.role}</span>
+                                    </div>
+                                    <span className="text-xs text-white/40">{u.contribuicoes}</span>
+                                  </div>
+                                  <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                                    <div className="h-full bg-amber-500/60 rounded-full" style={{ width: `${(Number(u.contribuicoes)/maxC)*100}%` }} />
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Distribuição por cargo */}
+                      <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp size={14} className="text-purple-400" />
+                          <span className="text-sm font-semibold text-white">Distribuição de utilizadores por cargo</span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {[
+                            { label: "Formandos", value: statsData.usersByRole?.formando ?? 0, color: "text-emerald-400 bg-emerald-500/10" },
+                            { label: "Formadores", value: statsData.usersByRole?.formador ?? 0, color: "text-blue-400 bg-blue-500/10" },
+                            { label: "Admins", value: (statsData.usersByRole?.admin ?? 0) + (statsData.usersByRole?.["super-admin"] ?? 0), color: "text-red-400 bg-red-500/10" },
+                            { label: "Total", value: t.total_users ?? 0, color: "text-white/60 bg-white/5" },
+                          ].map((r, i) => (
+                            <div key={i} className={`rounded-xl p-4 text-center ${r.color}`}>
+                              <p className="text-2xl font-bold">{r.value}</p>
+                              <p className="text-[10px] mt-1 opacity-70">{r.label}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </motion.div>
             ) : activeTab === "users" && groupedUsers ? (
               <motion.div key="users_list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">

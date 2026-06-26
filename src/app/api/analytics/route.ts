@@ -12,6 +12,7 @@ export async function GET() {
     topAreas,
     recentLogins,
     eventosRecentes,
+    usersByRoleRows,
   ] = await Promise.all([
     // Totais gerais
     dbQuery(`
@@ -66,7 +67,17 @@ export async function GET() {
       ORDER BY data_evento ASC
       LIMIT 5
     `),
+
+    // Distribuição por cargo
+    dbQuery(`
+      SELECT role, COUNT(*) AS total
+      FROM profiles
+      GROUP BY role
+    `),
   ]);
+
+  const usersByRole: Record<string, number> = {};
+  for (const r of usersByRoleRows.rows) usersByRole[r.role] = Number(r.total);
 
   return NextResponse.json({
     totals: totals.rows[0] ?? {},
@@ -74,5 +85,6 @@ export async function GET() {
     topAreas: topAreas.rows,
     recentLogins: recentLogins.rows,
     eventosRecentes: eventosRecentes.rows,
+    usersByRole,
   });
 }
