@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Users, FolderOpen, FileText, Calendar, Loader2, Clock, ChevronRight } from "lucide-react";
+import { Users, FolderOpen, FileText, Calendar, Loader2, Clock, ChevronRight, HardDrive } from "lucide-react";
 import Link from "next/link";
 
 type Stat = { label: string; value: number | string; icon: React.ElementType; color: string; href: string };
@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [recentAgenda, setRecentAgenda] = useState<any[]>([]);
   const [recentTickets, setRecentTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [disk, setDisk] = useState<{ total: number; used: number; avail: number; pct: number } | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -62,6 +63,9 @@ export default function DashboardPage() {
         setRecentFiles(arquivosData.data ?? []);
         setRecentAgenda(agendaData.data ?? []);
         setRecentTickets(ticketsData.data ?? []);
+
+        // Disco — falha silenciosa se não disponível
+        fetch("/api/system/disk").then(r => r.ok ? r.json() : null).then(d => { if (d && !d.error) setDisk(d); });
       } finally {
         setLoading(false);
       }
@@ -188,6 +192,41 @@ export default function DashboardPage() {
         </div>
 
       </div>
+
+      {/* Cartão de disco */}
+      {disk && (
+        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-slate-500/10 flex items-center justify-center shrink-0">
+              <HardDrive size={15} className="text-slate-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Armazenamento do servidor</p>
+              <p className="text-[10px] text-white/30">{fmt(disk.used)} usados de {fmt(disk.total)}</p>
+            </div>
+            <span className={`ml-auto text-sm font-bold ${disk.pct >= 90 ? "text-red-400" : disk.pct >= 70 ? "text-amber-400" : "text-emerald-400"}`}>
+              {disk.pct}%
+            </span>
+          </div>
+          <div className="w-full h-2 bg-white/[0.05] rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-700 ${disk.pct >= 90 ? "bg-red-500" : disk.pct >= 70 ? "bg-amber-500" : "bg-emerald-500"}`}
+              style={{ width: `${disk.pct}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-2 text-[10px] text-white/25">
+            <span>{fmt(disk.used)} usado</span>
+            <span>{fmt(disk.avail)} livre</span>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function fmt(bytes: number) {
+  if (bytes >= 1e12) return (bytes / 1e12).toFixed(1) + " TB";
+  if (bytes >= 1e9)  return (bytes / 1e9).toFixed(1) + " GB";
+  if (bytes >= 1e6)  return (bytes / 1e6).toFixed(1) + " MB";
+  return (bytes / 1e3).toFixed(0) + " KB";
 }
