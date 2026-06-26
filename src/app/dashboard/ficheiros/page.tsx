@@ -87,10 +87,15 @@ export default function FicheirosPage() {
   }
 
   async function fetchFiles() {
-    const res = await fetch("/api/db/arquivos?orderBy=created_at&ascending=false");
-    const data = await res.json();
-    setFiles(data ?? []);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/db/arquivos?orderBy=created_at&ascending=false");
+      const data = await res.json();
+      setFiles(Array.isArray(data) ? data : []);
+    } catch {
+      setFiles([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { fetchFiles(); }, []);
