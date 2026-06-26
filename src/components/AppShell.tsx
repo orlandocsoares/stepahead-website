@@ -139,11 +139,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <>
       <div className="fixed inset-0 z-0">
         <canvas ref={canvasRef} className="w-full h-full contrast-115 saturate-110 brightness-95 transform-gpu" />
-        
+
         {/* NOVA CAMADA GLASS: Opacidade aumentada (bg-black/35) e desfoque a 8px.
             Proporciona um descanso ocular profundo na Dashboard. */}
         <div className="absolute inset-0 bg-black/35 backdrop-blur-[8px] pointer-events-none transition-all duration-1000" />
-        
+
         {/* Gradiente original mantido intacto */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80 pointer-events-none" />
       </div>
