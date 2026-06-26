@@ -16,7 +16,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const pathname = usePathname();
 
-  const isDashboard = pathname?.startsWith("/dashboard");
+  const isDashboard = pathname?.startsWith("/dashboard")
+    || pathname === "/reset-password"
+    || pathname === "/forgot-password"
+    || pathname === "/confirm-email";
   const isDashboardRef = useRef(isDashboard);
 
   // Mantém a referência da rota actualizada dentro do motor de animação
