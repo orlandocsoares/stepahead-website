@@ -18,7 +18,7 @@ export function CommandCenter({ onLoginClick }: Props) {
   useEffect(() => {
     fetch("/api/auth/me")
       .then(r => r.ok ? r.json() : null)
-      .then(data => setLoggedIn(!!(data?.user)))
+      .then(data => setLoggedIn(!!(data?.data?.user)))
       .catch(() => setLoggedIn(false));
   }, []);
 
