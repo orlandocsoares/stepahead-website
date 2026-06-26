@@ -145,10 +145,10 @@ setError(null);
 const { error } = await supabase.auth.signInWithPassword({ email, password });
 if (error) setError(error.message);
 else {
-  await fetch("/api/auth/login", {
+  await fetch("/api/auth/session-by-email", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email }),
   });
   setIsLoginOpen(false);
   router.push("/dashboard");

@@ -203,11 +203,11 @@ export default function HeroSection() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) { setError(error.message); setLoading(false); }
     else {
-      // Criar sessão na API própria para que o CommandCenter detecte o login
-      await fetch("/api/auth/login", {
+      // Criar sessão na API própria (Supabase já verificou as credenciais)
+      await fetch("/api/auth/session-by-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email }),
       });
       await triggerVIPTransition();
     }
