@@ -79,7 +79,7 @@ export async function POST(request: Request) {
           [token, userId, expires.toISOString()]
         );
 
-        const confirmUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://sabermais.edu.ao"}/api/auth/confirm-email?token=${token}`;
+        const confirmUrl = `${process.env.APP_URL || "https://sabermais.edu.ao"}/api/auth/confirm-email?token=${token}`;
 
         if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY não configurado no servidor");
 

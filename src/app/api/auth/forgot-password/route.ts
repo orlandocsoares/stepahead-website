@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       [token, user.id, expires.toISOString()]
     );
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://sabermais.edu.ao"}/reset-password?token=${token}`;
+    const resetUrl = `${process.env.APP_URL || "https://sabermais.edu.ao"}/reset-password?token=${token}`;
 
     await resend.emails.send({
       from: "SaberMais <noreply@sabermais.edu.ao>",

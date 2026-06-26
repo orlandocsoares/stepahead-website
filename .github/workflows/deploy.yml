@@ -41,10 +41,10 @@ jobs:
               echo "RESEND_API_KEY=$RESEND_API_KEY" >> "$APP_DIR/.env.production"
             fi
 
-            if grep -q '^NEXT_PUBLIC_APP_URL=' "$APP_DIR/.env.production"; then
-              sed -i "s|^NEXT_PUBLIC_APP_URL=.*|NEXT_PUBLIC_APP_URL=https://sabermais.edu.ao|" "$APP_DIR/.env.production"
+            if grep -q '^APP_URL=' "$APP_DIR/.env.production"; then
+              sed -i "s|^APP_URL=.*|APP_URL=https://sabermais.edu.ao|" "$APP_DIR/.env.production"
             else
-              echo "NEXT_PUBLIC_APP_URL=https://sabermais.edu.ao" >> "$APP_DIR/.env.production"
+              echo "APP_URL=https://sabermais.edu.ao" >> "$APP_DIR/.env.production"
             fi
 
             echo "==> A buscar o código mais recente..."
