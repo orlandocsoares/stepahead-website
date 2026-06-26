@@ -125,11 +125,8 @@ export default function SupportPage() {
         {/* Cabeçalho */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 shrink-0">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.4em] text-blue-400/60 italic mb-1 font-medium">Technical Assistance</p>
-            <h2 className="text-3xl font-extralight italic uppercase tracking-tight text-white leading-none">
-              Suporte <span className="font-bold text-white/30">&</span> Auditoria
-            </h2>
-            <p className="text-xs text-white/25 mt-2">
+            <h2 className="text-lg font-semibold text-white">Suporte</h2>
+            <p className="text-sm text-white/40 mt-0.5">
               {filteredTickets.length} ticket{filteredTickets.length !== 1 ? "s" : ""} · {tickets.filter(t => t.status === "Pendente").length} pendente{tickets.filter(t => t.status === "Pendente").length !== 1 ? "s" : ""}
             </p>
           </div>

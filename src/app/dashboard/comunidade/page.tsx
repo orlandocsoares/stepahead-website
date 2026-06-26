@@ -140,13 +140,8 @@ export default function ComunidadePage() {
     <div className="space-y-6 w-full">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.4em] text-blue-400/60 italic mb-1 font-medium">
-            Intelligence Network
-          </p>
-          <h2 className="text-4xl font-extralight italic uppercase tracking-tight text-white leading-none">
-            Rede <span className="font-bold text-white/30">de Partilha</span>
-          </h2>
-          <p className="text-xs text-white/25 mt-2">
+          <h2 className="text-lg font-semibold text-white">Comunidade</h2>
+          <p className="text-sm text-white/40 mt-0.5">
             {filteredPosts.length} publicaç{filteredPosts.length !== 1 ? "ões" : "ão"}
           </p>
         </div>
