@@ -88,10 +88,12 @@ function ForgotPasswordLink() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setDebugInfo(null);
     setLoading(true);
     try {
       const res = await fetch("/api/auth/forgot-password", {
@@ -100,10 +102,11 @@ function ForgotPasswordLink() {
         body: JSON.stringify({ email }),
       });
       const json = await res.json();
+      setDebugInfo(JSON.stringify(json, null, 2));
       if (!res.ok) throw new Error(json?.error || "Erro ao enviar email.");
       setSent(true);
-    } catch {
-      setError("Erro ao enviar email. Tente novamente.");
+    } catch (err: any) {
+      setError(err.message || "Erro ao enviar email. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -137,6 +140,7 @@ function ForgotPasswordLink() {
                     className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 placeholder:text-white/20"
                   />
                   {error && <p className="text-xs text-red-400">{error}</p>}
+                  {debugInfo && <pre className="text-[10px] text-amber-400/80 bg-white/[0.03] rounded p-2 overflow-auto max-h-32">{debugInfo}</pre>}
                   <button type="submit" disabled={loading} className="w-full py-3 rounded-lg bg-blue-600 text-white text-xs font-semibold uppercase tracking-widest hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                     {loading && <Loader2 size={13} className="animate-spin" />}
                     Enviar link
