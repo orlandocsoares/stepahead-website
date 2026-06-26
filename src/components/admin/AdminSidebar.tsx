@@ -21,7 +21,6 @@ const NAV = [
   { label: "Permissões",   icon: Shield,           path: "/dashboard/admin",        adminOnly: true },
   { label: "Suporte",      icon: LifeBuoy,         path: "/dashboard/suporte" },
   { label: "Perfil",       icon: UserCircle,       path: "/dashboard/perfil" },
-  { label: "Definições",   icon: Settings,         path: "/dashboard/definicoes" },
 ];
 
 type Props = {
