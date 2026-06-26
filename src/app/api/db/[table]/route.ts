@@ -78,38 +78,28 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
     let valueIndex = 1;
 
     // Filtros de segurança para a tabela "arquivos"
+    // visibilidade: 'publico' | 'formadores' | 'privado'
     if (table === "arquivos") {
       if (sessionUser) {
-        if (userRole !== "super-admin" && userRole !== "administrador") {
-          // O uploader pode sempre ver os seus próprios ficheiros (incluindo rascunhos e privados).
-          // Para outros, o arquivo tem de estar publicado e respeitar as regras de visibilidade.
-          const securityFilter = `(
-            ${tableSql}.uploader_id = $${valueIndex++}
-            OR (
-              ${tableSql}.status = 'publicado'
-              AND (
-                ${tableSql}.visibilidade = 'publico'
-                OR (${tableSql}.visibilidade = 'area_todos' AND LOWER(${tableSql}.area) = LOWER($${valueIndex++}))
-                OR (${tableSql}.visibilidade = 'area_professores' AND $${valueIndex++} = 'formador' AND LOWER(${tableSql}.area) = LOWER($${valueIndex++}))
-                OR (${tableSql}.visibilidade = 'area_alunos' AND $${valueIndex++} = 'formando' AND LOWER(${tableSql}.area) = LOWER($${valueIndex++}))
-                OR (${tableSql}.visibilidade = 'professores' AND $${valueIndex++} = 'formador')
-                OR (LOWER(${tableSql}.destinatario_email) = LOWER($${valueIndex++}))
-              )
-            )
-          )`;
-          filters.push(securityFilter);
-          values.push(sessionUser.id);
-          values.push(userSpecialization);
-          values.push(userRole);
-          values.push(userSpecialization);
-          values.push(userRole);
-          values.push(userSpecialization);
-          values.push(userRole);
-          values.push(sessionUser.email);
+        if (userRole !== "super-admin" && userRole !== "admin") {
+          // admin e super-admin vêem tudo; outros ficam sujeitos à visibilidade
+          const isFormador = userRole === "formador";
+          if (isFormador) {
+            // formador: vê os seus + publico + formadores
+            filters.push(`(${tableSql}.uploader_id = $${valueIndex} OR ${tableSql}.visibilidade IN ('publico', 'formadores'))`);
+            values.push(sessionUser.id);
+            valueIndex++;
+          } else {
+            // formando e outros: vê apenas publico (e os seus próprios, caso existam)
+            filters.push(`(${tableSql}.uploader_id = $${valueIndex} OR ${tableSql}.visibilidade = 'publico')`);
+            values.push(sessionUser.id);
+            valueIndex++;
+          }
         }
+        // admin/super-admin: sem filtro adicional, vêem tudo
       } else {
-        // Visitantes não autenticados só vêem arquivos publicados públicos sem destinatário específico
-        filters.push(`(${tableSql}.status = 'publicado' AND ${tableSql}.visibilidade = 'publico' AND ${tableSql}.destinatario_email IS NULL)`);
+        // não autenticado: só publico
+        filters.push(`${tableSql}.visibilidade = 'publico'`);
       }
     }
 
