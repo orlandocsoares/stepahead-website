@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck, Trash2, Calendar, FileText,
   BarChart3, Loader2, Key, Plus, Clock, X, MapPin, Target,
-  Users, Activity, Database, Search, User, Download, Pencil
+  Users, Activity, Database, Search, User, Download, Pencil,
+  Eye, EyeOff, CheckCircle2, AlertCircle
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
@@ -31,6 +32,52 @@ export default function SuperAdminPage() {
   // Edição de agenda/ficheiros
   const [editItem, setEditItem] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>({});
+
+  // Criar utilizador
+  const [isNewUserModalOpen, setIsNewUserModalOpen] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({ firstName: "", lastName: "", email: "", password: "", role: "formando" });
+  const [showNewUserPwd, setShowNewUserPwd] = useState(false);
+  const [newUserSubmitting, setNewUserSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  function showToast(type: "success" | "error", text: string) {
+    setToast({ type, text });
+    setTimeout(() => setToast(null), 4000);
+  }
+
+  function resetNewUserForm() {
+    setNewUserForm({ firstName: "", lastName: "", email: "", password: "", role: "formando" });
+    setShowNewUserPwd(false);
+  }
+
+  async function handleCreateUser(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newUserForm.email || !newUserForm.password || !newUserForm.firstName) return;
+    setNewUserSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: newUserForm.email,
+          password: newUserForm.password,
+          first_name: newUserForm.firstName,
+          last_name: newUserForm.lastName,
+          role: newUserForm.role,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error ?? "Erro ao criar utilizador.");
+      showToast("success", `${newUserForm.firstName} criado com sucesso.`);
+      setIsNewUserModalOpen(false);
+      resetNewUserForm();
+      fetchData();
+    } catch (err: any) {
+      showToast("error", err.message);
+    } finally {
+      setNewUserSubmitting(false);
+    }
+  }
 
 
 
@@ -246,6 +293,16 @@ export default function SuperAdminPage() {
         </div>
       </header>
 
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 left-4 sm:left-auto sm:top-6 sm:right-6 z-50 px-5 py-3 rounded-xl flex items-center gap-3 shadow-xl border text-sm ${
+          toast.type === "success" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-red-500/10 border-red-500/30 text-red-400"
+        }`}>
+          {toast.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+          {toast.text}
+        </div>
+      )}
+
       {dbError && <div className="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm shrink-0">Erro: {dbError}</div>}
 
       {activeTab !== "stats" && (
@@ -258,9 +315,14 @@ export default function SuperAdminPage() {
             />
           </div>
           {activeTab === "users" && (
-            <button onClick={() => setIsExportModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.06] text-sm text-white/60 hover:text-white transition-colors">
-              <Download size={14} /> Exportar CSV
-            </button>
+            <>
+              <button onClick={() => { resetNewUserForm(); setIsNewUserModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
+                <Plus size={14} /> <span className="hidden sm:inline">Novo utilizador</span><span className="sm:hidden">Novo</span>
+              </button>
+              <button onClick={() => setIsExportModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.06] text-sm text-white/60 hover:text-white transition-colors">
+                <Download size={14} /> <span className="hidden sm:inline">Exportar CSV</span>
+              </button>
+            </>
           )}
           {activeTab === "agenda" && (
             <button onClick={() => setIsAgendaModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
@@ -530,6 +592,74 @@ export default function SuperAdminPage() {
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setIsPowerModalOpen(false)} className="flex-1 py-2.5 rounded-lg border border-white/[0.06] text-sm text-white/50">Cancelar</button>
                 <button type="submit" className="flex-1 py-2.5 rounded-lg bg-amber-500 text-sm text-black font-medium hover:bg-amber-400 transition-colors">Autorizar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: NOVO UTILIZADOR */}
+      {isNewUserModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsNewUserModalOpen(false)} />
+          <div className="relative w-full max-w-md bg-[#0d0d14] border border-white/[0.08] rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/[0.06]">
+              <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                <Users size={16} className="text-blue-400" /> Novo utilizador
+              </h3>
+              <button onClick={() => setIsNewUserModalOpen(false)} className="text-white/30 hover:text-white"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleCreateUser} className="px-6 py-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-white/40">Nome próprio *</label>
+                  <input required value={newUserForm.firstName} onChange={e => setNewUserForm({...newUserForm, firstName: e.target.value})}
+                    placeholder="Ex: João"
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-white/40">Apelido</label>
+                  <input value={newUserForm.lastName} onChange={e => setNewUserForm({...newUserForm, lastName: e.target.value})}
+                    placeholder="Ex: Silva"
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/40">E-mail *</label>
+                <input required type="email" value={newUserForm.email} onChange={e => setNewUserForm({...newUserForm, email: e.target.value})}
+                  placeholder="utilizador@sabermais.ao"
+                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/40">Palavra-passe *</label>
+                <div className="relative">
+                  <input required type={showNewUserPwd ? "text" : "password"} value={newUserForm.password}
+                    onChange={e => setNewUserForm({...newUserForm, password: e.target.value})} placeholder="Mínimo 6 caracteres"
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 pr-10 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50" />
+                  <button type="button" onClick={() => setShowNewUserPwd(s => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
+                    {showNewUserPwd ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/40">Cargo</label>
+                <select value={newUserForm.role} onChange={e => setNewUserForm({...newUserForm, role: e.target.value})}
+                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50">
+                  <option value="formando" className="bg-[#0d0d14]">Formando</option>
+                  <option value="formador" className="bg-[#0d0d14]">Formador</option>
+                  <option value="admin" className="bg-[#0d0d14]">Administrador</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setIsNewUserModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-lg border border-white/[0.06] text-sm text-white/50 hover:text-white hover:bg-white/[0.04] transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={newUserSubmitting}
+                  className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {newUserSubmitting ? <Loader2 size={14} className="animate-spin" /> : <><Plus size={14} /> Criar</>}
+                </button>
               </div>
             </form>
           </div>
