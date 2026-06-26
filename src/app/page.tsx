@@ -125,6 +125,7 @@ function ForgotPasswordLink() {
               <div className="text-center space-y-3 py-4">
                 <p className="text-white font-semibold text-sm">Email enviado!</p>
                 <p className="text-white/40 text-xs leading-relaxed">Verifique a sua caixa de entrada e siga as instruções para redefinir a password.</p>
+                {debugInfo && <pre className="text-left text-[10px] text-amber-400/80 bg-white/[0.03] rounded p-2 overflow-auto max-h-32">{debugInfo}</pre>}
                 <button onClick={() => { setOpen(false); setSent(false); }} className="text-[10px] text-white/30 hover:text-white uppercase tracking-widest mt-2">Fechar</button>
               </div>
             ) : (
