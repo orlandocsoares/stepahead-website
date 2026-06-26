@@ -89,8 +89,9 @@ export default function FicheirosPage() {
   async function fetchFiles() {
     try {
       const res = await fetch("/api/db/arquivos?orderBy=created_at&ascending=false");
-      const data = await res.json();
-      setFiles(Array.isArray(data) ? data : []);
+      const json = await res.json();
+      const rows = json?.data ?? json;
+      setFiles(Array.isArray(rows) ? rows : []);
     } catch {
       setFiles([]);
     } finally {
