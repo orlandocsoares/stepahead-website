@@ -69,12 +69,12 @@ export default function FicheirosPage() {
   const canUpload = user?.role === "admin" || user?.role === "formador";
 
   const visibleCategories = useMemo(
-    () => getVisibleCategories(user?.role, user?.especialidade),
-    [user?.role, user?.especialidade]
+    () => getVisibleCategories(user?.role, user?.specialization),
+    [user?.role, user?.specialization]
   );
   const uploadAreas = useMemo(
-    () => getUploadAreas(user?.role, user?.especialidade),
-    [user?.role, user?.especialidade]
+    () => getUploadAreas(user?.role, user?.specialization),
+    [user?.role, user?.specialization]
   );
   const isRestricted = user?.role === "formador" && uploadAreas !== null;
 
