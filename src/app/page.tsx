@@ -581,21 +581,31 @@ export default function HeroSection() {
                           <ForgotPasswordLink />
                         </form>
                       ) : (
-                        <form onSubmit={handleSignUp} className="space-y-5 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
-                          
-                          <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={handleSignUp} className="space-y-4">
+
+                          <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Nome</Label><Input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
                             <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Apelido</Label><Input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
                           </div>
-                          
-                          <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
-                          <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
-                          
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                            <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                          </div>
+
                           {userRole === 'formando' ? (
-                            <>
-                              <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Província</Label><Input placeholder="Ex: Bié" required value={provincia} onChange={(e) => setProvincia(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <Label className="text-[8px] uppercase tracking-widest text-blue-400">Província</Label>
+                                <select required value={provincia} onChange={(e) => setProvincia(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
+                                  <option value="" disabled className="bg-[#0d0d14]">Seleccionar</option>
+                                  {["Luanda","Bié"].map(p => (
+                                    <option key={p} value={p} className="bg-[#0d0d14]">{p}</option>
+                                  ))}
+                                </select>
+                              </div>
                               <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
-                            </>
+                            </div>
                           ) : (
                             <div className="space-y-6 pt-2">
                               {/* ZONA DO FORMADOR (FOTO + QR + ESPEC + BIO) */}
