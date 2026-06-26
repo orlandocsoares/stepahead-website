@@ -265,15 +265,11 @@ export default function HeroSection() {
   }, []);
 
   useEffect(() => {
-    const fetchTelemetry = async () => {
-      if (isDashboardView) return;
-      const { data: telData } = await supabase.from('hero_telemetria').select('*').single();
-      const { data: formadoresData } = await supabase.from('profiles').select('*').eq('role', 'formador').limit(4);
-      if (telData) {
-        setTelemetry({ ...telData, formadores_lista: formadoresData || [] });
-      }
-    };
-    fetchTelemetry();
+    if (isDashboardView) return;
+    fetch("/api/public/hero")
+      .then(r => r.json())
+      .then(data => setTelemetry(data))
+      .catch(() => {});
   }, [isDashboardView]);
 
   const handleLogout = async () => {
