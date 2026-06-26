@@ -4,7 +4,8 @@ import { useEffect, useState, useMemo } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   FileText, Video, Search, Download, Loader2, Plus, FolderOpen, Lock,
-  Globe, Users, GraduationCap,
+  Globe, Users, GraduationCap, LayoutGrid, List, ExternalLink,
+  FileImage, FileVideo, FileArchive, File,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -29,6 +30,25 @@ function VisibilidadeBadge({ v, small }: { v: string; small?: boolean }) {
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function getFileStyle(nome?: string, tipo?: string) {
+  const ext = nome?.split(".").pop()?.toLowerCase() ?? "";
+  if (tipo === "video" || ["mp4","mov","avi","mkv"].includes(ext))
+    return { Icon: FileVideo,   bg: "bg-orange-500/10", text: "text-orange-400",  label: "Vídeo" };
+  if (["jpg","jpeg","png","gif","webp","svg"].includes(ext))
+    return { Icon: FileImage,   bg: "bg-pink-500/10",   text: "text-pink-400",    label: ext.toUpperCase() };
+  if (["zip","rar","7z"].includes(ext))
+    return { Icon: FileArchive, bg: "bg-yellow-500/10", text: "text-yellow-400",  label: ext.toUpperCase() };
+  if (ext === "pdf")
+    return { Icon: FileText,    bg: "bg-red-500/10",    text: "text-red-400",     label: "PDF" };
+  if (["doc","docx"].includes(ext))
+    return { Icon: FileText,    bg: "bg-blue-500/10",   text: "text-blue-400",    label: "Word" };
+  if (["ppt","pptx"].includes(ext))
+    return { Icon: FileText,    bg: "bg-orange-500/10", text: "text-orange-400",  label: "PPT" };
+  if (["xls","xlsx"].includes(ext))
+    return { Icon: FileText,    bg: "bg-emerald-500/10","text": "text-emerald-400", label: "Excel" };
+  return { Icon: File,          bg: "bg-white/[0.06]",  text: "text-white/40",    label: ext.toUpperCase() || "—" };
 }
 
 function parseSpecializations(raw?: string): string[] {
@@ -68,6 +88,7 @@ export default function FicheirosPage() {
   const [turmaId, setTurmaId] = useState<string>("");
   const [minhasTurmas, setMinhasTurmas] = useState<{ id: string; nome: string; area: string }[]>([]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
 
@@ -222,6 +243,16 @@ export default function FicheirosPage() {
               className="pl-9 pr-4 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 w-48 transition-colors"
             />
           </div>
+          <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-lg p-1">
+            <button onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-white/[0.08] text-white" : "text-white/30 hover:text-white/60"}`}>
+              <LayoutGrid size={14} />
+            </button>
+            <button onClick={() => setViewMode("list")}
+              className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-white/[0.08] text-white" : "text-white/30 hover:text-white/60"}`}>
+              <List size={14} />
+            </button>
+          </div>
           {canUpload && (
             <button onClick={openUploadModal}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
@@ -245,25 +276,76 @@ export default function FicheirosPage() {
         ))}
       </div>
 
-      {/* Tabela */}
-      <div className="bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 size={22} className="animate-spin text-blue-500" />
+      {/* Conteúdo */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={22} className="animate-spin text-blue-500" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl flex flex-col items-center justify-center py-20 gap-4 text-center">
+          <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+            <FolderOpen size={22} className="text-blue-400" />
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-              <FolderOpen size={22} className="text-blue-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-white">Sem ficheiros</p>
-              <p className="text-xs text-white/30 mt-1">
-                {canUpload ? "Clica em \"Upload\" para adicionar o primeiro ficheiro." : "Ainda não há ficheiros nesta categoria."}
-              </p>
-            </div>
+          <div>
+            <p className="text-sm font-medium text-white">Sem ficheiros</p>
+            <p className="text-xs text-white/30 mt-1">
+              {canUpload ? "Clica em \"Upload\" para adicionar o primeiro ficheiro." : "Ainda não há ficheiros nesta categoria."}
+            </p>
           </div>
-        ) : (
+        </div>
+      ) : viewMode === "grid" ? (
+        /* ── GRELHA ── */
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          {filtered.map((f) => {
+            const { Icon, bg, text, label } = getFileStyle(f.nome_arquivo, f.tipo);
+            const isOwner = f.uploader_id === user?.id;
+            const isAdmin = user?.role === "admin" || user?.role === "super-admin";
+            const canChangeVis = isOwner || isAdmin;
+            const fileUrl = f.nome_arquivo
+              ? `/storage/v1/object/public/materiais/${encodeURIComponent(f.nome_arquivo)}`
+              : "#";
+            return (
+              <div key={f.id} className="group bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/[0.12] transition-all flex flex-col">
+                {/* Miniatura */}
+                <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="block">
+                  <div className={`${bg} flex items-center justify-center h-28 relative`}>
+                    <Icon size={40} className={`${text} opacity-60`} />
+                    <span className={`absolute bottom-2 right-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${bg} ${text} border border-current/20`}>
+                      {label}
+                    </span>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
+                </a>
+                {/* Info */}
+                <div className="px-3 py-2.5 flex flex-col gap-1.5 flex-1">
+                  <p className="text-xs text-white/80 font-medium leading-tight line-clamp-2">{f.label}</p>
+                  <p className="text-[10px] text-white/30">{f.area} · {f.tamanho ?? "—"}</p>
+                  {canChangeVis ? (
+                    <select
+                      value={f.visibilidade ?? "publico"}
+                      onChange={(e) => handleVisibilidadeChange(f.id, e.target.value)}
+                      disabled={updatingId === f.id}
+                      className="mt-auto bg-transparent border border-white/[0.06] rounded px-1.5 py-1 text-[10px] text-white/40 outline-none cursor-pointer hover:border-white/20 transition-colors w-full"
+                    >
+                      {VISIBILIDADE_OPTIONS.map(o => (
+                        <option key={o.value} value={o.value} className="bg-[#0d0d14]">{o.label}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="mt-auto">
+                      <VisibilidadeBadge v={f.visibilidade ?? "publico"} small />
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* ── LISTA ── */
+        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[500px]">
               <thead>
@@ -278,8 +360,8 @@ export default function FicheirosPage() {
               </thead>
               <tbody>
                 {filtered.map((f) => {
+                  const { Icon, bg, text } = getFileStyle(f.nome_arquivo, f.tipo);
                   const ext = f.nome_arquivo?.split(".").pop()?.toUpperCase() ?? "—";
-                  const isVideo = f.tipo === "video";
                   const isOwner = f.uploader_id === user?.id;
                   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
                   const canChangeVis = isOwner || isAdmin;
@@ -290,8 +372,8 @@ export default function FicheirosPage() {
                     <tr key={f.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isVideo ? "bg-orange-500/10 text-orange-400" : "bg-blue-500/10 text-blue-400"}`}>
-                            {isVideo ? <Video size={14} /> : <FileText size={14} />}
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${bg} ${text}`}>
+                            <Icon size={14} />
                           </div>
                           <div>
                             <p className="text-white/80 font-medium truncate max-w-[180px]">{f.label}</p>
@@ -304,12 +386,10 @@ export default function FicheirosPage() {
                       <td className="px-5 py-3 text-white/40 hidden lg:table-cell">{formatDate(f.created_at)}</td>
                       <td className="px-5 py-3">
                         {canChangeVis ? (
-                          <select
-                            value={f.visibilidade ?? "publico"}
+                          <select value={f.visibilidade ?? "publico"}
                             onChange={(e) => handleVisibilidadeChange(f.id, e.target.value)}
                             disabled={updatingId === f.id}
-                            className="bg-transparent border border-white/[0.08] rounded-lg px-2 py-1 text-[11px] text-white/60 outline-none cursor-pointer hover:border-white/20 transition-colors disabled:opacity-40"
-                          >
+                            className="bg-transparent border border-white/[0.08] rounded-lg px-2 py-1 text-[11px] text-white/60 outline-none cursor-pointer hover:border-white/20 transition-colors disabled:opacity-40">
                             {VISIBILIDADE_OPTIONS.map(o => (
                               <option key={o.value} value={o.value} className="bg-[#0d0d14]">{o.label}</option>
                             ))}
@@ -330,8 +410,8 @@ export default function FicheirosPage() {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Modal de upload */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
