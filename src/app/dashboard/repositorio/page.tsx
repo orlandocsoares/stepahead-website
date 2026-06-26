@@ -3,10 +3,10 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  FileText, Video, Search, Download, 
+import {
+  FileText, Video, Search, Download,
   Loader2, Sparkles, Plus, BookOpen, Shield, HelpCircle,
-  Globe, Lock, Mail, GraduationCap, UserCheck, EyeOff, Check, User
+  Globe, Lock, Mail, GraduationCap, UserCheck, EyeOff, Check, User, Trash2
 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -81,6 +81,21 @@ export default function RepositorioPage() {
       setLoading(false);
     }
   }
+
+  const handleDelete = async (fileId: string, fileName: string) => {
+    if (!confirm(`Eliminar "${fileName}"? Esta acção não pode ser desfeita.`)) return;
+    try {
+      const res = await fetch(`/api/db/arquivos`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eq: { id: fileId } }),
+      });
+      if (!res.ok) throw new Error("Erro ao eliminar");
+      fetchFiles();
+    } catch (err) {
+      alert("Erro ao eliminar o ficheiro.");
+    }
+  };
 
   const handlePublish = async (fileId: string) => {
     try {
@@ -468,6 +483,20 @@ export default function RepositorioPage() {
                             Coordenação Saber Mais
                           </span>
                         </div>
+                      )}
+
+                      {/* Delete Button — dono ou admin */}
+                      {(file.uploader_id === profile?.id || profile?.role === 'admin' || profile?.role === 'super-admin') && (
+                        <button
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await handleDelete(file.id, file.label || file.titulo || "ficheiro");
+                          }}
+                          className="mb-2 w-full py-2.5 bg-red-600/5 hover:bg-red-600/20 text-red-500/60 hover:text-red-400 border border-red-500/10 hover:border-red-500/30 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                        >
+                          <Trash2 size={11} /> Eliminar
+                        </button>
                       )}
 
                       {/* Fast Publish Button */}
