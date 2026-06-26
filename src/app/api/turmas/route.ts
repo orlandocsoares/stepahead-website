@@ -27,10 +27,16 @@ export async function GET() {
   return NextResponse.json({ data: result.rows });
 }
 
-// POST /api/turmas — criar turma
+// POST /api/turmas — criar turma (apenas admin)
 export async function POST(req: Request) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+
+  const roleRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
+  const role = roleRes.rows[0]?.role;
+  if (role !== "admin" && role !== "super-admin") {
+    return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+  }
 
   const { nome, area, formador_id } = await req.json();
   if (!nome || !area || !formador_id) return NextResponse.json({ error: "Campos obrigatórios em falta" }, { status: 400 });
