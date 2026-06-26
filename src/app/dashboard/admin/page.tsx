@@ -126,7 +126,7 @@ export default function SuperAdminPage() {
   }, [profile, profileLoading, router, isStaff]);
 
   useEffect(() => {
-    if (isAdminOrSuper(profile?.role)) fetchData();
+    if (isStaff) fetchData();
   }, [activeTab, profile]);
 
   useEffect(() => {
