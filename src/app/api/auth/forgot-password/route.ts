@@ -17,9 +17,8 @@ export async function POST(request: Request) {
       [clean]
     );
 
-    // Responder sempre com sucesso para não revelar se o email existe
     if (!result.rows[0]) {
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ error: "Não existe nenhuma conta com este endereço de email." }, { status: 404 });
     }
 
     const user = result.rows[0];
