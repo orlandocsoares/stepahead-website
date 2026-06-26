@@ -65,9 +65,12 @@ export async function POST(request: Request) {
     const profileStatus = needsConfirmation.rows[0]?.status;
 
     if (profileStatus === 'pendente') {
+      let emailSent = false;
+      let emailError: string | null = null;
+
       try {
         const token = randomBytes(32).toString("hex");
-        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
         await dbQuery(
           `INSERT INTO email_confirm_tokens (token, user_id, expires_at)
@@ -77,9 +80,11 @@ export async function POST(request: Request) {
         );
 
         const confirmUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://sabermais.edu.ao"}/api/auth/confirm-email?token=${token}`;
-        const resend = new Resend(process.env.RESEND_API_KEY);
 
-        await resend.emails.send({
+        if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY não configurado no servidor");
+
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const result = await resend.emails.send({
           from: "SaberMais <notificacoes@sabermais.edu.ao>",
           to: clean,
           subject: "Confirme o seu email — SaberMais",
@@ -103,13 +108,18 @@ export async function POST(request: Request) {
             </div>
           `,
         });
-      } catch (emailErr) {
-        // Falha no email não bloqueia o registo — será resolvido via logs
-        console.error("Erro ao enviar email de confirmação:", emailErr);
+
+        if ((result as any).error) throw new Error(JSON.stringify((result as any).error));
+        emailSent = true;
+      } catch (emailErr: any) {
+        emailError = emailErr?.message ?? String(emailErr);
+        console.error("Erro ao enviar email de confirmação:", emailError);
       }
+
+      return NextResponse.json({ ok: true, emailSent, emailError });
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, emailSent: false, emailError: "status não é pendente" });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
