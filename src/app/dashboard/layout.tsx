@@ -25,7 +25,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .dashboard-sidebar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
       `}</style>
 
-      <div className="fixed inset-0 bg-[#0d0d14] flex overflow-hidden">
+      <div className="fixed inset-0 bg-[#0d0d14] flex overflow-hidden"
+        style={{ backgroundImage: "url('/dashboard-bg.png')", backgroundSize: "cover", backgroundPosition: "center" }}>
+        <div className="absolute inset-0 bg-[#0d0d14]/88 pointer-events-none" />
         {mobileOpen && (
           <div
             className="fixed inset-0 bg-black/60 z-40 md:hidden"
