@@ -142,16 +142,18 @@ const handleLogout = async () => { await supabase.auth.signOut(); router.refresh
 const handleLogin = async (e: React.FormEvent) => {
 e.preventDefault();
 setError(null);
-const { error } = await supabase.auth.signInWithPassword({ email, password });
-if (error) setError(error.message);
-else {
-  await fetch("/api/auth/session-by-email", {
+try {
+  const res = await fetch("/api/auth/session-by-email", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, password }),
   });
+  const data = await res.json();
+  if (!res.ok) { setError(data.error ?? "Erro ao autenticar."); return; }
   setIsLoginOpen(false);
   router.push("/dashboard");
+} catch {
+  setError("Erro de ligação. Tente novamente.");
 }
 };
 

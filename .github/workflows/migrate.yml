@@ -49,6 +49,11 @@ jobs:
               );
               CREATE INDEX IF NOT EXISTS idx_mensagens_to   ON mensagens(to_user_id, read);
               CREATE INDEX IF NOT EXISTS idx_mensagens_conv ON mensagens(from_user_id, to_user_id, created_at DESC);
+              CREATE TABLE IF NOT EXISTS email_confirm_tokens (
+                token      TEXT PRIMARY KEY,
+                user_id    UUID NOT NULL UNIQUE REFERENCES auth_users(id) ON DELETE CASCADE,
+                expires_at TIMESTAMPTZ NOT NULL
+              );
             "
 
             echo "✅ Migrações concluídas!"
