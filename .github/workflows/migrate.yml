@@ -54,8 +54,6 @@ jobs:
                 user_id    UUID NOT NULL UNIQUE REFERENCES auth_users(id) ON DELETE CASCADE,
                 expires_at TIMESTAMPTZ NOT NULL
               );
-            "
-
               UPDATE profiles SET status = 'activo' WHERE role IN ('admin', 'super-admin');
             "
 
