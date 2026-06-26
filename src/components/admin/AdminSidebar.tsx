@@ -11,7 +11,6 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 // roles: undefined = todos | "admin" = admin e super-admin | "staff" = admin + formador
 const NAV = [
   { label: "Dashboard",    icon: LayoutDashboard, path: "/dashboard" },
-  { label: "Conteúdos",    icon: FileText,         path: "/dashboard/conteudos" },
   { label: "Ficheiros",    icon: FolderOpen,       path: "/dashboard/ficheiros" },
   { label: "Agenda",       icon: Calendar,         path: "/dashboard/agenda" },
   { label: "Comunidade",   icon: MessageSquare,    path: "/dashboard/comunidade" },
