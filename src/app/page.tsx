@@ -640,7 +640,7 @@ export default function HeroSection() {
                                   <select value={formadorId} onChange={e => setFormadorId(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
                                     <option value="" className="bg-[#0d0d14]">Seleccionar formador</option>
                                     {formadoresList.map((f: any) => (
-                                      <option key={f.id} value={f.id} className="bg-[#0d0d14]">{f.first_name} {f.last_name}{f.especialidade ? ` — ${f.especialidade}` : ""}</option>
+                                      <option key={f.id} value={f.id} className="bg-[#0d0d14]">{f.first_name} {f.last_name}</option>
                                     ))}
                                   </select>
                                 </div>
