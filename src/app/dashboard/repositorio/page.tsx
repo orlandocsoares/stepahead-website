@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
@@ -6,14 +5,14 @@ import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileText, Video, Search, Download, 
-  Loader2, Sparkles, Plus, ExternalLink, BookOpen, Shield, HelpCircle, X,
-  Globe, Lock, Mail, GraduationCap, UserCheck, Eye, EyeOff, Check, User
+  Loader2, Sparkles, Plus, BookOpen, Shield, HelpCircle,
+  Globe, Lock, Mail, GraduationCap, UserCheck, EyeOff, Check, User
 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function RepositorioPage() {
-  const { profile, loading: profileLoading } = useProfile();
+  const { profile } = useProfile();
   const [files, setFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("Geral");
@@ -634,6 +633,3 @@ export default function RepositorioPage() {
     </div>
   );
 }
-=======
-export { default } from "@/app/dashboard/ficheiros/page";
->>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
