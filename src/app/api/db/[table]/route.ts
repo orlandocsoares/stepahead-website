@@ -12,6 +12,8 @@ const ALLOWED_TABLES = new Set([
   "tickets",
   "arquivos",
   "documents",
+  "turmas",
+  "turma_membros",
 ]);
 
 function parseTable(params: { table: string }) {
@@ -78,28 +80,43 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
     let valueIndex = 1;
 
     // Filtros de segurança para a tabela "arquivos"
-    // visibilidade: 'publico' | 'formadores' | 'privado'
+    // visibilidade: 'publico' | 'formadores' | 'privado' | 'turma'
     if (table === "arquivos") {
       if (sessionUser) {
         if (userRole !== "super-admin" && userRole !== "admin") {
-          // admin e super-admin vêem tudo; outros ficam sujeitos à visibilidade
-          const isFormador = userRole === "formador";
-          if (isFormador) {
-            // formador: vê os seus + publico + formadores
-            filters.push(`(${tableSql}.uploader_id = $${valueIndex} OR ${tableSql}.visibilidade IN ('publico', 'formadores'))`);
+          if (userRole === "formador") {
+            // formador: vê os seus + publico + formadores + turma das suas turmas
+            filters.push(`(
+              ${tableSql}.uploader_id = $${valueIndex}
+              OR ${tableSql}.visibilidade IN ('publico', 'formadores')
+              OR (${tableSql}.visibilidade = 'turma' AND ${tableSql}.turma_id IN (
+                SELECT id FROM turmas WHERE formador_id = $${valueIndex}
+              ))
+            )`);
             values.push(sessionUser.id);
             valueIndex++;
           } else {
-            // formando e outros: vê apenas publico (e os seus próprios, caso existam)
-            filters.push(`(${tableSql}.uploader_id = $${valueIndex} OR ${tableSql}.visibilidade = 'publico')`);
+            // formando: vê publico (só área da sua turma) + turma onde é membro
+            filters.push(`(
+              (${tableSql}.visibilidade = 'publico' AND (
+                ${tableSql}.area = 'Geral'
+                OR ${tableSql}.area IN (
+                  SELECT t.area FROM turmas t
+                  INNER JOIN turma_membros tm ON tm.turma_id = t.id
+                  WHERE tm.formando_id = $${valueIndex}
+                )
+              ))
+              OR (${tableSql}.visibilidade = 'turma' AND ${tableSql}.turma_id IN (
+                SELECT turma_id FROM turma_membros WHERE formando_id = $${valueIndex}
+              ))
+            )`);
             values.push(sessionUser.id);
             valueIndex++;
           }
         }
         // admin/super-admin: sem filtro adicional, vêem tudo
       } else {
-        // não autenticado: só publico
-        filters.push(`${tableSql}.visibilidade = 'publico'`);
+        filters.push(`${tableSql}.visibilidade = 'publico' AND ${tableSql}.area = 'Geral'`);
       }
     }
 

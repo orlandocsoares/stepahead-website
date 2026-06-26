@@ -4,16 +4,17 @@ import { useEffect, useState, useMemo } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   FileText, Video, Search, Download, Loader2, Plus, FolderOpen, Lock,
-  Globe, Users, Eye,
+  Globe, Users, GraduationCap,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const CATEGORIES = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
 const VISIBILIDADE_OPTIONS = [
-  { value: "privado",    label: "Só eu",         icon: Lock,  color: "text-white/40" },
-  { value: "formadores", label: "Formadores",     icon: Users, color: "text-blue-400" },
-  { value: "publico",    label: "Todos",          icon: Globe, color: "text-emerald-400" },
+  { value: "privado",    label: "Só eu",          icon: Lock,          color: "text-white/40",   roles: ["formador", "admin"] },
+  { value: "turma",      label: "Minha turma",    icon: GraduationCap, color: "text-amber-400",  roles: ["formador"] },
+  { value: "formadores", label: "Formadores",      icon: Users,         color: "text-blue-400",   roles: ["formador", "admin"] },
+  { value: "publico",    label: "Todos",           icon: Globe,         color: "text-emerald-400", roles: ["formador", "admin"] },
 ];
 
 function VisibilidadeBadge({ v, small }: { v: string; small?: boolean }) {
@@ -64,6 +65,8 @@ export default function FicheirosPage() {
   const [title, setTitle] = useState("");
   const [uploadCategory, setUploadCategory] = useState("Geral");
   const [visibilidade, setVisibilidade] = useState("publico");
+  const [turmaId, setTurmaId] = useState<string>("");
+  const [minhasTurmas, setMinhasTurmas] = useState<{ id: string; nome: string; area: string }[]>([]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
@@ -81,7 +84,8 @@ export default function FicheirosPage() {
   function openUploadModal() {
     setTitle("");
     setUploadFile(null);
-    setVisibilidade("privado");
+    setVisibilidade("publico");
+    setTurmaId(minhasTurmas[0]?.id ?? "");
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
     setIsModalOpen(true);
   }
@@ -99,7 +103,15 @@ export default function FicheirosPage() {
     }
   }
 
-  useEffect(() => { fetchFiles(); }, []);
+  useEffect(() => {
+    fetchFiles();
+    if (user?.role === "formador") {
+      fetch("/api/turmas").then(r => r.json()).then(json => {
+        const todas = json.data ?? [];
+        setMinhasTurmas(todas.filter((t: any) => t.formador_id === user.id));
+      });
+    }
+  }, [user?.id, user?.role]);
 
   // Filtro: visibilidade + categoria + search
   const filtered = useMemo(() => {
@@ -153,6 +165,7 @@ export default function FicheirosPage() {
           tamanho: (uploadFile.size / (1024 * 1024)).toFixed(2) + " MB",
           tipo: uploadFile.type.includes("video") ? "video" : "pdf",
           visibilidade,
+          ...(visibilidade === "turma" && turmaId ? { turma_id: turmaId } : {}),
         }),
       });
       if (!dbRes.ok) throw new Error("Erro ao registar o ficheiro.");
@@ -363,8 +376,11 @@ export default function FicheirosPage() {
             {/* Visibilidade */}
             <div className="space-y-2">
               <label className="text-xs text-white/40">Visibilidade</label>
-              <div className="grid grid-cols-3 gap-2">
-                {VISIBILIDADE_OPTIONS.map((opt) => {
+              <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-4" : "grid-cols-3"}`}>
+                {VISIBILIDADE_OPTIONS.filter(opt => {
+                  if (opt.value === "turma") return user?.role === "formador" && minhasTurmas.length > 0;
+                  return true;
+                }).map((opt) => {
                   const Icon = opt.icon;
                   return (
                     <button key={opt.value} type="button"
@@ -384,9 +400,18 @@ export default function FicheirosPage() {
               </div>
               <p className="text-[10px] text-white/25 leading-relaxed">
                 {visibilidade === "privado" && "Só você tem acesso a este documento."}
+                {visibilidade === "turma" && "Apenas os formandos da turma seleccionada têm acesso."}
                 {visibilidade === "formadores" && "Você e todos os formadores podem ver este documento."}
                 {visibilidade === "publico" && "Todos os utilizadores da plataforma podem ver este documento."}
               </p>
+              {visibilidade === "turma" && minhasTurmas.length > 0 && (
+                <select value={turmaId} onChange={e => setTurmaId(e.target.value)}
+                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500/50">
+                  {minhasTurmas.map(t => (
+                    <option key={t.id} value={t.id} className="bg-[#0d0d14]">{t.nome} ({t.area})</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="space-y-1.5">

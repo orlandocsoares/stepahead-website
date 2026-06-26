@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     const resetUrl = `${process.env.APP_URL || "https://sabermais.edu.ao"}/reset-password?token=${token}`;
 
-    await resend.emails.send({
+    const sendResult = await resend.emails.send({
       from: "SaberMais <notificacoes@sabermais.edu.ao>",
       to: user.email,
       subject: "Recuperação de password — SaberMais",
@@ -57,8 +57,16 @@ export async function POST(request: Request) {
       `,
     });
 
+    console.log("[forgot-password] resend result:", JSON.stringify(sendResult));
+
+    if (sendResult.error) {
+      console.error("[forgot-password] resend error:", sendResult.error);
+      return NextResponse.json({ error: `Resend: ${sendResult.error.message}` }, { status: 500 });
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err: any) {
+    console.error("[forgot-password] exception:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
