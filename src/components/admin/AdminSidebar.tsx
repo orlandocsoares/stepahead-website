@@ -15,7 +15,7 @@ const NAV = [
   { label: "Agenda",       icon: Calendar,         path: "/dashboard/agenda" },
   { label: "Comunidade",   icon: MessageSquare,    path: "/dashboard/comunidade" },
   { label: "Mensagens",    icon: Mail,             path: "/dashboard/mensagens" },
-  { label: "Turmas",       icon: GraduationCap,    path: "/dashboard/turmas",       adminOnly: true },
+  { label: "Turmas",       icon: GraduationCap,    path: "/dashboard/turmas",       staffOnly: true },
   { label: "Utilizadores", icon: Users,            path: "/dashboard/admin",        adminOnly: true },
   { label: "Suporte",      icon: LifeBuoy,         path: "/dashboard/suporte" },
   { label: "Perfil",       icon: UserCircle,       path: "/dashboard/perfil" },
@@ -81,9 +81,10 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
 
       {/* Nav */}
       <nav className="dashboard-sidebar flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {NAV.filter(({ adminOnly }) => {
-          if (!adminOnly) return true;
-          return user?.role === "admin" || user?.role === "super-admin";
+        {NAV.filter(({ adminOnly, staffOnly }: any) => {
+          if (adminOnly) return user?.role === "admin" || user?.role === "super-admin";
+          if (staffOnly) return user?.role === "admin" || user?.role === "super-admin" || user?.role === "formador";
+          return true;
         }).map(({ label, icon: Icon, path }) => {
           const active = isActive(path);
           return (

@@ -2,88 +2,175 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Menu, MessageSquare, Globe } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard":               "Dashboard",
   "/dashboard/ficheiros":     "Ficheiros",
   "/dashboard/utilizadores":  "Utilizadores",
   "/dashboard/agenda":        "Agenda",
-  "/dashboard/admin":         "Permissões",
+  "/dashboard/admin":         "Utilizadores",
   "/dashboard/definicoes":    "Definições",
   "/dashboard/perfil":        "Perfil",
   "/dashboard/repositorio":   "Repositório",
   "/dashboard/comunidade":    "Comunidade",
   "/dashboard/suporte":       "Suporte",
   "/dashboard/mensagens":     "Mensagens",
+  "/dashboard/turmas":        "Turmas",
 };
 
-type Props = {
-  onMobileMenuToggle: () => void;
-};
+type Props = { onMobileMenuToggle: () => void };
 
 export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAdminUser();
   const [unread, setUnread] = useState(0);
+  const [notifs, setNotifs] = useState<any[]>([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [msgUnread, setMsgUnread] = useState(0);
+  const bellRef = useRef<HTMLDivElement>(null);
 
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
   const displayName = user?.first_name ?? user?.email?.split("@")[0] ?? "";
   const initial = displayName?.[0]?.toUpperCase() ?? "?";
 
-  // Polling de não lidas a cada 15s
+  async function fetchNotifs() {
+    try {
+      const res = await fetch("/api/notificacoes");
+      if (!res.ok) return;
+      const { notificacoes, unread: u } = await res.json();
+      setNotifs(notificacoes ?? []);
+      setUnread(u ?? 0);
+    } catch {}
+  }
+
+  async function markAllRead() {
+    await fetch("/api/notificacoes", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+    setNotifs(prev => prev.map(n => ({ ...n, lida: true })));
+    setUnread(0);
+  }
+
+  async function markRead(id: string, link?: string) {
+    await fetch("/api/notificacoes", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+    setNotifs(prev => prev.map(n => n.id === id ? { ...n, lida: true } : n));
+    setUnread(prev => Math.max(0, prev - 1));
+    if (link) { setNotifOpen(false); router.push(link); }
+  }
+
   useEffect(() => {
     if (!user) return;
-    async function fetchUnread() {
-      const res = await fetch("/api/mensagens?unread=1");
-      const { count } = await res.json();
-      setUnread(count ?? 0);
-    }
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 15000);
-    return () => clearInterval(interval);
+    fetchNotifs();
+    const i = setInterval(fetchNotifs, 20000);
+    return () => clearInterval(i);
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/mensagens?unread=1").then(r => r.json()).then(d => setMsgUnread(d.count ?? 0)).catch(() => {});
+    const i = setInterval(() => {
+      fetch("/api/mensagens?unread=1").then(r => r.json()).then(d => setMsgUnread(d.count ?? 0)).catch(() => {});
+    }, 15000);
+    return () => clearInterval(i);
+  }, [user]);
+
+  // Fechar ao clicar fora
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setNotifOpen(false);
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
+
+  function timeAgo(ts: string) {
+    const diff = Date.now() - new Date(ts).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return "agora";
+    if (m < 60) return `${m}m`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h`;
+    return `${Math.floor(h / 24)}d`;
+  }
 
   return (
     <header className="h-14 md:h-16 border-b border-white/[0.06] flex items-center px-4 md:px-6 shrink-0 bg-[#0d0d14] gap-3">
-      {/* Hamburger — visível apenas em mobile */}
-      <button
-        onClick={onMobileMenuToggle}
-        className="md:hidden p-2 -ml-1 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors shrink-0"
-        aria-label="Abrir menu"
-      >
+      <button onClick={onMobileMenuToggle} className="md:hidden p-2 -ml-1 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors shrink-0" aria-label="Abrir menu">
         <Menu size={20} />
       </button>
 
-      {/* Título: centrado em mobile, alinhado à esquerda em desktop */}
       <h1 className="flex-1 text-sm md:text-base font-semibold text-white text-center md:text-left">{title}</h1>
 
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
-        {/* Voltar ao site público */}
-        <a
-          href="/"
-          className="p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors"
-          aria-label="Ver site público"
-          title="Ver site público"
-        >
+        <a href="/" className="p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors" title="Ver site público">
           <Globe size={18} />
         </a>
 
-        {/* Badge de mensagens não lidas */}
-        <button
-          onClick={() => router.push("/dashboard/mensagens")}
-          className="relative p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors"
-          aria-label="Mensagens"
-        >
+        {/* Mensagens */}
+        <button onClick={() => router.push("/dashboard/mensagens")} className="relative p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors">
           <MessageSquare size={18} />
-          {unread > 0 && (
+          {msgUnread > 0 && (
             <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-blue-500 text-[9px] text-white flex items-center justify-center font-bold">
-              {unread > 9 ? "9+" : unread}
+              {msgUnread > 9 ? "9+" : msgUnread}
             </span>
           )}
         </button>
+
+        {/* Notificações */}
+        <div ref={bellRef} className="relative">
+          <button
+            onClick={() => { setNotifOpen(o => !o); if (!notifOpen) fetchNotifs(); }}
+            className="relative p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors"
+          >
+            <Bell size={18} />
+            {unread > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-[9px] text-white flex items-center justify-center font-bold animate-pulse">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </button>
+
+          {notifOpen && (
+            <div className="absolute right-0 top-12 w-80 bg-[#13131f] border border-white/[0.08] rounded-xl shadow-2xl z-50 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+                <span className="text-xs font-semibold text-white">Notificações</span>
+                {unread > 0 && (
+                  <button onClick={markAllRead} className="flex items-center gap-1 text-[10px] text-white/40 hover:text-white transition-colors">
+                    <CheckCheck size={12} /> Marcar todas como lidas
+                  </button>
+                )}
+              </div>
+
+              <div className="max-h-80 overflow-y-auto">
+                {notifs.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <Bell size={24} className="mx-auto text-white/10 mb-2" />
+                    <p className="text-xs text-white/30">Sem notificações</p>
+                  </div>
+                ) : notifs.map(n => (
+                  <button
+                    key={n.id}
+                    onClick={() => markRead(n.id, n.link)}
+                    className={`w-full text-left px-4 py-3 border-b border-white/[0.04] hover:bg-white/[0.04] transition-colors flex gap-3 ${!n.lida ? "bg-blue-500/5" : ""}`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${n.tipo === "novo_formando" ? "bg-emerald-500/10" : "bg-blue-500/10"}`}>
+                      {n.tipo === "novo_formando" ? <UserCheck size={14} className="text-emerald-400" /> : <Bell size={14} className="text-blue-400" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-xs font-medium leading-tight ${!n.lida ? "text-white" : "text-white/60"}`}>{n.titulo}</p>
+                        <span className="text-[10px] text-white/25 shrink-0">{timeAgo(n.created_at)}</span>
+                      </div>
+                      {n.mensagem && <p className="text-[11px] text-white/40 mt-0.5 leading-tight line-clamp-2">{n.mensagem}</p>}
+                      {!n.lida && <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mt-1" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="text-right hidden sm:block">
           <p className="text-xs font-medium text-white/70">{displayName}</p>

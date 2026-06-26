@@ -7,7 +7,7 @@ import { randomBytes } from "crypto";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, first_name, last_name, role, provincia, escola, especialidade, biografia, avatar_url } = body;
+    const { email, password, first_name, last_name, role, provincia, escola, especialidade, biografia, avatar_url, formador_id } = body;
 
     if (!email || !role) return NextResponse.json({ error: "Email e role obrigatórios" }, { status: 400 });
 
@@ -42,8 +42,8 @@ export async function POST(request: Request) {
 
     // Criar ou actualizar profiles
     await dbQuery(
-      `INSERT INTO profiles (id, email, first_name, last_name, role, status, provincia, escola, especialidade, biografia, avatar_url)
-       VALUES ($1,$2,$3,$4,$5,'pendente',$6,$7,$8,$9,$10)
+      `INSERT INTO profiles (id, email, first_name, last_name, role, status, provincia, escola, especialidade, biografia, avatar_url, formador_id)
+       VALUES ($1,$2,$3,$4,$5,'pendente',$6,$7,$8,$9,$10,$11)
        ON CONFLICT (email) DO UPDATE SET
          role          = EXCLUDED.role,
          first_name    = COALESCE(EXCLUDED.first_name,    profiles.first_name),
@@ -52,9 +52,10 @@ export async function POST(request: Request) {
          escola        = COALESCE(EXCLUDED.escola,        profiles.escola),
          especialidade = COALESCE(EXCLUDED.especialidade, profiles.especialidade),
          biografia     = COALESCE(EXCLUDED.biografia,     profiles.biografia),
-         avatar_url    = COALESCE(EXCLUDED.avatar_url,    profiles.avatar_url)`,
+         avatar_url    = COALESCE(EXCLUDED.avatar_url,    profiles.avatar_url),
+         formador_id   = COALESCE(EXCLUDED.formador_id,   profiles.formador_id)`,
       [userId, clean, first_name || null, last_name || null, role,
-       provincia || null, escola || null, especialidade || null, biografia || null, avatar_url || null]
+       provincia || null, escola || null, especialidade || null, biografia || null, avatar_url || null, formador_id || null]
     );
 
     // Enviar email de confirmação (novo utilizador OU re-envio se ainda pendente)

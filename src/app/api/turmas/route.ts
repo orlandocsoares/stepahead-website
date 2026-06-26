@@ -7,6 +7,9 @@ export async function GET() {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
+  const isAdmin = ["admin", "super-admin"].includes(sessionUser.role ?? "");
+  const isFormador = sessionUser.role === "formador";
+
   const result = await dbQuery(`
     SELECT
       t.id, t.nome, t.area, t.created_at,
@@ -16,9 +19,10 @@ export async function GET() {
     FROM turmas t
     LEFT JOIN profiles p ON p.id = t.formador_id
     LEFT JOIN turma_membros tm ON tm.turma_id = t.id
+    WHERE ($1::boolean OR t.formador_id = $2)
     GROUP BY t.id, p.first_name, p.last_name, p.id
     ORDER BY t.created_at DESC
-  `);
+  `, [isAdmin, sessionUser.id]);
 
   return NextResponse.json({ data: result.rows });
 }

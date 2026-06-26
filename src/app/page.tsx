@@ -195,7 +195,9 @@ export default function HeroSection() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [provincia, setProvincia] = useState('');
-  const [escola, setEscola] = useState('');       
+  const [escola, setEscola] = useState('');
+  const [formadorId, setFormadorId] = useState('');
+  const [formadoresList, setFormadoresList] = useState<any[]>([]);
   const [especialidade, setEspecialidade] = useState('');
   const [bio, setBio] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -268,7 +270,7 @@ export default function HeroSection() {
     if (isDashboardView) return;
     fetch("/api/public/hero")
       .then(r => r.json())
-      .then(data => setTelemetry(data))
+      .then(data => { setTelemetry(data); setFormadoresList(data.formadores_lista ?? []); })
       .catch(() => {});
   }, [isDashboardView]);
 
@@ -346,7 +348,7 @@ export default function HeroSection() {
         first_name: firstName,
         last_name: lastName,
         role: userRole,
-        ...(userRole === 'formando' ? { provincia, escola } : { especialidade, biografia: bio }),
+        ...(userRole === 'formando' ? { provincia, escola, formador_id: formadorId || undefined } : { especialidade, biografia: bio }),
       }),
     });
     const syncData = await syncRes.json();
@@ -619,17 +621,30 @@ export default function HeroSection() {
                           </div>
 
                           {userRole === 'formando' ? (
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="space-y-1">
-                                <Label className="text-[8px] uppercase tracking-widest text-blue-400">Província</Label>
-                                <select required value={provincia} onChange={(e) => setProvincia(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
-                                  <option value="" disabled className="bg-[#0d0d14]">Seleccionar</option>
-                                  {["Luanda","Bié"].map(p => (
-                                    <option key={p} value={p} className="bg-[#0d0d14]">{p}</option>
-                                  ))}
-                                </select>
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <Label className="text-[8px] uppercase tracking-widest text-blue-400">Província</Label>
+                                  <select required value={provincia} onChange={(e) => setProvincia(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
+                                    <option value="" disabled className="bg-[#0d0d14]">Seleccionar</option>
+                                    {["Luanda","Bié"].map(p => (
+                                      <option key={p} value={p} className="bg-[#0d0d14]">{p}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
                               </div>
-                              <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                              {formadoresList.length > 0 && (
+                                <div className="space-y-1">
+                                  <Label className="text-[8px] uppercase tracking-widest text-blue-400">Formador <span className="text-white/30">(opcional)</span></Label>
+                                  <select value={formadorId} onChange={e => setFormadorId(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
+                                    <option value="" className="bg-[#0d0d14]">Seleccionar formador</option>
+                                    {formadoresList.map((f: any) => (
+                                      <option key={f.id} value={f.id} className="bg-[#0d0d14]">{f.first_name} {f.last_name}{f.especialidade ? ` — ${f.especialidade}` : ""}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div className="space-y-6 pt-2">

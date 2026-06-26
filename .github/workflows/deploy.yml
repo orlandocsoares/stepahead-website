@@ -54,6 +54,18 @@ jobs:
             DB_USER=$(grep '^POSTGRES_USER=' "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
             DB_NAME=$(grep '^POSTGRES_DB='   "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
             docker exec sabermais-postgres psql -U "$DB_USER" -d "$DB_NAME" -c "
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS formador_id UUID REFERENCES profiles(id) ON DELETE SET NULL;
+              CREATE TABLE IF NOT EXISTS notificacoes (
+                id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                tipo       TEXT NOT NULL,
+                titulo     TEXT NOT NULL,
+                mensagem   TEXT,
+                lida       BOOLEAN NOT NULL DEFAULT FALSE,
+                link       TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_notificacoes_user ON notificacoes(user_id, lida, created_at DESC);
               CREATE TABLE IF NOT EXISTS hero_telemetria (
                 id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 media_radar INTEGER,

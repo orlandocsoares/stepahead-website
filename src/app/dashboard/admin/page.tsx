@@ -26,6 +26,7 @@ export default function SuperAdminPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const [statsData, setStatsData] = useState<any>(null);
+  const [formadoresList, setFormadoresList] = useState<any[]>([]);
   const [mediaRadar, setMediaRadar] = useState<string>("");
   const [mediaRadarSaving, setMediaRadarSaving] = useState(false);
   const [mediaRadarSaved, setMediaRadarSaved] = useState(false);
@@ -160,6 +161,12 @@ export default function SuperAdminPage() {
           return dB.localeCompare(dA);
         });
         setData(sorted);
+        // Carregar lista de formadores para o select de associação
+        if (activeTab === "users" && formadoresList.length === 0) {
+          fetch("/api/db/profiles?eq.role=formador")
+            .then(r => r.json())
+            .then(d => setFormadoresList(d.data ?? []));
+        }
       }
     } catch (e: any) { setDbError(e.message); setData([]); }
     setLoading(false);
@@ -680,6 +687,19 @@ export default function SuperAdminPage() {
                                     <option value="suspenso" className="bg-[#0d0d14]">Suspenso</option>
                                   </select>
                                 </div>
+                                {item.role === "formando" && formadoresList.length > 0 && (
+                                  <select
+                                    value={item.formador_id ?? ""}
+                                    onChange={e => handleUpdate(item.id, { formador_id: e.target.value || null })}
+                                    className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-white/70 outline-none cursor-pointer max-w-[160px]"
+                                    title="Formador associado"
+                                  >
+                                    <option value="" className="bg-[#0d0d14]">— Sem formador —</option>
+                                    {formadoresList.map((f: any) => (
+                                      <option key={f.id} value={f.id} className="bg-[#0d0d14]">{f.first_name} {f.last_name}</option>
+                                    ))}
+                                  </select>
+                                )}
                                 <button onClick={() => openPowerModal(item)} className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs transition-colors ${item.temporary_power ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-white/[0.04] text-white/30 hover:text-white"}`}>
                                   <Clock size={11} /> {item.temporary_power ? "Poder activo" : "Poder"}
                                 </button>

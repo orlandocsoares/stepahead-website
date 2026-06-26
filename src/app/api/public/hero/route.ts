@@ -6,7 +6,7 @@ export async function GET() {
 
   const [formadores, proximoEvento, totalMateriais, telemetria] = await Promise.all([
     safe(dbQuery(`
-      SELECT first_name, last_name, specialization AS especialidade, biografia, avatar_url
+      SELECT id, first_name, last_name, specialization AS especialidade, biografia, avatar_url
       FROM profiles
       WHERE role = 'formador' AND status = 'activo'
       LIMIT 6

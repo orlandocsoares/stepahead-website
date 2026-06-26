@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Plus, Trash2, Users, ChevronDown, ChevronUp, Loader2, X } from "lucide-react";
+import { Plus, Trash2, Users, ChevronDown, ChevronUp, Loader2, X, UserCheck, UserX } from "lucide-react";
 
 const AREAS = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
@@ -25,6 +25,8 @@ export default function TurmasPage() {
   const [formadores, setFormadores] = useState<Formador[]>([]);
   const [formandos, setFormandos] = useState<Formando[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendentes, setPendentes] = useState<any[]>([]);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [membros, setMembros] = useState<Record<string, Membro[]>>({});
   const [showCreate, setShowCreate] = useState(false);
@@ -35,21 +37,36 @@ export default function TurmasPage() {
   const [form, setForm] = useState({ nome: "", area: "Matemática", formador_id: "" });
 
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
+  const isFormador = user?.role === "formador";
 
   async function fetchAll() {
     setLoading(true);
-    const [turmasRes, formadoresRes, formandosRes] = await Promise.all([
+    const [turmasRes, formadoresRes, formandosRes, pendentesRes] = await Promise.all([
       fetch("/api/turmas").then(r => r.json()),
       fetch("/api/db/profiles?eq.role=formador").then(r => r.json()),
       fetch("/api/db/profiles?eq.role=formando").then(r => r.json()),
+      fetch("/api/formandos-pendentes").then(r => r.json()),
     ]);
     setTurmas(turmasRes.data ?? []);
     setFormadores(formadoresRes.data ?? formadoresRes ?? []);
     setFormandos(formandosRes.data ?? formandosRes ?? []);
+    setPendentes(pendentesRes.formandos ?? []);
     setLoading(false);
   }
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { if (user) fetchAll(); }, [user]);
+
+  async function handleAprovar(formando_id: string, acao: "aprovar" | "rejeitar") {
+    setApprovingId(formando_id);
+    await fetch("/api/formandos-pendentes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ formando_id, acao }),
+    });
+    setPendentes(prev => prev.filter(f => f.id !== formando_id));
+    setApprovingId(null);
+    if (acao === "aprovar") fetchAll();
+  }
 
   async function toggleExpand(id: string) {
     if (expanded === id) { setExpanded(null); return; }
@@ -111,22 +128,64 @@ export default function TurmasPage() {
     return formandos.filter(f => !existentes.has(f.id));
   }
 
-  if (!isAdmin) return (
-    <div className="flex items-center justify-center py-20 text-white/30 text-sm">Acesso restrito a administradores.</div>
+  if (!isAdmin && !isFormador) return (
+    <div className="flex items-center justify-center py-20 text-white/30 text-sm">Acesso restrito.</div>
   );
 
   return (
     <div className="space-y-6 w-full">
+
+      {/* Formandos pendentes de aprovação */}
+      {pendentes.length > 0 && (
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-amber-500/10">
+            <UserCheck size={15} className="text-amber-400" />
+            <span className="text-sm font-semibold text-amber-400">
+              {pendentes.length} formando{pendentes.length !== 1 ? "s" : ""} aguarda{pendentes.length === 1 ? "" : "m"} aprovação
+            </span>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {pendentes.map(f => (
+              <div key={f.id} className="flex items-center justify-between gap-4 px-5 py-3">
+                <div>
+                  <p className="text-sm text-white font-medium">{f.first_name} {f.last_name}</p>
+                  <p className="text-xs text-white/40">{f.email}{f.escola ? ` · ${f.escola}` : ""}{f.provincia ? ` · ${f.provincia}` : ""}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleAprovar(f.id, "aprovar")}
+                    disabled={approvingId === f.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-medium transition-colors disabled:opacity-40"
+                  >
+                    {approvingId === f.id ? <Loader2 size={12} className="animate-spin" /> : <UserCheck size={12} />}
+                    Aprovar
+                  </button>
+                  <button
+                    onClick={() => handleAprovar(f.id, "rejeitar")}
+                    disabled={approvingId === f.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium transition-colors disabled:opacity-40"
+                  >
+                    <UserX size={12} /> Rejeitar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-lg font-semibold text-white">Turmas</h2>
           <p className="text-sm text-white/40 mt-0.5">{turmas.length} turma{turmas.length !== 1 ? "s" : ""}</p>
         </div>
+        {isAdmin && (
         <button onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
           <Plus size={14} /> Nova turma
         </button>
+        )}
       </div>
 
       {/* Modal criar turma */}
