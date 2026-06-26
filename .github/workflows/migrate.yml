@@ -56,4 +56,7 @@ jobs:
               );
             "
 
+              UPDATE profiles SET status = 'activo' WHERE role IN ('admin', 'super-admin');
+            "
+
             echo "✅ Migrações concluídas!"
