@@ -14,6 +14,7 @@ const ALLOWED_TABLES = new Set([
   "documents",
   "turmas",
   "turma_membros",
+  "comunidade_comentarios",
 ]);
 
 function parseTable(params: { table: string }) {

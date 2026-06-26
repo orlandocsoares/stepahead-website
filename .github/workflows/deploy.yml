@@ -64,6 +64,14 @@ jobs:
               );
               CREATE INDEX IF NOT EXISTS idx_mensagens_to   ON mensagens(to_user_id, read);
               CREATE INDEX IF NOT EXISTS idx_mensagens_conv ON mensagens(from_user_id, to_user_id, created_at DESC);
+              CREATE TABLE IF NOT EXISTS comunidade_comentarios (
+                id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                post_id    UUID NOT NULL REFERENCES comunidade_posts(id) ON DELETE CASCADE,
+                user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                content    TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_com_comentarios_post ON comunidade_comentarios(post_id, created_at ASC);
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             echo "==> A construir e reiniciar o container web..."

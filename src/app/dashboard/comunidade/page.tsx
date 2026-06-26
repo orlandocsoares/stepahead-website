@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MessageSquare, Plus, Search, Loader2, Heart, MessageCircle, X, Globe, Sparkles, Share2
+  MessageSquare, Plus, Search, Loader2, Heart, MessageCircle, X, Globe, Sparkles, Share2, Send
 } from "lucide-react";
 
 const CATEGORIES = ["Todos", "Metodologia", "Dúvidas", "Casos de Sucesso", "Avisos"];
@@ -21,15 +21,50 @@ export default function ComunidadePage() {
   const [category, setCategory] = useState("Metodologia");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Comentários
+  const [openComments, setOpenComments] = useState<string | null>(null);
+  const [comments, setComments] = useState<Record<string, any[]>>({});
+  const [commentText, setCommentText] = useState("");
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+
   async function fetchPosts() {
     setLoading(true);
-    const res = await fetch("/api/db/comunidade_posts?orderBy=created_at&ascending=false");
+    const res = await fetch("/api/db/comunidade_posts?orderBy=created_at&ascending=false&select=*,profiles(first_name,last_name)");
     const { data } = await res.json();
     setPosts(data ?? []);
     setLoading(false);
   }
 
   useEffect(() => { fetchPosts(); }, []);
+
+  async function fetchComments(postId: string) {
+    const res = await fetch(`/api/db/comunidade_comentarios?eq.post_id=${postId}&orderBy=created_at&ascending=true&select=*,profiles(first_name,last_name)`);
+    const { data } = await res.json();
+    setComments(prev => ({ ...prev, [postId]: data ?? [] }));
+  }
+
+  async function toggleComments(postId: string) {
+    if (openComments === postId) {
+      setOpenComments(null);
+      return;
+    }
+    setOpenComments(postId);
+    setCommentText("");
+    if (!comments[postId]) await fetchComments(postId);
+  }
+
+  async function handleSubmitComment(postId: string) {
+    if (!commentText.trim() || !user) return;
+    setCommentSubmitting(true);
+    await fetch("/api/db/comunidade_comentarios", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ post_id: postId, user_id: user.id, content: commentText.trim() }),
+    });
+    setCommentText("");
+    await fetchComments(postId);
+    setCommentSubmitting(false);
+  }
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +131,8 @@ export default function ComunidadePage() {
         <AnimatePresence mode="popLayout">
           {filteredPosts.map((post, index) => {
             const displayName = `${post.profiles?.first_name || ""} ${post.profiles?.last_name || ""}`.trim() || "Agente";
+            const isOpen = openComments === post.id;
+            const postComments = comments[post.id] ?? [];
             return (
               <motion.div key={post.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: index * 0.04 }}
                 className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 flex flex-col gap-4 hover:border-white/[0.12] transition-colors"
@@ -122,8 +159,64 @@ export default function ComunidadePage() {
                 </div>
                 <div className="flex items-center gap-4 pt-2 border-t border-white/[0.04]">
                   <button className="flex items-center gap-1.5 text-xs text-white/20 hover:text-blue-400 transition-colors"><Heart size={12} /> Gosto</button>
-                  <button className="flex items-center gap-1.5 text-xs text-white/20 hover:text-blue-400 transition-colors"><MessageCircle size={12} /> Comentar</button>
+                  <button
+                    onClick={() => toggleComments(post.id)}
+                    className={`flex items-center gap-1.5 text-xs transition-colors ${isOpen ? "text-blue-400" : "text-white/20 hover:text-blue-400"}`}
+                  >
+                    <MessageCircle size={12} />
+                    Comentar {postComments.length > 0 && `(${postComments.length})`}
+                  </button>
                 </div>
+
+                {/* Secção de comentários */}
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-3 border-t border-white/[0.04] space-y-3">
+                        {postComments.length === 0 ? (
+                          <p className="text-xs text-white/20 text-center py-2">Sem comentários ainda.</p>
+                        ) : (
+                          postComments.map((c) => {
+                            const cName = `${c.profiles?.first_name || ""} ${c.profiles?.last_name || ""}`.trim() || "Agente";
+                            return (
+                              <div key={c.id} className="flex gap-2.5">
+                                <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 text-[10px] font-bold shrink-0 mt-0.5">
+                                  {cName[0]?.toUpperCase() || "?"}
+                                </div>
+                                <div className="flex-1 bg-white/[0.03] rounded-lg px-3 py-2">
+                                  <p className="text-[10px] font-semibold text-white/60 mb-0.5">{cName}</p>
+                                  <p className="text-xs text-white/50">{c.content}</p>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                        {/* Input novo comentário */}
+                        <div className="flex gap-2 pt-1">
+                          <input
+                            value={commentText}
+                            onChange={e => setCommentText(e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmitComment(post.id); } }}
+                            placeholder="Escreva um comentário..."
+                            className="flex-1 bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-xs text-white placeholder:text-white/20 outline-none focus:border-blue-500/40"
+                          />
+                          <button
+                            onClick={() => handleSubmitComment(post.id)}
+                            disabled={!commentText.trim() || commentSubmitting}
+                            className="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-colors disabled:opacity-40 shrink-0"
+                          >
+                            {commentSubmitting ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             );
           })}
