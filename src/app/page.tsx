@@ -102,7 +102,9 @@ function ForgotPasswordLink() {
         body: JSON.stringify({ email }),
       });
       const json = await res.json();
-      setDebugInfo(JSON.stringify(json, null, 2));
+      const debug = JSON.stringify(json, null, 2);
+      setDebugInfo(debug);
+      try { localStorage.setItem("fp_debug", debug); } catch {}
       if (!res.ok) throw new Error(json?.error || "Erro ao enviar email.");
       setSent(true);
     } catch (err: any) {
@@ -119,7 +121,7 @@ function ForgotPasswordLink() {
       </button>
       {open && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setOpen(false); setSent(false); setEmail(""); }} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { if (!sent) { setOpen(false); setSent(false); setEmail(""); } }} />
           <div className="relative w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-3xl border border-white/10 rounded-2xl p-8 space-y-5">
             {sent ? (
               <div className="text-center space-y-3 py-4">
