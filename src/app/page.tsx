@@ -82,6 +82,73 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
   );
 }
 
+function ForgotPasswordLink() {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setSent(true);
+    } catch {
+      setError("Erro ao enviar email. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="w-full text-center text-[9px] uppercase tracking-widest text-white/25 hover:text-white/60 transition-colors mt-1">
+        Esqueci a password
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setOpen(false); setSent(false); setEmail(""); }} />
+          <div className="relative w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-3xl border border-white/10 rounded-2xl p-8 space-y-5">
+            {sent ? (
+              <div className="text-center space-y-3 py-4">
+                <p className="text-white font-semibold text-sm">Email enviado!</p>
+                <p className="text-white/40 text-xs leading-relaxed">Verifique a sua caixa de entrada e siga as instruções para redefinir a password.</p>
+                <button onClick={() => { setOpen(false); setSent(false); }} className="text-[10px] text-white/30 hover:text-white uppercase tracking-widest mt-2">Fechar</button>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <h3 className="text-sm font-semibold text-white">Recuperar password</h3>
+                  <p className="text-[10px] text-white/40 mt-1">Introduza o seu email e enviaremos um link para redefinir a password.</p>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <input
+                    type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                    placeholder="o-seu-email@exemplo.com"
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 placeholder:text-white/20"
+                  />
+                  {error && <p className="text-xs text-red-400">{error}</p>}
+                  <button type="submit" disabled={loading} className="w-full py-3 rounded-lg bg-blue-600 text-white text-xs font-semibold uppercase tracking-widest hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                    {loading && <Loader2 size={13} className="animate-spin" />}
+                    Enviar link
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function HeroSection() {
   const isDashboardView = false;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -265,6 +332,19 @@ export default function HeroSection() {
       }
 
       const { error: profileError } = await supabase.from('profiles').update(profilePayload).eq('id', authData.user.id);
+
+      // Sincronizar com a nossa DB para garantir role correcto
+      await fetch("/api/auth/sync-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          first_name: firstName,
+          last_name: lastName,
+          role: userRole,
+          ...(userRole === 'formando' ? { provincia, escola } : { especialidade, biografia, avatar_url: finalAvatarUrl }),
+        }),
+      });
 
       if (!profileError) {
         setIsSuccess(true); // Mostra o ecrã de email dentro do pop-up
@@ -502,6 +582,7 @@ export default function HeroSection() {
                           <Button type="submit" disabled={loading} className="w-full rounded-2xl border bg-white/5 hover:bg-white hover:text-black font-medium uppercase tracking-[0.3em] py-6 text-[11px] shadow-none mt-4 transition-all">
                             {loading ? <Loader2 className="animate-spin" /> : "Entrar"}
                           </Button>
+                          <ForgotPasswordLink />
                         </form>
                       ) : (
                         <form onSubmit={handleSignUp} className="space-y-5 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
@@ -649,12 +730,9 @@ export default function HeroSection() {
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" />
+                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" />
                 </motion.div>
               </div>
-              <p className="text-[9px] sm:text-[10px] md:text-[11px] font-medium uppercase tracking-[0.35em] sm:tracking-[0.45em] md:tracking-[0.6em] text-white/80 text-center leading-none mt-0 z-20 whitespace-nowrap w-fit drop-shadow-md">
-                Programa de Apoio ao Reforço do Ensino Secundário em Angola
-              </p>
             </motion.div>
 
           </motion.div>
@@ -665,7 +743,7 @@ export default function HeroSection() {
         {isVIPWelcomeOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.9 }} className="fixed inset-0 bg-black/50 backdrop-blur-xl z-[300] flex flex-col items-center justify-center text-center p-6 pointer-events-auto">
             <motion.div initial={{ opacity: 0, y: 30, scale: 0.99, filter: "blur(15px)" }} animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }} transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center">
-              <motion.img src="/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ repeat: Infinity, duration: 4 }} className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none mix-blend-screen" />
+              <motion.img src="/logo-sabermais.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ repeat: Infinity, duration: 4 }} className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none mix-blend-screen" />
               <h2 className="text-5xl font-extralight uppercase tracking-tighter text-white italic leading-none">Bem-vindo</h2>
               <h3 className="text-3xl font-bold uppercase tracking-tight text-blue-500 mt-3 drop-shadow-[0_0_20px_rgba(59,130,246,0.3)]">{finalFullName}</h3>
             </motion.div>

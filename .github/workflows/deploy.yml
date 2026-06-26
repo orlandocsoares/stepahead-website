@@ -18,11 +18,14 @@ jobs:
       # 2. Liga-se à VPS via SSH e faz o deploy
       - name: Deploy na VPS
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
+          envs: RESEND_API_KEY
           script: |
             set -e
 
@@ -30,6 +33,13 @@ jobs:
 
             echo "==> A ir para o directório da aplicação..."
             cd "$APP_DIR"
+
+            echo "==> A actualizar variáveis de ambiente..."
+            if grep -q '^RESEND_API_KEY=' "$APP_DIR/.env.production"; then
+              sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=$RESEND_API_KEY|" "$APP_DIR/.env.production"
+            else
+              echo "RESEND_API_KEY=$RESEND_API_KEY" >> "$APP_DIR/.env.production"
+            fi
 
             echo "==> A buscar o código mais recente..."
             git pull origin main
