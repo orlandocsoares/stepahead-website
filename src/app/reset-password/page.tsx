@@ -175,7 +175,7 @@ export default function ResetPasswordPage() {
 
         {/* Logo */}
         <div className="text-center">
-          <Image src="/logo-sabermais.png" alt="SaberMais" width={120} height={40} className="mx-auto opacity-90" />
+          <Image src="/logo-sabermais.png" alt="SaberMais" width={120} height={40} className="mx-auto mix-blend-screen contrast-125 brightness-110" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
         </div>
 
         {/* Card com fundo glass */}
