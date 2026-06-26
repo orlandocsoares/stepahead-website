@@ -43,6 +43,18 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
+    if (user.status === 'suspenso') {
+      return NextResponse.json({
+        error: "A sua conta foi suspensa. Contacte o administrador.",
+        code: "SUSPENDED"
+      }, { status: 403 });
+    }
+
+    // Aceita: activo, aprovado (legado)
+    if (!['activo', 'aprovado'].includes(user.status)) {
+      return NextResponse.json({ error: "Conta não autorizada.", code: "NOT_AUTHORIZED" }, { status: 403 });
+    }
+
     await setSession(user.id);
     return NextResponse.json({ ok: true });
   } catch (err: any) {

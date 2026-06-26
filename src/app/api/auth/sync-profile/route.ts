@@ -7,7 +7,7 @@ import { randomBytes } from "crypto";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, first_name, last_name, role, provincia, escola, especialidade, biografia, avatar_url } = body;
+    const { email, password, first_name, last_name, role, provincia, escola, especialidade, biografia, avatar_url } = body;
 
     if (!email || !role) return NextResponse.json({ error: "Email e role obrigatórios" }, { status: 400 });
 
@@ -21,15 +21,20 @@ export async function POST(request: Request) {
 
     let userId: string;
     let isNewUser = false;
+    const passwordHash = hashPassword(password || randomBytes(16).toString("hex"));
+
     if (existing.rows[0]) {
       userId = existing.rows[0].id;
+      // Actualizar password real se foi fornecida
+      if (password) {
+        await dbQuery("UPDATE auth_users SET password_hash = $1 WHERE id = $2", [passwordHash, userId]);
+      }
     } else {
-      const tempPassword = randomBytes(16).toString("hex");
       const created = await dbQuery<{ id: string }>(
         `INSERT INTO auth_users (email, password_hash) VALUES ($1, $2)
          ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email
          RETURNING id`,
-        [clean, hashPassword(tempPassword)]
+        [clean, passwordHash]
       );
       userId = created.rows[0].id;
       isNewUser = true;
@@ -52,24 +57,30 @@ export async function POST(request: Request) {
        provincia || null, escola || null, especialidade || null, biografia || null, avatar_url || null]
     );
 
-    // Enviar email de confirmação apenas para novos utilizadores
-    if (isNewUser) {
-      const token = randomBytes(32).toString("hex");
-      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+    // Enviar email de confirmação (novo utilizador OU re-envio se ainda pendente)
+    const needsConfirmation = await dbQuery<{ status: string }>(
+      "SELECT status FROM profiles WHERE id = $1 LIMIT 1",
+      [userId]
+    );
+    const profileStatus = needsConfirmation.rows[0]?.status;
 
-      await dbQuery(
-        `INSERT INTO email_confirm_tokens (token, user_id, expires_at)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (user_id) DO UPDATE SET token = $1, expires_at = $3`,
-        [token, userId, expires.toISOString()]
-      );
-
-      const confirmUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://sabermais.edu.ao"}/api/auth/confirm-email?token=${token}`;
-
+    if (profileStatus === 'pendente') {
       try {
+        const token = randomBytes(32).toString("hex");
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+
+        await dbQuery(
+          `INSERT INTO email_confirm_tokens (token, user_id, expires_at)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (user_id) DO UPDATE SET token = $1, expires_at = $3`,
+          [token, userId, expires.toISOString()]
+        );
+
+        const confirmUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://sabermais.edu.ao"}/api/auth/confirm-email?token=${token}`;
         const resend = new Resend(process.env.RESEND_API_KEY);
+
         await resend.emails.send({
-          from: "SaberMais <noreply@sabermais.edu.ao>",
+          from: "SaberMais <notificacoes@sabermais.edu.ao>",
           to: clean,
           subject: "Confirme o seu email — SaberMais",
           html: `
@@ -93,7 +104,7 @@ export async function POST(request: Request) {
           `,
         });
       } catch (emailErr) {
-        // Falha no email não bloqueia o registo
+        // Falha no email não bloqueia o registo — será resolvido via logs
         console.error("Erro ao enviar email de confirmação:", emailErr);
       }
     }

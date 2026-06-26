@@ -323,12 +323,26 @@ export default function SuperAdminPage() {
                                   <option value="formador" className="bg-[#0d0d14]">Formador</option>
                                   <option value="admin" className="bg-[#0d0d14]">Admin</option>
                                 </select>
-                                <select value={item.status || "aprovado"} onChange={(e) => handleUpdate(item.id, { status: e.target.value })}
-                                  className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-white/70 outline-none cursor-pointer"
-                                >
-                                  <option value="pendente" className="bg-[#0d0d14]">Pendente</option>
-                                  <option value="aprovado" className="bg-[#0d0d14]">Aprovado</option>
-                                </select>
+                                <div className="flex flex-col gap-1">
+                                  {item.status === 'pendente' && (
+                                    <span className="text-[9px] uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full text-center">Email não confirmado</span>
+                                  )}
+                                  {item.status === 'email_confirmado' && (
+                                    <span className="text-[9px] uppercase tracking-widest text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full text-center">✓ Email confirmado</span>
+                                  )}
+                                  <select
+                                    value={item.status || "pendente"}
+                                    onChange={(e) => handleUpdate(item.id, { status: e.target.value })}
+                                    disabled={item.status === 'pendente'}
+                                    title={item.status === 'pendente' ? "Aguarda confirmação de email" : ""}
+                                    className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-white/70 outline-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                  >
+                                    <option value="pendente" className="bg-[#0d0d14]">Pendente</option>
+                                    <option value="email_confirmado" className="bg-[#0d0d14]">Email confirmado</option>
+                                    <option value="activo" className="bg-[#0d0d14]">Activo</option>
+                                    <option value="suspenso" className="bg-[#0d0d14]">Suspenso</option>
+                                  </select>
+                                </div>
                                 <button onClick={() => openPowerModal(item)} className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs transition-colors ${item.temporary_power ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-white/[0.04] text-white/30 hover:text-white"}`}>
                                   <Clock size={11} /> {item.temporary_power ? "Poder activo" : "Poder"}
                                 </button>

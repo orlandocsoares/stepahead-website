@@ -320,6 +320,7 @@ export default function HeroSection() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email,
+        password,
         first_name: firstName,
         last_name: lastName,
         role: userRole,
