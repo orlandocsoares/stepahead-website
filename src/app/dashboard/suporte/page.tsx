@@ -86,11 +86,9 @@ export default function SupportPage() {
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
             <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Pesquisar ticket..." className="pl-9 pr-4 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 w-48 transition-colors" />
           </div>
-          {!isAdmin && (
-            <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
-              <Plus size={14} /> Abrir ticket
-            </button>
-          )}
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
+            <Plus size={14} /> Abrir ticket
+          </button>
         </div>
       </div>
 
