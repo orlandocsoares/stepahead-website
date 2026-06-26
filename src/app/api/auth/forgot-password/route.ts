@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const resetUrl = `${process.env.APP_URL || "https://sabermais.edu.ao"}/reset-password?token=${token}`;
 
     await resend.emails.send({
-      from: "SaberMais <noreply@sabermais.edu.ao>",
+      from: "SaberMais <notificacoes@sabermais.edu.ao>",
       to: user.email,
       subject: "Recuperação de password — SaberMais",
       html: `

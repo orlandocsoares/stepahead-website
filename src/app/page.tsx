@@ -94,11 +94,13 @@ function ForgotPasswordLink() {
     setError(null);
     setLoading(true);
     try {
-      await fetch("/api/auth/forgot-password", {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Erro ao enviar email.");
       setSent(true);
     } catch {
       setError("Erro ao enviar email. Tente novamente.");
