@@ -1,259 +1,175 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useState, useMemo } from "react";
+import { useAdminUser } from "@/hooks/useAdminUser";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  MessageSquare, Plus, Search, Loader2, 
-  Heart, Share2, MessageCircle, X, Globe, User, Sparkles
+import {
+  MessageSquare, Plus, Search, Loader2, Heart, MessageCircle, X, Globe, Sparkles, Share2
 } from "lucide-react";
-import { useProfile } from "@/hooks/useProfile";
+
+const CATEGORIES = ["Todos", "Metodologia", "Dúvidas", "Casos de Sucesso", "Avisos"];
 
 export default function ComunidadePage() {
-  const { profile, loading: profileLoading } = useProfile();
+  const { user } = useAdminUser();
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("Todos");
-
-  // Formulário
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("Metodologia");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // REFINAMENTO UNIFORME: Rastreador de Direcção para a Calha de Néon (O Cometa)
-  const [scrollDirection, setScrollDirection] = useState<'down' | 'up'>('down');
-  const lastScrollY = useRef(0);
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const currentScrollY = e.currentTarget.scrollTop;
-    if (currentScrollY > lastScrollY.current) {
-      setScrollDirection('down');
-    } else if (currentScrollY < lastScrollY.current) {
-      setScrollDirection('up');
-    }
-    lastScrollY.current = currentScrollY;
-  };
-
-  const categories = ["Todos", "Metodologia", "Dúvidas", "Casos de Sucesso", "Avisos"];
-
-  useEffect(() => {
-    fetchPosts();
-    const channel = supabase.channel('posts-live').on('postgres_changes', { event: '*', schema: 'public', table: 'comunidade_posts' }, () => fetchPosts()).subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
-
   async function fetchPosts() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('comunidade_posts')
-      .select('*, profiles(first_name, last_name, role, avatar_url)')
-      .order('created_at', { ascending: false });
-    
-    if (!error && data) setPosts(data);
+    const res = await fetch("/api/db/comunidade_posts?orderBy=created_at&ascending=false");
+    const { data } = await res.json();
+    setPosts(data ?? []);
     setLoading(false);
   }
 
+  useEffect(() => { fetchPosts(); }, []);
+
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !content || !profile) return;
+    if (!title || !content || !user) return;
     setIsSubmitting(true);
-
-    const { error } = await supabase.from('comunidade_posts').insert([{
-      user_id: profile.id,
-      title,
-      content,
-      category
-    }]);
-
-    if (!error) {
-      setIsModalOpen(false);
-      setTitle("");
-      setContent("");
-      fetchPosts();
-    }
+    await fetch("/api/db/comunidade_posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: user.id, title, content, category }),
+    });
+    setIsModalOpen(false);
+    setTitle("");
+    setContent("");
+    fetchPosts();
     setIsSubmitting(false);
   };
 
   const filteredPosts = useMemo(() => {
-    return posts.filter(p => {
-      const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) || p.content.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = activeCategory === "Todos" || p.category === activeCategory;
-      return matchesSearch && matchesCategory;
+    return posts.filter((p) => {
+      const matchSearch = p.title?.toLowerCase().includes(searchTerm.toLowerCase()) || p.content?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchCat = activeCategory === "Todos" || p.category === activeCategory;
+      return matchSearch && matchCat;
     });
   }, [posts, searchTerm, activeCategory]);
 
-  if (profileLoading || loading) return (
-    <div className="h-screen flex items-center justify-center bg-transparent">
-      <Loader2 className="animate-spin text-blue-500" size={32} />
-    </div>
-  );
+  if (loading) return <div className="flex items-center justify-center h-full"><Loader2 size={24} className="animate-spin text-blue-500" /></div>;
 
   return (
-    <div className="h-screen flex flex-col max-w-[1400px] mx-auto pt-24 pb-10 px-4 md:px-10 md:pl-48 relative z-10 selection:bg-teal-500/30 overflow-hidden">
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        .hide-native-scroll::-webkit-scrollbar { width: 2px; }
-        .hide-native-scroll::-webkit-scrollbar-track { background: transparent; }
-        .hide-native-scroll::-webkit-scrollbar-thumb { background: transparent; }
-      `}} />
-
-      {/* HEADER DE COMUNIDADE */}
-      <header className="mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10 shrink-0">
-        <div className="space-y-4 text-left">
-          <p className="text-[9px] tracking-[1em] text-blue-500 uppercase font-black italic">Intelligence Network</p>
-          <h1 className="text-6xl font-extralight text-white uppercase tracking-tighter italic leading-none">
-            Rede de <span className="opacity-40 not-italic font-bold">Partilha</span>
-          </h1>
+    <div className="space-y-6 w-full">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.4em] text-blue-400/60 italic mb-1 font-medium">
+            Intelligence Network
+          </p>
+          <h2 className="text-4xl font-extralight italic uppercase tracking-tight text-white leading-none">
+            Rede <span className="font-bold text-white/30">de Partilha</span>
+          </h2>
+          <p className="text-xs text-white/25 mt-2">
+            {filteredPosts.length} publicaç{filteredPosts.length !== 1 ? "ões" : "ão"}
+          </p>
         </div>
-
-        <div className="flex flex-col sm:flex-row items-center gap-6 w-full lg:w-auto">
-          <div className="relative w-full sm:max-w-xs group">
-            <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-blue-500 transition-colors" />
-            <input 
-              type="text" 
-              placeholder="PESQUISAR TÓPICOS..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-full pl-12 pr-6 py-4 text-[10px] text-white uppercase tracking-widest outline-none focus:border-blue-500 transition-all"
-            />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-none">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Pesquisar tópico..." className="pl-9 pr-4 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 w-full sm:w-48 transition-colors" />
           </div>
-
-          <motion.button 
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-3 px-8 py-4 bg-blue-600 text-white text-[10px] uppercase font-black tracking-widest rounded-full shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:bg-blue-500 border-0 shrink-0"
-          >
-            <Plus size={16} /> Nova Publicação
-          </motion.button>
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors whitespace-nowrap shrink-0">
+            <Plus size={14} /> <span className="hidden sm:inline">Nova publicação</span><span className="sm:hidden">Nova</span>
+          </button>
         </div>
-      </header>
+      </div>
 
-      {/* FILTROS DE CATEGORIA */}
-      <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide shrink-0">
-        {categories.map((cat) => (
-          <button 
-            key={cat} onClick={() => setActiveCategory(cat)} 
-            className={`px-8 py-3 rounded-full text-[8px] uppercase tracking-[0.3em] font-black transition-all border whitespace-nowrap shrink-0 ${activeCategory === cat ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)] scale-105" : "bg-white/[0.02] text-white/30 border-white/5 hover:border-white/20 hover:text-white"}`}
+      <div className="flex gap-2 flex-wrap">
+        {CATEGORIES.map((cat) => (
+          <button key={cat} onClick={() => setActiveCategory(cat)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeCategory === cat ? "bg-blue-600/20 text-blue-400 border border-blue-500/30" : "bg-white/[0.03] text-white/40 border border-white/[0.06] hover:text-white/70"}`}
           >
             {cat}
           </button>
         ))}
       </div>
 
-      <div className="flex-1 relative flex gap-8 min-h-0">
-        <div className="flex-1 overflow-y-auto hide-native-scroll pb-10 pr-2" onScroll={handleScroll}>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <AnimatePresence mode="popLayout">
-              {filteredPosts.map((post, index) => {
-                const displayName = `${post.profiles?.first_name || ""} ${post.profiles?.last_name || ""}`.trim() || "Agente";
-                const displayAvatar = post.profiles?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${displayName}&backgroundColor=ffffff&textColor=000000`;
-                
-                return (
-                  <motion.div 
-                    key={post.id}
-                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="p-8 rounded-[3rem] bg-white/[0.02] border border-white/5 backdrop-blur-3xl group hover:border-blue-500/30 hover:bg-black/40 transition-all duration-700 shadow-xl flex flex-col justify-between h-full"
-                  >
-                    <div>
-                      <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full overflow-hidden bg-black border border-white/10 shrink-0">
-                            <img src={displayAvatar} alt="Avatar" className="w-full h-full object-cover opacity-80" />
-                          </div>
-                          <div className="text-left">
-                            <p className="text-white font-bold text-sm uppercase tracking-widest">{displayName}</p>
-                            <p className="text-[9px] text-white/40 uppercase tracking-widest font-mono mt-1">{post.profiles?.role} // {new Date(post.created_at).toLocaleDateString('pt-PT')}</p>
-                          </div>
-                        </div>
-                        <div className={`px-4 py-1.5 rounded-full text-[8px] uppercase font-black tracking-widest border ${
-                          post.category === 'Avisos' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                          post.category === 'Casos de Sucesso' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                          'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                        }`}>
-                          {post.category}
-                        </div>
-                      </div>
-                      
-                      <div className="text-left space-y-4 mb-8">
-                        <h3 className="text-2xl font-light text-white uppercase tracking-tighter italic leading-none group-hover:text-blue-400 transition-colors">{post.title}</h3>
-                        <p className="text-xs text-white/50 leading-relaxed font-light">{post.content}</p>
-                      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <AnimatePresence mode="popLayout">
+          {filteredPosts.map((post, index) => {
+            const displayName = `${post.profiles?.first_name || ""} ${post.profiles?.last_name || ""}`.trim() || "Agente";
+            return (
+              <motion.div key={post.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: index * 0.04 }}
+                className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 flex flex-col gap-4 hover:border-white/[0.12] transition-colors"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0">
+                      {displayName[0]?.toUpperCase() || "?"}
                     </div>
-
-                    {/* Barra de Interacção (Preparada para expansão futura) */}
-                    <div className="flex items-center gap-6 pt-6 border-t border-white/5">
-                      <button className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-white/30 hover:text-blue-400 transition-colors"><Heart size={14}/> Gosto</button>
-                      <button className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-white/30 hover:text-blue-400 transition-colors"><MessageCircle size={14}/> Comentar</button>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-white truncate">{displayName}</p>
+                      <p className="text-[10px] text-white/30">{new Date(post.created_at).toLocaleDateString("pt-PT")}</p>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </div>
-
-          {filteredPosts.length === 0 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-40 text-center border border-dashed border-white/5 rounded-[4rem] bg-white/[0.01]">
-              <Globe className="mx-auto text-white/5 mb-6" size={48} strokeWidth={1} />
-              <p className="text-[10px] uppercase tracking-[0.8em] text-white/20 font-black italic">A Rede de Inteligência aguarda contributos.</p>
-            </motion.div>
-          )}
-        </div>
-
-        {/* CALHA DE SCROLL NÉON INTEGRADA (O COMETA) */}
-        <div className="w-[3px] rounded-full bg-white/[0.02] relative overflow-hidden shrink-0 hidden md:block mb-10">
-          <motion.div
-            key={scrollDirection}
-            animate={scrollDirection === 'down' ? { top: ['-20%', '120%'] } : { top: ['120%', '-20%'] }}
-            transition={{ repeat: Infinity, duration: 1.8, ease: "linear" }}
-            className={`absolute left-0 w-full h-[15%] rounded-full shadow-[0_0_15px_rgba(59,130,246,0.8)] ${scrollDirection === 'down' ? 'bg-gradient-to-b from-transparent via-blue-500/80 to-white' : 'bg-gradient-to-t from-transparent via-blue-500/80 to-white'}`}
-          />
-        </div>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-medium shrink-0 ${
+                    post.category === "Avisos" ? "bg-red-500/10 text-red-400" :
+                    post.category === "Casos de Sucesso" ? "bg-emerald-500/10 text-emerald-400" :
+                    "bg-blue-500/10 text-blue-400"
+                  }`}>{post.category}</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-1.5 leading-snug">{post.title}</h3>
+                  <p className="text-xs text-white/40 leading-relaxed line-clamp-3">{post.content}</p>
+                </div>
+                <div className="flex items-center gap-4 pt-2 border-t border-white/[0.04]">
+                  <button className="flex items-center gap-1.5 text-xs text-white/20 hover:text-blue-400 transition-colors"><Heart size={12} /> Gosto</button>
+                  <button className="flex items-center gap-1.5 text-xs text-white/20 hover:text-blue-400 transition-colors"><MessageCircle size={12} /> Comentar</button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
 
-      {/* MODAL DE NOVA PUBLICAÇÃO */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-lg bg-zinc-950/90 border border-white/10 p-12 rounded-[3rem] backdrop-blur-3xl shadow-2xl">
-              <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-white/20 hover:text-white transition-colors bg-transparent border-0 outline-none"><X size={20}/></button>
-              
-              <h2 className="text-3xl font-light text-white uppercase tracking-tighter italic mb-8 flex items-center gap-4"><Sparkles className="text-blue-500"/> Nova Partilha</h2>
-              
-              <form onSubmit={handleCreatePost} className="space-y-6 text-left">
-                <div className="space-y-2">
-                  <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Título do Tópico</label>
-                  <input required value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-white/5 border-0 border-b border-white/10 py-4 px-4 text-sm text-white outline-none focus:border-blue-500 transition-all" placeholder="EX: TÁCTICA PARA AULAS PRÁTICAS..." />
-                </div>
+      {filteredPosts.length === 0 && (
+        <div className="py-20 text-center">
+          <Globe className="mx-auto text-white/10 mb-4" size={32} strokeWidth={1} />
+          <p className="text-sm text-white/20">Sem publicações.</p>
+        </div>
+      )}
 
-                <div className="space-y-2">
-                  <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Categoria</label>
-                  <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/5 border-0 border-b border-white/10 py-4 px-4 text-[10px] uppercase tracking-widest text-white outline-none border-0">
-                    <option className="bg-zinc-900">Metodologia</option>
-                    <option className="bg-zinc-900">Dúvidas</option>
-                    <option className="bg-zinc-900">Casos de Sucesso</option>
-                    <option className="bg-zinc-900">Avisos</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Conteúdo</label>
-                  <textarea required rows={5} value={content} onChange={e => setContent(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-sm text-white outline-none focus:border-blue-500 transition-all resize-none" placeholder="PARTILHE O SEU CONHECIMENTO..." />
-                </div>
-
-                <button disabled={isSubmitting} type="submit" className="w-full py-5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-2xl hover:bg-blue-500 transition-all shadow-2xl flex justify-center items-center gap-3 border-0 mt-4">
-                  {isSubmitting ? <Loader2 className="animate-spin" size={16}/> : <><Share2 size={16}/> Publicar na Rede</>}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+          <div className="relative w-full max-w-lg bg-[#0d0d14] border border-white/[0.08] rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/[0.06]">
+              <h3 className="text-base font-semibold text-white flex items-center gap-2"><Sparkles size={16} className="text-blue-400" /> Nova publicação</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-white/30 hover:text-white"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleCreatePost} className="px-6 py-5 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/40">Título</label>
+                <input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Táctica para aulas práticas..." className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/40">Categoria</label>
+                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none">
+                  {["Metodologia","Dúvidas","Casos de Sucesso","Avisos"].map(c => <option key={c} className="bg-[#0d0d14]">{c}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/40">Conteúdo</label>
+                <textarea required rows={5} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Partilhe o seu conhecimento..." className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50 resize-none" />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-lg border border-white/[0.06] text-sm text-white/50">Cancelar</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <><Share2 size={13} /> Publicar</>}
                 </button>
-              </form>
-            </motion.div>
+              </div>
+            </form>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

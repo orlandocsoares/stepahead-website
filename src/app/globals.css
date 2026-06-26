@@ -59,9 +59,14 @@
   transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
 }
 
-/* --- INJEÇÃO DE IMERSÃO CRYSTAL (O que faltava) --- */
+/* --- ESTILOS GLOBAIS DO SITE PÚBLICO --- */
 
-/* Scrollbar Futurista */
+/*
+  Scrollbar estilizada — aplica-se APENAS ao site público.
+  O dashboard tem a sua própria lógica de scrollbar em dashboard/layout.tsx
+  (via classes .dashboard-main e .dashboard-sidebar com display:none).
+  NÃO adicionar regras *::-webkit-scrollbar aqui — afectariam o dashboard também.
+*/
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -97,4 +102,31 @@ input, select, textarea {
 /* Remover o brilho azul padrão do Chrome em inputs focado */
 input:focus {
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+/* Utilitário scrollbar-hide (compatível com todos os browsers) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* Backdrop-blur fallback para Firefox < 103 */
+@supports not (backdrop-filter: blur(1px)) {
+  .dashboard-glass {
+    background-color: rgba(13, 13, 20, 0.97) !important;
+  }
+}
+
+/* iOS Safari: usar dvh onde suportado para evitar corte da address bar */
+@supports (height: 100dvh) {
+  .h-screen-safe {
+    height: 100dvh;
+  }
+}
+.h-screen-safe {
+  height: 100vh;
 }
