@@ -88,12 +88,10 @@ function ForgotPasswordLink() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setDebugInfo(null);
     setLoading(true);
     try {
       const res = await fetch("/api/auth/forgot-password", {
@@ -102,9 +100,6 @@ function ForgotPasswordLink() {
         body: JSON.stringify({ email }),
       });
       const json = await res.json();
-      const debug = JSON.stringify(json, null, 2);
-      setDebugInfo(debug);
-      try { localStorage.setItem("fp_debug", debug); } catch {}
       if (!res.ok) throw new Error(json?.error || "Erro ao enviar email.");
       setSent(true);
     } catch (err: any) {
@@ -121,36 +116,58 @@ function ForgotPasswordLink() {
       </button>
       {open && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { if (!sent) { setOpen(false); setSent(false); setEmail(""); } }} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setOpen(false); setSent(false); setEmail(""); }} />
           <div className="relative w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-3xl border border-white/10 rounded-2xl p-8 space-y-5">
-            {sent ? (
-              <div className="text-center space-y-3 py-4">
-                <p className="text-white font-semibold text-sm">Email enviado!</p>
-                <p className="text-white/40 text-xs leading-relaxed">Verifique a sua caixa de entrada e siga as instruções para redefinir a password.</p>
-                {debugInfo && <pre className="text-left text-[10px] text-amber-400/80 bg-white/[0.03] rounded p-2 overflow-auto max-h-32">{debugInfo}</pre>}
-                <button onClick={() => { setOpen(false); setSent(false); }} className="text-[10px] text-white/30 hover:text-white uppercase tracking-widest mt-2">Fechar</button>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <h3 className="text-sm font-semibold text-white">Recuperar password</h3>
-                  <p className="text-[10px] text-white/40 mt-1">Introduza o seu e-mail e enviaremos um link para repor a password.</p>
+            <div>
+              <h3 className="text-sm font-semibold text-white">Recuperar password</h3>
+              <p className="text-[10px] text-white/40 mt-1">Introduza o seu e-mail e enviaremos um link para repor a password.</p>
+            </div>
+
+            <div className="space-y-4">
+              <input
+                type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                disabled={sent}
+                placeholder="o-seu-email@exemplo.com"
+                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 placeholder:text-white/20 disabled:opacity-40"
+              />
+
+              {/* Resultado */}
+              {sent && (
+                <div className="flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-3">
+                  <span className="text-emerald-400 text-lg leading-none">✓</span>
+                  <div>
+                    <p className="text-emerald-400 text-xs font-semibold">Email enviado!</p>
+                    <p className="text-white/40 text-[11px] mt-0.5 leading-relaxed">Verifique a sua caixa de entrada e siga as instruções para redefinir a password.</p>
+                  </div>
                 </div>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <input
-                    type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                    placeholder="o-seu-email@exemplo.com"
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 placeholder:text-white/20"
-                  />
-                  {error && <p className="text-xs text-red-400">{error}</p>}
-                  {debugInfo && <pre className="text-[10px] text-amber-400/80 bg-white/[0.03] rounded p-2 overflow-auto max-h-32">{debugInfo}</pre>}
-                  <button type="button" disabled={loading} onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSubmit(e as any); }} className="w-full py-3 rounded-lg bg-blue-600 text-white text-xs font-semibold uppercase tracking-widest hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-                    {loading && <Loader2 size={13} className="animate-spin" />}
-                    Enviar link
-                  </button>
-                </form>
-              </>
-            )}
+              )}
+              {error && (
+                <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
+                  <span className="text-red-400 text-lg leading-none">✕</span>
+                  <div>
+                    <p className="text-red-400 text-xs font-semibold">Não foi possível enviar</p>
+                    <p className="text-white/40 text-[11px] mt-0.5 leading-relaxed">{error}</p>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                disabled={loading || sent}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSubmit(e as any); }}
+                className="w-full py-3 rounded-lg bg-blue-600 text-white text-xs font-semibold uppercase tracking-widest hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading && <Loader2 size={13} className="animate-spin" />}
+                {sent ? "Link enviado" : "Enviar link"}
+              </button>
+
+              {(sent || error) && (
+                <button type="button" onClick={() => { setOpen(false); setSent(false); setEmail(""); setError(null); }}
+                  className="w-full text-center text-[10px] text-white/25 hover:text-white/60 transition-colors">
+                  Fechar
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
