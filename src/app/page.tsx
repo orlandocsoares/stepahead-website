@@ -144,7 +144,7 @@ function ForgotPasswordLink() {
                   />
                   {error && <p className="text-xs text-red-400">{error}</p>}
                   {debugInfo && <pre className="text-[10px] text-amber-400/80 bg-white/[0.03] rounded p-2 overflow-auto max-h-32">{debugInfo}</pre>}
-                  <button type="submit" disabled={loading} className="w-full py-3 rounded-lg bg-blue-600 text-white text-xs font-semibold uppercase tracking-widest hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  <button type="button" disabled={loading} onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSubmit(e as any); }} className="w-full py-3 rounded-lg bg-blue-600 text-white text-xs font-semibold uppercase tracking-widest hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                     {loading && <Loader2 size={13} className="animate-spin" />}
                     Enviar link
                   </button>
