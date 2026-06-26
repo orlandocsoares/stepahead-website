@@ -73,6 +73,27 @@ export async function GET(request: Request) {
   }
 }
 
+// DELETE /api/mensagens?id=<msgId>  — só o remetente pode eliminar
+export async function DELETE(request: Request) {
+  try {
+    const session = await getSessionUser();
+    if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+    const url = new URL(request.url);
+    const id = url.searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "ID da mensagem obrigatório" }, { status: 400 });
+
+    const result = await db.query(
+      `DELETE FROM mensagens WHERE id = $1 AND from_user_id = $2 RETURNING id`,
+      [id, session.id]
+    );
+    if (result.rowCount === 0) return NextResponse.json({ error: "Mensagem não encontrada ou sem permissão" }, { status: 404 });
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
 // POST /api/mensagens  { to_user_id, content }
 export async function POST(request: Request) {
   try {
