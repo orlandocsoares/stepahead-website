@@ -1,0 +1,41 @@
+import { NextResponse } from "next/server";
+import { dbQuery } from "@/lib/db";
+import { getSessionUser } from "@/lib/server-auth";
+
+export async function GET() {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+
+  const profileRes = await dbQuery(
+    `SELECT role, first_name, last_name FROM profiles WHERE id = $1 LIMIT 1`,
+    [sessionUser.id]
+  );
+  const me = profileRes.rows[0];
+  if (!me) return NextResponse.json({ error: "Perfil não encontrado" }, { status: 403 });
+
+  const isAdmin = me.role === "admin" || me.role === "super-admin";
+  const isFormador = me.role === "formador";
+
+  if (!isAdmin && !isFormador) {
+    return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+  }
+
+  if (isAdmin) {
+    const result = await dbQuery(`
+      SELECT p.*, f.first_name || ' ' || COALESCE(f.last_name, '') AS formador_nome
+      FROM profiles p
+      LEFT JOIN profiles f ON f.id = p.formador_id
+      ORDER BY p.created_at DESC
+    `);
+    return NextResponse.json({ data: result.rows });
+  } else {
+    // Formador: apenas os seus formandos
+    const result = await dbQuery(`
+      SELECT p.*
+      FROM profiles p
+      WHERE p.formador_id = $1 AND p.role = 'formando'
+      ORDER BY p.created_at DESC
+    `, [sessionUser.id]);
+    return NextResponse.json({ data: result.rows });
+  }
+}

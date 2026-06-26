@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck } from "lucide-react";
+import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
 const PAGE_TITLES: Record<string, string> = {
@@ -30,6 +30,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const [notifs, setNotifs] = useState<any[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [msgUnread, setMsgUnread] = useState(0);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
@@ -75,6 +76,9 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
     return () => clearInterval(i);
   }, [user]);
 
+  // Reaparecer banner ao mudar de página
+  useEffect(() => { setBannerDismissed(false); }, [pathname]);
+
   // Fechar ao clicar fora
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -94,7 +98,29 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
     return `${Math.floor(h / 24)}d`;
   }
 
+  const pendingFormandos = notifs.filter(n => n.tipo === "novo_formando" && !n.lida);
+  const showBanner = pendingFormandos.length > 0 && !bannerDismissed && pathname !== "/dashboard/admin";
+
   return (
+    <>
+    {showBanner && (
+      <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 flex items-center gap-3">
+        <AlertTriangle size={15} className="text-amber-400 shrink-0" />
+        <p className="text-xs text-amber-200 flex-1">
+          <span className="font-semibold">{pendingFormandos.length} formando{pendingFormandos.length > 1 ? "s" : ""}</span>
+          {pendingFormandos.length > 1 ? " aguardam" : " aguarda"} a tua aprovação.
+        </p>
+        <button
+          onClick={() => { setBannerDismissed(false); router.push("/dashboard/admin"); }}
+          className="flex items-center gap-1 text-[11px] text-amber-400 font-medium hover:text-amber-300 transition-colors shrink-0"
+        >
+          Ver agora <ArrowRight size={12} />
+        </button>
+        <button onClick={() => setBannerDismissed(true)} className="text-white/20 hover:text-white/60 transition-colors shrink-0">
+          <X size={14} />
+        </button>
+      </div>
+    )}
     <header className="h-14 md:h-16 border-b border-white/[0.06] flex items-center px-4 md:px-6 shrink-0 bg-[#0d0d14] gap-3">
       <button onClick={onMobileMenuToggle} className="md:hidden p-2 -ml-1 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors shrink-0" aria-label="Abrir menu">
         <Menu size={20} />
@@ -181,5 +207,6 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
         </div>
       </div>
     </header>
+    </>
   );
 }

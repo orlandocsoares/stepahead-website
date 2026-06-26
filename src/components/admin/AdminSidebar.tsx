@@ -16,7 +16,7 @@ const NAV = [
   { label: "Comunidade",   icon: MessageSquare,    path: "/dashboard/comunidade" },
   { label: "Mensagens",    icon: Mail,             path: "/dashboard/mensagens" },
   { label: "Turmas",       icon: GraduationCap,    path: "/dashboard/turmas",       staffOnly: true },
-  { label: "Utilizadores", icon: Users,            path: "/dashboard/admin",        adminOnly: true },
+  { label: "Utilizadores", icon: Users,            path: "/dashboard/admin",        staffOnly: true },
   { label: "Suporte",      icon: LifeBuoy,         path: "/dashboard/suporte" },
   { label: "Perfil",       icon: UserCircle,       path: "/dashboard/perfil" },
 ];

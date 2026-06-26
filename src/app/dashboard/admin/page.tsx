@@ -105,6 +105,8 @@ export default function SuperAdminPage() {
 
 
   const isAdminOrSuper = (role?: string) => role === "admin" || role === "super-admin";
+  const isFormador = profile?.role === "formador";
+  const isStaff = isAdminOrSuper(profile?.role) || isFormador;
 
   const isPowerActive = useMemo(() => {
     if (!profile) return false;
@@ -113,14 +115,15 @@ export default function SuperAdminPage() {
 
   const visibleTabs = useMemo(() => {
     if (isAdminOrSuper(profile?.role)) return ["users", "agenda", "arquivos", "stats"] as const;
+    if (profile?.role === "formador") return ["users"] as const;
     return [] as const;
   }, [profile]);
 
   useEffect(() => {
-    if (!profileLoading && !isAdminOrSuper(profile?.role)) {
+    if (!profileLoading && !isStaff) {
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, router, isStaff]);
 
   useEffect(() => {
     if (isAdminOrSuper(profile?.role)) fetchData();
@@ -146,12 +149,12 @@ export default function SuperAdminPage() {
     setDbError(null);
     setSearchTerm("");
 
-    const table = activeTab === "users" ? "profiles" :
-                  activeTab === "agenda" ? "agenda_atividades" :
-                  activeTab === "arquivos" ? "arquivos" : "dashboard_stats";
+    const url = activeTab === "users" ? "/api/admin/utilizadores" :
+                activeTab === "agenda" ? "/api/db/agenda_atividades" :
+                activeTab === "arquivos" ? "/api/db/arquivos" : "/api/db/dashboard_stats";
 
     try {
-      const res = await fetch(`/api/db/${table}`);
+      const res = await fetch(url);
       const { data: res_data, error } = await res.json();
       if (error) { setDbError(error); setData([]); }
       else {
@@ -161,8 +164,8 @@ export default function SuperAdminPage() {
           return dB.localeCompare(dA);
         });
         setData(sorted);
-        // Carregar lista de formadores para o select de associação
-        if (activeTab === "users" && formadoresList.length === 0) {
+        // Carregar lista de formadores para o select de associação (só admins)
+        if (activeTab === "users" && isAdminOrSuper(profile?.role) && formadoresList.length === 0) {
           fetch("/api/db/profiles?eq.role=formador")
             .then(r => r.json())
             .then(d => setFormadoresList(d.data ?? []));
@@ -358,7 +361,7 @@ export default function SuperAdminPage() {
               className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50 transition-colors"
             />
           </div>
-          {activeTab === "users" && (
+          {activeTab === "users" && isAdminOrSuper(profile?.role) && (
             <>
               <button onClick={() => { resetNewUserForm(); setIsNewUserModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
                 <Plus size={14} /> <span className="hidden sm:inline">Novo utilizador</span><span className="sm:hidden">Novo</span>
@@ -660,52 +663,68 @@ export default function SuperAdminPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 flex-wrap">
-                                <select value={item.role} onChange={(e) => handleUpdate(item.id, { role: e.target.value })}
-                                  className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-white/70 outline-none cursor-pointer"
-                                >
-                                  <option value="formando" className="bg-[#0d0d14]">Formando</option>
-                                  <option value="formador" className="bg-[#0d0d14]">Formador</option>
-                                  <option value="admin" className="bg-[#0d0d14]">Admin</option>
-                                </select>
-                                <div className="flex flex-col gap-1">
-                                  {item.status === 'pendente' && (
-                                    <span className="text-[9px] uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full text-center">Email não confirmado</span>
-                                  )}
-                                  {item.status === 'email_confirmado' && (
-                                    <span className="text-[9px] uppercase tracking-widest text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full text-center">✓ Email confirmado</span>
-                                  )}
-                                  <select
-                                    value={item.status || "pendente"}
-                                    onChange={(e) => handleUpdate(item.id, { status: e.target.value })}
-                                    disabled={item.status === 'pendente'}
-                                    title={item.status === 'pendente' ? "Aguarda confirmação de email" : ""}
-                                    className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-white/70 outline-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                                  >
-                                    <option value="pendente" className="bg-[#0d0d14]">Pendente</option>
-                                    <option value="email_confirmado" className="bg-[#0d0d14]">Email confirmado</option>
-                                    <option value="activo" className="bg-[#0d0d14]">Activo</option>
-                                    <option value="suspenso" className="bg-[#0d0d14]">Suspenso</option>
-                                  </select>
-                                </div>
-                                {item.role === "formando" && formadoresList.length > 0 && (
-                                  <select
-                                    value={item.formador_id ?? ""}
-                                    onChange={e => handleUpdate(item.id, { formador_id: e.target.value || null })}
-                                    className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-white/70 outline-none cursor-pointer max-w-[160px]"
-                                    title="Formador associado"
-                                  >
-                                    <option value="" className="bg-[#0d0d14]">— Sem formador —</option>
-                                    {formadoresList.map((f: any) => (
-                                      <option key={f.id} value={f.id} className="bg-[#0d0d14]">{f.first_name} {f.last_name}</option>
-                                    ))}
-                                  </select>
+                                {/* Status badge para formadores (só leitura) */}
+                                {isFormador && (
+                                  <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                                    item.status === 'activo' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
+                                    item.status === 'email_confirmado' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
+                                    item.status === 'rejeitado' ? 'text-red-400 bg-red-500/10 border-red-500/20' :
+                                    'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                                  }`}>
+                                    {item.status === 'activo' ? 'Activo' : item.status === 'email_confirmado' ? '✓ Email confirmado' : item.status === 'rejeitado' ? 'Rejeitado' : 'Pendente'}
+                                  </span>
                                 )}
-                                <button onClick={() => openPowerModal(item)} className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs transition-colors ${item.temporary_power ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-white/[0.04] text-white/30 hover:text-white"}`}>
-                                  <Clock size={11} /> {item.temporary_power ? "Poder activo" : "Poder"}
-                                </button>
-                                <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors">
-                                  <Trash2 size={13} />
-                                </button>
+                                {/* Controlos de admin */}
+                                {isAdminOrSuper(profile?.role) && (
+                                  <>
+                                    <select value={item.role} onChange={(e) => handleUpdate(item.id, { role: e.target.value })}
+                                      className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-white/70 outline-none cursor-pointer"
+                                    >
+                                      <option value="formando" className="bg-[#0d0d14]">Formando</option>
+                                      <option value="formador" className="bg-[#0d0d14]">Formador</option>
+                                      <option value="admin" className="bg-[#0d0d14]">Admin</option>
+                                    </select>
+                                    <div className="flex flex-col gap-1">
+                                      {item.status === 'pendente' && (
+                                        <span className="text-[9px] uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full text-center">Email não confirmado</span>
+                                      )}
+                                      {item.status === 'email_confirmado' && (
+                                        <span className="text-[9px] uppercase tracking-widest text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full text-center">✓ Email confirmado</span>
+                                      )}
+                                      <select
+                                        value={item.status || "pendente"}
+                                        onChange={(e) => handleUpdate(item.id, { status: e.target.value })}
+                                        disabled={item.status === 'pendente'}
+                                        title={item.status === 'pendente' ? "Aguarda confirmação de email" : ""}
+                                        className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-white/70 outline-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                      >
+                                        <option value="pendente" className="bg-[#0d0d14]">Pendente</option>
+                                        <option value="email_confirmado" className="bg-[#0d0d14]">Email confirmado</option>
+                                        <option value="activo" className="bg-[#0d0d14]">Activo</option>
+                                        <option value="suspenso" className="bg-[#0d0d14]">Suspenso</option>
+                                      </select>
+                                    </div>
+                                    {item.role === "formando" && formadoresList.length > 0 && (
+                                      <select
+                                        value={item.formador_id ?? ""}
+                                        onChange={e => handleUpdate(item.id, { formador_id: e.target.value || null })}
+                                        className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-white/70 outline-none cursor-pointer max-w-[160px]"
+                                        title="Formador associado"
+                                      >
+                                        <option value="" className="bg-[#0d0d14]">— Sem formador —</option>
+                                        {formadoresList.map((f: any) => (
+                                          <option key={f.id} value={f.id} className="bg-[#0d0d14]">{f.first_name} {f.last_name}</option>
+                                        ))}
+                                      </select>
+                                    )}
+                                    <button onClick={() => openPowerModal(item)} className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs transition-colors ${item.temporary_power ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-white/[0.04] text-white/30 hover:text-white"}`}>
+                                      <Clock size={11} /> {item.temporary_power ? "Poder activo" : "Poder"}
+                                    </button>
+                                    <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </motion.div>
                           );
