@@ -5,7 +5,7 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   FileText, Video, Search, Download, Loader2, Plus, FolderOpen, Lock,
   Globe, Users, GraduationCap, LayoutGrid, List, ExternalLink,
-  FileImage, FileVideo, FileArchive, File,
+  FileImage, FileVideo, FileArchive, File, Trash2,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -200,6 +200,20 @@ export default function FicheirosPage() {
     }
   }
 
+  async function handleDelete(id: string, nome: string) {
+    if (!confirm(`Eliminar "${nome}"? Esta acção não pode ser desfeita.`)) return;
+    try {
+      await fetch(`/api/db/arquivos`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eq: { id } }),
+      });
+      setFiles(prev => prev.filter(f => f.id !== id));
+    } catch {
+      alert("Erro ao eliminar o ficheiro.");
+    }
+  }
+
   async function handleVisibilidadeChange(id: string, newVis: string) {
     setUpdatingId(id);
     try {
@@ -338,6 +352,14 @@ export default function FicheirosPage() {
                       <VisibilidadeBadge v={f.visibilidade ?? "publico"} small />
                     </div>
                   )}
+                  {(isOwner || isAdmin) && (
+                    <button
+                      onClick={() => handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro")}
+                      className="mt-1 w-full flex items-center justify-center gap-1 py-1 rounded text-[10px] text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <Trash2 size={10} /> Eliminar
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -399,10 +421,20 @@ export default function FicheirosPage() {
                         )}
                       </td>
                       <td className="px-5 py-3 text-right">
-                        <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors">
-                          <Download size={13} /> Abrir
-                        </a>
+                        <div className="flex items-center justify-end gap-1">
+                          <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors">
+                            <Download size={13} /> Abrir
+                          </a>
+                          {(isOwner || isAdmin) && (
+                            <button
+                              onClick={() => handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro")}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
