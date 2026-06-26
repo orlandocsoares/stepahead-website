@@ -1,0 +1,31 @@
+name: Migração email_confirm_tokens
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    name: Criar tabela email_confirm_tokens
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Executar SQL no servidor
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            APP_DIR=/opt/apps/sabermais/sabermais.edu.ao
+            DB_USER=$(grep '^POSTGRES_USER=' "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
+            DB_NAME=$(grep '^POSTGRES_DB='   "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
+
+            docker exec sabermais-postgres psql -U "$DB_USER" -d "$DB_NAME" -c "
+              CREATE TABLE IF NOT EXISTS email_confirm_tokens (
+                token      TEXT PRIMARY KEY,
+                user_id    UUID NOT NULL UNIQUE REFERENCES auth_users(id) ON DELETE CASCADE,
+                expires_at TIMESTAMPTZ NOT NULL
+              );
+            "
+            echo "✅ Tabela email_confirm_tokens criada!"
