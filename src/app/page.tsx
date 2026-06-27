@@ -437,7 +437,7 @@ export default function HeroSection() {
 
   const getDynamicPhaseContent = (index: number) => {
     const base = PROGRAM_PHASES[index];
-    const defaultTextClass = "text-[13px] font-bold text-white/95 leading-snug drop-shadow-md";
+    const defaultTextClass = "text-[13px] font-bold text-white leading-snug" + ' ' + "[text-shadow:0_1px_8px_rgba(0,0,0,0.95)]";
 
     if (!telemetry) return { ...base, description: <span className={defaultTextClass}>{base.description}</span> };
 
@@ -620,7 +620,7 @@ export default function HeroSection() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
-                    className={`relative rounded-xl border ${border} bg-gradient-to-br ${color} backdrop-blur-sm p-3 overflow-hidden`}
+                    className={`relative rounded-xl border ${border} bg-gradient-to-br ${color} backdrop-blur-md p-3 overflow-hidden`}
                   >
                     <div className={`absolute top-0 right-0 w-12 h-12 rounded-full blur-xl ${glow} -translate-y-1/2 translate-x-1/2`} />
                     <div className={`w-7 h-7 rounded-lg ${glow} border ${border} flex items-center justify-center mb-2`}>
@@ -654,6 +654,8 @@ export default function HeroSection() {
       <div className="absolute inset-0 z-10">
         <canvas ref={canvasRef} className="w-full h-full contrast-115 saturate-110 brightness-95 transform-gpu" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80 pointer-events-none" />
+        {/* Vignette lateral esquerda — garante legibilidade do texto em qualquer frame do vídeo */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/20 to-transparent pointer-events-none" />
       </div>
 
       <AnimatePresence>
@@ -864,14 +866,14 @@ export default function HeroSection() {
                 {activePhaseIndex !== 0 && (
                   <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">
                     <div className="shrink-0">
-                      <p className="text-[10px] md:text-[11px] tracking-[0.6em] text-white/70 uppercase font-medium truncate drop-shadow-md">{activeData.subtitle}</p>
-                      <h1 className="text-4xl sm:text-5xl font-bold uppercase tracking-tight text-white mt-2 drop-shadow-lg">{activeData.name}</h1>
+                      <p className="text-[10px] md:text-[11px] tracking-[0.6em] text-white/90 uppercase font-medium truncate" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{activeData.subtitle}</p>
+                      <h1 className="text-4xl sm:text-5xl font-bold uppercase tracking-tight text-white mt-2" style={{textShadow:"0 2px 12px rgba(0,0,0,0.9)"}}>{activeData.name}</h1>
                     </div>
                     <div className="flex-1 mt-4">{activeData.description}</div>
                     <div className="shrink-0 pt-2 mt-auto">
                       <button onClick={() => window.open(DASHBOARD_URL, "_blank")} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-4 w-fit outline-none">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80 group-hover:text-white transition-colors">Saber Mais</span>
-                        <div className="relative w-12 h-[1px] bg-white/30 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div>
+                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white transition-colors" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Saber Mais</span>
+                        <div className="relative w-12 h-[1px] bg-white/50 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div>
                       </button>
                     </div>
                   </motion.div>
