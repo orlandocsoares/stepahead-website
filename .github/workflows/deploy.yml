@@ -183,6 +183,7 @@ jobs:
             echo "==> A recarregar o nginx (config + volumes)..."
             docker compose --env-file .env.production -f docker-compose.prod.yml stop nginx 2>/dev/null || true
             docker compose --env-file .env.production -f docker-compose.prod.yml rm -f nginx 2>/dev/null || true
+            docker rm -f sabermais-nginx 2>/dev/null || true
             sleep 3
             docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-deps nginx
 
