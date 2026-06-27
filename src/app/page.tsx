@@ -258,15 +258,6 @@ export default function HeroSection() {
   }, [isDashboardView]);
 
   const handleLogout = async () => {
-    setIsLoginOpen(false);
-    // Após o login, o hook useProfile será actualizado na próxima renderização.
-    // Apenas precisamos de accionar a UI de boas-vindas.
-    await refreshProfile();
-    setIsVIPWelcomeOpen(true);
-    setTimeout(() => { router.push("/dashboard"); }, 3200); 
-  };
-
-  const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     await refreshProfile(); // Actualiza o estado do perfil para null
     router.refresh();
