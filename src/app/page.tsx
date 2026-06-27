@@ -671,7 +671,6 @@ export default function HeroSection() {
                                               {selected && <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
                                             </span>
                                             <span className="font-medium">{f.first_name} {f.last_name}</span>
-                                            {f.especialidade && <span className="text-white/30 text-[10px] ml-auto">{f.especialidade}</span>}
                                           </button>
                                         );
                                       })}
