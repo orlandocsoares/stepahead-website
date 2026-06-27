@@ -19,7 +19,19 @@ jobs:
           script: |
             echo "==> A aplicar migrações..."
 
+<<<<<<< HEAD
             docker exec sabermais-postgres psql -U postgres -d sabermais -c "
+=======
+            APP_DIR=/opt/apps/sabermais/sabermais.edu.ao
+
+            # Ler as variáveis de ambiente do .env.production
+            DB_USER=$(grep '^POSTGRES_USER=' "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
+            DB_NAME=$(grep '^POSTGRES_DB='   "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
+
+            echo "==> Utilizador: $DB_USER  Base de dados: $DB_NAME"
+
+            docker exec sabermais-postgres psql -U "$DB_USER" -d "$DB_NAME" -c "
+>>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
               CREATE TABLE IF NOT EXISTS mensagens (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 from_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,

@@ -1,38 +1,96 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  BarChart3, Calendar, FileText, 
-  User, LogOut, ShieldAlert, Home, LayoutDashboard,
-  MessageSquare, LifeBuoy 
+import { useEffect, useState } from "react";
+import {
+  LayoutDashboard,
+  LogIn,
+  BarChart3,
+  Calendar,
+  FileText,
+  MessageSquare,
+  LifeBuoy,
+  User,
+  ShieldAlert,
+  Home,
+  LogOut,
 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/hooks/useProfile";
 
-export function CommandCenter() {
-  const pathname = usePathname();
+type Props = {
+  onLoginClick?: () => void;
+  isHero?: boolean;
+};
+
+// Verifica sessão via API própria (não Supabase).
+// - Sem sessão: mostra o botão circular de login
+// - Com sessão: mostra botão discreto para o backoffice
+export function CommandCenter({ onLoginClick, isHero = false }: Props) {
+  const [authUser, setAuthUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const { profile } = useProfile();
   const router = useRouter();
-  const { profile, loading } = useProfile();
+  const pathname = usePathname();
+
+  // State for UI interaction
   const [isVisible, setIsVisible] = useState(false);
   const [internalHover, setInternalHover] = useState(false);
-  const [authUser, setAuthUser] = useState<any>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setAuthUser(user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const getSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setAuthUser(session?.user ?? null);
+      setLoading(false);
+    };
+
+    getSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user ?? null);
+      setLoading(false);
     });
+
     return () => subscription.unsubscribe();
   }, []);
 
-  const isHero = pathname === "/";
-  const shouldShowBar = isHero ? isVisible : true;
+  // Still loading - show nothing to prevent flash
+  if (loading) return null;
+
+  // If not logged in, show the login button (only on hero page)
+  if (!authUser && isHero) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.5 }}
+        className="fixed left-6 top-1/2 -translate-y-1/2 z-[110]"
+      >
+        <button
+          onClick={onLoginClick}
+          className="w-20 h-20 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center group"
+        >
+          <LogIn
+            size={24}
+            className="text-white/40 group-hover:text-white transition-colors"
+          />
+        </button>
+      </motion.div>
+    );
+  }
+
+  // If not logged in and not on hero, show nothing.
+  if (!authUser) return null;
 
   // INJECÇÃO DO PLANO: Inclusão dos caminhos de Comunidade e Suporte com cores premium dedicadas
   const navItems = [
-    { label: "Radar", icon: LayoutDashboard, path: "/dashboard", color: "text-blue-400" },
+    { label: "Radar", icon: BarChart3, path: "/dashboard", color: "text-blue-400" },
     { label: "Agenda", icon: Calendar, path: "/dashboard/agenda", color: "text-emerald-400" },
     { label: "Repositório", icon: FileText, path: "/dashboard/repositorio", color: "text-amber-400" },
     { label: "Comunidade", icon: MessageSquare, path: "/dashboard/comunidade", color: "text-teal-400" },
@@ -49,14 +107,12 @@ export function CommandCenter() {
     window.location.href = '/';
   };
 
-  if (loading) return null;
-
   const displayName = authUser?.user_metadata?.first_name || profile?.first_name || 'Utilizador';
   const avatarUrl = authUser?.user_metadata?.avatar_url || profile?.avatar_url;
   const displayAvatar = avatarUrl || (displayName ? `https://api.dicebear.com/7.x/initials/svg?seed=${displayName}&backgroundColor=ffffff&textColor=000000` : null);
   const userRoleDisplay = profile?.role === 'super-admin' ? 'Admin' : 'Operacional';
 
-  if (!authUser) return null;
+  const shouldShowBar = !isHero || isVisible || internalHover;
 
   return (
     <>
@@ -101,7 +157,7 @@ export function CommandCenter() {
           {/* AVATAR DO UTILIZADOR COM BADGE ACTIVO */}
           <div className="relative flex items-center w-full justify-center mt-2 mb-2">
             <button
-              onClick={() => router.push('/dashboard/perfil')}
+              onClick={() => router.push("/dashboard/perfil")}
               className="relative w-12 h-12 rounded-full outline-none group flex items-center justify-center"
             >
               <div className="absolute inset-0 rounded-full border border-white/10 group-hover:border-white/30 transition-colors duration-500" />
@@ -135,13 +191,18 @@ export function CommandCenter() {
 
           <div className="w-8 h-[1px] bg-white/5 mb-2 mt-2" />
 
-          {/* BOTÃO FIXO PARA VOLTAR AO SITE (HERO) */}
+          {/* BOTÃO RETORNO DINÂMICO: Alterna inteligentemente consoante o local do utilizador */}
           <div className="relative flex items-center w-full justify-center mb-2">
             <button 
-              onClick={() => router.push('/')} 
-              className="relative p-4 rounded-full transition-all duration-700 group outline-none flex items-center justify-center hover:bg-white/[0.03]"
+              onClick={() => router.push(isHero ? "/dashboard" : "/")}
+              className={`relative p-4 rounded-full transition-all duration-700 group outline-none flex items-center justify-center ${isHero ? 'bg-white/5 border border-white/10' : 'hover:bg-white/[0.03]'}`}
             >
-              <Home size={20} strokeWidth={1} className="relative z-10 text-white/20 group-hover:text-white/70 transition-colors" />
+              {isHero ? (
+                <LayoutDashboard size={20} strokeWidth={1.5} className="relative z-10 text-blue-400 group-hover:text-blue-300 transition-colors" />
+              ) : (
+                <Home size={20} strokeWidth={1} className="relative z-10 text-white/20 group-hover:text-white/70 transition-colors" />
+              )}
+              {isHero && <motion.div layoutId="glow" className="absolute inset-0 bg-blue-500/10 rounded-full blur-xl" />}
               
               <AnimatePresence>
                 {internalHover && (
@@ -152,8 +213,8 @@ export function CommandCenter() {
                     transition={{ duration: 0.2, ease: "easeOut" }} 
                     className="absolute left-full pointer-events-none flex items-center h-full top-0"
                   >
-                    <span className="text-[10px] font-medium uppercase tracking-[0.4em] text-white/40 drop-shadow-md whitespace-nowrap">
-                      Página Principal
+                    <span className={`text-[10px] font-medium uppercase tracking-[0.4em] drop-shadow-md whitespace-nowrap ${isHero ? 'text-white' : 'text-white/40'}`}>
+                      {isHero ? "Voltar à Dashboard" : "Voltar à Página"}
                     </span>
                   </motion.div>
                 )}
@@ -170,7 +231,7 @@ export function CommandCenter() {
               return (
                 <div key={item.path} className="relative flex items-center justify-center w-full">
                   <button 
-                    onClick={() => router.push(item.path)} 
+                    onClick={() => router.push(item.path)}
                     className={`relative p-4 rounded-full transition-all duration-700 group outline-none flex items-center justify-center ${isActive ? 'bg-white/5 border border-white/10' : 'hover:bg-white/[0.03]'}`}
                   >
                     <Icon size={20} strokeWidth={isActive ? 1.5 : 1} className={`relative z-10 transition-colors ${isActive ? item.color : 'text-white/20 group-hover:text-white/70'}`} />

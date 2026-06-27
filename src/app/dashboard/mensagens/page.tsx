@@ -3,7 +3,11 @@
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { useSearchParams, useRouter } from "next/navigation";
+<<<<<<< HEAD
 import { Send, Search, Loader2, MessageSquare, ArrowLeft, Smile } from "lucide-react";
+=======
+import { Send, Search, Loader2, MessageSquare, ArrowLeft, Smile, Trash2 } from "lucide-react";
+>>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
 
 type Conversation = {
   other_id: string;
@@ -108,6 +112,14 @@ function MensagensInner() {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [activeId, allUsers]);
 
+<<<<<<< HEAD
+=======
+  async function handleDeleteMsg(id: string) {
+    await fetch(`/api/mensagens?id=${id}`, { method: "DELETE" });
+    if (activeId) fetchMessages(activeId);
+  }
+
+>>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!text.trim() || !activeId || !user) return;
@@ -277,17 +289,40 @@ function MensagensInner() {
                 messages.map((msg) => {
                   const isMe = msg.from_user_id === user?.id;
                   return (
+<<<<<<< HEAD
                     <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"} gap-2`}>
                       {!isMe && <Avatar name={`${msg.first_name} ${msg.last_name}`} size={7} />}
                       <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
+=======
+                    <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"} gap-2 group/msg`}>
+                      {!isMe && <Avatar name={`${msg.first_name} ${msg.last_name}`} size={7} />}
+                      <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 relative ${
+>>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
                         isMe
                           ? "bg-blue-600 text-white rounded-tr-sm"
                           : "bg-white/[0.06] text-white/80 rounded-tl-sm"
                       }`}>
+<<<<<<< HEAD
                         <p className="text-sm leading-relaxed">{msg.content}</p>
                         <p className={`text-[10px] mt-1 ${isMe ? "text-blue-200/60" : "text-white/25"}`}>
                           {formatTime(msg.created_at)}
                         </p>
+=======
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+                        <p className={`text-[10px] mt-1 ${isMe ? "text-blue-200/60" : "text-white/25"}`}>
+                          {formatTime(msg.created_at)}
+                        </p>
+                        {/* Botão eliminar — só nas mensagens enviadas por mim */}
+                        {isMe && (
+                          <button
+                            onClick={() => handleDeleteMsg(msg.id)}
+                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#0d0d14] border border-white/10 text-white/30 hover:text-red-400 hover:border-red-500/30 flex items-center justify-center opacity-0 group-hover/msg:opacity-100 transition-all"
+                            title="Eliminar mensagem"
+                          >
+                            <Trash2 size={10} />
+                          </button>
+                        )}
+>>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
                       </div>
                     </div>
                   );
