@@ -34,16 +34,21 @@ export async function POST(req: Request) {
 
   const roleRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
   const role = roleRes.rows[0]?.role;
-  if (role !== "admin" && role !== "super-admin") {
+  const isAdmin = role === "admin" || role === "super-admin";
+  const isFormador = role === "formador";
+  if (!isAdmin && !isFormador) {
     return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
   }
 
   const { nome, area, formador_id } = await req.json();
-  if (!nome || !area || !formador_id) return NextResponse.json({ error: "Campos obrigatórios em falta" }, { status: 400 });
+  if (!nome || !area) return NextResponse.json({ error: "Campos obrigatórios em falta" }, { status: 400 });
+  // Formador só pode criar turmas para si próprio
+  const effectiveFormadorId = isFormador ? sessionUser.id : formador_id;
+  if (!effectiveFormadorId) return NextResponse.json({ error: "Formador obrigatório" }, { status: 400 });
 
   const result = await dbQuery(
     `INSERT INTO turmas (nome, area, formador_id) VALUES ($1, $2, $3) RETURNING *`,
-    [nome, area, formador_id]
+    [nome, area, effectiveFormadorId]
   );
   return NextResponse.json({ data: result.rows[0] });
 }

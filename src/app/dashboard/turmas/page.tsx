@@ -79,12 +79,13 @@ export default function TurmasPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.nome || !form.formador_id) return;
+    const formadorId = isFormador ? (user?.id ?? "") : form.formador_id;
+    if (!form.nome || !formadorId) return;
     setCreating(true);
     await fetch("/api/turmas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, formador_id: formadorId }),
     });
     setShowCreate(false);
     setForm({ nome: "", area: "Matemática", formador_id: "" });
@@ -180,8 +181,8 @@ export default function TurmasPage() {
           <h2 className="text-lg font-semibold text-white">Turmas</h2>
           <p className="text-sm text-white/40 mt-0.5">{turmas.length} turma{turmas.length !== 1 ? "s" : ""}</p>
         </div>
-        {isAdmin && (
-        <button onClick={() => setShowCreate(true)}
+        {(isAdmin || isFormador) && (
+        <button onClick={() => { setForm(f => ({ ...f, formador_id: isFormador ? (user?.id ?? "") : "" })); setShowCreate(true); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
           <Plus size={14} /> Nova turma
         </button>
@@ -211,6 +212,7 @@ export default function TurmasPage() {
                   {AREAS.filter(a => a !== "Geral").map(a => <option key={a} value={a} className="bg-[#0d0d14]">{a}</option>)}
                 </select>
               </div>
+              {isAdmin && (
               <div className="space-y-1.5">
                 <label className="text-xs text-white/40">Formador</label>
                 <select required value={form.formador_id} onChange={e => setForm(f => ({ ...f, formador_id: e.target.value }))}
@@ -221,6 +223,7 @@ export default function TurmasPage() {
                   ))}
                 </select>
               </div>
+              )}
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setShowCreate(false)}
                   className="flex-1 py-2.5 rounded-lg border border-white/[0.06] text-sm text-white/50 hover:text-white transition-colors">Cancelar</button>
