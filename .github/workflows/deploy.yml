@@ -18,11 +18,14 @@ jobs:
       # 2. Liga-se à VPS via SSH e faz o deploy
       - name: Deploy na VPS
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
+          envs: RESEND_API_KEY
           script: |
             set -e
 
@@ -31,6 +34,19 @@ jobs:
             echo "==> A ir para o directório da aplicação..."
             cd "$APP_DIR"
 
+            echo "==> A actualizar variáveis de ambiente..."
+            if grep -q '^RESEND_API_KEY=' "$APP_DIR/.env.production"; then
+              sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=$RESEND_API_KEY|" "$APP_DIR/.env.production"
+            else
+              echo "RESEND_API_KEY=$RESEND_API_KEY" >> "$APP_DIR/.env.production"
+            fi
+
+            if grep -q '^APP_URL=' "$APP_DIR/.env.production"; then
+              sed -i "s|^APP_URL=.*|APP_URL=https://sabermais.edu.ao|" "$APP_DIR/.env.production"
+            else
+              echo "APP_URL=https://sabermais.edu.ao" >> "$APP_DIR/.env.production"
+            fi
+
             echo "==> A buscar o código mais recente..."
             git pull origin main
 
@@ -38,6 +54,36 @@ jobs:
             DB_USER=$(grep '^POSTGRES_USER=' "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
             DB_NAME=$(grep '^POSTGRES_DB='   "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
             docker exec sabermais-postgres psql -U "$DB_USER" -d "$DB_NAME" -c "
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS formador_id UUID REFERENCES profiles(id) ON DELETE SET NULL;
+              CREATE TABLE IF NOT EXISTS notificacoes (
+                id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                tipo       TEXT NOT NULL,
+                titulo     TEXT NOT NULL,
+                mensagem   TEXT,
+                lida       BOOLEAN NOT NULL DEFAULT FALSE,
+                link       TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_notificacoes_user ON notificacoes(user_id, lida, created_at DESC);
+              CREATE TABLE IF NOT EXISTS hero_telemetria (
+                id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                media_radar INTEGER,
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+              );
+              INSERT INTO hero_telemetria (id) SELECT gen_random_uuid() WHERE NOT EXISTS (SELECT 1 FROM hero_telemetria);
+              CREATE TABLE IF NOT EXISTS formando_formadores (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                formando_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                formador_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                status TEXT NOT NULL DEFAULT 'pendente',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                ano_letivo TEXT NOT NULL DEFAULT '2025/2026',
+                UNIQUE(formando_id, formador_id, ano_letivo)
+              );
+              CREATE INDEX IF NOT EXISTS idx_ff_formando ON formando_formadores(formando_id, status);
+              CREATE INDEX IF NOT EXISTS idx_ff_formador ON formando_formadores(formador_id, status);
               CREATE TABLE IF NOT EXISTS mensagens (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 from_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -48,16 +94,46 @@ jobs:
               );
               CREATE INDEX IF NOT EXISTS idx_mensagens_to   ON mensagens(to_user_id, read);
               CREATE INDEX IF NOT EXISTS idx_mensagens_conv ON mensagens(from_user_id, to_user_id, created_at DESC);
+              CREATE TABLE IF NOT EXISTS comunidade_comentarios (
+                id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                post_id    UUID NOT NULL REFERENCES comunidade_posts(id) ON DELETE CASCADE,
+                user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                content    TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_com_comentarios_post ON comunidade_comentarios(post_id, created_at ASC);
+              CREATE TABLE IF NOT EXISTS ticket_mensagens (
+                id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                ticket_id  UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+                user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                content    TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_ticket_mensagens ON ticket_mensagens(ticket_id, created_at ASC);
+              CREATE TABLE IF NOT EXISTS comunidade_gostos (
+                post_id    UUID NOT NULL REFERENCES comunidade_posts(id) ON DELETE CASCADE,
+                user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (post_id, user_id)
+              );
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             echo "==> A construir e reiniciar o container web..."
             docker compose --env-file .env.production -f docker-compose.prod.yml build web
+            docker compose --env-file .env.production -f docker-compose.prod.yml stop web 2>/dev/null || true
+            docker compose --env-file .env.production -f docker-compose.prod.yml rm -f web 2>/dev/null || true
+            sleep 3
             docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-deps web
 
             echo "==> A recarregar o nginx (config + volumes)..."
-            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-deps --force-recreate nginx
+            docker compose --env-file .env.production -f docker-compose.prod.yml stop nginx 2>/dev/null || true
+            docker compose --env-file .env.production -f docker-compose.prod.yml rm -f nginx 2>/dev/null || true
+            sleep 3
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-deps nginx
 
-            echo "==> A limpar imagens antigas..."
-            docker image prune -f
+            echo "==> A limpar imagens e cache antigas..."
+            docker image prune -af
+            docker builder prune -af
+            docker system prune -f --volumes=false
 
             echo "✅ Deploy concluído!"

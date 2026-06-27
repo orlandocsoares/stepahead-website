@@ -4,23 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FileText, FolderOpen, Users, Calendar,
-  Shield, Settings, LogOut, ChevronLeft, ChevronRight, Globe, X, UserCircle, LifeBuoy, MessageSquare, Mail,
+  Shield, Settings, LogOut, ChevronLeft, ChevronRight, Globe, X, UserCircle, LifeBuoy, MessageSquare, Mail, GraduationCap,
 } from "lucide-react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 
 // roles: undefined = todos | "admin" = admin e super-admin | "staff" = admin + formador
 const NAV = [
   { label: "Dashboard",    icon: LayoutDashboard, path: "/dashboard" },
-  { label: "Conteúdos",    icon: FileText,         path: "/dashboard/conteudos" },
   { label: "Ficheiros",    icon: FolderOpen,       path: "/dashboard/ficheiros" },
-  { label: "Utilizadores", icon: Users,            path: "/dashboard/utilizadores", adminOnly: true },
   { label: "Agenda",       icon: Calendar,         path: "/dashboard/agenda" },
   { label: "Comunidade",   icon: MessageSquare,    path: "/dashboard/comunidade" },
   { label: "Mensagens",    icon: Mail,             path: "/dashboard/mensagens" },
-  { label: "Permissões",   icon: Shield,           path: "/dashboard/admin",        adminOnly: true },
+  { label: "Turmas",       icon: GraduationCap,    path: "/dashboard/turmas",       staffOnly: true },
+  { label: "Utilizadores", icon: Users,            path: "/dashboard/admin",        staffOnly: true },
   { label: "Suporte",      icon: LifeBuoy,         path: "/dashboard/suporte" },
   { label: "Perfil",       icon: UserCircle,       path: "/dashboard/perfil" },
-  { label: "Definições",   icon: Settings,         path: "/dashboard/definicoes" },
 ];
 
 type Props = {
@@ -83,9 +81,10 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
 
       {/* Nav */}
       <nav className="dashboard-sidebar flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {NAV.filter(({ adminOnly }) => {
-          if (!adminOnly) return true;
-          return user?.role === "admin" || user?.role === "super-admin";
+        {NAV.filter(({ adminOnly, staffOnly }: any) => {
+          if (adminOnly) return user?.role === "admin" || user?.role === "super-admin";
+          if (staffOnly) return user?.role === "admin" || user?.role === "super-admin" || user?.role === "formador";
+          return true;
         }).map(({ label, icon: Icon, path }) => {
           const active = isActive(path);
           return (

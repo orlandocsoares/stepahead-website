@@ -31,7 +31,21 @@ jobs:
             echo "==> Utilizador: $DB_USER  Base de dados: $DB_NAME"
 
             docker exec sabermais-postgres psql -U "$DB_USER" -d "$DB_NAME" -c "
+<<<<<<< HEAD
 >>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
+=======
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_name TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS provincia TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS escola TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS especialidade TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS biografia TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+              CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                token      TEXT PRIMARY KEY,
+                user_id    UUID NOT NULL UNIQUE REFERENCES auth_users(id) ON DELETE CASCADE,
+                expires_at TIMESTAMPTZ NOT NULL
+              );
+>>>>>>> 0f734c167fa484fa9acd18f356e0b784c4adf9b7
               CREATE TABLE IF NOT EXISTS mensagens (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 from_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -42,6 +56,12 @@ jobs:
               );
               CREATE INDEX IF NOT EXISTS idx_mensagens_to   ON mensagens(to_user_id, read);
               CREATE INDEX IF NOT EXISTS idx_mensagens_conv ON mensagens(from_user_id, to_user_id, created_at DESC);
+              CREATE TABLE IF NOT EXISTS email_confirm_tokens (
+                token      TEXT PRIMARY KEY,
+                user_id    UUID NOT NULL UNIQUE REFERENCES auth_users(id) ON DELETE CASCADE,
+                expires_at TIMESTAMPTZ NOT NULL
+              );
+              UPDATE profiles SET status = 'activo' WHERE role IN ('admin', 'super-admin');
             "
 
             echo "✅ Migrações concluídas!"

@@ -12,6 +12,11 @@ const ALLOWED_TABLES = new Set([
   "tickets",
   "arquivos",
   "documents",
+  "turmas",
+  "turma_membros",
+  "comunidade_comentarios",
+  "comunidade_gostos",
+  "ticket_mensagens",
 ]);
 
 function parseTable(params: { table: string }) {
@@ -23,7 +28,7 @@ function parseTable(params: { table: string }) {
 }
 
 function mapJoinedRows(table: string, rows: any[]) {
-  if (table !== "tickets" && table !== "comunidade_posts") {
+  if (table !== "tickets" && table !== "comunidade_posts" && table !== "arquivos") {
     return rows;
   }
 
@@ -57,9 +62,71 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
     const tableSql = assertIdentifier(table);
     const url = new URL(request.url);
 
+    // Obter sessão e perfil do utilizador para verificação de segurança
+    const sessionUser = await getSessionUser();
+    let userRole = "formando";
+    let userSpecialization = "";
+    
+    if (sessionUser) {
+      const profileRes = await dbQuery(
+        `SELECT role, specialization, especialidade FROM profiles WHERE id = $1 LIMIT 1`,
+        [sessionUser.id]
+      );
+      if (profileRes.rows[0]) {
+        userRole = profileRes.rows[0].role || "formando";
+        userSpecialization = profileRes.rows[0].specialization || profileRes.rows[0].especialidade || "";
+      }
+    }
+
     const filters: string[] = [];
     const values: unknown[] = [];
     let valueIndex = 1;
+
+    // Filtros de segurança para a tabela "arquivos"
+    // visibilidade: 'publico' | 'formadores' | 'privado' | 'turma'
+    if (table === "arquivos") {
+      if (sessionUser) {
+        if (userRole !== "super-admin" && userRole !== "admin") {
+          if (userRole === "formador") {
+            // formador: vê os seus + publico + formadores + turma das suas turmas
+            filters.push(`(
+              ${tableSql}.uploader_id = $${valueIndex}
+              OR ${tableSql}.visibilidade IN ('publico', 'formadores')
+              OR (${tableSql}.visibilidade = 'turma' AND ${tableSql}.turma_id IN (
+                SELECT id FROM turmas WHERE formador_id = $${valueIndex}
+              ))
+            )`);
+            values.push(sessionUser.id);
+            valueIndex++;
+          } else {
+            // formando: vê Geral + áreas dos formadores aceites + turmas onde é membro
+            filters.push(`(
+              (${tableSql}.visibilidade IN ('publico', 'formadores') AND (
+                ${tableSql}.area = 'Geral'
+                OR ${tableSql}.area IN (
+                  SELECT p.specialization FROM profiles p
+                  INNER JOIN formando_formadores ff ON ff.formador_id = p.id
+                  WHERE ff.formando_id = $${valueIndex} AND ff.status IN ('aceite')
+                )
+                OR ${tableSql}.area IN (
+                  SELECT t.area FROM turmas t
+                  INNER JOIN turma_membros tm ON tm.turma_id = t.id
+                  WHERE tm.formando_id = $${valueIndex}
+                )
+              ))
+              OR (${tableSql}.visibilidade = 'turma' AND ${tableSql}.turma_id IN (
+                SELECT turma_id FROM turma_membros WHERE formando_id = $${valueIndex}
+              ))
+            )`);
+            values.push(sessionUser.id);
+            valueIndex++;
+          }
+        }
+        // admin/super-admin: sem filtro adicional, vêem tudo
+      } else {
+        filters.push(`${tableSql}.visibilidade = 'publico' AND ${tableSql}.area = 'Geral'`);
+      }
+    }
 
     for (const [key, value] of url.searchParams.entries()) {
       if (key.startsWith("eq.")) {
@@ -92,6 +159,11 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
 
     if (table === "comunidade_posts" && selectRequested.includes("profiles(")) {
       fromSql += ` LEFT JOIN profiles ON profiles.id = ${tableSql}.user_id`;
+      selectSql += `, profiles.first_name AS profile_first_name, profiles.last_name AS profile_last_name, profiles.role AS profile_role, profiles.avatar_url AS profile_avatar_url`;
+    }
+
+    if (table === "arquivos" && selectRequested.includes("profiles(")) {
+      fromSql += ` LEFT JOIN profiles ON profiles.id = ${tableSql}.uploader_id`;
       selectSql += `, profiles.first_name AS profile_first_name, profiles.last_name AS profile_last_name, profiles.role AS profile_role, profiles.avatar_url AS profile_avatar_url`;
     }
 
@@ -143,6 +215,9 @@ export async function POST(request: Request, context: { params: Promise<{ table:
     const insertedRows: any[] = [];
 
     for (const item of payload) {
+      if (table === "arquivos") {
+        item.uploader_id = sessionUser.id;
+      }
       const entries = Object.entries(item ?? {});
       if (!entries.length) continue;
 

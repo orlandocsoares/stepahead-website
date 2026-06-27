@@ -1,0 +1,41 @@
+name: Migração turmas
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    name: Criar tabelas turmas e turma_membros
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Executar SQL no servidor
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            APP_DIR=/opt/apps/sabermais/sabermais.edu.ao
+            DB_USER=$(grep '^POSTGRES_USER=' "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
+            DB_NAME=$(grep '^POSTGRES_DB='   "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
+
+            docker exec sabermais-postgres psql -U "$DB_USER" -d "$DB_NAME" -c "
+              CREATE TABLE IF NOT EXISTS turmas (
+                id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                nome        TEXT NOT NULL,
+                area        TEXT NOT NULL,
+                formador_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE TABLE IF NOT EXISTS turma_membros (
+                turma_id    UUID NOT NULL REFERENCES turmas(id) ON DELETE CASCADE,
+                formando_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                PRIMARY KEY (turma_id, formando_id)
+              );
+              CREATE INDEX IF NOT EXISTS idx_turma_membros_formando ON turma_membros(formando_id);
+              CREATE INDEX IF NOT EXISTS idx_turmas_formador ON turmas(formador_id);
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS turma_id UUID REFERENCES turmas(id) ON DELETE SET NULL;
+            "
+            echo "✅ Migração turmas concluída!"

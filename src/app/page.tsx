@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
 import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,99 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
   );
 }
 
+function ForgotPasswordLink() {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Erro ao enviar email.");
+      setSent(true);
+    } catch (err: any) {
+      setError(err.message || "Erro ao enviar email. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="w-full text-center text-[9px] uppercase tracking-widest text-white/25 hover:text-white/60 transition-colors mt-1">
+        Recuperar password
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setOpen(false); setSent(false); setEmail(""); }} />
+          <div className="relative w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-3xl border border-white/10 rounded-2xl p-8 space-y-5">
+            <div>
+              <h3 className="text-sm font-semibold text-white">Recuperar password</h3>
+              <p className="text-[10px] text-white/40 mt-1">Introduza o seu e-mail e enviaremos um link para repor a password.</p>
+            </div>
+
+            <div className="space-y-4">
+              <input
+                type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                disabled={sent}
+                placeholder="o-seu-email@exemplo.com"
+                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 placeholder:text-white/20 disabled:opacity-40"
+              />
+
+              {/* Resultado */}
+              {sent && (
+                <div className="flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-3">
+                  <span className="text-emerald-400 text-lg leading-none">✓</span>
+                  <div>
+                    <p className="text-emerald-400 text-xs font-semibold">Email enviado!</p>
+                    <p className="text-white/40 text-[11px] mt-0.5 leading-relaxed">Verifique a sua caixa de entrada e siga as instruções para redefinir a password.</p>
+                  </div>
+                </div>
+              )}
+              {error && (
+                <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
+                  <span className="text-red-400 text-lg leading-none">✕</span>
+                  <div>
+                    <p className="text-red-400 text-xs font-semibold">Não foi possível enviar</p>
+                    <p className="text-white/40 text-[11px] mt-0.5 leading-relaxed">{error}</p>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                disabled={loading || sent}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSubmit(e as any); }}
+                className="w-full py-3 rounded-lg bg-blue-600 text-white text-xs font-semibold uppercase tracking-widest hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading && <Loader2 size={13} className="animate-spin" />}
+                {sent ? "Link enviado" : "Enviar link"}
+              </button>
+
+              {(sent || error) && (
+                <button type="button" onClick={() => { setOpen(false); setSent(false); setEmail(""); setError(null); }}
+                  className="w-full text-center text-[10px] text-white/25 hover:text-white/60 transition-colors">
+                  Fechar
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function HeroSection() {
   const isDashboardView = false;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -102,7 +196,10 @@ export default function HeroSection() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [provincia, setProvincia] = useState('');
-  const [escola, setEscola] = useState('');       
+  const [escola, setEscola] = useState('');
+  const [formadoresIds, setFormadoresIds] = useState<string[]>([]);
+  const [anoLetivo, setAnoLetivo] = useState(getAnoLetivoActivo());
+  const [formadoresList, setFormadoresList] = useState<any[]>([]);
   const [especialidade, setEspecialidade] = useState('');
   const [bio, setBio] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -134,20 +231,23 @@ export default function HeroSection() {
     setSessionId(Math.random().toString(36).substring(2, 11) + Date.now().toString(36));
   }, []);
 
-  // Escuta do Telemóvel
+  // Escuta do Telemóvel via SSE
   useEffect(() => {
     if (!sessionId || userRole !== 'formador' || authMode !== 'register') return;
 
-    const channel = supabase.channel(`camera-${sessionId}`);
-    channel.on('broadcast', { event: 'photo_captured' }, (payload: any) => {
-        if (payload.payload?.url) {
-          setAvatarPreview(payload.payload.url);
-          setRemoteImageUrl(payload.payload.url);
+    const es = new EventSource(`/api/sse/camera/${sessionId}`);
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data?.url) {
+          setAvatarPreview(data.url);
+          setRemoteImageUrl(data.url);
           setUploadMode("local");
         }
-      }).subscribe();
+      } catch {}
+    };
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { es.close(); };
   }, [sessionId, userRole, authMode]);
 
   useEffect(() => {
@@ -169,15 +269,11 @@ export default function HeroSection() {
   }, []);
 
   useEffect(() => {
-    const fetchTelemetry = async () => {
-      if (isDashboardView) return;
-      const { data: telData } = await supabase.from('hero_telemetria').select('*').single();
-      const { data: formadoresData } = await supabase.from('profiles').select('*').eq('role', 'formador').limit(4);
-      if (telData) {
-        setTelemetry({ ...telData, formadores_lista: formadoresData || [] });
-      }
-    };
-    fetchTelemetry();
+    if (isDashboardView) return;
+    fetch("/api/public/hero")
+      .then(r => r.json())
+      .then(data => { setTelemetry(data); setFormadoresList(data.formadores_lista ?? []); })
+      .catch(() => {});
   }, [isDashboardView]);
 
   const handleLogout = async () => {
@@ -200,16 +296,25 @@ export default function HeroSection() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { setError(error.message); setLoading(false); }
-    else {
-      // Criar sessão na API própria (Supabase já verificou as credenciais)
-      await fetch("/api/auth/session-by-email", {
+    try {
+      // Verificar credenciais e estado da conta via API própria
+      const sessionRes = await fetch("/api/auth/session-by-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, password }),
       });
+      const sessionData = await sessionRes.json();
+
+      if (!sessionRes.ok) {
+        setError(sessionData.error ?? "Erro ao autenticar.");
+        setLoading(false);
+        return;
+      }
+
       await triggerVIPTransition();
+    } catch {
+      setError("Erro de ligação. Tente novamente.");
+      setLoading(false);
     }
   };
 
@@ -235,43 +340,40 @@ export default function HeroSection() {
 
     setLoading(true);
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email, password, options: { data: { first_name: firstName, role: userRole } }
+    // Tentar registo directo na nossa API (não depende do Supabase)
+    const syncRes = await fetch("/api/auth/sync-profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+        role: userRole,
+        ...(userRole === 'formando' ? { provincia, escola, formadores_ids: formadoresIds, ano_letivo: anoLetivo } : { especialidade, biografia: bio }),
+      }),
     });
+    const syncData = await syncRes.json();
+    if (!syncRes.ok) { setError(syncData.error ?? "Erro ao criar conta."); setLoading(false); return; }
 
-    if (authError) { setError(authError.message); setLoading(false); return; }
-
-    if (authData.user) {
-      let finalAvatarUrl = remoteImageUrl;
-
-      if (userRole === 'formador' && avatarFile && !finalAvatarUrl) {
-        const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${authData.user.id}-${Math.random()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage.from('avatars').upload(`formadores/${fileName}`, avatarFile);
-        if (!uploadError && uploadData) {
-          finalAvatarUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${uploadData.path}`;
-        }
-      }
-
-      const profilePayload: any = { first_name: firstName, last_name: lastName, role: userRole, status: 'pendente' };
-
-      if (userRole === 'formando') {
-        profilePayload.provincia = provincia;
-        profilePayload.escola = escola;
-      } else {
-        profilePayload.especialidade = especialidade;
-        profilePayload.biografia = bio;
-        if (finalAvatarUrl) profilePayload.avatar_url = finalAvatarUrl;
-      }
-
-      const { error: profileError } = await supabase.from('profiles').update(profilePayload).eq('id', authData.user.id);
-
-      if (!profileError) {
-        setIsSuccess(true); // Mostra o ecrã de email dentro do pop-up
-      } else {
-        setError("Erro ao gravar perfil.");
+    // Upload avatar formador para a nossa API de storage
+    if (userRole === 'formador' && avatarFile) {
+      const form = new FormData();
+      form.append("bucket", "avatars");
+      form.append("path", `formadores/${Math.random().toString(36).slice(2)}.${avatarFile.name.split('.').pop()}`);
+      form.append("file", avatarFile);
+      const upRes = await fetch("/api/storage/upload", { method: "POST", body: form });
+      const upData = await upRes.json();
+      if (upRes.ok && upData.data?.path) {
+        await fetch("/api/auth/sync-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, role: userRole, avatar_url: `/storage/v1/object/public/avatars/${upData.data.path}` }),
+        });
       }
     }
+
+    setIsSuccess(true);
     setLoading(false);
   };
 
@@ -462,15 +564,18 @@ export default function HeroSection() {
             
             {/* O SEU POP-UP ORIGINAL, AGORA COM TUDO LÁ DENTRO */}
             <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-              <DialogContent className="w-[95vw] md:w-[70vw] lg:w-[50vw] sm:max-w-[440px] bg-[#0a0a0a]/80 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200]">
+              <DialogContent className="w-[95vw] sm:max-w-[520px] bg-[#0a0a0a]/80 backdrop-blur-3xl border border-white/5 text-white rounded-[2.5rem] p-10 pointer-events-auto z-[200]">
                 
                 {isSuccess ? (
                   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center text-center space-y-6 py-8">
-                    <ShieldCheck size={56} className="text-blue-500" />
-                    <div className="space-y-2">
-                      <h2 className="text-xl font-light uppercase tracking-[0.2em]">Verifique o E-mail</h2>
+                    <ShieldCheck size={56} className="text-emerald-500" />
+                    <div className="space-y-3">
+                      <h2 className="text-xl font-light uppercase tracking-[0.2em]">Verifique o seu email</h2>
                       <p className="text-[10px] uppercase tracking-widest text-white/50 leading-relaxed">
-                        Enviámos um link de activação para <span className="text-white">{email}</span>. Confirme para validar a autenticidade dos dados.
+                        Enviámos um email para <span className="text-white">{email}</span>. Clique no link de confirmação para verificar que é dono deste endereço.
+                      </p>
+                      <p className="text-[10px] uppercase tracking-widest text-amber-400/80 leading-relaxed">
+                        Só após confirmar o email é que o administrador poderá aprovar a sua conta.
                       </p>
                     </div>
                     <Button onClick={() => setIsLoginOpen(false)} className="rounded-full bg-white text-black hover:bg-blue-500 hover:text-white uppercase tracking-[0.2em] text-[9px] px-8">Fechar</Button>
@@ -502,23 +607,80 @@ export default function HeroSection() {
                           <Button type="submit" disabled={loading} className="w-full rounded-2xl border bg-white/5 hover:bg-white hover:text-black font-medium uppercase tracking-[0.3em] py-6 text-[11px] shadow-none mt-4 transition-all">
                             {loading ? <Loader2 className="animate-spin" /> : "Entrar"}
                           </Button>
+                          <ForgotPasswordLink />
                         </form>
                       ) : (
-                        <form onSubmit={handleSignUp} className="space-y-5 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
-                          
-                          <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={handleSignUp} className="space-y-4">
+
+                          <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Nome</Label><Input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
                             <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Apelido</Label><Input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
                           </div>
-                          
-                          <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
-                          <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
-                          
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                            <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                          </div>
+
                           {userRole === 'formando' ? (
-                            <>
-                              <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Província</Label><Input placeholder="Ex: Bié" required value={provincia} onChange={(e) => setProvincia(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
-                              <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
-                            </>
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <Label className="text-[8px] uppercase tracking-widest text-blue-400">Província</Label>
+                                  <select required value={provincia} onChange={(e) => setProvincia(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
+                                    <option value="" disabled className="bg-[#0d0d14]">Seleccionar</option>
+                                    {["Luanda","Bié"].map(p => (
+                                      <option key={p} value={p} className="bg-[#0d0d14]">{p}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[8px] uppercase tracking-widest text-blue-400">Ano Lectivo</Label>
+                                <select value={anoLetivo} onChange={e => setAnoLetivo(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
+                                  {getAnosLetivos().map(a => (
+                                    <option key={a} value={a} className="bg-[#0d0d14]">{a}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              {formadoresList.filter(f => !provincia || f.provincia === provincia).length > 0 && (
+                                <div className="space-y-2">
+                                  <Label className="text-[8px] uppercase tracking-widest text-blue-400">
+                                    Formadores <span className="text-white/30">(escolha os seus professores)</span>
+                                  </Label>
+                                  <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+                                    {formadoresList
+                                      .filter(f => !provincia || f.provincia === provincia)
+                                      .map((f: any) => {
+                                        const selected = formadoresIds.includes(f.id);
+                                        return (
+                                          <button
+                                            key={f.id}
+                                            type="button"
+                                            onClick={() => setFormadoresIds(prev =>
+                                              selected ? prev.filter(id => id !== f.id) : [...prev, f.id]
+                                            )}
+                                            className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-left text-xs transition-all border ${
+                                              selected
+                                                ? 'bg-blue-500/20 border-blue-500/40 text-white'
+                                                : 'bg-white/[0.03] border-white/10 text-white/50 hover:border-white/20 hover:text-white/80'
+                                            }`}
+                                          >
+                                            <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 ${selected ? 'bg-blue-500 border-blue-500' : 'border-white/30'}`}>
+                                              {selected && <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
+                                            </span>
+                                            <span className="font-medium">{f.first_name} {f.last_name}</span>
+                                          </button>
+                                        );
+                                      })}
+                                  </div>
+                                  {formadoresIds.length > 0 && (
+                                    <p className="text-[10px] text-blue-400">{formadoresIds.length} formador{formadoresIds.length > 1 ? 'es' : ''} seleccionado{formadoresIds.length > 1 ? 's' : ''}</p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <div className="space-y-6 pt-2">
                               {/* ZONA DO FORMADOR (FOTO + QR + ESPEC + BIO) */}
@@ -649,12 +811,9 @@ export default function HeroSection() {
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" />
+                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
                 </motion.div>
               </div>
-              <p className="text-[9px] sm:text-[10px] md:text-[11px] font-medium uppercase tracking-[0.35em] sm:tracking-[0.45em] md:tracking-[0.6em] text-white/80 text-center leading-none mt-0 z-20 whitespace-nowrap w-fit drop-shadow-md">
-                Programa de Apoio ao Reforço do Ensino Secundário em Angola
-              </p>
             </motion.div>
 
           </motion.div>
@@ -665,7 +824,7 @@ export default function HeroSection() {
         {isVIPWelcomeOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.9 }} className="fixed inset-0 bg-black/50 backdrop-blur-xl z-[300] flex flex-col items-center justify-center text-center p-6 pointer-events-auto">
             <motion.div initial={{ opacity: 0, y: 30, scale: 0.99, filter: "blur(15px)" }} animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }} transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center">
-              <motion.img src="/storage/v1/object/public/Logo%20Sabermais/Sabermais_Logo.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ repeat: Infinity, duration: 4 }} className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none mix-blend-screen" />
+              <motion.img src="/logo-sabermais.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ repeat: Infinity, duration: 4 }} className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none mix-blend-screen" />
               <h2 className="text-5xl font-extralight uppercase tracking-tighter text-white italic leading-none">Bem-vindo</h2>
               <h3 className="text-3xl font-bold uppercase tracking-tight text-blue-500 mt-3 drop-shadow-[0_0_20px_rgba(59,130,246,0.3)]">{finalFullName}</h3>
             </motion.div>
