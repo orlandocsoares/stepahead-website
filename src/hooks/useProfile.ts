@@ -1,56 +1,36 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState, useCallback } from 'react';
 
+// Este hook é agora a única fonte de verdade para o perfil do utilizador no lado do cliente.
+// Ele busca os dados da sua API local, que por sua vez usa a sua base de dados local.
 export function useProfile() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // 1. A LISTA MESTRA (HARDCODE BYPASS)
-  // Qualquer e-mail aqui terá acesso Super-Admin absoluto, ignorando bloqueios da Base de Dados.
-  const SUPER_ADMINS = [
-    'programasabermais3ciclo@gmail.com', 
-    'arch.medius@gmail.com'
-  ];
-
-  async function syncProfile() {
+  // A função para buscar/refrescar o perfil é envolvida em useCallback.
+  const syncProfile = useCallback(async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        // Tentamos ler a BD...
-        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-
-        // 2. A INJECÇÃO DE AUTORIDADE
-        const isMaster = SUPER_ADMINS.includes(user.email || '');
-        
-        let finalProfile = { ...(data || {}), email: user.email };
-
-        // Se for o Arquiteto Jair, forçamos os dados para não dar erro de "null" e abrir o menu
-        if (isMaster) {
-          finalProfile.role = 'super-admin';
-          finalProfile.status = 'aprovado';
-          finalProfile.first_name = finalProfile.first_name || 'Coordenação';
-          finalProfile.last_name = finalProfile.last_name || 'Saber Mais';
-          finalProfile.specialization = finalProfile.specialization || 'Gestão Global';
-          finalProfile.province = finalProfile.province || 'Nacional';
-        }
-
-        setProfile(finalProfile);
-        console.log("PSM_FORCED_ACCESS: Cargo Activo ->", finalProfile.role);
+      // Em vez de chamar o Supabase, chamamos a nossa API local.
+      const res = await fetch('/api/auth/me');
+      if (!res.ok) {
+        setProfile(null);
+        return;
       }
+      const { profile: userProfile } = await res.json();
+      setProfile(userProfile);
     } catch (err) {
-      console.error("Erro crítico ignorado pela contingência:", err);
+      console.error("Erro ao buscar o perfil do utilizador:", err);
+      setProfile(null); // Limpa o perfil em caso de erro de rede
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     syncProfile();
-  }, []);
+  }, [syncProfile]);
 
   return { profile, loading, refresh: syncProfile };
 }

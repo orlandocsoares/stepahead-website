@@ -7,10 +7,10 @@ import {
   LogOut, Home, UserCog, ShieldCheck, Zap, X 
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { useProfile } from "@/hooks/useProfile";
 
 export function Sidebar() {
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const { profile } = useProfile();
   const [hasMission, setHasMission] = useState(false);
   const [missionInfo, setMissionInfo] = useState<any>(null);
   const [showToast, setShowToast] = useState(false);
@@ -18,38 +18,8 @@ export function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
+  // A lógica de "missão" é processada quando o perfil do utilizador é carregado.
   useEffect(() => {
-    let channel: any;
-
-    async function getUserData() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from('profiles')
-        .select('role, delegated_module, delegation_expiry')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (data) {
-        processMission(data);
-        setUserRole(data.role);
-      }
-
-      channel = supabase.channel(`profile-changes-${user.id}`)
-        .on('postgres_changes', 
-          { event: 'UPDATE', table: 'profiles', schema: 'public', filter: `id=eq.${user.id}` },
-          (payload) => {
-            const newData = payload.new;
-            processMission(newData);
-            if (newData.delegated_module && !showToast) {
-              setShowToast(true);
-              setTimeout(() => setShowToast(false), 8000); 
-            }
-          }
-        ).subscribe();
-    }
-
     function processMission(data: any) {
       const now = new Date();
       const expiry = data.delegation_expiry ? new Date(data.delegation_expiry) : null;
@@ -59,9 +29,13 @@ export function Sidebar() {
       setMissionInfo(isActive ? data : null);
     }
 
-    getUserData();
-    return () => { if (channel) supabase.removeChannel(channel); };
-  }, [pathname]);
+    if (profile) {
+      processMission(profile);
+    }
+    // NOTA: A funcionalidade de actualização em tempo real (realtime) estava ligada ao Supabase.
+    // Para a manter, seria necessário implementar uma solução de WebSocket/SSE com o seu backend local.
+    // Por agora, a informação da missão é carregada quando o componente é montado.
+  }, [profile]);
 
   // Nomes actualizados para reflectir a sua interface
   const menu = [
@@ -72,7 +46,8 @@ export function Sidebar() {
   ];
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    // Chama a API de logout para limpar o cookie de sessão
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
     router.refresh();
   };
@@ -112,7 +87,7 @@ export function Sidebar() {
         {/* INDICADOR DE STATUS */}
         <div className="flex justify-center mb-10 shrink-0">
            <div className={`w-2 h-2 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.3)] 
-             ${userRole === 'super-admin' ? 'bg-blue-500' : hasMission ? 'bg-orange-500 animate-pulse shadow-[0_0_15px_#f97316]' : 'bg-green-500'}`} 
+             ${profile?.role === 'super-admin' ? 'bg-blue-500' : hasMission ? 'bg-orange-500 animate-pulse shadow-[0_0_15px_#f97316]' : 'bg-green-500'}`} 
            />
         </div>
 
@@ -163,7 +138,7 @@ export function Sidebar() {
           })}
 
           {/* BOTÃO OPERACIONAL / CONTROLO */}
-          {(userRole === 'super-admin' || userRole === 'formador' || hasMission) && (
+          {(profile?.role === 'super-admin' || profile?.role === 'formador' || hasMission) && (
             <div className="w-full pt-4 mt-2">
               <button 
                 onClick={() => router.push("/dashboard/admin")} 
@@ -173,15 +148,15 @@ export function Sidebar() {
                   <motion.div layoutId="activeIndicator" className="absolute left-0 w-[3px] h-6 bg-blue-500 rounded-r-full" />
                 )}
                 
-                {hasMission && userRole !== 'super-admin' 
+                {hasMission && profile?.role !== 'super-admin' 
                   ? <Zap size={20} strokeWidth={1.5} className={`transition-colors duration-300 animate-pulse ${pathname === '/dashboard/admin' ? 'text-orange-500' : 'text-orange-500/50 group-hover:text-orange-400'}`} /> 
                   : <ShieldCheck size={20} strokeWidth={1.5} className={`transition-colors duration-300 ${pathname === '/dashboard/admin' ? 'text-blue-500' : 'text-blue-500/30 group-hover:text-blue-400'}`} />
                 }
 
                 {/* Legenda Pura Flutuante */}
                 <div className="absolute left-[70px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none flex items-center">
-                  <span className={`text-[10px] uppercase tracking-[0.4em] font-light drop-shadow-md whitespace-nowrap ${hasMission && userRole !== 'super-admin' ? 'text-orange-400/70' : 'text-blue-400/70'}`}>
-                    {hasMission && userRole !== 'super-admin' ? 'Missão' : 'Controlo'}
+                  <span className={`text-[10px] uppercase tracking-[0.4em] font-light drop-shadow-md whitespace-nowrap ${hasMission && profile?.role !== 'super-admin' ? 'text-orange-400/70' : 'text-blue-400/70'}`}>
+                    {hasMission && profile?.role !== 'super-admin' ? 'Missão' : 'Controlo'}
                   </span>
                 </div>
               </button>

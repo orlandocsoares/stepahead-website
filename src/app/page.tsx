@@ -16,6 +16,7 @@ import { Navigator } from "@/components/Navigator";
 import { CommandCenter } from "@/components/CommandCenter";
 import { HeroBranding } from "@/components/HeroBranding";
 import { HelpGuide } from "@/components/HelpGuide";
+import { useProfile } from "@/hooks/useProfile";
 import { QRCodeSVG } from "qrcode.react";
 
 const FRAME_SUFFIX = "_delay-0.033s.webp";
@@ -182,9 +183,8 @@ export default function HeroSection() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const router = useRouter();
+  const { profile, refresh: refreshProfile } = useProfile();
 
-  const [user, setUser] = useState<any>(null);
-  const [profileData, setProfileData] = useState<any>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isVIPWelcomeOpen, setIsVIPWelcomeOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -251,24 +251,6 @@ export default function HeroSection() {
   }, [sessionId, userRole, authMode]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      if (user) {
-        supabase.from("profiles").select("*").eq("id", user.id).single().then(({ data }) => setProfileData(data));
-      }
-    });
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
-        setProfileData(data);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
     if (isDashboardView) return;
     fetch("/api/public/hero")
       .then(r => r.json())
@@ -277,17 +259,16 @@ export default function HeroSection() {
   }, [isDashboardView]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
+    refreshProfile(); // Actualiza o estado do perfil para null
     router.refresh();
   };
 
   const triggerVIPTransition = async () => {
     setIsLoginOpen(false);
-    const { data: { user: freshUser } } = await supabase.auth.getUser();
-    if (freshUser) {
-      const { data } = await supabase.from("profiles").select("*").eq("id", freshUser.id).single();
-      setProfileData(data);
-    }
+    // Após o login, o hook useProfile será actualizado na próxima renderização.
+    // Apenas precisamos de accionar a UI de boas-vindas.
+    await refreshProfile();
     setIsVIPWelcomeOpen(true);
     setTimeout(() => { router.push("/dashboard"); }, 3200); 
   };
@@ -456,7 +437,7 @@ export default function HeroSection() {
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const qrCodeUrl = `${origin}/camera/${sessionId}`;
-  const finalFullName = `${profileData?.first_name || ""} ${profileData?.last_name || ""}`.trim() || email;
+  const finalFullName = `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim() || profile?.email;
 
   const getDynamicPhaseContent = (index: number) => {
     const base = PROGRAM_PHASES[index];
@@ -561,6 +542,18 @@ export default function HeroSection() {
       <AnimatePresence>
         {!isDashboardView && (
           <motion.div key="hero-main-ui" initial={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(20px)" }} className="absolute inset-0 z-30 pointer-events-none" >
+            
+            {/* BANDEIRAS DA COOPERAÇÃO */}
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 1, delay: 1.2, ease: "easeOut" }}
+              className="fixed top-6 left-6 sm:top-10 sm:left-10 z-50 pointer-events-auto flex items-center gap-3"
+            >
+              {/* Certifique-se que estes caminhos para as bandeiras estão correctos */}
+              <img src="/storage/v1/object/public/Flags/ao.svg" alt="Bandeira de Angola" className="h-5 w-auto rounded-sm shadow-lg" />
+              <img src="/storage/v1/object/public/Flags/pt.svg" alt="Bandeira de Portugal" className="h-5 w-auto rounded-sm shadow-lg" />
+            </motion.div>
             
             {/* O SEU POP-UP ORIGINAL, AGORA COM TUDO LÁ DENTRO */}
             <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
@@ -785,11 +778,11 @@ export default function HeroSection() {
                 
                 <AnimatePresence>
                   {isLogoHovered && activePhaseIndex === 0 && (
-                    user ? (
+                    profile ? (
                       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute -top-20 flex flex-col items-center gap-2 z-50">
                         <div className="flex items-center gap-2 px-4 py-2 bg-white/[0.02] backdrop-blur-3xl border border-white/10 rounded-xl shadow-xl transition-all">
                           <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                          <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-white">Sessão: {user.user_metadata?.first_name || 'Utilizador'}</span>
+                          <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-white">Sessão: {profile.first_name || 'Utilizador'}</span>
                         </div>
                         <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-[8px] uppercase tracking-widest text-white/30 hover:text-red-400 flex items-center gap-1"><LogOut size={10} /> Terminar Sessão</button>
                       </motion.div>

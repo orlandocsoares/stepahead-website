@@ -53,8 +53,43 @@ jobs:
             echo "==> A aplicar migrações na base de dados..."
             DB_USER=$(grep '^POSTGRES_USER=' "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
             DB_NAME=$(grep '^POSTGRES_DB='   "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
+
+            # Script de migração consolidado.
+            # Contém todas as alterações de todos os ficheiros de workflow para garantir consistência.
             docker exec sabermais-postgres psql -U "$DB_USER" -d "$DB_NAME" -c "
+              -- Adicionar colunas à tabela 'profiles'
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_name TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS provincia TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS escola TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS especialidade TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS biografia TEXT;
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
               ALTER TABLE profiles ADD COLUMN IF NOT EXISTS formador_id UUID REFERENCES profiles(id) ON DELETE SET NULL;
+
+              -- Criação de novas tabelas
+              CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                token      TEXT PRIMARY KEY,
+                user_id    UUID NOT NULL UNIQUE REFERENCES auth_users(id) ON DELETE CASCADE,
+                expires_at TIMESTAMPTZ NOT NULL
+              );
+
+              CREATE TABLE IF NOT EXISTS email_confirm_tokens (
+                token      TEXT PRIMARY KEY,
+                user_id    UUID NOT NULL UNIQUE REFERENCES auth_users(id) ON DELETE CASCADE,
+                expires_at TIMESTAMPTZ NOT NULL
+              );
+
+              CREATE TABLE IF NOT EXISTS mensagens (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                from_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                to_user_id   UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                content      TEXT NOT NULL,
+                read         BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_mensagens_to   ON mensagens(to_user_id, read);
+              CREATE INDEX IF NOT EXISTS idx_mensagens_conv ON mensagens(from_user_id, to_user_id, created_at DESC);
+
               CREATE TABLE IF NOT EXISTS notificacoes (
                 id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -66,34 +101,27 @@ jobs:
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
               );
               CREATE INDEX IF NOT EXISTS idx_notificacoes_user ON notificacoes(user_id, lida, created_at DESC);
+
               CREATE TABLE IF NOT EXISTS hero_telemetria (
                 id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 media_radar INTEGER,
                 updated_at TIMESTAMPTZ DEFAULT NOW()
               );
               INSERT INTO hero_telemetria (id) SELECT gen_random_uuid() WHERE NOT EXISTS (SELECT 1 FROM hero_telemetria);
+
               CREATE TABLE IF NOT EXISTS formando_formadores (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 formando_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
                 formador_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-                status TEXT NOT NULL DEFAULT 'pendente',
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                ano_letivo TEXT NOT NULL DEFAULT '2025/2026',
+                status      TEXT NOT NULL DEFAULT 'pendente',
+                created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                ano_letivo  TEXT NOT NULL DEFAULT '2025/2026',
                 UNIQUE(formando_id, formador_id, ano_letivo)
               );
               CREATE INDEX IF NOT EXISTS idx_ff_formando ON formando_formadores(formando_id, status);
               CREATE INDEX IF NOT EXISTS idx_ff_formador ON formando_formadores(formador_id, status);
-              CREATE TABLE IF NOT EXISTS mensagens (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                from_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-                to_user_id   UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-                content      TEXT NOT NULL,
-                read         BOOLEAN NOT NULL DEFAULT FALSE,
-                created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-              );
-              CREATE INDEX IF NOT EXISTS idx_mensagens_to   ON mensagens(to_user_id, read);
-              CREATE INDEX IF NOT EXISTS idx_mensagens_conv ON mensagens(from_user_id, to_user_id, created_at DESC);
+
               CREATE TABLE IF NOT EXISTS comunidade_comentarios (
                 id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 post_id    UUID NOT NULL REFERENCES comunidade_posts(id) ON DELETE CASCADE,
@@ -103,6 +131,7 @@ jobs:
               );
               CREATE INDEX IF NOT EXISTS idx_com_comentarios_post ON comunidade_comentarios(post_id, created_at ASC);
               CREATE TABLE IF NOT EXISTS ticket_mensagens (
+
                 id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 ticket_id  UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
                 user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -110,12 +139,38 @@ jobs:
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
               );
               CREATE INDEX IF NOT EXISTS idx_ticket_mensagens ON ticket_mensagens(ticket_id, created_at ASC);
+
               CREATE TABLE IF NOT EXISTS comunidade_gostos (
                 post_id    UUID NOT NULL REFERENCES comunidade_posts(id) ON DELETE CASCADE,
                 user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 PRIMARY KEY (post_id, user_id)
               );
+
+              CREATE TABLE IF NOT EXISTS turmas (
+                id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                nome        TEXT NOT NULL,
+                area        TEXT NOT NULL,
+                formador_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_turmas_formador ON turmas(formador_id);
+
+              CREATE TABLE IF NOT EXISTS turma_membros (
+                turma_id    UUID NOT NULL REFERENCES turmas(id) ON DELETE CASCADE,
+                formando_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                PRIMARY KEY (turma_id, formando_id)
+              );
+              CREATE INDEX IF NOT EXISTS idx_turma_membros_formando ON turma_membros(formando_id);
+
+              -- Alterações em tabelas existentes
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS visibilidade TEXT NOT NULL DEFAULT 'publico';
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS uploader_id UUID;
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS turma_id UUID REFERENCES turmas(id) ON DELETE SET NULL;
+
+              -- Atualizações de dados
+              UPDATE profiles SET status = 'activo' WHERE role IN ('admin', 'super-admin');
+              UPDATE arquivos SET visibilidade = 'publico';
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             echo "==> A construir e reiniciar o container web..."

@@ -24,25 +24,30 @@ export async function GET(request: Request) {
     }
 
     if (conversations) {
-      // Uma linha por interlocutor — a última mensagem trocada
+      // Query optimizada para evitar o problema "N+1" na contagem de mensagens não lidas.
+      // Em vez de uma subquery por linha, pré-calculamos as contagens e fazemos um LEFT JOIN.
       const result = await db.query(
-        `SELECT DISTINCT ON (other_id)
-           other_id,
-           p.first_name, p.last_name, p.avatar_url, p.role,
-           m.content AS last_message,
-           m.created_at,
-           m.from_user_id,
-           -- nº de não lidas desta conversa
-           (SELECT COUNT(*) FROM mensagens u
-            WHERE u.from_user_id = other_id AND u.to_user_id = $1 AND u.read = FALSE) AS unread_count
-         FROM (
-           SELECT CASE WHEN from_user_id = $1 THEN to_user_id ELSE from_user_id END AS other_id,
-                  id, content, created_at, from_user_id
-           FROM mensagens
-           WHERE from_user_id = $1 OR to_user_id = $1
-         ) m
-         JOIN profiles p ON p.id = m.other_id
-         ORDER BY other_id, m.created_at DESC`,
+        `SELECT DISTINCT ON (m.other_id)
+          m.other_id,
+          p.first_name, p.last_name, p.avatar_url, p.role,
+          m.content AS last_message,
+          m.created_at,
+          m.from_user_id,
+          COALESCE(unread.unread_count, 0)::int AS unread_count
+        FROM (
+          -- Subquery para identificar o outro utilizador na conversa
+          SELECT CASE WHEN from_user_id = $1 THEN to_user_id ELSE from_user_id END AS other_id,
+                 id, content, created_at, from_user_id
+          FROM mensagens
+          WHERE from_user_id = $1 OR to_user_id = $1
+        ) m
+        JOIN profiles p ON p.id = m.other_id
+        LEFT JOIN (
+          -- Subquery para contar mensagens não lidas por utilizador
+          SELECT from_user_id, COUNT(*) as unread_count
+          FROM mensagens WHERE to_user_id = $1 AND read = FALSE GROUP BY from_user_id
+        ) unread ON unread.from_user_id = m.other_id
+        ORDER BY m.other_id, m.created_at DESC`,
         [session.id]
       );
       return NextResponse.json({ data: result.rows });
@@ -67,14 +72,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ data: result.rows });
     }
 
-    return NextResponse.json({ error: "Parâmetro obrigatório em falta" }, { status: 400 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: "Parâmetro obrigatório em falta (ex: ?with=<userId>)" }, { status: 400 });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
-<<<<<<< HEAD
-=======
 // DELETE /api/mensagens?id=<msgId>  — só o remetente pode eliminar
 export async function DELETE(request: Request) {
   try {
@@ -91,12 +95,12 @@ export async function DELETE(request: Request) {
     );
     if (result.rowCount === 0) return NextResponse.json({ error: "Mensagem não encontrada ou sem permissão" }, { status: 404 });
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
->>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
 // POST /api/mensagens  { to_user_id, content }
 export async function POST(request: Request) {
   try {
@@ -115,8 +119,9 @@ export async function POST(request: Request) {
       `INSERT INTO mensagens (from_user_id, to_user_id, content) VALUES ($1, $2, $3) RETURNING *`,
       [session.id, to_user_id, content.trim()]
     );
-    return NextResponse.json({ data: result.rows[0] });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ data: result.rows[0] }, { status: 201 });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { type User as SupabaseUser } from "@supabase/supabase-js";
 import {
   LayoutDashboard,
   LogIn,
@@ -24,14 +25,13 @@ type Props = {
   isHero?: boolean;
 };
 
-// Verifica sessão via API própria (não Supabase).
+// Verifica a sessão do utilizador com o Supabase.
 // - Sem sessão: mostra o botão circular de login
 // - Com sessão: mostra botão discreto para o backoffice
 export function CommandCenter({ onLoginClick, isHero = false }: Props) {
-  const [authUser, setAuthUser] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const { profile } = useProfile();
+  // O estado do utilizador e o loading vêm agora directamente do hook useProfile.
+  // Isto centraliza a lógica e remove a dependência directa do Supabase aqui.
+  const { profile, loading } = useProfile();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -39,32 +39,11 @@ export function CommandCenter({ onLoginClick, isHero = false }: Props) {
   const [isVisible, setIsVisible] = useState(false);
   const [internalHover, setInternalHover] = useState(false);
 
-  useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setAuthUser(session?.user ?? null);
-      setLoading(false);
-    };
-
-    getSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   // Still loading - show nothing to prevent flash
   if (loading) return null;
 
   // If not logged in, show the login button (only on hero page)
-  if (!authUser && isHero) {
+  if (!profile && isHero) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -86,7 +65,7 @@ export function CommandCenter({ onLoginClick, isHero = false }: Props) {
   }
 
   // If not logged in and not on hero, show nothing.
-  if (!authUser) return null;
+  if (!profile) return null;
 
   // INJECÇÃO DO PLANO: Inclusão dos caminhos de Comunidade e Suporte com cores premium dedicadas
   const navItems = [
@@ -107,8 +86,8 @@ export function CommandCenter({ onLoginClick, isHero = false }: Props) {
     window.location.href = '/';
   };
 
-  const displayName = authUser?.user_metadata?.first_name || profile?.first_name || 'Utilizador';
-  const avatarUrl = authUser?.user_metadata?.avatar_url || profile?.avatar_url;
+  const displayName = profile?.first_name || 'Utilizador';
+  const avatarUrl = profile?.avatar_url;
   const displayAvatar = avatarUrl || (displayName ? `https://api.dicebear.com/7.x/initials/svg?seed=${displayName}&backgroundColor=ffffff&textColor=000000` : null);
   const userRoleDisplay = profile?.role === 'super-admin' ? 'Admin' : 'Operacional';
 
