@@ -49,15 +49,16 @@ export function CommandCenter({ onLoginClick, isHero = false }: Props) {
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.5 }}
-        className="fixed left-6 top-1/2 -translate-y-1/2 z-[110]"
+        className="fixed left-8 bottom-10 z-[110]"
       >
         <button
           onClick={onLoginClick}
-          className="w-20 h-20 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center group"
+          className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center group hover:bg-white/15 hover:border-white/40 transition-all shadow-lg"
+          title="Entrar"
         >
           <LogIn
-            size={24}
-            className="text-white/40 group-hover:text-white transition-colors"
+            size={22}
+            className="text-white/70 group-hover:text-white transition-colors"
           />
         </button>
       </motion.div>
