@@ -496,24 +496,78 @@ export default function HeroSection() {
             </div>
           )
         };
-      case 5:
+      case 5: {
+        const areaColors: Record<string, { bg: string; text: string; border: string }> = {
+          "Matemática":        { bg: "bg-blue-500/10",    text: "text-blue-300",   border: "border-blue-500/20" },
+          "Português":         { bg: "bg-emerald-500/10", text: "text-emerald-300",border: "border-emerald-500/20" },
+          "Ciências":          { bg: "bg-cyan-500/10",    text: "text-cyan-300",   border: "border-cyan-500/20" },
+          "História":          { bg: "bg-amber-500/10",   text: "text-amber-300",  border: "border-amber-500/20" },
+          "Geografia":         { bg: "bg-lime-500/10",    text: "text-lime-300",   border: "border-lime-500/20" },
+          "Biologia":          { bg: "bg-green-500/10",   text: "text-green-300",  border: "border-green-500/20" },
+          "Física":            { bg: "bg-violet-500/10",  text: "text-violet-300", border: "border-violet-500/20" },
+          "Química":           { bg: "bg-pink-500/10",    text: "text-pink-300",   border: "border-pink-500/20" },
+          "Geral":             { bg: "bg-white/5",        text: "text-white/50",   border: "border-white/10" },
+        };
+        const defaultAreaColor = { bg: "bg-white/5", text: "text-white/50", border: "border-white/10" };
+        const areas: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
+
         return {
           ...base,
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-              {telemetry.total_materials && (
-                <div className="flex items-center gap-4 mt-3">
-                  <FileText className="text-amber-400 w-10 h-10" />
-                  <div className="text-left">
-                    <span className="text-4xl font-bold text-white tracking-tighter">{telemetry.total_materials}</span>
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-amber-400 font-bold">Materiais no Cofre</p>
-                  </div>
+
+              {/* Contador principal */}
+              <div className="flex items-end gap-3">
+                <div className="relative">
+                  <span className="text-[52px] font-black text-white leading-none tracking-tighter tabular-nums drop-shadow-lg">
+                    {telemetry.total_materials ?? 0}
+                  </span>
+                  <span className="absolute -top-1 -right-3 text-amber-400 text-lg font-bold">+</span>
+                </div>
+                <div className="pb-1.5">
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-amber-400 font-bold leading-tight">Materiais</p>
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-amber-400/60 font-bold leading-tight">pedagógicos</p>
+                </div>
+              </div>
+
+              {/* Pills por área */}
+              {areas.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {areas.map(({ area, total }) => {
+                    const c = areaColors[area] ?? defaultAreaColor;
+                    return (
+                      <motion.span
+                        key={area}
+                        initial={{ opacity: 0, scale: 0.85 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-semibold ${c.bg} ${c.text} ${c.border}`}
+                      >
+                        <span className="w-1 h-1 rounded-full bg-current opacity-60" />
+                        {area}
+                        <span className="opacity-50 font-normal">({total})</span>
+                      </motion.span>
+                    );
+                  })}
                 </div>
               )}
+
+              {/* CTA */}
+              <motion.a
+                href="/dashboard/ficheiros"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-amber-400 transition-colors pointer-events-auto group"
+              >
+                Aceder ao repositório
+                <span className="group-hover:translate-x-1 transition-transform">→</span>
+              </motion.a>
             </div>
-          )
+          ),
         };
+      }
       case 6: {
         const metrics = [
           {

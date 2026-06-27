@@ -2,17 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { Menu, MessageSquare } from "lucide-react";
-=======
-import { Menu, MessageSquare, Globe } from "lucide-react";
->>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
-import { useEffect, useState } from "react";
-=======
-import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X } from "lucide-react";
+import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
->>>>>>> 0f734c167fa484fa9acd18f356e0b784c4adf9b7
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard":               "Dashboard",
@@ -34,7 +25,7 @@ type Props = { onMobileMenuToggle: () => void };
 export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAdminUser();
+  const { user, logout } = useAdminUser();
   const [unread, setUnread] = useState(0);
   const [notifs, setNotifs] = useState<any[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -85,10 +76,8 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
     return () => clearInterval(i);
   }, [user]);
 
-  // Reaparecer banner ao mudar de página
   useEffect(() => { setBannerDismissed(false); }, [pathname]);
 
-  // Fechar ao clicar fora
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (bellRef.current && !bellRef.current.contains(e.target as Node)) setNotifOpen(false);
@@ -138,34 +127,11 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
       <h1 className="flex-1 text-sm md:text-base font-semibold text-white text-center md:text-left">{title}</h1>
 
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        {/* Voltar ao site público */}
-        <a
-          href="/"
-          className="p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors"
-          aria-label="Ver site público"
-          title="Ver site público"
-        >
-          <Globe size={18} />
-        </a>
-
->>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
-        {/* Badge de mensagens não lidas */}
-        <button
-          onClick={() => router.push("/dashboard/mensagens")}
-          className="relative p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors"
-          aria-label="Mensagens"
-        >
-=======
         <a href="/" className="p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors" title="Ver site público">
           <Globe size={18} />
         </a>
 
-        {/* Mensagens */}
         <button onClick={() => router.push("/dashboard/mensagens")} className="relative p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors">
->>>>>>> 0f734c167fa484fa9acd18f356e0b784c4adf9b7
           <MessageSquare size={18} />
           {msgUnread > 0 && (
             <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-blue-500 text-[9px] text-white flex items-center justify-center font-bold">
@@ -228,6 +194,15 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
             </div>
           )}
         </div>
+
+        {/* Logout mobile */}
+        <button
+          onClick={logout}
+          className="md:hidden p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/[0.08] transition-colors"
+          aria-label="Terminar sessão"
+        >
+          <LogOut size={18} />
+        </button>
 
         <div className="text-right hidden sm:block">
           <p className="text-xs font-medium text-white/70">{displayName}</p>

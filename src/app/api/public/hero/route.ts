@@ -4,7 +4,7 @@ import { dbQuery } from "@/lib/db";
 export async function GET() {
   const safe = (p: Promise<any>) => p.catch(() => ({ rows: [] }));
 
-  const [formadores, proximoEvento, totalMateriais, telemetria, totalFormandos, provincias, turmas] = await Promise.all([
+  const [formadores, proximoEvento, totalMateriais, telemetria, totalFormandos, provincias, turmas, areasMateriais] = await Promise.all([
     safe(dbQuery(`
       SELECT id, first_name, last_name, specialization AS especialidade, biografia, avatar_url, provincia
       FROM profiles
@@ -23,6 +23,14 @@ export async function GET() {
     safe(dbQuery(`SELECT COUNT(*) AS total FROM profiles WHERE role = 'formando' AND status = 'activo'`)),
     safe(dbQuery(`SELECT COUNT(DISTINCT provincia) AS total FROM profiles WHERE status = 'activo' AND provincia IS NOT NULL`)),
     safe(dbQuery(`SELECT COUNT(*) AS total FROM turmas`)),
+    safe(dbQuery(`
+      SELECT area, COUNT(*) AS total
+      FROM arquivos
+      WHERE status = 'publicado' AND area IS NOT NULL AND area != ''
+      GROUP BY area
+      ORDER BY total DESC
+      LIMIT 5
+    `)),
   ]);
 
   return NextResponse.json({
@@ -34,5 +42,6 @@ export async function GET() {
     total_formandos: Number(totalFormandos.rows[0]?.total ?? 0),
     total_provincias: Number(provincias.rows[0]?.total ?? 0),
     total_turmas: Number(turmas.rows[0]?.total ?? 0),
+    areas_materiais: areasMateriais.rows.map((r: any) => ({ area: r.area, total: Number(r.total) })),
   });
 }
