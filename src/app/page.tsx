@@ -706,7 +706,7 @@ export default function HeroSection() {
           {/* Mobile: botão pill centrado no fundo */}
           <button
             onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
-            className="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white text-[11px] font-bold uppercase tracking-[0.3em] shadow-lg"
+            className="md:hidden fixed bottom-[72px] left-1/2 -translate-x-1/2 z-[110] flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white text-[11px] font-bold uppercase tracking-[0.3em] shadow-lg"
           >
             <LogIn size={15} />
             Entrar
@@ -717,7 +717,7 @@ export default function HeroSection() {
       {!isDashboardView && !isVIPWelcomeOpen && profile && (
         <a
           href="/dashboard"
-          className="fixed left-1/2 -translate-x-1/2 bottom-20 md:left-6 md:translate-x-0 md:bottom-8 z-[110] flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/25 transition-all shadow-lg group"
+          className="fixed left-1/2 -translate-x-1/2 bottom-[72px] md:left-6 md:translate-x-0 md:bottom-8 z-[110] flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/25 transition-all shadow-lg group"
         >
           <LayoutDashboard size={16} className="text-white/50 group-hover:text-white transition-colors" />
           <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors">Backoffice</span>
@@ -936,7 +936,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div className="absolute top-[14vh] sm:top-[28vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-auto sm:w-[90%] md:w-[540px] z-40 pointer-events-auto flex flex-col justify-between" style={{minHeight: '60vh', maxHeight: '75vh'}}>
+            <div className="absolute top-[14vh] sm:top-[28vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-auto sm:w-[90%] md:w-[540px] z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '75vh'}}>
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
                   <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">
@@ -1005,22 +1005,52 @@ export default function HeroSection() {
               </div>
             </motion.div>
 
-            {/* Navegação mobile — dots no fundo */}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3 md:hidden pointer-events-auto">
-              <div className="flex items-center gap-2">
-                {PROGRAM_PHASES.map((phase, index) => {
-                  if (index === 0) return null;
-                  const isActive = activePhaseIndex === index;
-                  return (
-                    <button
-                      key={phase.id}
-                      onClick={() => goToPhase(index)}
-                      className={`rounded-full transition-all duration-300 ${isActive ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/30 hover:bg-white/60'}`}
-                    />
-                  );
-                })}
+            {/* Barra de navegação mobile */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden pointer-events-auto">
+              <div className="flex items-stretch bg-black/60 backdrop-blur-2xl border-t border-white/[0.08]">
+                {/* Fase anterior */}
+                <button
+                  onClick={() => goToPhase(activePhaseIndex - 1)}
+                  disabled={activePhaseIndex <= 1}
+                  className="flex-1 flex flex-col items-start justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
+                >
+                  <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">anterior</span>
+                  <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wide truncate max-w-[90px]">
+                    {activePhaseIndex > 1 ? PROGRAM_PHASES[activePhaseIndex - 1]?.name : ''}
+                  </span>
+                </button>
+
+                {/* Fase actual — centro */}
+                <div className="flex flex-col items-center justify-center px-4 py-3 border-x border-white/[0.08] min-w-[120px]">
+                  <span className="text-[8px] uppercase tracking-[0.4em] text-white/40 font-medium">
+                    {String(activePhaseIndex).padStart(2,'0')} / {String(PROGRAM_PHASES.length - 1).padStart(2,'0')}
+                  </span>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={activePhaseIndex}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-[12px] font-bold text-white uppercase tracking-[0.2em] mt-0.5"
+                    >
+                      {PROGRAM_PHASES[activePhaseIndex]?.name}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+
+                {/* Fase seguinte */}
+                <button
+                  onClick={() => goToPhase(activePhaseIndex + 1)}
+                  disabled={activePhaseIndex >= PROGRAM_PHASES.length - 1}
+                  className="flex-1 flex flex-col items-end justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
+                >
+                  <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">seguinte</span>
+                  <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wide truncate max-w-[90px] text-right">
+                    {activePhaseIndex < PROGRAM_PHASES.length - 1 ? PROGRAM_PHASES[activePhaseIndex + 1]?.name : ''}
+                  </span>
+                </button>
               </div>
-              <p className="text-[8px] uppercase tracking-[0.4em] text-white/30">deslize para navegar</p>
             </div>
 
           </motion.div>
