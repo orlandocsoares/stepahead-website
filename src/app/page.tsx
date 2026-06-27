@@ -659,17 +659,6 @@ export default function HeroSection() {
         {!isDashboardView && (
           <motion.div key="hero-main-ui" initial={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(20px)" }} className="absolute inset-0 z-30 pointer-events-none" >
             
-            {/* BANDEIRAS DA COOPERAÇÃO */}
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ duration: 1, delay: 1.2, ease: "easeOut" }}
-              className="fixed top-6 left-6 sm:top-10 sm:left-10 z-50 pointer-events-auto flex items-center gap-3"
-            >
-              {/* As imagens são servidas a partir da pasta 'public' */}
-              <img src="/flags/Flag_of_Angola.svg.png" alt="Bandeira de Angola" className="h-5 w-auto rounded-sm shadow-lg" />
-              <img src="/flags/Flag_of_Portugal.svg.webp" alt="Bandeira de Portugal" className="h-5 w-auto rounded-sm shadow-lg" />
-            </motion.div>
             
             {/* O SEU POP-UP ORIGINAL, AGORA COM TUDO LÁ DENTRO */}
             <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
@@ -888,6 +877,55 @@ export default function HeroSection() {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* TICKER DE MÉTRICAS */}
+            {telemetry && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 1.5 }}
+                className="absolute bottom-[calc(10vh+140px)] sm:bottom-[calc(10vh+160px)] left-0 right-0 z-40 overflow-hidden pointer-events-none"
+              >
+                <div className="relative">
+                  {/* gradientes nas bordas */}
+                  <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-black/60 to-transparent z-10" />
+                  <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/60 to-transparent z-10" />
+
+                  {/* linha superior */}
+                  <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-2" />
+
+                  {/* ticker scroll */}
+                  <div className="flex gap-0 w-max animate-ticker">
+                    {[...Array(3)].map((_, rep) => (
+                      <div key={rep} className="flex items-center gap-8 px-8">
+                        {[
+                          { label: "Formandos Activos",      value: telemetry.total_formandos,  dot: "bg-blue-400" },
+                          { label: "Formadores",             value: telemetry.total_formadores, dot: "bg-emerald-400" },
+                          { label: "Materiais Pedagógicos",  value: telemetry.total_materials,  dot: "bg-amber-400" },
+                          { label: "Turmas",                 value: telemetry.total_turmas,     dot: "bg-violet-400" },
+                          ...(telemetry.proximo_evento ? [{ label: "Próximo Evento", value: telemetry.proximo_evento, dot: "bg-cyan-400", isText: true }] : []),
+                          ...( (telemetry.areas_materiais ?? []).slice(0, 2).map((a: any) => ({
+                            label: a.area, value: a.total, dot: "bg-white/30"
+                          }))),
+                        ].map(({ label, value, dot, isText }: any, i) => (
+                          <div key={i} className="flex items-center gap-3 shrink-0">
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
+                            <span className="text-[9px] uppercase tracking-[0.25em] text-white/30 font-medium">{label}</span>
+                            <span className="text-[11px] font-bold text-white/60 tabular-nums ml-1">
+                              {isText ? value : (value ?? 0)}
+                            </span>
+                            <span className="text-white/10 text-xs mx-2">·</span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* linha inferior */}
+                  <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
+                </div>
+              </motion.div>
+            )}
 
             <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-10 sm:bottom-12 md:bottom-16 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
