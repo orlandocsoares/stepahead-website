@@ -24,14 +24,14 @@ export function useAdminUser() {
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => r.json())
-      .then(({ data }) => {
-        if (!data?.user) {
-          router.push("/login");
+      .then(({ profile }) => {
+        if (!profile) {
+          router.push("/");
         } else {
-          setUser(data.user);
+          setUser(profile);
         }
       })
-      .catch(() => router.push("/login"))
+      .catch(() => router.push("/"))
       .finally(() => setLoading(false));
   }, [router]);
 
