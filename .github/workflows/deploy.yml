@@ -172,8 +172,8 @@ jobs:
               UPDATE profiles SET status = 'activo' WHERE role IN ('admin', 'super-admin');
               UPDATE arquivos SET visibilidade = 'publico';
 
-              -- Limpar sessoes expiradas e sessoes de teste
-              DELETE FROM user_sessions WHERE expires_at < NOW();
+              -- Limpar todas as sessoes a cada deploy (forcado)
+              DELETE FROM user_sessions;
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             echo "==> A construir e reiniciar o container web..."
