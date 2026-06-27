@@ -80,7 +80,7 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
       </div>
 
       {/* Nav */}
-      <nav className="dashboard-sidebar flex-1 overflow-y-auto py-4 px-2 space-y-1">
+      <nav className="dashboard-sidebar flex-1 overflow-y-auto py-4 px-2 space-y-1 min-h-0">
         {NAV.filter(({ adminOnly, staffOnly }: any) => {
           if (adminOnly) return user?.role === "admin" || user?.role === "super-admin";
           if (staffOnly) return user?.role === "admin" || user?.role === "super-admin" || user?.role === "formador";
