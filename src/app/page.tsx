@@ -878,6 +878,17 @@ export default function HeroSection() {
               </AnimatePresence>
             </div>
 
+            {/* BANDEIRAS DA COOPERAÇÃO */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 1.2, ease: "easeOut" }}
+              className="fixed top-6 left-6 sm:top-10 sm:left-10 z-50 pointer-events-auto flex items-center gap-3"
+            >
+              <img src="/flags/Flag_of_Angola.svg.png" alt="Bandeira de Angola" className="h-5 w-auto rounded-sm shadow-lg" />
+              <img src="/flags/Flag_of_Portugal.svg.webp" alt="Bandeira de Portugal" className="h-5 w-auto rounded-sm shadow-lg" />
+            </motion.div>
+
             {/* TICKER DE MÉTRICAS */}
             {telemetry && (
               <motion.div
