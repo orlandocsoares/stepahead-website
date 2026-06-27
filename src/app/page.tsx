@@ -645,7 +645,7 @@ export default function HeroSection() {
   return (
     <div ref={containerRef} className="relative h-[100dvh] w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
 
-      {!isDashboardView && !isVIPWelcomeOpen && (
+      {!isDashboardView && !isVIPWelcomeOpen && !profile && (
         <CommandCenter isHero onLoginClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} />
       )}
 
