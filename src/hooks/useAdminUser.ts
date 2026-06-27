@@ -23,13 +23,15 @@ export function useAdminUser() {
 
   useEffect(() => {
     fetch("/api/auth/me")
-      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
-      .then(({ profile }) => {
+      .then(async (r) => {
+        if (r.status === 401 || r.status === 403) { router.push("/"); return; }
+        if (!r.ok) { setLoading(false); return; } // erro de servidor — não faz logout
+        const { profile } = await r.json();
         if (!profile) router.push("/");
         else setUser(profile);
+        setLoading(false);
       })
-      .catch(() => router.push("/"))
-      .finally(() => setLoading(false));
+      .catch(() => setLoading(false)); // erro de rede — não faz logout
   }, [router]);
 
   async function logout() {

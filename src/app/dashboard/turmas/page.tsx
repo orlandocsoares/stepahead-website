@@ -41,17 +41,23 @@ export default function TurmasPage() {
 
   async function fetchAll() {
     setLoading(true);
-    const [turmasRes, formadoresRes, formandosRes, pendentesRes] = await Promise.all([
-      fetch("/api/turmas").then(r => r.json()),
-      fetch("/api/db/profiles?eq.role=formador").then(r => r.json()),
-      fetch("/api/db/profiles?eq.role=formando").then(r => r.json()),
-      fetch("/api/formandos-pendentes").then(r => r.json()),
-    ]);
-    setTurmas(turmasRes.data ?? []);
-    setFormadores(formadoresRes.data ?? formadoresRes ?? []);
-    setFormandos(formandosRes.data ?? formandosRes ?? []);
-    setPendentes(pendentesRes.formandos ?? []);
-    setLoading(false);
+    try {
+      const safe = (p: Promise<Response>) => p.then(r => r.ok ? r.json() : {}).catch(() => ({}));
+      const [turmasRes, formadoresRes, formandosRes, pendentesRes] = await Promise.all([
+        safe(fetch("/api/turmas")),
+        safe(fetch("/api/db/profiles?eq.role=formador")),
+        safe(fetch("/api/db/profiles?eq.role=formando")),
+        safe(fetch("/api/formandos-pendentes")),
+      ]);
+      setTurmas(turmasRes.data ?? []);
+      setFormadores(formadoresRes.data ?? formadoresRes ?? []);
+      setFormandos(formandosRes.data ?? formandosRes ?? []);
+      setPendentes(pendentesRes.formandos ?? []);
+    } catch {
+      // falha silenciosa — mostra lista vazia
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { if (user) fetchAll(); }, [user]);
