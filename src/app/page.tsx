@@ -259,8 +259,7 @@ export default function HeroSection() {
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    await refreshProfile(); // Actualiza o estado do perfil para null
-    router.refresh();
+    window.location.href = "/";
   };
 
   const triggerVIPTransition = async () => {
