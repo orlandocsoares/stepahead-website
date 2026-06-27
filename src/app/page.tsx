@@ -497,18 +497,19 @@ export default function HeroSection() {
           )
         };
       case 5: {
-        const areaColors: Record<string, { bg: string; text: string; border: string }> = {
-          "Matemática":        { bg: "bg-blue-500/10",    text: "text-blue-300",   border: "border-blue-500/20" },
-          "Português":         { bg: "bg-emerald-500/10", text: "text-emerald-300",border: "border-emerald-500/20" },
-          "Ciências":          { bg: "bg-cyan-500/10",    text: "text-cyan-300",   border: "border-cyan-500/20" },
-          "História":          { bg: "bg-amber-500/10",   text: "text-amber-300",  border: "border-amber-500/20" },
-          "Geografia":         { bg: "bg-lime-500/10",    text: "text-lime-300",   border: "border-lime-500/20" },
-          "Biologia":          { bg: "bg-green-500/10",   text: "text-green-300",  border: "border-green-500/20" },
-          "Física":            { bg: "bg-violet-500/10",  text: "text-violet-300", border: "border-violet-500/20" },
-          "Química":           { bg: "bg-pink-500/10",    text: "text-pink-300",   border: "border-pink-500/20" },
-          "Geral":             { bg: "bg-white/5",        text: "text-white/50",   border: "border-white/10" },
+        const areaColors: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+          "Matemática":        { bg: "bg-blue-900/60",    text: "text-blue-200",   border: "border-blue-400/40",   dot: "bg-blue-400" },
+          "Língua Portuguesa": { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400" },
+          "Português":         { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400" },
+          "Ciências":          { bg: "bg-cyan-900/60",    text: "text-cyan-200",   border: "border-cyan-400/40",   dot: "bg-cyan-400" },
+          "História":          { bg: "bg-amber-900/60",   text: "text-amber-200",  border: "border-amber-400/40",  dot: "bg-amber-400" },
+          "Geografia":         { bg: "bg-lime-900/60",    text: "text-lime-200",   border: "border-lime-400/40",   dot: "bg-lime-400" },
+          "Biologia":          { bg: "bg-green-900/60",   text: "text-green-200",  border: "border-green-400/40",  dot: "bg-green-400" },
+          "Física":            { bg: "bg-violet-900/60",  text: "text-violet-200", border: "border-violet-400/40", dot: "bg-violet-400" },
+          "Química":           { bg: "bg-pink-900/60",    text: "text-pink-200",   border: "border-pink-400/40",   dot: "bg-pink-400" },
+          "Geral":             { bg: "bg-white/10",       text: "text-white/80",   border: "border-white/20",      dot: "bg-white/50" },
         };
-        const defaultAreaColor = { bg: "bg-white/5", text: "text-white/50", border: "border-white/10" };
+        const defaultAreaColor = { bg: "bg-white/10", text: "text-white/80", border: "border-white/20", dot: "bg-white/50" };
         const areas: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
 
         return {
@@ -542,11 +543,11 @@ export default function HeroSection() {
                         initial={{ opacity: 0, scale: 0.85 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3 }}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-semibold ${c.bg} ${c.text} ${c.border}`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-semibold backdrop-blur-sm drop-shadow-md ${c.bg} ${c.text} ${c.border}`}
                       >
-                        <span className="w-1 h-1 rounded-full bg-current opacity-60" />
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.dot}`} />
                         {area}
-                        <span className="opacity-50 font-normal">({total})</span>
+                        <span className="opacity-60 font-normal">({total})</span>
                       </motion.span>
                     );
                   })}
@@ -889,6 +890,7 @@ export default function HeroSection() {
               <img src="/flags/Flag_of_Portugal.svg.webp" alt="Bandeira de Portugal" className="h-5 w-auto rounded-sm shadow-lg" />
             </motion.div>
 
+
             {/* TICKER DE MÉTRICAS */}
             {telemetry && (
               <motion.div
@@ -898,42 +900,31 @@ export default function HeroSection() {
                 className="absolute bottom-[calc(10vh+140px)] sm:bottom-[calc(10vh+160px)] left-0 right-0 z-40 overflow-hidden pointer-events-none"
               >
                 <div className="relative">
-                  {/* gradientes nas bordas */}
-                  <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-black/60 to-transparent z-10" />
-                  <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/60 to-transparent z-10" />
-
-                  {/* linha superior */}
-                  <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-2" />
-
-                  {/* ticker scroll */}
+                  <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-black/80 to-transparent z-10" />
+                  <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/80 to-transparent z-10" />
+                  <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-2" />
                   <div className="flex gap-0 w-max animate-ticker">
                     {[...Array(3)].map((_, rep) => (
                       <div key={rep} className="flex items-center gap-8 px-8">
-                        {[
-                          { label: "Formandos Activos",      value: telemetry.total_formandos,  dot: "bg-blue-400" },
-                          { label: "Formadores",             value: telemetry.total_formadores, dot: "bg-emerald-400" },
-                          { label: "Materiais Pedagógicos",  value: telemetry.total_materials,  dot: "bg-amber-400" },
-                          { label: "Turmas",                 value: telemetry.total_turmas,     dot: "bg-violet-400" },
+                        {([
+                          { label: "Formandos Activos",     value: telemetry.total_formandos,  dot: "bg-blue-400" },
+                          { label: "Formadores",            value: telemetry.total_formadores, dot: "bg-emerald-400" },
+                          { label: "Materiais Pedagógicos", value: telemetry.total_materials,  dot: "bg-amber-400" },
+                          { label: "Turmas",                value: telemetry.total_turmas,     dot: "bg-violet-400" },
                           ...(telemetry.proximo_evento ? [{ label: "Próximo Evento", value: telemetry.proximo_evento, dot: "bg-cyan-400", isText: true }] : []),
-                          ...( (telemetry.areas_materiais ?? []).slice(0, 2).map((a: any) => ({
-                            label: a.area, value: a.total, dot: "bg-white/30"
-                          }))),
-                        ].map(({ label, value, dot, isText }: any, i) => (
-                          <div key={i} className="flex items-center gap-3 shrink-0">
+                          ...((telemetry.areas_materiais ?? []).slice(0, 2).map((a: any) => ({ label: a.area, value: a.total, dot: "bg-white/60" }))),
+                        ] as any[]).map(({ label, value, dot, isText }, i) => (
+                          <div key={i} className="flex items-center gap-2.5 shrink-0">
                             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
-                            <span className="text-[9px] uppercase tracking-[0.25em] text-white/30 font-medium">{label}</span>
-                            <span className="text-[11px] font-bold text-white/60 tabular-nums ml-1">
-                              {isText ? value : (value ?? 0)}
-                            </span>
-                            <span className="text-white/10 text-xs mx-2">·</span>
+                            <span className="text-[9px] uppercase tracking-[0.25em] text-white/70 font-medium">{label}</span>
+                            <span className="text-[12px] font-bold text-white tabular-nums ml-0.5">{isText ? value : (value ?? 0)}</span>
+                            <span className="text-white/25 mx-2">·</span>
                           </div>
                         ))}
                       </div>
                     ))}
                   </div>
-
-                  {/* linha inferior */}
-                  <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
+                  <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mt-2" />
                 </div>
               </motion.div>
             )}
