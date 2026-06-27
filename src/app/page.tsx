@@ -698,13 +698,26 @@ export default function HeroSection() {
     <div ref={containerRef} className="relative h-[100dvh] w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
 
       {!isDashboardView && !isVIPWelcomeOpen && !profile && (
-        <CommandCenter isHero onLoginClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} />
+        <>
+          {/* Desktop: círculo esquerdo via CommandCenter */}
+          <div className="hidden md:block">
+            <CommandCenter isHero onLoginClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} />
+          </div>
+          {/* Mobile: botão pill centrado no fundo */}
+          <button
+            onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
+            className="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white text-[11px] font-bold uppercase tracking-[0.3em] shadow-lg"
+          >
+            <LogIn size={15} />
+            Entrar
+          </button>
+        </>
       )}
 
       {!isDashboardView && !isVIPWelcomeOpen && profile && (
         <a
           href="/dashboard"
-          className="fixed left-6 bottom-8 z-[110] flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/25 transition-all shadow-lg group"
+          className="fixed left-1/2 -translate-x-1/2 bottom-20 md:left-6 md:translate-x-0 md:bottom-8 z-[110] flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/25 transition-all shadow-lg group"
         >
           <LayoutDashboard size={16} className="text-white/50 group-hover:text-white transition-colors" />
           <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors">Backoffice</span>
@@ -901,18 +914,18 @@ export default function HeroSection() {
             <HelpGuide open={helpOpen} setOpen={setHelpOpen} />
 
             {/* BARRA DIREITA UNIFICADA (Evita sobreposição em ecrãs de menor altura) */}
-            <div className="fixed top-0 right-6 sm:right-16 md:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-6 sm:py-10 pointer-events-none">
-              
+            <div className="fixed top-0 right-4 sm:right-6 md:right-16 lg:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-5 sm:py-10 pointer-events-none">
+
               {/* TOPO: Botão de Ajuda */}
               <div className="pointer-events-auto shrink-0">
-                <button onClick={() => setHelpOpen(true)} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white transition hover:border-sky-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-400/50">
+                <button onClick={() => setHelpOpen(true)} className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white transition hover:border-sky-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-400/50">
                   <span className="text-lg font-black">?</span>
                   <span className="sr-only">Abrir guia de ajuda</span>
                 </button>
               </div>
 
-              {/* CENTRO: Fases e Navegador */}
-              <div className="flex flex-col items-end gap-4 md:gap-8 pointer-events-auto my-auto shrink-0 transform-gpu min-[1000px]:scale-100 scale-90 origin-right">
+              {/* CENTRO: Fases e Navegador — apenas desktop */}
+              <div className="hidden md:flex flex-col items-end gap-4 md:gap-8 pointer-events-auto my-auto shrink-0 transform-gpu min-[1000px]:scale-100 scale-90 origin-right">
                 <PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} phases={PROGRAM_PHASES} setIsHovering={setIsHovering} />
                 <Navigator activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} setIsHovering={setIsHovering} />
               </div>
@@ -923,13 +936,13 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div className="absolute top-[28vh] left-8 sm:left-24 lg:left-[160px] w-[85%] md:w-[540px] h-[320px] z-40 pointer-events-auto flex flex-col justify-between">
+            <div className="absolute top-[14vh] sm:top-[28vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-auto sm:w-[90%] md:w-[540px] z-40 pointer-events-auto flex flex-col justify-between" style={{minHeight: '60vh', maxHeight: '75vh'}}>
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
                   <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">
                     <div className="shrink-0">
-                      <p className="text-[10px] md:text-[11px] tracking-[0.6em] text-white/90 uppercase font-medium truncate" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{activeData.subtitle}</p>
-                      <h1 className="text-4xl sm:text-5xl font-bold uppercase tracking-tight text-white mt-2" style={{textShadow:"0 2px 12px rgba(0,0,0,0.9)"}}>{activeData.name}</h1>
+                      <p className="text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.6em] text-white/90 uppercase font-medium truncate" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{activeData.subtitle}</p>
+                      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold uppercase tracking-tight text-white mt-2" style={{textShadow:"0 2px 12px rgba(0,0,0,0.9)"}}>{activeData.name}</h1>
                     </div>
                     <div className="flex-1 mt-4">{activeData.description}</div>
                     <div className="shrink-0 pt-2 mt-auto">
@@ -991,6 +1004,24 @@ export default function HeroSection() {
                 </motion.div>
               </div>
             </motion.div>
+
+            {/* Navegação mobile — dots no fundo */}
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3 md:hidden pointer-events-auto">
+              <div className="flex items-center gap-2">
+                {PROGRAM_PHASES.map((phase, index) => {
+                  if (index === 0) return null;
+                  const isActive = activePhaseIndex === index;
+                  return (
+                    <button
+                      key={phase.id}
+                      onClick={() => goToPhase(index)}
+                      className={`rounded-full transition-all duration-300 ${isActive ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/30 hover:bg-white/60'}`}
+                    />
+                  );
+                })}
+              </div>
+              <p className="text-[8px] uppercase tracking-[0.4em] text-white/30">deslize para navegar</p>
+            </div>
 
           </motion.div>
         )}
