@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/hooks/useProfile";
 
 type Props = {
@@ -80,8 +79,8 @@ export function CommandCenter({ onLoginClick, isHero = false }: Props) {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/';
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/";
   };
 
   const displayName = profile?.first_name || 'Utilizador';
