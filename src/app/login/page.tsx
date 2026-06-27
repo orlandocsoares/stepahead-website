@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, ArrowRight, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
@@ -41,38 +40,19 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 1. TENTA A AUTENTICAÇÃO NO SUPABASE AUTH
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password 
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (authError) {
-        throw new Error("Credenciais inválidas. Verifique o seu e-mail e password.");
+      const json = await res.json();
+
+      if (!res.ok || json.error) {
+        throw new Error(json.error?.message ?? "Credenciais inválidas. Verifique o seu e-mail e password.");
       }
 
-      // 2. BUSCA O PERFIL PARA VERIFICAR STATUS DE APROVAÇÃO
-      if (authData.user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('status, role')
-          .eq('id', authData.user.id)
-          .single();
-
-        if (profileError || !profile) {
-          throw new Error("Perfil não encontrado. Contacte o suporte técnico.");
-        }
-
-        // BLOQUEIO DE CANDIDATURAS PENDENTES
-        if (profile.status === 'pendente') {
-          // Expulsa o utilizador da sessão de auth imediatamente
-          await supabase.auth.signOut();
-          throw new Error("A tua candidatura ainda está em análise pelo Centro de Controlo.");
-        }
-
-        // 3. SE CHEGOU AQUI, ESTÁ APROVADO OU É ADMIN
-        router.push("/dashboard");
-      }
+      router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
       setLoading(false);

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { type User as SupabaseUser } from "@supabase/supabase-js";
 import {
   LayoutDashboard,
   LogIn,
