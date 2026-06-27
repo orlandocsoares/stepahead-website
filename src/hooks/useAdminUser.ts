@@ -23,13 +23,10 @@ export function useAdminUser() {
 
   useEffect(() => {
     fetch("/api/auth/me")
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
       .then(({ profile }) => {
-        if (!profile) {
-          router.push("/");
-        } else {
-          setUser(profile);
-        }
+        if (!profile) router.push("/");
+        else setUser(profile);
       })
       .catch(() => router.push("/"))
       .finally(() => setLoading(false));

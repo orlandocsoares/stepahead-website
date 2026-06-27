@@ -42,24 +42,21 @@ export function CommandCenter({ onLoginClick, isHero = false }: Props) {
   // Still loading - show nothing to prevent flash
   if (loading) return null;
 
-  // If not logged in, show the login button (only on hero page)
+  // Não autenticado no hero: botão Entrar no lado direito a meio do ecrã
   if (!profile && isHero) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.5 }}
-        className="fixed left-8 bottom-10 z-[110]"
+        className="fixed left-8 top-1/2 -translate-y-1/2 z-[110]"
       >
         <button
           onClick={onLoginClick}
-          className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center group hover:bg-white/15 hover:border-white/40 transition-all shadow-lg"
+          className="w-20 h-20 rounded-full bg-white/5 backdrop-blur-xl border border-white/15 flex items-center justify-center group hover:bg-white/10 hover:border-white/30 transition-all shadow-xl"
           title="Entrar"
         >
-          <LogIn
-            size={22}
-            className="text-white/70 group-hover:text-white transition-colors"
-          />
+          <LogIn size={24} className="text-white/50 group-hover:text-white transition-colors" />
         </button>
       </motion.div>
     );

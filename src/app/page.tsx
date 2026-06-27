@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
@@ -649,6 +649,16 @@ export default function HeroSection() {
         <CommandCenter isHero onLoginClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} />
       )}
 
+      {!isDashboardView && !isVIPWelcomeOpen && profile && (
+        <a
+          href="/dashboard"
+          className="fixed left-6 bottom-8 z-[110] flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/25 transition-all shadow-lg group"
+        >
+          <LayoutDashboard size={16} className="text-white/50 group-hover:text-white transition-colors" />
+          <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors">Backoffice</span>
+        </a>
+      )}
+
       <motion.div className="fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[100] mix-blend-difference hidden md:block" style={{ x: mouseX, y: mouseY, translateX: "-50%", translateY: "-50%" }} animate={{ scale: isHovering ? 3.5 : 1, opacity: 0.8 }} transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.2 }} />
 
       <div className="absolute inset-0 z-10">
@@ -938,7 +948,7 @@ export default function HeroSection() {
         {isVIPWelcomeOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.9 }} className="fixed inset-0 bg-black/50 backdrop-blur-xl z-[300] flex flex-col items-center justify-center text-center p-6 pointer-events-auto">
             <motion.div initial={{ opacity: 0, y: 30, scale: 0.99, filter: "blur(15px)" }} animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }} transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center">
-              <motion.img src="/logo-sabermais.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ repeat: Infinity, duration: 4 }} className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none mix-blend-screen" />
+              <motion.img src="/logo-sabermais.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.6, 0.9, 0.6] }} transition={{ repeat: Infinity, duration: 4 }} className="h-20 w-auto object-contain mb-8 select-none mix-blend-screen contrast-125 brightness-110" style={{ filter: "drop-shadow(0 0 24px rgba(120,200,255,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.5)) contrast(1.25) brightness(1.1)" }} />
               <h2 className="text-5xl font-extralight uppercase tracking-tighter text-white italic leading-none">Bem-vindo</h2>
               <h3 className="text-3xl font-bold uppercase tracking-tight text-blue-500 mt-3 drop-shadow-[0_0_20px_rgba(59,130,246,0.3)]">{finalFullName}</h3>
             </motion.div>
