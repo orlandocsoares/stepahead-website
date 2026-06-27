@@ -706,7 +706,7 @@ export default function HeroSection() {
           {/* Mobile: botão pill centrado no fundo */}
           <button
             onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
-            className="md:hidden fixed bottom-[72px] left-1/2 -translate-x-1/2 z-[110] flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white text-[11px] font-bold uppercase tracking-[0.3em] shadow-lg"
+            className="md:hidden fixed left-6 top-1/2 -translate-y-1/2 z-[110] flex items-center gap-2.5 px-5 py-3 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white text-[11px] font-bold uppercase tracking-[0.3em] shadow-lg"
           >
             <LogIn size={15} />
             Entrar
