@@ -7,7 +7,7 @@ import { randomBytes } from "crypto";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, first_name, last_name, role, provincia, escola, especialidade, biografia, avatar_url, formador_id } = body;
+    const { email, password, first_name, last_name, role, provincia, escola, especialidade, biografia, avatar_url, formadores_ids, ano_letivo } = body;
 
     if (!email || !role) return NextResponse.json({ error: "Email e role obrigatórios" }, { status: 400 });
 
@@ -42,8 +42,8 @@ export async function POST(request: Request) {
 
     // Criar ou actualizar profiles
     await dbQuery(
-      `INSERT INTO profiles (id, email, first_name, last_name, role, status, provincia, escola, especialidade, biografia, avatar_url, formador_id)
-       VALUES ($1,$2,$3,$4,$5,'pendente',$6,$7,$8,$9,$10,$11)
+      `INSERT INTO profiles (id, email, first_name, last_name, role, status, provincia, escola, especialidade, biografia, avatar_url)
+       VALUES ($1,$2,$3,$4,$5,'pendente',$6,$7,$8,$9,$10)
        ON CONFLICT (email) DO UPDATE SET
          role          = EXCLUDED.role,
          first_name    = COALESCE(EXCLUDED.first_name,    profiles.first_name),
@@ -52,11 +52,27 @@ export async function POST(request: Request) {
          escola        = COALESCE(EXCLUDED.escola,        profiles.escola),
          especialidade = COALESCE(EXCLUDED.especialidade, profiles.especialidade),
          biografia     = COALESCE(EXCLUDED.biografia,     profiles.biografia),
-         avatar_url    = COALESCE(EXCLUDED.avatar_url,    profiles.avatar_url),
-         formador_id   = COALESCE(EXCLUDED.formador_id,   profiles.formador_id)`,
+         avatar_url    = COALESCE(EXCLUDED.avatar_url,    profiles.avatar_url)`,
       [userId, clean, first_name || null, last_name || null, role,
-       provincia || null, escola || null, especialidade || null, biografia || null, avatar_url || null, formador_id || null]
+       provincia || null, escola || null, especialidade || null, biografia || null, avatar_url || null]
     );
+
+    // Associar formadores escolhidos (many-to-many)
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth() + 1;
+    const defaultAno = m >= 9 ? `${y}/${y+1}` : `${y-1}/${y}`;
+    const anoLetivoVal = ano_letivo || defaultAno;
+    if (role === 'formando' && Array.isArray(formadores_ids) && formadores_ids.length > 0) {
+      for (const fid of formadores_ids) {
+        await dbQuery(
+          `INSERT INTO formando_formadores (formando_id, formador_id, status, ano_letivo)
+           VALUES ($1, $2, 'pendente', $3)
+           ON CONFLICT (formando_id, formador_id, ano_letivo) DO NOTHING`,
+          [userId, fid, anoLetivoVal]
+        );
+      }
+    }
 
     // Enviar email de confirmação (novo utilizador OU re-envio se ainda pendente)
     const needsConfirmation = await dbQuery<{ status: string }>(

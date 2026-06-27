@@ -28,19 +28,25 @@ export async function GET(req: NextRequest) {
 
     await dbQuery("DELETE FROM email_confirm_tokens WHERE user_id = $1", [row.user_id]);
 
-    // Notificar formador se o formando escolheu um
-    const profile = await dbQuery<{ first_name: string; last_name: string; email: string; formador_id: string | null }>(
-      "SELECT first_name, last_name, email, formador_id FROM profiles WHERE id = $1 LIMIT 1",
+    // Notificar todos os formadores que o formando escolheu
+    const profile = await dbQuery<{ first_name: string; last_name: string; email: string }>(
+      "SELECT first_name, last_name, email FROM profiles WHERE id = $1 LIMIT 1",
       [row.user_id]
     );
     const p = profile.rows[0];
-    if (p?.formador_id) {
-      await dbQuery(
-        `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
-         VALUES ($1, 'novo_formando', 'Novo formando aguarda aprovação',
-           $2, '/dashboard/admin')`,
-        [p.formador_id, `${p.first_name} ${p.last_name} (${p.email}) confirmou o email e aguarda a sua aprovação.`]
+    if (p) {
+      const formadores = await dbQuery<{ formador_id: string }>(
+        "SELECT formador_id FROM formando_formadores WHERE formando_id = $1 AND status = 'pendente'",
+        [row.user_id]
       );
+      for (const { formador_id } of formadores.rows) {
+        await dbQuery(
+          `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
+           VALUES ($1, 'novo_formando', 'Novo formando aguarda aprovação',
+             $2, '/dashboard/admin')`,
+          [formador_id, `${p.first_name} ${p.last_name} (${p.email}) confirmou o email e escolheu-te como formador.`]
+        );
+      }
     }
 
     return redirect("/confirm-email?sucesso=1");

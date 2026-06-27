@@ -663,16 +663,44 @@ export default function SuperAdminPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 flex-wrap">
-                                {/* Status badge para formadores (só leitura) */}
+                                {/* Controlos para formadores */}
                                 {isFormador && (
-                                  <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full border ${
-                                    item.status === 'activo' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
-                                    item.status === 'email_confirmado' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
-                                    item.status === 'rejeitado' ? 'text-red-400 bg-red-500/10 border-red-500/20' :
-                                    'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                                  }`}>
-                                    {item.status === 'activo' ? 'Activo' : item.status === 'email_confirmado' ? '✓ Email confirmado' : item.status === 'rejeitado' ? 'Rejeitado' : 'Pendente'}
-                                  </span>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {/* Badge de estado da associação */}
+                                    <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                                      item.ff_status === 'aceite' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
+                                      item.ff_status === 'rejeitado' ? 'text-red-400 bg-red-500/10 border-red-500/20' :
+                                      item.ff_status === 'removido' ? 'text-white/20 bg-white/5 border-white/10' :
+                                      'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                                    }`}>
+                                      {item.ff_status === 'aceite' ? '✓ Aceite' :
+                                       item.ff_status === 'rejeitado' ? 'Rejeitado' :
+                                       item.ff_status === 'removido' ? 'Removido' : 'Pendente'}
+                                    </span>
+                                    {item.ano_letivo && (
+                                      <span className="text-[9px] text-white/25">{item.ano_letivo}</span>
+                                    )}
+                                    {/* Aprovar/Rejeitar se pendente */}
+                                    {item.ff_status === 'pendente' && (
+                                      <>
+                                        <button
+                                          onClick={() => fetch("/api/formandos-pendentes", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ formando_id: item.id, acao: "aprovar" }) }).then(() => fetchData())}
+                                          className="px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] hover:bg-emerald-500/20 transition-colors"
+                                        >Aprovar</button>
+                                        <button
+                                          onClick={() => fetch("/api/formandos-pendentes", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ formando_id: item.id, acao: "rejeitar" }) }).then(() => fetchData())}
+                                          className="px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] hover:bg-red-500/20 transition-colors"
+                                        >Rejeitar</button>
+                                      </>
+                                    )}
+                                    {/* Remover se aceite */}
+                                    {item.ff_status === 'aceite' && (
+                                      <button
+                                        onClick={() => { if (confirm(`Remover ${item.first_name} ${item.last_name} como seu formando?`)) fetch("/api/formandos-pendentes", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ formando_id: item.id, acao: "remover" }) }).then(() => fetchData()); }}
+                                        className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/30 text-[10px] hover:text-red-400 hover:border-red-500/20 transition-colors"
+                                      >Remover</button>
+                                    )}
+                                  </div>
                                 )}
                                 {/* Controlos de admin */}
                                 {isAdminOrSuper(profile?.role) && (

@@ -72,6 +72,18 @@ jobs:
                 updated_at TIMESTAMPTZ DEFAULT NOW()
               );
               INSERT INTO hero_telemetria (id) SELECT gen_random_uuid() WHERE NOT EXISTS (SELECT 1 FROM hero_telemetria);
+              CREATE TABLE IF NOT EXISTS formando_formadores (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                formando_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                formador_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                status TEXT NOT NULL DEFAULT 'pendente',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                ano_letivo TEXT NOT NULL DEFAULT '2025/2026',
+                UNIQUE(formando_id, formador_id, ano_letivo)
+              );
+              CREATE INDEX IF NOT EXISTS idx_ff_formando ON formando_formadores(formando_id, status);
+              CREATE INDEX IF NOT EXISTS idx_ff_formador ON formando_formadores(formador_id, status);
               CREATE TABLE IF NOT EXISTS mensagens (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 from_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,

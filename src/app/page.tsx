@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
 import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -196,7 +197,8 @@ export default function HeroSection() {
   const [lastName, setLastName] = useState('');
   const [provincia, setProvincia] = useState('');
   const [escola, setEscola] = useState('');
-  const [formadorId, setFormadorId] = useState('');
+  const [formadoresIds, setFormadoresIds] = useState<string[]>([]);
+  const [anoLetivo, setAnoLetivo] = useState(getAnoLetivoActivo());
   const [formadoresList, setFormadoresList] = useState<any[]>([]);
   const [especialidade, setEspecialidade] = useState('');
   const [bio, setBio] = useState('');
@@ -348,7 +350,7 @@ export default function HeroSection() {
         first_name: firstName,
         last_name: lastName,
         role: userRole,
-        ...(userRole === 'formando' ? { provincia, escola, formador_id: formadorId || undefined } : { especialidade, biografia: bio }),
+        ...(userRole === 'formando' ? { provincia, escola, formadores_ids: formadoresIds, ano_letivo: anoLetivo } : { especialidade, biografia: bio }),
       }),
     });
     const syncData = await syncRes.json();
@@ -634,15 +636,49 @@ export default function HeroSection() {
                                 </div>
                                 <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
                               </div>
-                              {formadoresList.length > 0 && (
-                                <div className="space-y-1">
-                                  <Label className="text-[8px] uppercase tracking-widest text-blue-400">Formador <span className="text-white/30">(opcional)</span></Label>
-                                  <select value={formadorId} onChange={e => setFormadorId(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
-                                    <option value="" className="bg-[#0d0d14]">Seleccionar formador</option>
-                                    {formadoresList.map((f: any) => (
-                                      <option key={f.id} value={f.id} className="bg-[#0d0d14]">{f.first_name} {f.last_name}</option>
-                                    ))}
-                                  </select>
+                              <div className="space-y-1">
+                                <Label className="text-[8px] uppercase tracking-widest text-blue-400">Ano Lectivo</Label>
+                                <select value={anoLetivo} onChange={e => setAnoLetivo(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
+                                  {getAnosLetivos().map(a => (
+                                    <option key={a} value={a} className="bg-[#0d0d14]">{a}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              {formadoresList.filter(f => !provincia || f.provincia === provincia).length > 0 && (
+                                <div className="space-y-2">
+                                  <Label className="text-[8px] uppercase tracking-widest text-blue-400">
+                                    Formadores <span className="text-white/30">(escolha os seus professores)</span>
+                                  </Label>
+                                  <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+                                    {formadoresList
+                                      .filter(f => !provincia || f.provincia === provincia)
+                                      .map((f: any) => {
+                                        const selected = formadoresIds.includes(f.id);
+                                        return (
+                                          <button
+                                            key={f.id}
+                                            type="button"
+                                            onClick={() => setFormadoresIds(prev =>
+                                              selected ? prev.filter(id => id !== f.id) : [...prev, f.id]
+                                            )}
+                                            className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-left text-xs transition-all border ${
+                                              selected
+                                                ? 'bg-blue-500/20 border-blue-500/40 text-white'
+                                                : 'bg-white/[0.03] border-white/10 text-white/50 hover:border-white/20 hover:text-white/80'
+                                            }`}
+                                          >
+                                            <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 ${selected ? 'bg-blue-500 border-blue-500' : 'border-white/30'}`}>
+                                              {selected && <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
+                                            </span>
+                                            <span className="font-medium">{f.first_name} {f.last_name}</span>
+                                            {f.especialidade && <span className="text-white/30 text-[10px] ml-auto">{f.especialidade}</span>}
+                                          </button>
+                                        );
+                                      })}
+                                  </div>
+                                  {formadoresIds.length > 0 && (
+                                    <p className="text-[10px] text-blue-400">{formadoresIds.length} formador{formadoresIds.length > 1 ? 'es' : ''} seleccionado{formadoresIds.length > 1 ? 's' : ''}</p>
+                                  )}
                                 </div>
                               )}
                             </div>

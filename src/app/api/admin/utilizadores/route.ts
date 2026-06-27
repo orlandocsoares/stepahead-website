@@ -7,7 +7,7 @@ export async function GET() {
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const profileRes = await dbQuery(
-    `SELECT role, first_name, last_name FROM profiles WHERE id = $1 LIMIT 1`,
+    `SELECT role FROM profiles WHERE id = $1 LIMIT 1`,
     [sessionUser.id]
   );
   const me = profileRes.rows[0];
@@ -21,6 +21,7 @@ export async function GET() {
   }
 
   if (isAdmin) {
+    // Admin vê todos os utilizadores
     const result = await dbQuery(`
       SELECT p.*, f.first_name || ' ' || COALESCE(f.last_name, '') AS formador_nome
       FROM profiles p
@@ -29,12 +30,21 @@ export async function GET() {
     `);
     return NextResponse.json({ data: result.rows });
   } else {
-    // Formador: apenas os seus formandos
+    // Formador vê os seus formandos agrupados por status de associação
     const result = await dbQuery(`
-      SELECT p.*
-      FROM profiles p
-      WHERE p.formador_id = $1 AND p.role = 'formando'
-      ORDER BY p.created_at DESC
+      SELECT p.*, ff.status AS ff_status, ff.ano_letivo, ff.id AS ff_id
+      FROM formando_formadores ff
+      JOIN profiles p ON p.id = ff.formando_id
+      WHERE ff.formador_id = $1
+      ORDER BY
+        CASE ff.status
+          WHEN 'pendente' THEN 1
+          WHEN 'aceite' THEN 2
+          WHEN 'rejeitado' THEN 3
+          WHEN 'removido' THEN 4
+          ELSE 5
+        END,
+        ff.updated_at DESC
     `, [sessionUser.id]);
     return NextResponse.json({ data: result.rows });
   }

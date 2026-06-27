@@ -99,10 +99,15 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
             values.push(sessionUser.id);
             valueIndex++;
           } else {
-            // formando: vê publico (só área da sua turma) + turma onde é membro
+            // formando: vê Geral + áreas dos formadores aceites + turmas onde é membro
             filters.push(`(
-              (${tableSql}.visibilidade = 'publico' AND (
+              (${tableSql}.visibilidade IN ('publico', 'formadores') AND (
                 ${tableSql}.area = 'Geral'
+                OR ${tableSql}.area IN (
+                  SELECT p.specialization FROM profiles p
+                  INNER JOIN formando_formadores ff ON ff.formador_id = p.id
+                  WHERE ff.formando_id = $${valueIndex} AND ff.status IN ('aceite')
+                )
                 OR ${tableSql}.area IN (
                   SELECT t.area FROM turmas t
                   INNER JOIN turma_membros tm ON tm.turma_id = t.id
