@@ -31,7 +31,9 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [msgUnread, setMsgUnread] = useState(0);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
 
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
   const displayName = user?.first_name ?? user?.email?.split("@")[0] ?? "";
@@ -81,6 +83,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (bellRef.current && !bellRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) setAvatarOpen(false);
     }
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
@@ -195,21 +198,30 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           )}
         </div>
 
-        {/* Logout mobile */}
-        <button
-          onClick={logout}
-          className="md:hidden p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/[0.08] transition-colors"
-          aria-label="Terminar sessão"
-        >
-          <LogOut size={18} />
-        </button>
+        {/* Avatar com dropdown de logout */}
+        <div className="relative" ref={avatarRef}>
+          <button
+            onClick={() => setAvatarOpen(o => !o)}
+            className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-400 uppercase shrink-0 hover:bg-blue-600/50 transition-colors"
+          >
+            {initial}
+          </button>
 
-        <div className="text-right hidden sm:block">
-          <p className="text-xs font-medium text-white/70">{displayName}</p>
-          <p className="text-[10px] text-white/30 capitalize">{user?.role ?? ""}</p>
-        </div>
-        <div className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-400 uppercase shrink-0">
-          {initial}
+          {avatarOpen && (
+            <div className="absolute right-0 top-10 w-48 bg-[#13131f] border border-white/[0.08] rounded-xl shadow-2xl z-50 overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/[0.06]">
+                <p className="text-xs font-semibold text-white truncate">{displayName}</p>
+                <p className="text-[10px] text-white/30 capitalize">{user?.role ?? ""}</p>
+              </div>
+              <button
+                onClick={() => { setAvatarOpen(false); logout(); }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-sm text-white/50 hover:text-red-400 hover:bg-red-500/[0.08] transition-colors"
+              >
+                <LogOut size={15} />
+                Terminar sessão
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
