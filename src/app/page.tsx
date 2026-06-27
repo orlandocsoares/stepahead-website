@@ -698,26 +698,15 @@ export default function HeroSection() {
     <div ref={containerRef} className="relative h-[100dvh] w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
 
       {!isDashboardView && !isVIPWelcomeOpen && !profile && (
-        <>
-          {/* Desktop: círculo esquerdo via CommandCenter */}
-          <div className="hidden md:block">
-            <CommandCenter isHero onLoginClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} />
-          </div>
-          {/* Mobile: botão pill centrado no fundo */}
-          <button
-            onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
-            className="md:hidden fixed left-6 bottom-[76px] z-[110] flex items-center gap-2.5 px-5 py-3 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white text-[11px] font-bold uppercase tracking-[0.3em] shadow-lg"
-          >
-            <LogIn size={15} />
-            Entrar
-          </button>
-        </>
+        <div className="hidden md:block">
+          <CommandCenter isHero onLoginClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} />
+        </div>
       )}
 
       {!isDashboardView && !isVIPWelcomeOpen && profile && (
         <a
           href="/dashboard"
-          className="fixed left-1/2 -translate-x-1/2 bottom-[72px] md:left-6 md:translate-x-0 md:bottom-8 z-[110] flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/25 transition-all shadow-lg group"
+          className="hidden md:flex fixed left-6 bottom-8 z-[110] items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/25 transition-all shadow-lg group"
         >
           <LayoutDashboard size={16} className="text-white/50 group-hover:text-white transition-colors" />
           <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors">Backoffice</span>
@@ -969,7 +958,7 @@ export default function HeroSection() {
 
 
 
-            <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-10 sm:bottom-12 md:bottom-16 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
+            <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-[72px] sm:bottom-12 md:bottom-16 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>
@@ -1000,7 +989,7 @@ export default function HeroSection() {
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
+                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative h-16 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
                 </motion.div>
               </div>
             </motion.div>
@@ -1021,7 +1010,7 @@ export default function HeroSection() {
                 </button>
 
                 {/* Fase actual — centro */}
-                <div className="flex flex-col items-center justify-center px-4 py-3 border-x border-white/[0.08] min-w-[120px]">
+                <div className="flex flex-col items-center justify-center px-3 py-2 border-x border-white/[0.08] min-w-[110px]">
                   <span className="text-[8px] uppercase tracking-[0.4em] text-white/40 font-medium">
                     {String(activePhaseIndex).padStart(2,'0')} / {String(PROGRAM_PHASES.length - 1).padStart(2,'0')}
                   </span>
@@ -1032,11 +1021,29 @@ export default function HeroSection() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
                       transition={{ duration: 0.2 }}
-                      className="text-[12px] font-bold text-white uppercase tracking-[0.2em] mt-0.5"
+                      className="text-[11px] font-bold text-white uppercase tracking-[0.15em] mt-0.5"
                     >
                       {PROGRAM_PHASES[activePhaseIndex]?.name}
                     </motion.span>
                   </AnimatePresence>
+                  {!profile && (
+                    <button
+                      onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
+                      className="mt-1.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[9px] font-bold uppercase tracking-[0.25em] text-white/80 hover:bg-white/20 transition-colors"
+                    >
+                      <LogIn size={10} />
+                      Entrar
+                    </button>
+                  )}
+                  {profile && (
+                    <a
+                      href="/dashboard"
+                      className="mt-1.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 text-[9px] font-bold uppercase tracking-[0.25em] text-blue-300 hover:bg-blue-500/30 transition-colors"
+                    >
+                      <LayoutDashboard size={10} />
+                      Backoffice
+                    </a>
+                  )}
                 </div>
 
                 {/* Fase seguinte */}
