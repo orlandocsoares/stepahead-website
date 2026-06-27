@@ -891,43 +891,6 @@ export default function HeroSection() {
             </motion.div>
 
 
-            {/* TICKER DE MÉTRICAS */}
-            {telemetry && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 1.5 }}
-                className="absolute bottom-[calc(10vh+140px)] sm:bottom-[calc(10vh+160px)] left-0 right-0 z-40 overflow-hidden pointer-events-none"
-              >
-                <div className="relative">
-                  <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-black/80 to-transparent z-10" />
-                  <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/80 to-transparent z-10" />
-                  <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-2" />
-                  <div className="flex gap-0 w-max animate-ticker">
-                    {[...Array(3)].map((_, rep) => (
-                      <div key={rep} className="flex items-center gap-8 px-8">
-                        {([
-                          { label: "Formandos Activos",     value: telemetry.total_formandos,  dot: "bg-blue-400" },
-                          { label: "Formadores",            value: telemetry.total_formadores, dot: "bg-emerald-400" },
-                          { label: "Materiais Pedagógicos", value: telemetry.total_materials,  dot: "bg-amber-400" },
-                          { label: "Turmas",                value: telemetry.total_turmas,     dot: "bg-violet-400" },
-                          ...(telemetry.proximo_evento ? [{ label: "Próximo Evento", value: telemetry.proximo_evento, dot: "bg-cyan-400", isText: true }] : []),
-                          ...((telemetry.areas_materiais ?? []).slice(0, 2).map((a: any) => ({ label: a.area, value: a.total, dot: "bg-white/60" }))),
-                        ] as any[]).map(({ label, value, dot, isText }, i) => (
-                          <div key={i} className="flex items-center gap-2.5 shrink-0">
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
-                            <span className="text-[9px] uppercase tracking-[0.25em] text-white/70 font-medium">{label}</span>
-                            <span className="text-[12px] font-bold text-white tabular-nums ml-0.5">{isText ? value : (value ?? 0)}</span>
-                            <span className="text-white/25 mx-2">·</span>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mt-2" />
-                </div>
-              </motion.div>
-            )}
 
             <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-10 sm:bottom-12 md:bottom-16 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
