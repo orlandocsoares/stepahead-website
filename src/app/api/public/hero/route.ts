@@ -18,15 +18,15 @@ export async function GET() {
       ORDER BY data_evento ASC
       LIMIT 1
     `)),
-    safe(dbQuery(`SELECT COUNT(*) AS total FROM arquivos WHERE status = 'publicado'`)),
+    safe(dbQuery(`SELECT COUNT(*) AS total FROM arquivos WHERE visibilidade IN ('publico', 'formadores')`)),
     safe(dbQuery(`SELECT media_radar FROM hero_telemetria LIMIT 1`)),
-    safe(dbQuery(`SELECT COUNT(*) AS total FROM profiles WHERE role = 'formando' AND status = 'activo'`)),
-    safe(dbQuery(`SELECT COUNT(DISTINCT provincia) AS total FROM profiles WHERE status = 'activo' AND provincia IS NOT NULL`)),
+    safe(dbQuery(`SELECT COUNT(*) AS total FROM profiles WHERE role = 'formando' AND status IN ('activo', 'email_confirmado', 'pendente')`)),
+    safe(dbQuery(`SELECT COUNT(DISTINCT provincia) AS total FROM profiles WHERE provincia IS NOT NULL AND provincia != ''`)),
     safe(dbQuery(`SELECT COUNT(*) AS total FROM turmas`)),
     safe(dbQuery(`
       SELECT area, COUNT(*) AS total
       FROM arquivos
-      WHERE status = 'publicado' AND area IS NOT NULL AND area != ''
+      WHERE visibilidade IN ('publico', 'formadores') AND area IS NOT NULL AND area != ''
       GROUP BY area
       ORDER BY total DESC
       LIMIT 5
