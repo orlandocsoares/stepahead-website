@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
@@ -514,6 +514,72 @@ export default function HeroSection() {
             </div>
           )
         };
+      case 6: {
+        const metrics = [
+          {
+            icon: Users,
+            value: telemetry.total_formandos || 0,
+            label: "Formandos activos",
+            color: "from-blue-500/20 to-blue-600/5",
+            border: "border-blue-500/20",
+            iconColor: "text-blue-400",
+            glow: "bg-blue-500/10",
+          },
+          {
+            icon: GraduationCap,
+            value: telemetry.total_formadores || 0,
+            label: "Formadores",
+            color: "from-emerald-500/20 to-emerald-600/5",
+            border: "border-emerald-500/20",
+            iconColor: "text-emerald-400",
+            glow: "bg-emerald-500/10",
+          },
+          {
+            icon: FileText,
+            value: telemetry.total_materials || 0,
+            label: "Materiais pedagógicos",
+            color: "from-amber-500/20 to-amber-600/5",
+            border: "border-amber-500/20",
+            iconColor: "text-amber-400",
+            glow: "bg-amber-500/10",
+          },
+          {
+            icon: BookOpen,
+            value: telemetry.total_turmas || 0,
+            label: "Turmas criadas",
+            color: "from-violet-500/20 to-violet-600/5",
+            border: "border-violet-500/20",
+            iconColor: "text-violet-400",
+            glow: "bg-violet-500/10",
+          },
+        ];
+        return {
+          ...base,
+          description: (
+            <div className="space-y-3">
+              <p className={defaultTextClass}>{base.description}</p>
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                {metrics.map(({ icon: Icon, value, label, color, border, iconColor, glow }) => (
+                  <motion.div
+                    key={label}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className={`relative rounded-xl border ${border} bg-gradient-to-br ${color} backdrop-blur-sm p-3 overflow-hidden`}
+                  >
+                    <div className={`absolute top-0 right-0 w-12 h-12 rounded-full blur-xl ${glow} -translate-y-1/2 translate-x-1/2`} />
+                    <div className={`w-7 h-7 rounded-lg ${glow} border ${border} flex items-center justify-center mb-2`}>
+                      <Icon size={14} className={iconColor} />
+                    </div>
+                    <p className="text-xl font-bold text-white tabular-nums leading-none">{value}</p>
+                    <p className="text-[9px] text-white/50 uppercase tracking-[0.15em] mt-0.5 font-medium leading-tight">{label}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          ),
+        };
+      }
       default:
         return { ...base, description: <span className={defaultTextClass}>{base.description}</span> };
     }
