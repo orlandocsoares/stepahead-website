@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
@@ -441,34 +441,70 @@ export default function HeroSection() {
     if (!telemetry) return { ...base, description: <span className={defaultTextClass}>{base.description}</span> };
 
     switch (index) {
-      case 2:
+      case 1:
         return {
           ...base,
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-              {telemetry.media_radar && (
-                <div className="flex items-center gap-4 mt-3 w-fit">
-                  <div className="relative w-14 h-14 flex items-center justify-center">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/20" />
-                      <motion.circle 
-                        cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="transparent" 
-                        strokeDasharray="150" strokeDashoffset={150 - (150 * telemetry.media_radar) / 100} 
-                        className="text-blue-500" transition={{ duration: 2 }} 
-                      />
-                    </svg>
-                    <span className="absolute text-sm font-bold text-white">{telemetry.media_radar}%</span>
+              <div className="flex flex-wrap gap-3 mt-2">
+                {[
+                  { icon: MapPin,     value: "2",        label: "Províncias" },
+                  { icon: Handshake,  value: "2026",     label: "Ano em curso" },
+                  { icon: GraduationCap, value: `${telemetry.total_formadores || 0}`, label: "Formadores" },
+                  { icon: Users,      value: `${telemetry.total_formandos || 0}`,    label: "Formandos" },
+                ].map(({ icon: Icon, value, label }) => (
+                  <div key={label} className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
+                    <Icon size={14} className="text-blue-400 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-white leading-none">{value}</p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-0.5">{label}</p>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-blue-300 font-bold">Média Nacional</p>
-                    <p className="text-[15px] text-white font-bold">Radar de Integração</p>
+                ))}
+              </div>
+            </div>
+          ),
+        };
+      case 2: {
+        const proximaData = telemetry.proximo_evento_data ? new Date(telemetry.proximo_evento_data) : null;
+        const diasRestantes = proximaData ? Math.max(0, Math.ceil((proximaData.getTime() - Date.now()) / 86400000)) : null;
+        return {
+          ...base,
+          description: (
+            <div className="space-y-4">
+              <p className={defaultTextClass}>{base.description}</p>
+              <div className="flex flex-wrap gap-3 mt-1">
+                <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
+                  <CheckCircle size={14} className="text-emerald-400 shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-white leading-none">{telemetry.sessoes_realizadas || 0}</p>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-0.5">Sessões realizadas</p>
                   </div>
                 </div>
-              )}
+                <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
+                  <GraduationCap size={14} className="text-blue-400 shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-white leading-none">{telemetry.total_turmas || 0}</p>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-0.5">Turmas activas</p>
+                  </div>
+                </div>
+                {telemetry.proximo_evento && (
+                  <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
+                    <Clock size={14} className="text-amber-400 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-white leading-none truncate max-w-[140px]">{telemetry.proximo_evento}</p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-amber-400/80 mt-0.5">
+                        {diasRestantes !== null ? `Em ${diasRestantes} dia${diasRestantes !== 1 ? 's' : ''}` : 'Próxima sessão'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          )
+          ),
         };
+      }
       case 3:
         return {
           ...base,
@@ -479,22 +515,39 @@ export default function HeroSection() {
             </div>
           )
         };
-      case 4:
+      case 4: {
+        const luanda = telemetry.provincias_stats?.luanda ?? { formadores: 0, formandos: 0 };
+        const bie    = telemetry.provincias_stats?.bie    ?? { formadores: 0, formandos: 0 };
         return {
           ...base,
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-              <div className="flex items-center gap-4 mt-3">
-                <Calendar className="text-blue-400 w-10 h-10" />
-                <div className="text-left">
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-blue-300 font-bold">Próxima Acção</p>
-                  <p className="text-[15px] text-white font-bold italic">{telemetry.proximo_evento || 'Agendada'}</p>
-                </div>
+              <div className="flex gap-3 mt-1">
+                {[
+                  { nome: "Luanda", data: luanda, color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-500/5" },
+                  { nome: "Bié",    data: bie,    color: "text-amber-400", border: "border-amber-500/20", bg: "bg-amber-500/5" },
+                ].map(({ nome, data, color, border, bg }) => (
+                  <div key={nome} className={`flex-1 rounded-xl border ${border} ${bg} backdrop-blur-sm px-4 py-3 space-y-2`}>
+                    <p className={`text-[10px] font-black uppercase tracking-[0.3em] ${color}`}>{nome}</p>
+                    <div className="flex gap-3">
+                      <div>
+                        <p className="text-lg font-bold text-white leading-none">{data.formadores}</p>
+                        <p className="text-[9px] text-white/40 uppercase tracking-[0.15em] mt-0.5">Formadores</p>
+                      </div>
+                      <div className="w-px bg-white/10" />
+                      <div>
+                        <p className="text-lg font-bold text-white leading-none">{data.formandos}</p>
+                        <p className="text-[9px] text-white/40 uppercase tracking-[0.15em] mt-0.5">Formandos</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          )
+          ),
         };
+      }
       case 5: {
         const areaColors: Record<string, { bg: string; text: string; border: string; dot: string }> = {
           "Matemática":        { bg: "bg-blue-900/60",    text: "text-blue-200",   border: "border-blue-400/40",   dot: "bg-blue-400" },

@@ -4,7 +4,11 @@ import { dbQuery } from "@/lib/db";
 export async function GET() {
   const safe = (p: Promise<any>) => p.catch(() => ({ rows: [] }));
 
-  const [formadores, proximoEvento, totalMateriais, telemetria, totalFormandos, provincias, turmas, areasMateriais] = await Promise.all([
+  const [
+    formadores, proximoEvento, totalMateriais, telemetria,
+    totalFormandos, provincias, turmas, areasMateriais,
+    sessoesRealizadas, provinciasStats,
+  ] = await Promise.all([
     safe(dbQuery(`
       SELECT id, first_name, last_name, specialization AS especialidade, biografia, avatar_url, provincia
       FROM profiles
@@ -12,7 +16,7 @@ export async function GET() {
       ORDER BY first_name ASC
     `)),
     safe(dbQuery(`
-      SELECT titulo AS proximo_evento
+      SELECT titulo AS proximo_evento, data_evento
       FROM agenda_atividades
       WHERE data_evento >= NOW()
       ORDER BY data_evento ASC
@@ -27,21 +31,42 @@ export async function GET() {
       SELECT area, COUNT(*) AS total
       FROM arquivos
       WHERE visibilidade IN ('publico', 'formadores') AND area IS NOT NULL AND area != ''
-      GROUP BY area
-      ORDER BY total DESC
-      LIMIT 5
+      GROUP BY area ORDER BY total DESC LIMIT 5
+    `)),
+    safe(dbQuery(`SELECT COUNT(*) AS total FROM agenda_atividades WHERE data_evento < NOW()`)),
+    safe(dbQuery(`
+      SELECT
+        LOWER(provincia) AS prov,
+        COUNT(*) FILTER (WHERE role = 'formador') AS formadores,
+        COUNT(*) FILTER (WHERE role = 'formando') AS formandos
+      FROM profiles
+      WHERE provincia IS NOT NULL AND provincia != ''
+        AND LOWER(provincia) IN ('luanda', 'bié', 'bie')
+      GROUP BY LOWER(provincia)
     `)),
   ]);
+
+  const provMap: Record<string, { formadores: number; formandos: number }> = {};
+  for (const r of provinciasStats.rows) {
+    const key = r.prov === 'bie' ? 'bié' : r.prov;
+    provMap[key] = { formadores: Number(r.formadores), formandos: Number(r.formandos) };
+  }
 
   return NextResponse.json({
     formadores_lista: formadores.rows,
     total_formadores: formadores.rows.length,
     proximo_evento: proximoEvento.rows[0]?.proximo_evento ?? null,
+    proximo_evento_data: proximoEvento.rows[0]?.data_evento ?? null,
     total_materials: Number(totalMateriais.rows[0]?.total ?? 0) || null,
     media_radar: telemetria.rows[0]?.media_radar ?? null,
     total_formandos: Number(totalFormandos.rows[0]?.total ?? 0),
     total_provincias: Number(provincias.rows[0]?.total ?? 0),
     total_turmas: Number(turmas.rows[0]?.total ?? 0),
     areas_materiais: areasMateriais.rows.map((r: any) => ({ area: r.area, total: Number(r.total) })),
+    sessoes_realizadas: Number(sessoesRealizadas.rows[0]?.total ?? 0),
+    provincias_stats: {
+      luanda: provMap['luanda'] ?? { formadores: 0, formandos: 0 },
+      bie: provMap['bié'] ?? { formadores: 0, formandos: 0 },
+    },
   });
 }
