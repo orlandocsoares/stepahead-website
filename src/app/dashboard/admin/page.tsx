@@ -126,7 +126,7 @@ export default function SuperAdminPage() {
   }, [profile, profileLoading, router, isStaff]);
 
   useEffect(() => {
-    if (isStaff) fetchData();
+    if (isStaff && activeTab !== "stats") fetchData();
   }, [activeTab, profile]);
 
   useEffect(() => {
@@ -155,8 +155,11 @@ export default function SuperAdminPage() {
 
     try {
       const res = await fetch(url);
-      const { data: res_data, error } = await res.json();
-      if (error) { setDbError(error); setData([]); }
+      const text = await res.text();
+      let json: any = {};
+      try { json = JSON.parse(text); } catch { setDbError("Resposta inválida do servidor. Tenta novamente."); setData([]); setLoading(false); return; }
+      const { data: res_data, error } = json;
+      if (!res.ok || error) { setDbError(typeof error === "string" ? error : error?.message ?? "Erro ao carregar dados."); setData([]); }
       else {
         const sorted = [...(res_data ?? [])].sort((a, b) => {
           const dA = a.created_at || a.updated_at || "";
