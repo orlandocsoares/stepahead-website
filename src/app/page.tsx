@@ -8,7 +8,6 @@ import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { BASE_FRAME_URL, DASHBOARD_URL } from "@/lib/program-config";
 import { PhasesSidebar } from "@/components/PhasesSidebar"; 
@@ -183,11 +182,10 @@ export default function HeroSection() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const router = useRouter();
-  const { profile, refresh: refreshProfile } = useProfile();
+  const { profile, loading: profileLoading, refresh: refreshProfile } = useProfile();
 
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isVIPWelcomeOpen, setIsVIPWelcomeOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   
   const [userRole, setUserRole] = useState<'formando' | 'formador'>('formando');
@@ -211,6 +209,7 @@ export default function HeroSection() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [remoteImageUrl, setRemoteImageUrl] = useState<string | null>(null);
   const [uploadMode, setUploadMode] = useState<"local" | "qr">("local");
+  const [helpOpen, setHelpOpen] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
 
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
@@ -259,18 +258,24 @@ export default function HeroSection() {
   }, [isDashboardView]);
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    refreshProfile(); // Actualiza o estado do perfil para null
-    router.refresh();
-  };
-
-  const triggerVIPTransition = async () => {
     setIsLoginOpen(false);
     // Após o login, o hook useProfile será actualizado na próxima renderização.
     // Apenas precisamos de accionar a UI de boas-vindas.
     await refreshProfile();
     setIsVIPWelcomeOpen(true);
     setTimeout(() => { router.push("/dashboard"); }, 3200); 
+  };
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    await refreshProfile(); // Actualiza o estado do perfil para null
+    router.refresh();
+  };
+
+  const triggerVIPTransition = async () => {
+    await refreshProfile();
+    setIsVIPWelcomeOpen(true);
+    setTimeout(() => { router.push(DASHBOARD_URL); }, 3200); 
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -299,15 +304,6 @@ export default function HeroSection() {
     }
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setAvatarFile(file);
-      setAvatarPreview(URL.createObjectURL(file));
-      setRemoteImageUrl(null);
-    }
-  };
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -321,7 +317,7 @@ export default function HeroSection() {
 
     setLoading(true);
 
-    // Tentar registo directo na nossa API (não depende do Supabase)
+    // Registo na nossa API local
     const syncRes = await fetch("/api/auth/sync-profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -337,7 +333,7 @@ export default function HeroSection() {
     const syncData = await syncRes.json();
     if (!syncRes.ok) { setError(syncData.error ?? "Erro ao criar conta."); setLoading(false); return; }
 
-    // Upload avatar formador para a nossa API de storage
+    // Upload do avatar do formador para a nossa API de storage
     if (userRole === 'formador' && avatarFile) {
       const form = new FormData();
       form.append("bucket", "avatars");
@@ -356,6 +352,15 @@ export default function HeroSection() {
 
     setIsSuccess(true);
     setLoading(false);
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+      setRemoteImageUrl(null);
+    }
   };
 
   const goToPhase = useCallback((index: number) => {
@@ -527,7 +532,7 @@ export default function HeroSection() {
 
   return (
     <div ref={containerRef} className="relative h-[100dvh] w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
-      
+
       {!isDashboardView && !isVIPWelcomeOpen && (
         <CommandCenter onLoginClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} />
       )}
@@ -550,9 +555,9 @@ export default function HeroSection() {
               transition={{ duration: 1, delay: 1.2, ease: "easeOut" }}
               className="fixed top-6 left-6 sm:top-10 sm:left-10 z-50 pointer-events-auto flex items-center gap-3"
             >
-              {/* Certifique-se que estes caminhos para as bandeiras estão correctos */}
-              <img src="/storage/v1/object/public/Flags/ao.svg" alt="Bandeira de Angola" className="h-5 w-auto rounded-sm shadow-lg" />
-              <img src="/storage/v1/object/public/Flags/pt.svg" alt="Bandeira de Portugal" className="h-5 w-auto rounded-sm shadow-lg" />
+              {/* As imagens são servidas a partir da pasta 'public' */}
+              <img src="/flags/ao.svg" alt="Bandeira de Angola" className="h-5 w-auto rounded-sm shadow-lg" />
+              <img src="/flags/pt.svg" alt="Bandeira de Portugal" className="h-5 w-auto rounded-sm shadow-lg" />
             </motion.div>
             
             {/* O SEU POP-UP ORIGINAL, AGORA COM TUDO LÁ DENTRO */}
