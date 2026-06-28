@@ -24,7 +24,16 @@ export async function GET() {
     ORDER BY t.created_at DESC
   `, [isAdmin, sessionUser.id]);
 
-  return NextResponse.json({ data: result.rows });
+  const semTurma = await dbQuery(`
+    SELECT p.id, p.first_name, p.last_name, p.email, p.provincia
+    FROM profiles p
+    WHERE p.role = 'formando'
+      AND p.status IN ('activo', 'email_confirmado', 'pendente')
+      AND p.id NOT IN (SELECT formando_id FROM turma_membros)
+    ORDER BY p.first_name ASC
+  `);
+
+  return NextResponse.json({ data: result.rows, formandos_sem_turma: semTurma.rows });
 }
 
 // POST /api/turmas — criar turma (apenas admin)
