@@ -12,10 +12,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 const CATEGORIES = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
 const VISIBILIDADE_OPTIONS = [
-  { value: "privado",    label: "Só eu",          icon: Lock,          color: "text-white/40",   roles: ["formador", "admin"] },
-  { value: "turma",      label: "Minha turma",    icon: GraduationCap, color: "text-amber-400",  roles: ["formador"] },
-  { value: "formadores", label: "Formadores",      icon: Users,         color: "text-blue-400",   roles: ["formador", "admin"] },
-  { value: "publico",    label: "Todos",           icon: Globe,         color: "text-emerald-400", roles: ["formador", "admin"] },
+  { value: "privado",           label: "Só eu",              icon: Lock,          color: "text-white/40",    roles: ["formador", "admin"] },
+  { value: "turma",             label: "Minha turma",        icon: GraduationCap, color: "text-amber-400",   roles: ["formador"] },
+  { value: "formadores",        label: "Formadores",         icon: Users,         color: "text-blue-400",    roles: ["formador", "admin"] },
+  { value: "formadores_turma",  label: "Formadores + Turma", icon: Users,         color: "text-purple-400",  roles: ["formador"] },
+  { value: "publico",           label: "Todos",              icon: Globe,         color: "text-emerald-400", roles: ["formador", "admin"] },
 ];
 
 function VisibilidadeBadge({ v, small }: { v: string; small?: boolean }) {
@@ -581,7 +582,8 @@ export default function FicheirosPage() {
               <label className="text-xs text-white/40">Visibilidade</label>
               <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-4" : "grid-cols-3"}`}>
                 {VISIBILIDADE_OPTIONS.filter(opt => {
-                  if (opt.value === "turma") return user?.role === "formador" && minhasTurmas.length > 0;
+                  if (opt.value === "turma" || opt.value === "formadores_turma")
+                    return user?.role === "formador" && minhasTurmas.length > 0;
                   return true;
                 }).map((opt) => {
                   const Icon = opt.icon;
@@ -605,9 +607,10 @@ export default function FicheirosPage() {
                 {visibilidade === "privado" && "Só você tem acesso a este documento."}
                 {visibilidade === "turma" && "Apenas os formandos da turma seleccionada têm acesso."}
                 {visibilidade === "formadores" && "Você e todos os formadores podem ver este documento."}
+                {visibilidade === "formadores_turma" && "Formadores e os formandos da turma seleccionada podem ver este documento."}
                 {visibilidade === "publico" && "Todos os utilizadores da plataforma podem ver este documento."}
               </p>
-              {visibilidade === "turma" && minhasTurmas.length > 0 && (
+              {(visibilidade === "turma" || visibilidade === "formadores_turma") && minhasTurmas.length > 0 && (
                 <select value={turmaId} onChange={e => setTurmaId(e.target.value)}
                   className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500/50">
                   {minhasTurmas.map(t => (
