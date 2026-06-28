@@ -169,13 +169,11 @@ export default function FicheirosPage() {
     }
   }
 
-  async function handleFileSelect(file: File) {
+  function handleFileSelect(file: File) {
     setUploadFile(file);
     setThumbnailPreview(null);
     if (file.type === "application/pdf") {
-      const { generatePdfThumbnail } = await import("@/lib/pdf-thumbnail");
-      const blob = await generatePdfThumbnail(file);
-      if (blob) setThumbnailPreview(URL.createObjectURL(blob));
+      setThumbnailPreview(URL.createObjectURL(file));
     }
   }
 
@@ -240,24 +238,6 @@ export default function FicheirosPage() {
       const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: form });
       if (!uploadRes.ok) throw new Error("Erro no upload do ficheiro.");
 
-      // Upload thumbnail se for PDF
-      let thumbnailUrl: string | null = null;
-      if (uploadFile.type === "application/pdf") {
-        const { generatePdfThumbnail } = await import("@/lib/pdf-thumbnail");
-        const thumbBlob = await generatePdfThumbnail(uploadFile);
-        if (thumbBlob) {
-          const thumbName = `thumb_${Date.now()}.jpg`;
-          const thumbForm = new FormData();
-          thumbForm.append("bucket", "materiais");
-          thumbForm.append("path", `thumbnails/${thumbName}`);
-          thumbForm.append("file", new File([thumbBlob], thumbName, { type: "image/jpeg" }));
-          const thumbRes = await fetch("/api/storage/upload", { method: "POST", body: thumbForm });
-          if (thumbRes.ok) {
-            thumbnailUrl = `/storage/v1/object/public/materiais/thumbnails/${thumbName}`;
-          }
-        }
-      }
-
       const areaFinal = uploadAreas && !uploadAreas.includes(uploadCategory)
         ? uploadAreas[0]
         : uploadCategory;
@@ -272,7 +252,6 @@ export default function FicheirosPage() {
           tamanho: (uploadFile.size / (1024 * 1024)).toFixed(2) + " MB",
           tipo: uploadFile.type.includes("video") ? "video" : "pdf",
           visibilidade,
-          ...(thumbnailUrl ? { thumbnail_url: thumbnailUrl } : {}),
           ...(visibilidade === "turma" && turmaId ? { turma_id: turmaId } : {}),
         }),
       });
@@ -423,9 +402,11 @@ export default function FicheirosPage() {
               <div key={f.id} className="group bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/[0.12] transition-all flex flex-col">
                 {/* Miniatura */}
                 <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="block">
-                  <div className={`${f.thumbnail_url ? "" : bg} flex items-center justify-center h-28 relative overflow-hidden`}>
+                  <div className={`flex items-center justify-center h-28 relative overflow-hidden ${f.thumbnail_url ? "" : bg}`}>
                     {f.thumbnail_url ? (
                       <img src={f.thumbnail_url} alt={f.label} className="w-full h-full object-cover" />
+                    ) : label === "PDF" ? (
+                      <embed src={fileUrl} type="application/pdf" className="w-full h-full pointer-events-none" />
                     ) : (
                       <Icon size={40} className={`${text} opacity-60`} />
                     )}
@@ -637,8 +618,8 @@ export default function FicheirosPage() {
                 <input type="file" required onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} className="absolute inset-0 opacity-0 cursor-pointer" />
                 {thumbnailPreview ? (
                   <>
-                    <img src={thumbnailPreview} alt="Pré-visualização" className="h-28 w-auto rounded shadow-lg object-contain" />
-                    <p className="text-[10px] text-white/40 truncate max-w-full">{uploadFile?.name}</p>
+                    <embed src={thumbnailPreview} type="application/pdf" className="w-full h-32 rounded pointer-events-none" />
+                    <p className="text-[10px] text-white/40 truncate max-w-full mt-1">{uploadFile?.name}</p>
                   </>
                 ) : (
                   <>
