@@ -126,32 +126,42 @@ export default function FicheirosPage() {
       const { generatePdfThumbnail } = await import("@/lib/pdf-thumbnail");
       setThumbProgress({ done: 0, total: ficheiros.length });
 
+      let ok = 0;
       for (let i = 0; i < ficheiros.length; i++) {
         const f = ficheiros[i];
         try {
           const fileUrl = `/storage/v1/object/public/materiais/${encodeURIComponent(f.nome_arquivo)}`;
-          const blob = await fetch(fileUrl).then(r => r.blob());
+          const fileRes = await fetch(fileUrl);
+          if (!fileRes.ok) { console.warn("[thumb] ficheiro não encontrado:", f.nome_arquivo); continue; }
+
+          const blob = await fileRes.blob();
           const pdfFile = new File([blob], f.nome_arquivo, { type: "application/pdf" });
           const thumbBlob = await generatePdfThumbnail(pdfFile);
-          if (thumbBlob) {
-            const thumbName = `thumb_${f.id}.jpg`;
-            const thumbForm = new FormData();
-            thumbForm.append("bucket", "materiais");
-            thumbForm.append("path", `thumbnails/${thumbName}`);
-            thumbForm.append("file", new File([thumbBlob], thumbName, { type: "image/jpeg" }));
-            const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: thumbForm });
-            if (uploadRes.ok) {
-              const thumbnailUrl = `/storage/v1/object/public/materiais/thumbnails/${thumbName}`;
-              await fetch("/api/arquivos/gerar-thumbnails", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: f.id, thumbnail_url: thumbnailUrl }),
-              });
-            }
-          }
-        } catch {}
+          if (!thumbBlob) { console.warn("[thumb] falhou renderizar:", f.nome_arquivo); continue; }
+
+          const thumbName = `thumb_${f.id}.jpg`;
+          const thumbForm = new FormData();
+          thumbForm.append("bucket", "materiais");
+          thumbForm.append("path", `thumbnails/${thumbName}`);
+          thumbForm.append("upsert", "true");
+          thumbForm.append("file", new File([thumbBlob], thumbName, { type: "image/jpeg" }));
+          const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: thumbForm });
+          if (!uploadRes.ok) { console.warn("[thumb] upload falhou:", await uploadRes.text()); continue; }
+
+          const thumbnailUrl = `/storage/v1/object/public/materiais/thumbnails/${thumbName}`;
+          const patchRes = await fetch("/api/arquivos/gerar-thumbnails", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: f.id, thumbnail_url: thumbnailUrl }),
+          });
+          if (patchRes.ok) ok++;
+          else console.warn("[thumb] patch falhou:", await patchRes.text());
+        } catch (err) {
+          console.error("[thumb] erro:", err);
+        }
         setThumbProgress({ done: i + 1, total: ficheiros.length });
       }
+      alert(`Capas geradas: ${ok}/${ficheiros.length}`);
       fetchFiles();
     } finally {
       setGeneratingThumbs(false);
