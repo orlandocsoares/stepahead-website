@@ -40,27 +40,7 @@ export function CommandCenter({ onLoginClick, isHero = false }: Props) {
   // Still loading - show nothing to prevent flash
   if (loading) return null;
 
-  // Não autenticado no hero: botão Entrar no lado direito a meio do ecrã
-  if (!profile && isHero) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.5 }}
-        className="fixed left-8 top-1/2 -translate-y-1/2 z-[110]"
-      >
-        <button
-          onClick={onLoginClick}
-          className="w-20 h-20 rounded-full bg-white/5 backdrop-blur-xl border border-white/15 flex items-center justify-center group hover:bg-white/10 hover:border-white/30 transition-all shadow-xl"
-          title="Entrar"
-        >
-          <LogIn size={24} className="text-white/50 group-hover:text-white transition-colors" />
-        </button>
-      </motion.div>
-    );
-  }
-
-  // If not logged in and not on hero, show nothing.
+  // Se não estiver autenticado, não mostra nada (o botão de login agora está na HeroSection)
   if (!profile) return null;
 
   // INJECÇÃO DO PLANO: Inclusão dos caminhos de Comunidade e Suporte com cores premium dedicadas

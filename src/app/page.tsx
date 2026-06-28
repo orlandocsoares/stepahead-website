@@ -740,21 +740,8 @@ export default function HeroSection() {
   return (
     <div ref={containerRef} className="relative h-[100dvh] w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
 
-      {!isDashboardView && !isVIPWelcomeOpen && !profile && (
-        <div className="hidden md:block">
-          <CommandCenter isHero onLoginClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} />
-        </div>
-      )}
-
-      {!isDashboardView && !isVIPWelcomeOpen && profile && (
-        <a
-          href="/dashboard"
-          className="hidden md:flex fixed left-6 bottom-8 z-[110] items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/25 transition-all shadow-lg group"
-        >
-          <LayoutDashboard size={16} className="text-white/50 group-hover:text-white transition-colors" />
-          <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors">Backoffice</span>
-        </a>
-      )}
+      {/* O CommandCenter (avatar à esquerda) só aparece para utilizadores com sessão iniciada */}
+      {!isDashboardView && !isVIPWelcomeOpen && profile && <CommandCenter isHero />}
 
       <motion.div className="fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[100] mix-blend-difference hidden md:block" style={{ x: mouseX, y: mouseY, translateX: "-50%", translateY: "-50%" }} animate={{ scale: isHovering ? 3.5 : 1, opacity: 0.8 }} transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.2 }} />
 
@@ -945,24 +932,32 @@ export default function HeroSection() {
 
             <HelpGuide open={helpOpen} setOpen={setHelpOpen} />
 
-            {/* BARRA DIREITA UNIFICADA (Evita sobreposição em ecrãs de menor altura) */}
             <div className="fixed top-0 right-4 sm:right-6 md:right-16 lg:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-5 sm:py-10 pointer-events-none">
-
-              {/* TOPO: Botão de Ajuda */}
-              <div className="pointer-events-auto shrink-0">
+              {/* TOPO: Botões de Ação (Login e Ajuda) */}
+              <div className="pointer-events-auto shrink-0 flex items-center gap-2">
+                {!profile && !profileLoading && (
+                  <motion.button
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1, delay: 1.3, ease: "easeOut" }}
+                    onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
+                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white/70 transition-colors hover:border-blue-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(59,130,246,0.18)] focus:outline-none focus:ring-2 focus:ring-blue-400/50 group"
+                    title="Entrar"
+                  >
+                    <LogIn size={18} />
+                  </motion.button>
+                )}
                 <button onClick={() => setHelpOpen(true)} className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white transition hover:border-sky-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-400/50">
                   <span className="text-lg font-black">?</span>
                   <span className="sr-only">Abrir guia de ajuda</span>
                 </button>
               </div>
 
-              {/* CENTRO: Fases e Navegador — apenas desktop */}
               <div className="hidden md:flex flex-col items-end gap-4 md:gap-8 pointer-events-auto my-auto shrink-0 transform-gpu min-[1000px]:scale-100 scale-90 origin-right">
                 <PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} phases={PROGRAM_PHASES} setIsHovering={setIsHovering} />
                 <Navigator activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} setIsHovering={setIsHovering} />
               </div>
 
-              {/* BASE: HeroBranding */}
               <div className="pointer-events-auto shrink-0">
                 <HeroBranding />
               </div>
