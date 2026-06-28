@@ -334,19 +334,6 @@ export default function FicheirosPage() {
               <List size={14} />
             </button>
           </div>
-          {(user?.role === "admin" || user?.role === "super-admin") && (
-            <button
-              onClick={handleGenerateMissingThumbnails}
-              disabled={generatingThumbs}
-              title="Gerar capas para ficheiros sem miniatura"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white/50 hover:text-white hover:bg-white/[0.08] transition-colors disabled:opacity-40"
-            >
-              {generatingThumbs
-                ? <><Loader2 size={14} className="animate-spin" />{thumbProgress ? `${thumbProgress.done}/${thumbProgress.total}` : "..."}</>
-                : <><ImagePlus size={14} /> Capas</>
-              }
-            </button>
-          )}
           {canUpload && (
             <button onClick={openUploadModal}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
