@@ -5,7 +5,7 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   FileText, Video, Search, Download, Loader2, Plus, FolderOpen, Lock,
   Globe, Users, GraduationCap, LayoutGrid, List, ExternalLink,
-  FileImage, FileVideo, FileArchive, File, Trash2,
+  FileImage, FileVideo, FileArchive, File, Trash2, ImagePlus,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -89,6 +89,9 @@ export default function FicheirosPage() {
   const [minhasTurmas, setMinhasTurmas] = useState<{ id: string; nome: string; area: string }[]>([]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [generatingThumbs, setGeneratingThumbs] = useState(false);
+  const [thumbProgress, setThumbProgress] = useState<{ done: number; total: number } | null>(null);
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
 
@@ -105,10 +108,65 @@ export default function FicheirosPage() {
   function openUploadModal() {
     setTitle("");
     setUploadFile(null);
+    setThumbnailPreview(null);
     setVisibilidade("publico");
     setTurmaId(minhasTurmas[0]?.id ?? "");
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
     setIsModalOpen(true);
+  }
+
+  async function handleGenerateMissingThumbnails() {
+    setGeneratingThumbs(true);
+    setThumbProgress(null);
+    try {
+      const res = await fetch("/api/arquivos/gerar-thumbnails");
+      const { ficheiros } = await res.json();
+      if (!ficheiros?.length) { setGeneratingThumbs(false); return; }
+
+      const { generatePdfThumbnail } = await import("@/lib/pdf-thumbnail");
+      setThumbProgress({ done: 0, total: ficheiros.length });
+
+      for (let i = 0; i < ficheiros.length; i++) {
+        const f = ficheiros[i];
+        try {
+          const fileUrl = `/storage/v1/object/public/materiais/${encodeURIComponent(f.nome_arquivo)}`;
+          const blob = await fetch(fileUrl).then(r => r.blob());
+          const pdfFile = new File([blob], f.nome_arquivo, { type: "application/pdf" });
+          const thumbBlob = await generatePdfThumbnail(pdfFile);
+          if (thumbBlob) {
+            const thumbName = `thumb_${f.id}.jpg`;
+            const thumbForm = new FormData();
+            thumbForm.append("bucket", "materiais");
+            thumbForm.append("path", `thumbnails/${thumbName}`);
+            thumbForm.append("file", new File([thumbBlob], thumbName, { type: "image/jpeg" }));
+            const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: thumbForm });
+            if (uploadRes.ok) {
+              const thumbnailUrl = `/storage/v1/object/public/materiais/thumbnails/${thumbName}`;
+              await fetch("/api/arquivos/gerar-thumbnails", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: f.id, thumbnail_url: thumbnailUrl }),
+              });
+            }
+          }
+        } catch {}
+        setThumbProgress({ done: i + 1, total: ficheiros.length });
+      }
+      fetchFiles();
+    } finally {
+      setGeneratingThumbs(false);
+      setThumbProgress(null);
+    }
+  }
+
+  async function handleFileSelect(file: File) {
+    setUploadFile(file);
+    setThumbnailPreview(null);
+    if (file.type === "application/pdf") {
+      const { generatePdfThumbnail } = await import("@/lib/pdf-thumbnail");
+      const blob = await generatePdfThumbnail(file);
+      if (blob) setThumbnailPreview(URL.createObjectURL(blob));
+    }
   }
 
   async function fetchFiles() {
@@ -172,6 +230,24 @@ export default function FicheirosPage() {
       const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: form });
       if (!uploadRes.ok) throw new Error("Erro no upload do ficheiro.");
 
+      // Upload thumbnail se for PDF
+      let thumbnailUrl: string | null = null;
+      if (uploadFile.type === "application/pdf") {
+        const { generatePdfThumbnail } = await import("@/lib/pdf-thumbnail");
+        const thumbBlob = await generatePdfThumbnail(uploadFile);
+        if (thumbBlob) {
+          const thumbName = `thumb_${Date.now()}.jpg`;
+          const thumbForm = new FormData();
+          thumbForm.append("bucket", "materiais");
+          thumbForm.append("path", `thumbnails/${thumbName}`);
+          thumbForm.append("file", new File([thumbBlob], thumbName, { type: "image/jpeg" }));
+          const thumbRes = await fetch("/api/storage/upload", { method: "POST", body: thumbForm });
+          if (thumbRes.ok) {
+            thumbnailUrl = `/storage/v1/object/public/materiais/thumbnails/${thumbName}`;
+          }
+        }
+      }
+
       const areaFinal = uploadAreas && !uploadAreas.includes(uploadCategory)
         ? uploadAreas[0]
         : uploadCategory;
@@ -186,12 +262,14 @@ export default function FicheirosPage() {
           tamanho: (uploadFile.size / (1024 * 1024)).toFixed(2) + " MB",
           tipo: uploadFile.type.includes("video") ? "video" : "pdf",
           visibilidade,
+          ...(thumbnailUrl ? { thumbnail_url: thumbnailUrl } : {}),
           ...(visibilidade === "turma" && turmaId ? { turma_id: turmaId } : {}),
         }),
       });
       if (!dbRes.ok) throw new Error("Erro ao registar o ficheiro.");
 
       setIsModalOpen(false);
+      setThumbnailPreview(null);
       fetchFiles();
     } catch (err: any) {
       alert(err.message ?? "Erro desconhecido.");
@@ -267,6 +345,19 @@ export default function FicheirosPage() {
               <List size={14} />
             </button>
           </div>
+          {(user?.role === "admin" || user?.role === "super-admin") && (
+            <button
+              onClick={handleGenerateMissingThumbnails}
+              disabled={generatingThumbs}
+              title="Gerar capas para ficheiros sem miniatura"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white/50 hover:text-white hover:bg-white/[0.08] transition-colors disabled:opacity-40"
+            >
+              {generatingThumbs
+                ? <><Loader2 size={14} className="animate-spin" />{thumbProgress ? `${thumbProgress.done}/${thumbProgress.total}` : "..."}</>
+                : <><ImagePlus size={14} /> Capas</>
+              }
+            </button>
+          )}
           {canUpload && (
             <button onClick={openUploadModal}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
@@ -322,12 +413,16 @@ export default function FicheirosPage() {
               <div key={f.id} className="group bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/[0.12] transition-all flex flex-col">
                 {/* Miniatura */}
                 <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="block">
-                  <div className={`${bg} flex items-center justify-center h-28 relative`}>
-                    <Icon size={40} className={`${text} opacity-60`} />
-                    <span className={`absolute bottom-2 right-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${bg} ${text} border border-current/20`}>
+                  <div className={`${f.thumbnail_url ? "" : bg} flex items-center justify-center h-28 relative overflow-hidden`}>
+                    {f.thumbnail_url ? (
+                      <img src={f.thumbnail_url} alt={f.label} className="w-full h-full object-cover" />
+                    ) : (
+                      <Icon size={40} className={`${text} opacity-60`} />
+                    )}
+                    <span className={`absolute bottom-2 right-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-black/60 ${text}`}>
                       {label}
                     </span>
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                       <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
@@ -528,12 +623,21 @@ export default function FicheirosPage() {
 
             <div className="space-y-1.5">
               <label className="text-xs text-white/40">Ficheiro</label>
-              <label className="relative flex flex-col items-center justify-center gap-2 border border-dashed border-white/[0.10] rounded-lg p-8 cursor-pointer hover:border-blue-500/40 transition-colors">
-                <input type="file" required onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)} className="absolute inset-0 opacity-0 cursor-pointer" />
-                <Download size={20} className="text-white/20" />
-                <p className="text-xs text-white/40 text-center">
-                  {uploadFile ? uploadFile.name : "Arraste ou clique para seleccionar"}
-                </p>
+              <label className="relative flex flex-col items-center justify-center gap-2 border border-dashed border-white/[0.10] rounded-lg p-6 cursor-pointer hover:border-blue-500/40 transition-colors overflow-hidden">
+                <input type="file" required onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                {thumbnailPreview ? (
+                  <>
+                    <img src={thumbnailPreview} alt="Pré-visualização" className="h-28 w-auto rounded shadow-lg object-contain" />
+                    <p className="text-[10px] text-white/40 truncate max-w-full">{uploadFile?.name}</p>
+                  </>
+                ) : (
+                  <>
+                    <Download size={20} className="text-white/20" />
+                    <p className="text-xs text-white/40 text-center">
+                      {uploadFile ? uploadFile.name : "Arraste ou clique para seleccionar"}
+                    </p>
+                  </>
+                )}
               </label>
             </div>
 

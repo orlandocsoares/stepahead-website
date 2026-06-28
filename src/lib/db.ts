@@ -28,6 +28,12 @@ async function initializeDatabase(pool: Pool) {
       ADD COLUMN IF NOT EXISTS destinatario_email TEXT DEFAULT NULL;
     `);
 
+    // 5. Add thumbnail_url to arquivos
+    await pool.query(`
+      ALTER TABLE arquivos
+      ADD COLUMN IF NOT EXISTS thumbnail_url TEXT DEFAULT NULL;
+    `);
+
     console.log("Database schema initialized successfully.");
   } catch (error) {
     console.error("Failed to initialize database schema:", error);
