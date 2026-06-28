@@ -1,7 +1,73 @@
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 import { dbQuery } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { setSession } from "@/lib/server-auth";
+import { randomBytes } from "crypto";
+
+const BASE = process.env.APP_URL || "https://sabermais.edu.ao";
+
+async function sendConfirmEmail(email: string, userId: string, firstName: string) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const token = randomBytes(32).toString("hex");
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+
+  await dbQuery(
+    `INSERT INTO email_confirm_tokens (token, user_id, expires_at)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (user_id) DO UPDATE SET token = $1, expires_at = $3`,
+    [token, userId, expires.toISOString()]
+  );
+
+  const confirmUrl = `${BASE}/api/auth/confirm-email?token=${token}`;
+
+  await resend.emails.send({
+    from: "SaberMais <notificacoes@sabermais.edu.ao>",
+    to: email,
+    subject: "Confirme o seu email — SaberMais",
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d0d14;color:#fff;border-radius:16px;">
+        <img src="${BASE}/logo-sabermais.png" alt="SaberMais" style="height:48px;margin-bottom:24px;" />
+        <h2 style="font-size:18px;font-weight:600;margin-bottom:8px;">Bem-vindo ao SaberMais${firstName ? `, ${firstName}` : ""}!</h2>
+        <p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.6;margin-bottom:24px;">
+          Para activar a sua conta, clique no botão abaixo para confirmar o seu endereço de email. O link é válido durante <strong style="color:#fff;">24 horas</strong>.
+        </p>
+        <a href="${confirmUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">
+          Confirmar email
+        </a>
+        <p style="color:rgba(255,255,255,0.3);font-size:12px;margin-top:24px;">
+          Se não criou esta conta, pode ignorar este email.
+        </p>
+      </div>
+    `,
+  });
+}
+
+async function notifyAdminNewFormador(firstName: string, lastName: string, email: string) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const admins = await dbQuery<{ email: string }>(
+    `SELECT email FROM profiles WHERE role IN ('admin', 'super-admin') AND status = 'activo'`
+  );
+  for (const admin of admins.rows) {
+    await resend.emails.send({
+      from: "SaberMais <notificacoes@sabermais.edu.ao>",
+      to: admin.email,
+      subject: "Novo formador aguarda aprovação — SaberMais",
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d0d14;color:#fff;border-radius:16px;">
+          <img src="${BASE}/logo-sabermais.png" alt="SaberMais" style="height:48px;margin-bottom:24px;" />
+          <h2 style="font-size:18px;font-weight:600;margin-bottom:8px;">Novo formador aguarda aprovação</h2>
+          <p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.6;margin-bottom:24px;">
+            <strong style="color:#fff;">${firstName} ${lastName}</strong> (${email}) confirmou o email e está a aguardar aprovação para aceder ao portal.
+          </p>
+          <a href="${BASE}/dashboard/admin" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">
+            Ir para o painel de administração
+          </a>
+        </div>
+      `,
+    });
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -30,17 +96,36 @@ export async function POST(request: Request) {
 
     const userId = created.rows[0].id;
     const firstName = String(metadata.first_name ?? "").trim();
+    const lastName = String(metadata.last_name ?? "").trim();
     const role = String(metadata.role ?? "formando");
 
     await dbQuery(
-      `INSERT INTO profiles (id, email, first_name, role, status)
-       VALUES ($1, $2, $3, $4, 'pendente')`,
-      [userId, email, firstName || null, role]
+      `INSERT INTO profiles (id, email, first_name, last_name, role, status)
+       VALUES ($1, $2, $3, $4, $5, 'pendente')`,
+      [userId, email, firstName || null, lastName || null, role]
     );
 
-    await setSession(userId);
+    if (role === "formador") {
+      // Formador: envia email de confirmação — sem sessão até admin aprovar
+      await sendConfirmEmail(email, userId, firstName).catch(e =>
+        console.error("[register] sendConfirmEmail error:", e.message)
+      );
+      return NextResponse.json({
+        data: { user: { id: userId, email } },
+        pendente: true,
+        mensagem: "Verifique o seu email para confirmar a conta. Após confirmação, a sua conta será analisada pelo administrador.",
+      });
+    }
 
-    return NextResponse.json({ data: { user: { id: userId, email } } });
+    // Formando: envia email de confirmação — sem sessão até confirmar
+    await sendConfirmEmail(email, userId, firstName).catch(e =>
+      console.error("[register] sendConfirmEmail error:", e.message)
+    );
+    return NextResponse.json({
+      data: { user: { id: userId, email } },
+      pendente: true,
+      mensagem: "Verifique o seu email para confirmar a conta.",
+    });
   } catch {
     return NextResponse.json({ error: { message: "Falha ao criar conta." } }, { status: 500 });
   }

@@ -28,6 +28,8 @@ export default function SuperAdminPage() {
   const [statsData, setStatsData] = useState<any>(null);
   const [formadoresList, setFormadoresList] = useState<any[]>([]);
   const [mediaRadar, setMediaRadar] = useState<string>("");
+  const [formadoresPendentes, setFormadoresPendentes] = useState<any[]>([]);
+  const [approvingFormadorId, setApprovingFormadorId] = useState<string | null>(null);
   const [mediaRadarSaving, setMediaRadarSaving] = useState(false);
   const [mediaRadarSaved, setMediaRadarSaved] = useState(false);
 
@@ -127,6 +129,15 @@ export default function SuperAdminPage() {
 
   useEffect(() => {
     if (isStaff && activeTab !== "stats") fetchData();
+  }, [activeTab, profile]);
+
+  useEffect(() => {
+    if (isAdminOrSuper(profile?.role) && activeTab === "users") {
+      fetch("/api/formadores-pendentes")
+        .then(r => r.json())
+        .then(d => setFormadoresPendentes(d.formadores ?? []))
+        .catch(() => {});
+    }
   }, [activeTab, profile]);
 
   useEffect(() => {
@@ -640,6 +651,54 @@ export default function SuperAdminPage() {
               </motion.div>
             ) : activeTab === "users" && groupedUsers ? (
               <motion.div key="users_list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
+
+                {/* Formadores pendentes de aprovação */}
+                {isAdminOrSuper(profile?.role) && formadoresPendentes.length > 0 && (
+                  <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle size={14} className="text-amber-400 shrink-0" />
+                      <span className="text-sm font-semibold text-amber-300">
+                        {formadoresPendentes.length === 1
+                          ? "1 formador aguarda aprovação"
+                          : `${formadoresPendentes.length} formadores aguardam aprovação`}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {formadoresPendentes.map((f) => (
+                        <div key={f.id} className="flex items-center justify-between gap-3 bg-white/[0.03] rounded-lg px-3 py-2.5">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-white font-medium truncate">{f.first_name} {f.last_name}</p>
+                            <p className="text-[11px] text-white/40 truncate">{f.email}{f.especialidade ? ` · ${f.especialidade}` : ""}</p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              disabled={approvingFormadorId === f.id}
+                              onClick={async () => {
+                                setApprovingFormadorId(f.id);
+                                await fetch("/api/formadores-pendentes", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ formador_id: f.id, acao: "aprovar" }) });
+                                setFormadoresPendentes(prev => prev.filter(x => x.id !== f.id));
+                                setApprovingFormadorId(null);
+                                fetchData();
+                              }}
+                              className="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                            >Aprovar</button>
+                            <button
+                              disabled={approvingFormadorId === f.id}
+                              onClick={async () => {
+                                setApprovingFormadorId(f.id);
+                                await fetch("/api/formadores-pendentes", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ formador_id: f.id, acao: "rejeitar" }) });
+                                setFormadoresPendentes(prev => prev.filter(x => x.id !== f.id));
+                                setApprovingFormadorId(null);
+                              }}
+                              className="px-3 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-medium hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                            >Rejeitar</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {groupedUsers.map((group) => {
                   if (group.data.length === 0) return null;
                   return (

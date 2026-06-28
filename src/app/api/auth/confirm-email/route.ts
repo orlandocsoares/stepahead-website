@@ -28,12 +28,29 @@ export async function GET(req: NextRequest) {
 
     await dbQuery("DELETE FROM email_confirm_tokens WHERE user_id = $1", [row.user_id]);
 
-    // Notificar todos os formadores que o formando escolheu
-    const profile = await dbQuery<{ first_name: string; last_name: string; email: string }>(
-      "SELECT first_name, last_name, email FROM profiles WHERE id = $1 LIMIT 1",
+    const profileRes = await dbQuery<{ first_name: string; last_name: string; email: string; role: string }>(
+      "SELECT first_name, last_name, email, role FROM profiles WHERE id = $1 LIMIT 1",
       [row.user_id]
     );
-    const p = profile.rows[0];
+    const p = profileRes.rows[0];
+
+    if (p?.role === "formador") {
+      // Formador confirmou email → notificar admins para aprovação
+      const admins = await dbQuery<{ id: string }>(
+        `SELECT id FROM profiles WHERE role IN ('admin', 'super-admin') AND status = 'activo'`
+      );
+      for (const admin of admins.rows) {
+        await dbQuery(
+          `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
+           VALUES ($1, 'novo_formador', 'Novo formador aguarda aprovação',
+             $2, '/dashboard/admin')`,
+          [admin.id, `${p.first_name} ${p.last_name ?? ""} (${p.email}) confirmou o email e aguarda aprovação.`]
+        );
+      }
+      return redirect("/confirm-email?sucesso=formador");
+    }
+
+    // Formando: notificar formadores escolhidos
     if (p) {
       const formadores = await dbQuery<{ formador_id: string }>(
         "SELECT formador_id FROM formando_formadores WHERE formando_id = $1 AND status = 'pendente'",
@@ -44,7 +61,7 @@ export async function GET(req: NextRequest) {
           `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
            VALUES ($1, 'novo_formando', 'Novo formando aguarda aprovação',
              $2, '/dashboard/admin')`,
-          [formador_id, `${p.first_name} ${p.last_name} (${p.email}) confirmou o email e escolheu-te como formador.`]
+          [formador_id, `${p.first_name} ${p.last_name ?? ""} (${p.email}) confirmou o email e escolheu-te como formador.`]
         );
       }
     }

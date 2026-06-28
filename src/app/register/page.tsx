@@ -100,7 +100,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
-          metadata: { first_name: formData.first_name, role },
+          metadata: { first_name: formData.first_name, last_name: formData.last_name, role },
         }),
       });
       const regJson = await regRes.json();
@@ -165,7 +165,12 @@ export default function RegisterPage() {
           </div>
           <h1 className="text-4xl font-extralight text-white uppercase tracking-tighter italic">Verifique o seu E-mail</h1>
           <p className="text-white/40 text-sm leading-relaxed tracking-widest uppercase">
-            Enviámos um link de activação para <span className="text-white font-bold">{formData.email}</span>. Por favor, confirme o e-mail para validar a autenticidade dos seus dados pedagógicos.
+            Enviámos um link de confirmação para <span className="text-white font-bold">{formData.email}</span>.
+          </p>
+          <p className="text-white/30 text-xs leading-relaxed mt-2">
+            {role === "formador"
+              ? "Após confirmar o email, a sua conta será analisada pelo administrador. Receberá uma notificação quando o acesso for aprovado."
+              : "Após confirmar o email, o seu formador receberá uma notificação e poderá aprovar o seu acesso ao portal."}
           </p>
         </motion.div>
       </div>

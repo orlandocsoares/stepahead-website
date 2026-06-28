@@ -23,6 +23,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: { message: "Credenciais invalidas." } }, { status: 401 });
     }
 
+    // Verificar se é formador pendente de aprovação
+    const profileRes = await dbQuery<{ role: string; status: string }>(
+      "SELECT role, status FROM profiles WHERE id = $1 LIMIT 1",
+      [user.id]
+    );
+    const profile = profileRes.rows[0];
+    if (profile?.status === "pendente") {
+      return NextResponse.json(
+        { error: { message: "Confirme o seu email antes de iniciar sessão. Verifique a sua caixa de entrada." } },
+        { status: 403 }
+      );
+    }
+    if (profile?.role === "formador" && profile?.status === "email_confirmado") {
+      return NextResponse.json(
+        { error: { message: "A sua conta está a aguardar aprovação pelo administrador." } },
+        { status: 403 }
+      );
+    }
+    if (profile?.role === "formando" && profile?.status === "email_confirmado") {
+      return NextResponse.json(
+        { error: { message: "A sua conta está a aguardar aprovação pelo seu formador." } },
+        { status: 403 }
+      );
+    }
+
     await setSession(user.id);
 
     return NextResponse.json({ data: { user: { id: user.id, email: user.email } } });

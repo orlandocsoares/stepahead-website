@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut } from "lucide-react";
+import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut, ShieldCheck } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
 const PAGE_TITLES: Record<string, string> = {
@@ -99,8 +99,11 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
     return `${Math.floor(h / 24)}d`;
   }
 
+  const isAdmin = user?.role === "admin" || user?.role === "super-admin";
   const pendingFormandos = notifs.filter(n => n.tipo === "novo_formando" && !n.lida);
-  const showBanner = pendingFormandos.length > 0 && !bannerDismissed && pathname !== "/dashboard/admin";
+  const pendingFormadores = notifs.filter(n => n.tipo === "novo_formador" && !n.lida);
+  const totalPending = pendingFormandos.length + (isAdmin ? pendingFormadores.length : 0);
+  const showBanner = totalPending > 0 && !bannerDismissed && pathname !== "/dashboard/admin";
 
   return (
     <>
@@ -108,8 +111,12 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
       <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 flex items-center gap-3">
         <AlertTriangle size={15} className="text-amber-400 shrink-0" />
         <p className="text-xs text-amber-200 flex-1">
-          <span className="font-semibold">{pendingFormandos.length} formando{pendingFormandos.length > 1 ? "s" : ""}</span>
-          {pendingFormandos.length > 1 ? " aguardam" : " aguarda"} a tua aprovação.
+          {pendingFormandos.length > 0 && (
+            <><span className="font-semibold">{pendingFormandos.length} formando{pendingFormandos.length > 1 ? "s" : ""}</span>{pendingFormandos.length > 1 ? " aguardam" : " aguarda"} aprovação. </>
+          )}
+          {isAdmin && pendingFormadores.length > 0 && (
+            <><span className="font-semibold">{pendingFormadores.length} formador{pendingFormadores.length > 1 ? "es" : ""}</span>{pendingFormadores.length > 1 ? " aguardam" : " aguarda"} validação.</>
+          )}
         </p>
         <button
           onClick={() => { setBannerDismissed(false); router.push("/dashboard/admin"); }}
@@ -180,8 +187,14 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
                     onClick={() => markRead(n.id, n.link)}
                     className={`w-full text-left px-4 py-3 border-b border-white/[0.04] hover:bg-white/[0.04] transition-colors flex gap-3 ${!n.lida ? "bg-blue-500/5" : ""}`}
                   >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${n.tipo === "novo_formando" ? "bg-emerald-500/10" : "bg-blue-500/10"}`}>
-                      {n.tipo === "novo_formando" ? <UserCheck size={14} className="text-emerald-400" /> : <Bell size={14} className="text-blue-400" />}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                      n.tipo === "novo_formando" ? "bg-emerald-500/10" :
+                      n.tipo === "novo_formador" ? "bg-amber-500/10" :
+                      "bg-blue-500/10"
+                    }`}>
+                      {n.tipo === "novo_formando" ? <UserCheck size={14} className="text-emerald-400" /> :
+                       n.tipo === "novo_formador" ? <ShieldCheck size={14} className="text-amber-400" /> :
+                       <Bell size={14} className="text-blue-400" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
