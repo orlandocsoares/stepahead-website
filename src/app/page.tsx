@@ -971,12 +971,7 @@ export default function HeroSection() {
                         </div>
                         <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-[8px] uppercase tracking-widest text-white/30 hover:text-red-400 flex items-center gap-1"><LogOut size={10} /> Terminar Sessão</button>
                       </motion.div>
-                    ) : (
-                      <motion.button initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} onClick={(e) => { e.stopPropagation(); setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} className="absolute -top-16 group flex flex-col items-center gap-2 transition-all z-50 pointer-events-auto">
-                        <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/70 group-hover:text-white drop-shadow-md">Aceder ao Terminal</span>
-                        <div className="w-8 h-[1px] bg-white/20 group-hover:w-16 group-hover:bg-blue-500 transition-all duration-700" />
-                      </motion.button>
-                    )
+                    ) : null
                   )}
 
                   {isLogoHovered && EDUCATIONAL_ELEMENTS.map((item, i) => {
