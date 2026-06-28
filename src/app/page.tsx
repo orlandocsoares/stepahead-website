@@ -61,7 +61,7 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
   const avatar = f.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${f.first_name}&backgroundColor=ffffff&textColor=000000`;
 
   return (
-    <div className="relative overflow-hidden w-full h-[80px] mt-3 bg-transparent">
+    <div className="relative overflow-hidden w-full h-[90px] mt-2 bg-transparent">
       <AnimatePresence mode="wait">
         <motion.div
           key={idx}
@@ -69,13 +69,13 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
           animate={{ opacity: 1, filter: "blur(0px)" }}
           exit={{ opacity: 0, filter: "blur(4px)" }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="flex items-center gap-4 w-full absolute inset-0"
+          className="flex items-center gap-5 w-full absolute inset-0"
         >
-          <img src={avatar} className="w-14 h-14 rounded-full border border-white/20 object-cover shrink-0 drop-shadow-md" alt="Formador" />
+          <img src={avatar} className="w-16 h-16 rounded-full border border-white/20 object-cover shrink-0 drop-shadow-md" alt="Formador" />
           <div className="flex flex-col text-left">
-            <span className="text-xl text-white font-bold tracking-tight drop-shadow-md">{f.first_name} {f.last_name}</span>
-            <span className="text-[10px] text-emerald-400 uppercase tracking-[0.2em] font-bold mt-0.5 drop-shadow-sm">{f.especialidade || 'Área Pedagógica'}</span>
-            <p className="text-[11px] text-white/80 mt-1 font-light leading-snug line-clamp-2 drop-shadow-sm">{f.biografia || 'Reforço das metodologias de ensino activo.'}</p>
+            <span className="text-2xl text-white font-bold tracking-tight drop-shadow-md">{f.first_name} {f.last_name}</span>
+            <span className="text-[11px] text-emerald-400 uppercase tracking-[0.2em] font-bold mt-1 drop-shadow-sm">{f.especialidade || 'Área Pedagógica'}</span>
+            <p className="text-xs text-white/80 mt-1.5 font-light leading-snug line-clamp-2 drop-shadow-sm">{f.biografia || 'Reforço das metodologias de ensino activo.'}</p>
           </div>
         </motion.div>
       </AnimatePresence>
@@ -449,21 +449,21 @@ export default function HeroSection() {
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
               {telemetry.media_radar && (
-                <div className="flex items-center gap-4 mt-3 w-fit">
-                  <div className="relative w-14 h-14 flex items-center justify-center">
+                <div className="flex items-center gap-4 mt-4 w-fit">
+                  <div className="relative w-16 h-16 flex items-center justify-center">
                     <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/20" />
+                      <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/20" />
                       <motion.circle 
-                        cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="transparent" 
-                        strokeDasharray="150" strokeDashoffset={150 - (150 * telemetry.media_radar) / 100} 
+                        cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="transparent" 
+                        strokeDasharray="175" strokeDashoffset={175 - (175 * telemetry.media_radar) / 100} 
                         className="text-blue-500" transition={{ duration: 2 }} 
                       />
                     </svg>
-                    <span className="absolute text-sm font-bold text-white">{telemetry.media_radar}%</span>
+                    <span className="absolute text-base font-bold text-white">{telemetry.media_radar}%</span>
                   </div>
                   <div className="text-left">
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-blue-300 font-bold">Média Nacional</p>
-                    <p className="text-[15px] text-white font-bold">Radar de Integração</p>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-blue-300 font-bold">Média Nacional</p>
+                    <p className="text-base text-white font-bold">Radar de Integração</p>
                   </div>
                 </div>
               )}
@@ -474,9 +474,12 @@ export default function HeroSection() {
         return {
           ...base,
           description: (
-            <div className="space-y-2">
+            <div className="space-y-4">
               <p className={defaultTextClass}>A promoção da supervisão apoia-se em <strong className="text-blue-300">{telemetry.total_formadores || 3} formadores</strong> de excelência.</p>
-              <FormadoresLoop formadores={telemetry.formadores_lista} />
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-300 font-bold">Equipa de Formadores</p>
+                <FormadoresLoop formadores={telemetry.formadores_lista} />
+              </div>
             </div>
           )
         };
@@ -486,11 +489,11 @@ export default function HeroSection() {
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-              <div className="flex items-center gap-4 mt-3">
-                <Calendar className="text-blue-400 w-10 h-10" />
+              <div className="flex items-center gap-4 mt-4">
+                <Calendar className="text-blue-400 w-12 h-12" />
                 <div className="text-left">
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-blue-300 font-bold">Próxima Acção</p>
-                  <p className="text-[15px] text-white font-bold italic">{telemetry.proximo_evento || 'Agendada'}</p>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-blue-300 font-bold">Próxima Acção</p>
+                  <p className="text-base text-white font-bold italic">{telemetry.proximo_evento || 'Agendada'}</p>
                 </div>
               </div>
             </div>
@@ -503,11 +506,11 @@ export default function HeroSection() {
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
               {telemetry.total_materials && (
-                <div className="flex items-center gap-4 mt-3">
-                  <FileText className="text-amber-400 w-10 h-10" />
+                <div className="flex items-center gap-4 mt-4">
+                  <FileText className="text-amber-400 w-12 h-12" />
                   <div className="text-left">
-                    <span className="text-4xl font-bold text-white tracking-tighter">{telemetry.total_materials}</span>
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-amber-400 font-bold">Materiais no Cofre</p>
+                    <span className="text-5xl font-bold text-white tracking-tighter">{telemetry.total_materials}</span>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400 font-bold">Materiais no Cofre</p>
                   </div>
                 </div>
               )}
