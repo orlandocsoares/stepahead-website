@@ -1021,15 +1021,6 @@ export default function HeroSection() {
                       {PROGRAM_PHASES[activePhaseIndex]?.name}
                     </motion.span>
                   </AnimatePresence>
-                  {!profile && (
-                    <button
-                      onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
-                      className="mt-1.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[9px] font-bold uppercase tracking-[0.25em] text-white/80 hover:bg-white/20 transition-colors"
-                    >
-                      <LogIn size={10} />
-                      Entrar
-                    </button>
-                  )}
                   {profile && (
                     <a
                       href="/dashboard"
