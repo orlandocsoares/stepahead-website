@@ -3,7 +3,26 @@ import { Resend } from "resend";
 import { dbQuery } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { setSession } from "@/lib/server-auth";
+import { rateLimiter, getClientIp } from "@/lib/rate-limit";
+import { auditLog } from "@/lib/audit";
 import { randomBytes } from "crypto";
+
+// Máx. 5 registos por IP por hora
+const REGISTER_LIMIT = { max: 5, windowMs: 60 * 60 * 1000 };
+
+/**
+ * Valida complexidade de password:
+ * - Mínimo 8 caracteres
+ * - Pelo menos 1 letra maiúscula
+ * - Pelo menos 1 dígito
+ * Evita passwords obviamente fracas sem ser demasiado restritivo.
+ */
+function validatePassword(pwd: string): string | null {
+  if (pwd.length < 8) return "A password deve ter pelo menos 8 caracteres.";
+  if (!/[A-Z]/.test(pwd)) return "A password deve conter pelo menos uma letra maiúscula.";
+  if (!/[0-9]/.test(pwd)) return "A password deve conter pelo menos um número.";
+  return null; // válida
+}
 
 const BASE = process.env.APP_URL || "https://sabermais.edu.ao";
 
@@ -70,6 +89,17 @@ async function notifyAdminNewFormador(firstName: string, lastName: string, email
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+
+  // --- Rate limiting por IP ---
+  const rl = rateLimiter.check("register", ip, REGISTER_LIMIT);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: { message: `Demasiados registos. Tente novamente em ${rl.retryAfterSecs}s.` } },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSecs) } }
+    );
+  }
+
   try {
     const body = await request.json();
     const email = String(body.email ?? "").trim().toLowerCase();
@@ -85,8 +115,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: { message: "Email inválido." } }, { status: 400 });
     }
 
-    if (password.length < 8) {
-      return NextResponse.json({ error: { message: "A password deve ter pelo menos 8 caracteres." } }, { status: 400 });
+    const pwdError = validatePassword(password);
+    if (pwdError) {
+      return NextResponse.json({ error: { message: pwdError } }, { status: 400 });
     }
 
     const exists = await dbQuery<{ id: string }>("SELECT id FROM auth_users WHERE email = $1 LIMIT 1", [email]);
@@ -110,27 +141,18 @@ export async function POST(request: Request) {
       [userId, email, firstName || null, lastName || null, role]
     );
 
-    if (role === "formador") {
-      // Formador: envia email de confirmação — sem sessão até admin aprovar
-      await sendConfirmEmail(email, userId, firstName).catch(e =>
-        console.error("[register] sendConfirmEmail error:", e.message)
-      );
-      return NextResponse.json({
-        data: { user: { id: userId, email } },
-        pendente: true,
-        mensagem: "Verifique o seu email para confirmar a conta. Após confirmação, a sua conta será analisada pelo administrador.",
-      });
-    }
+    await auditLog("register", { actorId: userId, ip, details: { role, email } });
 
-    // Formando: envia email de confirmação — sem sessão até confirmar
+    // Ambos os roles: envia email de confirmação — sem sessão imediata
     await sendConfirmEmail(email, userId, firstName).catch(e =>
       console.error("[register] sendConfirmEmail error:", e.message)
     );
-    return NextResponse.json({
-      data: { user: { id: userId, email } },
-      pendente: true,
-      mensagem: "Verifique o seu email para confirmar a conta.",
-    });
+
+    const mensagem = role === "formador"
+      ? "Verifique o seu email para confirmar a conta. Após confirmação, a sua conta será analisada pelo administrador."
+      : "Verifique o seu email para confirmar a conta.";
+
+    return NextResponse.json({ data: { user: { id: userId, email } }, pendente: true, mensagem });
   } catch {
     return NextResponse.json({ error: { message: "Falha ao criar conta." } }, { status: 500 });
   }

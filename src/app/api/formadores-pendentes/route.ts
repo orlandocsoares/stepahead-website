@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
+import { auditLog } from "@/lib/audit";
+import { getClientIp } from "@/lib/rate-limit";
 
 export async function GET() {
   const session = await getSessionUser();
@@ -20,6 +22,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const ip = getClientIp(req);
   const session = await getSessionUser();
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   if (!["admin", "super-admin"].includes(session.role ?? "")) {
@@ -39,8 +42,10 @@ export async function POST(req: Request) {
          'A sua conta de formador foi aprovada. Pode agora iniciar sessão no portal SaberMais.', '/')`,
       [formador_id]
     );
+    await auditLog("approve_formador", { actorId: session.id, targetId: formador_id, ip });
   } else {
     await dbQuery(`UPDATE profiles SET status = 'rejeitado' WHERE id = $1 AND role = 'formador'`, [formador_id]);
+    await auditLog("reject_formador", { actorId: session.id, targetId: formador_id, ip });
   }
 
   return NextResponse.json({ ok: true });

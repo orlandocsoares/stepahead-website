@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
+import { auditLog } from "@/lib/audit";
+import { getClientIp } from "@/lib/rate-limit";
 
 const BASE = process.env.APP_URL || "https://sabermais.edu.ao";
 
@@ -60,7 +62,8 @@ export async function GET() {
 }
 
 // POST — aprovar ou rejeitar a associação formando↔formador
-export async function POST(request: Request) {
+export async function POST(request: Request, ) {
+  const ip = getClientIp(request);
   const session = await getSessionUser();
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
@@ -108,6 +111,7 @@ export async function POST(request: Request) {
         [formando_id]
       );
       await sendApprovalEmail(ff.email, ff.first_name);
+      await auditLog("approve_formando", { actorId: session.id, targetId: formando_id, ip });
     } else {
       // Já tinha acesso — notificar que ganhou acesso a nova disciplina
       const formadorProfile = await dbQuery(
@@ -142,6 +146,7 @@ export async function POST(request: Request) {
        WHERE formando_id = $1 AND formador_id = $2`,
       [formando_id, formadorId]
     );
+    await auditLog("reject_formando", { actorId: session.id, targetId: formando_id, ip });
   } else if (acao === "remover") {
     // Formador remove formando já aceite → notifica formando
     await dbQuery(

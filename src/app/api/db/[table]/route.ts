@@ -19,6 +19,36 @@ const ALLOWED_TABLES = new Set([
   "ticket_mensagens",
 ]);
 
+/**
+ * Colunas permitidas por tabela no GET genérico.
+ * Protege contra leitura de campos internos (password_hash, tokens, etc.).
+ * `null` = sem restrição (tabelas sem dados sensíveis).
+ */
+const ALLOWED_COLUMNS: Record<string, Set<string> | null> = {
+  profiles: new Set([
+    "id", "email", "first_name", "last_name", "role", "status",
+    "avatar_url", "provincia", "escola", "especialidade", "biografia",
+    "specialization", "genero", "bi_number", "cv_summary", "created_at", "updated_at",
+  ]),
+  // Tabelas sem dados sensíveis — sem restrição de colunas
+  hero_telemetria:      null,
+  dashboard_stats:      null,
+  agenda_atividades:    null,
+  inscricoes_agenda:    null,
+  comunidade_posts:     null,
+  tickets:              null,
+  arquivos:             null,
+  documents:            null,
+  turmas:               null,
+  turma_membros:        null,
+  comunidade_comentarios: null,
+  comunidade_gostos:    null,
+  ticket_mensagens:     null,
+};
+
+/** Regex de UUID v4 para validar parâmetros de ID nas queries */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function parseTable(params: { table: string }) {
   const table = params.table;
   if (!ALLOWED_TABLES.has(table)) {
@@ -134,6 +164,10 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
     for (const [key, value] of url.searchParams.entries()) {
       if (key.startsWith("eq.")) {
         const column = key.slice(3);
+        // Validar UUID quando a coluna termina em '_id' ou se chama 'id'
+        if ((column === "id" || column.endsWith("_id")) && !UUID_RE.test(value)) {
+          return NextResponse.json({ data: null, error: { message: "ID inválido." } }, { status: 400 });
+        }
         filters.push(`${tableSql}.${assertIdentifier(column)} = $${valueIndex++}`);
         values.push(value);
       }
@@ -149,10 +183,17 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
       }
     }
 
+
     const whereSql = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
     let fromSql = `FROM ${tableSql}`;
-    let selectSql = `${tableSql}.*`;
+
+    // Para tabelas com whitelist, expandir explicitamente as colunas permitidas
+    // em vez de usar `*` — evita expor campos adicionados à BD no futuro.
+    const allowedCols = ALLOWED_COLUMNS[table];
+    let selectSql = allowedCols
+      ? [...allowedCols].map(c => `${tableSql}.${assertIdentifier(c)}`).join(", ")
+      : `${tableSql}.*`;
 
     const selectRequested = url.searchParams.get("select") ?? "*";
     if (table === "tickets" && selectRequested.includes("profiles(")) {

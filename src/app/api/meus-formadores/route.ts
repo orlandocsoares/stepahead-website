@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
 
+/** Valida formato "AAAA/AAAA" com anos consecutivos, ex: "2025/2026" */
+function validarAnoLetivo(ano: string): boolean {
+  const match = ano.match(/^(\d{4})\/(\d{4})$/);
+  if (!match) return false;
+  return parseInt(match[2]) === parseInt(match[1]) + 1;
+}
+
 // GET — lista de formadores do formando com status por ano letivo
 export async function GET(req: Request) {
   const session = await getSessionUser();
@@ -9,7 +16,13 @@ export async function GET(req: Request) {
 
   const now = new Date(); const y = now.getFullYear(); const m = now.getMonth()+1;
   const defaultAno = m >= 9 ? `${y}/${y+1}` : `${y-1}/${y}`;
-  const anoLetivo = new URL(req.url).searchParams.get("ano") || defaultAno;
+  const anoParam = new URL(req.url).searchParams.get("ano") || defaultAno;
+
+  // Rejeitar anos letivos malformados
+  if (!validarAnoLetivo(anoParam)) {
+    return NextResponse.json({ error: "Ano letivo inválido." }, { status: 400 });
+  }
+  const anoLetivo = anoParam;
 
   const result = await dbQuery(`
     SELECT ff.id, ff.formador_id, ff.status, ff.ano_letivo,
@@ -20,11 +33,11 @@ export async function GET(req: Request) {
     ORDER BY ff.created_at ASC
   `, [session.id, anoLetivo]);
 
-  // Lista de todos os formadores disponíveis para adicionar
+  // Apenas formadores com conta activa (aprovados pelo admin)
   const todos = await dbQuery(`
     SELECT id, first_name, last_name, specialization AS especialidade, avatar_url, provincia
     FROM profiles
-    WHERE role = 'formador' AND status IN ('activo', 'email_confirmado')
+    WHERE role = 'formador' AND status = 'activo'
     ORDER BY first_name ASC
   `);
 
@@ -41,6 +54,7 @@ export async function POST(req: Request) {
   const now2 = new Date(); const y2 = now2.getFullYear(); const m2 = now2.getMonth()+1;
   const ano_letivo = body.ano_letivo || (m2 >= 9 ? `${y2}/${y2+1}` : `${y2-1}/${y2}`);
   if (!formador_id) return NextResponse.json({ error: "formador_id obrigatório" }, { status: 400 });
+  if (!validarAnoLetivo(ano_letivo)) return NextResponse.json({ error: "Ano letivo inválido." }, { status: 400 });
 
   // Verificar se já existe
   const exists = await dbQuery(
@@ -77,6 +91,7 @@ export async function DELETE(req: Request) {
   const formador_id = body2.formador_id;
   const now3 = new Date(); const y3 = now3.getFullYear(); const m3 = now3.getMonth()+1;
   const ano_letivo = body2.ano_letivo || (m3 >= 9 ? `${y3}/${y3+1}` : `${y3-1}/${y3}`);
+  if (!validarAnoLetivo(ano_letivo)) return NextResponse.json({ error: "Ano letivo inválido." }, { status: 400 });
 
   const deleted = await dbQuery(
     `DELETE FROM formando_formadores WHERE formando_id = $1 AND formador_id = $2 AND ano_letivo = $3 RETURNING *`,
