@@ -32,6 +32,12 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
+  // Necessário para uploads de ficheiros grandes (vídeos, etc.)
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "2gb",
+    },
+  },
   webpack: (config) => {
     config.resolve.alias.canvas = false;
     return config;

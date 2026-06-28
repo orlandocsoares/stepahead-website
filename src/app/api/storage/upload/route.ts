@@ -3,9 +3,13 @@ import { mkdir, writeFile, access } from "fs/promises";
 import path from "path";
 import { getSessionUser } from "@/lib/server-auth";
 
+// Remover limite de tamanho do body imposto pelo Next.js (por defeito 4 MB)
+export const config = { api: { bodyParser: false } };
+export const maxDuration = 300; // 5 min — necessário para uploads grandes
+
 const STORAGE_ROOT = path.join(process.cwd(), "storage");
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2 GB
 
 const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",
@@ -50,7 +54,7 @@ export async function POST(request: Request) {
 
   // Validar tamanho
   if (file.size > MAX_FILE_SIZE) {
-    return NextResponse.json({ data: null, error: { message: "Ficheiro demasiado grande (máx 100 MB)." } }, { status: 413 });
+    return NextResponse.json({ data: null, error: { message: "Ficheiro demasiado grande (máx 2 GB)." } }, { status: 413 });
   }
 
   // Validar nome do ficheiro (componente final do path)
