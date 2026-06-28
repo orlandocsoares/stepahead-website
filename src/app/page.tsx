@@ -447,24 +447,6 @@ export default function HeroSection() {
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-<<<<<<< HEAD
-              {telemetry.media_radar && (
-                <div className="flex items-center gap-4 mt-4 w-fit">
-                  <div className="relative w-16 h-16 flex items-center justify-center">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/20" />
-                      <motion.circle 
-                        cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="transparent" 
-                        strokeDasharray="175" strokeDashoffset={175 - (175 * telemetry.media_radar) / 100} 
-                        className="text-blue-500" transition={{ duration: 2 }} 
-                      />
-                    </svg>
-                    <span className="absolute text-base font-bold text-white">{telemetry.media_radar}%</span>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-blue-300 font-bold">Média Nacional</p>
-                    <p className="text-base text-white font-bold">Radar de Integração</p>
-=======
               <div className="flex flex-wrap gap-3 mt-2">
                 {[
                   { icon: MapPin,     value: "2",        label: "Províncias" },
@@ -498,7 +480,6 @@ export default function HeroSection() {
                   <div>
                     <p className="text-sm font-bold text-white leading-none">{telemetry.sessoes_realizadas || 0}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-0.5">Sessões realizadas</p>
->>>>>>> 2c98e5ea17faa206f79da7188f627b0dd8df5fd1
                   </div>
                 </div>
                 <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
@@ -545,14 +526,6 @@ export default function HeroSection() {
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-<<<<<<< HEAD
-              <div className="flex items-center gap-4 mt-4">
-                <Calendar className="text-blue-400 w-12 h-12" />
-                <div className="text-left">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-blue-300 font-bold">Próxima Acção</p>
-                  <p className="text-base text-white font-bold italic">{telemetry.proximo_evento || 'Agendada'}</p>
-                </div>
-=======
               <div className="flex gap-3 mt-1">
                 {[
                   { nome: "Luanda", data: luanda, color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-500/5" },
@@ -573,7 +546,6 @@ export default function HeroSection() {
                     </div>
                   </div>
                 ))}
->>>>>>> 2c98e5ea17faa206f79da7188f627b0dd8df5fd1
               </div>
             </div>
           ),
@@ -600,15 +572,6 @@ export default function HeroSection() {
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-<<<<<<< HEAD
-              {telemetry.total_materials && (
-                <div className="flex items-center gap-4 mt-4">
-                  <FileText className="text-amber-400 w-12 h-12" />
-                  <div className="text-left">
-                    <span className="text-5xl font-bold text-white tracking-tighter">{telemetry.total_materials}</span>
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400 font-bold">Materiais no Cofre</p>
-                  </div>
-=======
 
               {/* Contador principal */}
               <div className="flex items-end gap-3">
@@ -643,7 +606,6 @@ export default function HeroSection() {
                       </motion.span>
                     );
                   })}
->>>>>>> 2c98e5ea17faa206f79da7188f627b0dd8df5fd1
                 </div>
               )}
 
