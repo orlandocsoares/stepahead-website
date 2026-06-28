@@ -62,13 +62,24 @@ export async function POST(req: Request) {
   return NextResponse.json({ data: result.rows[0] });
 }
 
-// DELETE /api/turmas?id=... — apagar turma
+// DELETE /api/turmas?id=... — apagar turma (só owner ou admin)
 export async function DELETE(req: Request) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 });
+
+  const roleRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
+  const role = roleRes.rows[0]?.role;
+  const isAdmin = role === "admin" || role === "super-admin";
+
+  const turmaRes = await dbQuery(`SELECT formador_id FROM turmas WHERE id = $1 LIMIT 1`, [id]);
+  if (!turmaRes.rows[0]) return NextResponse.json({ error: "Turma não encontrada" }, { status: 404 });
+
+  if (!isAdmin && turmaRes.rows[0].formador_id !== sessionUser.id) {
+    return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+  }
 
   await dbQuery(`DELETE FROM turmas WHERE id = $1`, [id]);
   return NextResponse.json({ ok: true });

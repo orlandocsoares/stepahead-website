@@ -80,8 +80,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: { message: "Email e password sao obrigatorios." } }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: { message: "A password deve ter pelo menos 6 caracteres." } }, { status: 400 });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email) || email.length > 254) {
+      return NextResponse.json({ error: { message: "Email inválido." } }, { status: 400 });
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json({ error: { message: "A password deve ter pelo menos 8 caracteres." } }, { status: 400 });
     }
 
     const exists = await dbQuery<{ id: string }>("SELECT id FROM auth_users WHERE email = $1 LIMIT 1", [email]);

@@ -194,7 +194,8 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
     const rows = mapJoinedRows(table, result.rows);
     return NextResponse.json({ data: single ? (rows[0] ?? null) : rows, error: null });
   } catch (error: any) {
-    return NextResponse.json({ data: null, error: { message: error.message || "Erro na consulta." } }, { status: 400 });
+    console.error("[db-route GET]", error.message);
+    return NextResponse.json({ data: null, error: { message: "Erro ao processar consulta." } }, { status: 400 });
   }
 }
 
@@ -237,9 +238,20 @@ export async function POST(request: Request, context: { params: Promise<{ table:
 
     return NextResponse.json({ data: insertedRows, error: null });
   } catch (error: any) {
-    return NextResponse.json({ data: null, error: { message: error.message || "Erro ao inserir registo." } }, { status: 400 });
+    console.error("[db-route POST]", error.message);
+    return NextResponse.json({ data: null, error: { message: "Erro ao inserir registo." } }, { status: 400 });
   }
 }
+
+// Campos que nunca podem ser alterados por utilizadores não-admin
+const PROTECTED_FIELDS = new Set(["role", "status", "id", "email"]);
+
+// Tabelas onde o utilizador só pode editar os seus próprios registos
+const OWNED_TABLES: Record<string, string> = {
+  profiles: "id",
+  tickets: "user_id",
+  comunidade_posts: "user_id",
+};
 
 export async function PATCH(request: Request, context: { params: Promise<{ table: string }> }) {
   const sessionUser = await getSessionUser();
@@ -255,6 +267,30 @@ export async function PATCH(request: Request, context: { params: Promise<{ table
 
     const updates = body.updates ?? {};
     const eq = body.eq ?? {};
+
+    // Verificar role do utilizador
+    const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
+    const userRole = profileRes.rows[0]?.role ?? "formando";
+    const isAdminUser = userRole === "admin" || userRole === "super-admin";
+
+    // Bloquear edição de campos protegidos para não-admins
+    if (!isAdminUser) {
+      for (const field of Object.keys(updates)) {
+        if (PROTECTED_FIELDS.has(field)) {
+          return NextResponse.json({ data: null, error: { message: `Campo '${field}' não pode ser alterado.` } }, { status: 403 });
+        }
+      }
+    }
+
+    // Validar ownership para tabelas próprias
+    const ownerField = OWNED_TABLES[table];
+    if (ownerField && !isAdminUser) {
+      // Verificar que o eq aponta para um registo do próprio utilizador
+      const ownerValue = table === "profiles" ? eq.id : eq[ownerField];
+      if (!ownerValue || ownerValue !== sessionUser.id) {
+        return NextResponse.json({ data: null, error: { message: "Sem permissão para editar este registo." } }, { status: 403 });
+      }
+    }
 
     const updateEntries = Object.entries(updates);
     if (!updateEntries.length) {
@@ -283,7 +319,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ table
 
     return NextResponse.json({ data: result.rows, error: null });
   } catch (error: any) {
-    return NextResponse.json({ data: null, error: { message: error.message || "Erro ao atualizar registo." } }, { status: 400 });
+    console.error("[db-route PATCH]", error.message);
+    return NextResponse.json({ data: null, error: { message: "Erro ao atualizar registo." } }, { status: 400 });
   }
 }
 
@@ -300,6 +337,20 @@ export async function DELETE(request: Request, context: { params: Promise<{ tabl
     const body = await request.json();
     const eq = body.eq ?? {};
 
+    // Verificar role do utilizador
+    const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
+    const userRole = profileRes.rows[0]?.role ?? "formando";
+    const isAdminUser = userRole === "admin" || userRole === "super-admin";
+
+    // Validar ownership para tabelas próprias
+    const ownerField = OWNED_TABLES[table];
+    if (ownerField && !isAdminUser) {
+      const ownerValue = table === "profiles" ? eq.id : eq[ownerField];
+      if (!ownerValue || ownerValue !== sessionUser.id) {
+        return NextResponse.json({ data: null, error: { message: "Sem permissão para eliminar este registo." } }, { status: 403 });
+      }
+    }
+
     const values: unknown[] = [];
     let idx = 1;
     const filterParts = Object.entries(eq).map(([key, value]) => {
@@ -312,6 +363,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ tabl
     const result = await dbQuery(`DELETE FROM ${tableSql} ${whereSql} RETURNING *`, values);
     return NextResponse.json({ data: result.rows, error: null });
   } catch (error: any) {
-    return NextResponse.json({ data: null, error: { message: error.message || "Erro ao eliminar registo." } }, { status: 400 });
+    console.error("[db-route DELETE]", error.message);
+    return NextResponse.json({ data: null, error: { message: "Erro ao eliminar registo." } }, { status: 400 });
   }
 }

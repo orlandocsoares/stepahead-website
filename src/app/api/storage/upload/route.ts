@@ -5,6 +5,28 @@ import { getSessionUser } from "@/lib/server-auth";
 
 const STORAGE_ROOT = path.join(process.cwd(), "storage");
 
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+
+const ALLOWED_MIME_TYPES = new Set([
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/msword",
+  "text/plain",
+  "video/mp4",
+  "video/webm",
+  "audio/mpeg",
+  "audio/wav",
+]);
+
+// Apenas letras, números, traços, underscores, pontos — sem path traversal
+const SAFE_FILENAME = /^[\w.\-]+$/;
+
 export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) {
@@ -19,6 +41,22 @@ export async function POST(request: Request) {
 
   if (!bucket || !relativePath || !file) {
     return NextResponse.json({ data: null, error: { message: "bucket, path e file sao obrigatorios." } }, { status: 400 });
+  }
+
+  // Validar tipo MIME
+  if (!ALLOWED_MIME_TYPES.has(file.type)) {
+    return NextResponse.json({ data: null, error: { message: "Tipo de ficheiro não permitido." } }, { status: 415 });
+  }
+
+  // Validar tamanho
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json({ data: null, error: { message: "Ficheiro demasiado grande (máx 100 MB)." } }, { status: 413 });
+  }
+
+  // Validar nome do ficheiro (componente final do path)
+  const fileName = relativePath.split("/").pop() ?? "";
+  if (!SAFE_FILENAME.test(fileName)) {
+    return NextResponse.json({ data: null, error: { message: "Nome de ficheiro inválido." } }, { status: 400 });
   }
 
   const bucketDir = path.join(STORAGE_ROOT, bucket);
