@@ -71,7 +71,7 @@ function getVisibleCategories(role?: string, specialization?: string): string[] 
 function getUploadAreas(role?: string, specialization?: string): string[] | null {
   if (role === "admin") return null;
   const areas = parseSpecializations(specialization);
-  return role === "formador" && areas.length > 0 ? areas : null;
+  return role === "formador" && areas.length > 0 ? ["Geral", ...areas] : null;
 }
 
 export default function FicheirosPage() {
@@ -101,12 +101,7 @@ export default function FicheirosPage() {
     [user?.role, user?.specialization]
   );
 
-  // Se formador com uma única área, não mostrar "Geral" — ir directo para a área
-  const showGeral = useMemo(() => {
-    if (user?.role !== "formador") return true;
-    const areas = parseSpecializations(user?.specialization);
-    return areas.length !== 1;
-  }, [user?.role, user?.specialization]);
+  const showGeral = true;
   const uploadAreas = useMemo(
     () => getUploadAreas(user?.role, user?.specialization),
     [user?.role, user?.specialization]
@@ -201,12 +196,7 @@ export default function FicheirosPage() {
   useEffect(() => {
     if (!user) return;
     // Definir categoria activa inicial
-    if (user.role === "formador") {
-      const areas = parseSpecializations(user.specialization);
-      setActiveCategory(areas.length === 1 ? areas[0] : "Geral");
-    } else {
-      setActiveCategory("Geral");
-    }
+    setActiveCategory("Geral");
   }, [user?.role, user?.specialization]);
 
   useEffect(() => {
