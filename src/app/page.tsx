@@ -648,16 +648,18 @@ export default function HeroSection() {
               )}
 
               {/* CTA */}
-              <motion.a
-                href="/dashboard/ficheiros"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-amber-400 transition-colors pointer-events-auto group"
-              >
-                Aceder ao repositório
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
-              </motion.a>
+              {profile && (
+                <motion.a
+                  href="/dashboard/ficheiros"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-amber-400 transition-colors pointer-events-auto group"
+                >
+                  Aceder ao repositório
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </motion.a>
+              )}
             </div>
           ),
         };
