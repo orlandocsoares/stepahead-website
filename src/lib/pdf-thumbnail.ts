@@ -1,16 +1,13 @@
 "use client";
 
-const PDFJS_VERSION = "3.11.174"; // versão estável compatível com browsers
-const PDFJS_CDN = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
-
 function loadPdfJs(): Promise<any> {
   return new Promise((resolve, reject) => {
     if ((window as any).pdfjsLib) { resolve((window as any).pdfjsLib); return; }
     const script = document.createElement("script");
-    script.src = `${PDFJS_CDN}/pdf.min.js`;
+    script.src = "/pdfjs.min.js"; // servido localmente — sem CDN externo
     script.onload = () => {
       const lib = (window as any).pdfjsLib;
-      lib.GlobalWorkerOptions.workerSrc = `${PDFJS_CDN}/pdf.worker.min.js`;
+      lib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
       resolve(lib);
     };
     script.onerror = reject;
