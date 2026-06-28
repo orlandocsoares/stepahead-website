@@ -75,7 +75,7 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
           <div className="flex flex-col text-left">
             <span className="text-2xl text-white font-bold tracking-tight drop-shadow-md">{f.first_name} {f.last_name}</span>
             <span className="text-[11px] text-emerald-400 uppercase tracking-[0.2em] font-bold mt-1 drop-shadow-sm">{f.especialidade || 'Área Pedagógica'}</span>
-            <p className="text-xs text-white/80 mt-1.5 font-light leading-snug line-clamp-2 drop-shadow-sm">{f.biografia || 'Reforço das metodologias de ensino activo.'}</p>
+            <p className="text-sm text-white/80 mt-1.5 font-light leading-relaxed line-clamp-2 drop-shadow-sm">{f.biografia || 'Reforço das metodologias de ensino activo.'}</p>
           </div>
         </motion.div>
       </AnimatePresence>
@@ -436,7 +436,7 @@ export default function HeroSection() {
 
   const getDynamicPhaseContent = (index: number) => {
     const base = PROGRAM_PHASES[index];
-    const defaultTextClass = "text-[13px] font-bold text-white leading-snug" + ' ' + "[text-shadow:0_1px_8px_rgba(0,0,0,0.95)]";
+    const defaultTextClass = "text-sm font-bold text-white leading-relaxed" + ' ' + "[text-shadow:0_1px_8px_rgba(0,0,0,0.95)]";
 
     if (!telemetry) return { ...base, description: <span className={defaultTextClass}>{base.description}</span> };
 
