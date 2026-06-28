@@ -903,10 +903,10 @@ export default function HeroSection() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, delay: 1.3, ease: "easeOut" }}
                     onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
-                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white/70 transition-colors hover:border-blue-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(59,130,246,0.18)] focus:outline-none focus:ring-2 focus:ring-blue-400/50 group"
-                    title="Entrar"
+                    className="inline-flex items-center gap-2 px-4 h-10 sm:h-11 rounded-full border border-white/20 bg-slate-950/80 text-white/80 text-[11px] font-bold uppercase tracking-[0.25em] transition-all hover:border-blue-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(59,130,246,0.18)] focus:outline-none focus:ring-2 focus:ring-blue-400/50"
                   >
-                    <LogIn size={18} />
+                    <LogIn size={14} />
+                    <span>Entrar</span>
                   </motion.button>
                 )}
                 <button onClick={() => setHelpOpen(true)} className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white transition hover:border-sky-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-400/50">
