@@ -78,7 +78,7 @@ export default function FicheirosPage() {
   const [files, setFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("Geral");
+  const [activeCategory, setActiveCategory] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -99,6 +99,13 @@ export default function FicheirosPage() {
     () => getVisibleCategories(user?.role, user?.specialization),
     [user?.role, user?.specialization]
   );
+
+  // Se formador com uma única área, não mostrar "Geral" — ir directo para a área
+  const showGeral = useMemo(() => {
+    if (user?.role !== "formador") return true;
+    const areas = parseSpecializations(user?.specialization);
+    return areas.length !== 1;
+  }, [user?.role, user?.specialization]);
   const uploadAreas = useMemo(
     () => getUploadAreas(user?.role, user?.specialization),
     [user?.role, user?.specialization]
@@ -189,6 +196,17 @@ export default function FicheirosPage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (!user) return;
+    // Definir categoria activa inicial
+    if (user.role === "formador") {
+      const areas = parseSpecializations(user.specialization);
+      setActiveCategory(areas.length === 1 ? areas[0] : "Geral");
+    } else {
+      setActiveCategory("Geral");
+    }
+  }, [user?.role, user?.specialization]);
 
   useEffect(() => {
     fetchFiles();
@@ -345,7 +363,7 @@ export default function FicheirosPage() {
 
       {/* Filtros de categoria */}
       <div className="flex gap-2 flex-wrap">
-        {visibleCategories.map((cat) => (
+        {visibleCategories.filter(cat => showGeral || cat !== "Geral").map((cat) => (
           <button key={cat} onClick={() => setActiveCategory(cat)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               activeCategory === cat
