@@ -417,7 +417,7 @@ export default function FicheirosPage() {
                 {/* Info */}
                 <div className="px-3 py-2.5 flex flex-col gap-1.5 flex-1">
                   <p className="text-xs text-white/80 font-medium leading-tight line-clamp-2">{f.label}</p>
-                  <p className="text-[10px] text-white/30">{f.area} · {f.tamanho ?? "—"}</p>
+                  <p className="text-[10px] text-white/30">{f.area} · {f.tamanho ?? "—"} · {formatDate(f.created_at)}</p>
                   {canChangeVis ? (
                     <select
                       value={f.visibilidade ?? "publico"}
