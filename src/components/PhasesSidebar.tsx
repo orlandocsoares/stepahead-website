@@ -61,7 +61,7 @@ export function PhasesSidebar({ activePhaseIndex, goToPhase, phases, setIsHoveri
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.4 }}
-                    className="absolute -inset-[1.5px] rounded-xl border-spin z-0 pointer-events-none"
+                    className="absolute -inset-[1px] rounded-xl border-spin z-0 pointer-events-none"
                     style={{ borderRadius: "0.75rem" }}
                   />
                 )}
@@ -69,7 +69,7 @@ export function PhasesSidebar({ activePhaseIndex, goToPhase, phases, setIsHoveri
 
               {/* Fundo vidro (cobre o gradiente rotativo, deixa só a borda visível) */}
               <div className={`
-                absolute inset-[1.5px] rounded-[10px] backdrop-blur-xl transition-all duration-700 z-10
+                absolute inset-[1px] rounded-[10px] backdrop-blur-xl transition-all duration-700 z-10
                 ${isActive
                   ? "bg-slate-950/80"
                   : "bg-white/[0.04] group-hover:bg-white/[0.10]"}
