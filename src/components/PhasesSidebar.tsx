@@ -29,47 +29,52 @@ export function PhasesSidebar({ activePhaseIndex, goToPhase, phases, setIsHoveri
               ${isActive ? "scale-[1.03]" : "scale-100 hover:scale-[1.02]"}
             `}
           >
-            {/* 1. FUNDO VIDRO PREMIUM (Bordas limpas, sem sobreposição) */}
+            {/* 1. FUNDO VIDRO */}
             <div className={`
               absolute inset-0 rounded-xl backdrop-blur-xl transition-all duration-700 z-0
-              ${isActive 
-                ? "bg-white/[0.15] shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-white/40" 
-                : "bg-white/[0.04] border border-white/10 group-hover:bg-white/[0.12] group-hover:border-white/30"} 
+              ${isActive
+                ? "bg-white/[0.12]"
+                : "bg-white/[0.04] group-hover:bg-white/[0.10]"}
             `} />
 
-            {/* 2. EFEITO GLOW INTERNO NO HOVER/ACTIVE */}
+            {/* 2. CONTORNO LUMINOSO ACTIVO */}
+            <AnimatePresence>
+              {isActive && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="absolute inset-0 rounded-xl border border-white/70 shadow-[0_0_18px_rgba(255,255,255,0.35),inset_0_0_12px_rgba(255,255,255,0.08)] z-10 pointer-events-none"
+                />
+              )}
+            </AnimatePresence>
+
+            {/* Borda subtil no hover (sem activo) */}
+            {!isActive && (
+              <div className="absolute inset-0 rounded-xl border border-white/10 group-hover:border-white/25 transition-all duration-700 z-10 pointer-events-none" />
+            )}
+
+            {/* 3. GLOW INTERNO */}
             <div className={`
               absolute inset-0 rounded-xl transition-opacity duration-700 z-10 pointer-events-none
-              bg-gradient-to-r from-transparent via-white/[0.08] to-transparent
+              bg-gradient-to-r from-transparent via-white/[0.07] to-transparent
               ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}
             `} />
 
-            {/* 3. TEXTO DA FASE */}
+            {/* 4. TEXTO DA FASE */}
             <span
               className={`
                 relative z-20 text-[11px] md:text-[12px] uppercase tracking-[0.55em] md:tracking-[0.6em] font-medium font-sans
                 leading-none transition-all duration-700 truncate px-4
-                ${isActive 
-                  ? "text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.7)] font-bold" 
+                ${isActive
+                  ? "text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.7)] font-bold"
                   : "text-white/70 group-hover:text-white/95"}
               `}
               title={phase.name}
             >
               {phase.name}
             </span>
-
-            {/* 4. INDICADOR DE FOCO LATERAL (Alinhado perfeitamente à borda direita) */}
-            <AnimatePresence>
-              {isActive && (
-                <motion.div
-                  initial={{ opacity: 0, scaleY: 0 }}
-                  animate={{ opacity: 1, scaleY: 1 }}
-                  exit={{ opacity: 0, scaleY: 0 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                  className="absolute right-[1px] top-1/2 -translate-y-1/2 w-[3px] h-[55%] bg-white rounded-l-full shadow-[0_0_12px_rgba(255,255,255,0.9)] z-30 origin-center pointer-events-none"
-                />
-              )}
-            </AnimatePresence>
           </button>
         );
       })}
