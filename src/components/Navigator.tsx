@@ -26,7 +26,7 @@ export function Navigator({ activePhaseIndex, goToPhase, setIsHovering }: Naviga
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="relative w-44 md:w-64 h-14 md:h-16 rounded-2xl border border-white/10 grid grid-cols-[1fr,auto,1fr] items-center pointer-events-auto bg-black/20 backdrop-blur-3xl shadow-2xl overflow-hidden"
+      className="relative hidden md:grid w-44 md:w-64 h-14 md:h-16 rounded-2xl border border-white/10 grid-cols-[1fr,auto,1fr] items-center pointer-events-auto bg-black/20 backdrop-blur-3xl shadow-2xl overflow-hidden"
     >
       <button 
         onClick={() => handleNavigate("prev")} 

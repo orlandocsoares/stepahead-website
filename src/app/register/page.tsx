@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   UserPlus, FileText, School, MapPin, 
@@ -44,25 +43,23 @@ export default function RegisterPage() {
     setSessionId(uniqueId);
   }, []);
 
-  // Escuta em tempo real para receber a foto do telemóvel
+  // Escuta SSE para receber a foto do telemóvel
   useEffect(() => {
     if (!sessionId || role !== 'formador') return;
 
-    const channel = supabase.channel(`camera-${sessionId}`);
-    
-    channel
-      .on('broadcast', { event: 'photo_captured' }, (payload: any) => {
-        if (payload.payload?.url) {
-          setAvatarPreview(payload.payload.url);
-          setRemoteImageUrl(payload.payload.url);
+    const evtSource = new EventSource(`/api/sse/camera/${sessionId}`);
+    evtSource.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data?.url) {
+          setAvatarPreview(data.url);
+          setRemoteImageUrl(data.url);
           setUploadMode("local");
         }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+      } catch {}
     };
+
+    return () => evtSource.close();
   }, [sessionId, role]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,61 +92,46 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    // 1. REGISTO NO SUPABASE AUTH
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: {
-          first_name: formData.first_name,
-          role: role
-        }
-      }
-    });
+    try {
+      // 1. Criar conta
+      const regRes = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          metadata: { first_name: formData.first_name, role },
+        }),
+      });
+      const regJson = await regRes.json();
+      if (!regRes.ok || regJson.error) throw new Error(regJson.error?.message ?? "Erro no registo.");
+      const userId = regJson.data.user.id;
 
-    if (authError) {
-      alert("Erro no registo: " + authError.message);
-      // TODO: Considerar uma UI de notificação (Toast) em vez de alert().
-      setLoading(false);
-      return;
-    }
-
-    if (authData.user) {
+      // 2. Upload de avatar (formador com ficheiro local)
       let finalAvatarUrl = remoteImageUrl;
-
-      // Se tiver carregado ficheiro local
       if (role === 'formador' && avatarFile && !finalAvatarUrl) {
         const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${authData.user.id}-${Math.random()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(`formadores/${fileName}`, avatarFile);
-          
-        if (uploadError) {
-          // Se o upload falhar, o ideal seria apagar o utilizador recém-criado para evitar inconsistências.
-          // NOTA: Esta operação requer privilégios de admin e deve ser feita numa server-side function por segurança.
-          // await supabase.auth.admin.deleteUser(authData.user.id);
-          alert("Erro ao carregar a fotografia: " + uploadError.message);
-          setLoading(false);
-          return;
-        }
-        if (uploadData) {
-          finalAvatarUrl = `/storage/v1/object/public/avatars/${uploadData.path}`;
+        const fileName = `${userId}-${Date.now()}.${fileExt}`;
+        const fd = new FormData();
+        fd.append("bucket", "avatars");
+        fd.append("path", `formadores/${fileName}`);
+        fd.append("file", avatarFile);
+        const upRes = await fetch("/api/storage/upload", { method: "POST", body: fd });
+        const upJson = await upRes.json();
+        if (upRes.ok && upJson.data?.path) {
+          finalAvatarUrl = `/api/storage/avatars/formadores/${fileName}`;
         }
       }
 
-      // 3. ACTUALIZAÇÃO DO PERFIL NA BASE DE DADOS
+      // 3. Actualizar perfil com dados completos
       const profilePayload: any = {
-        first_name: formData.first_name,
         last_name: formData.last_name,
-        role: role,
-        status: 'pendente'
+        status: 'pendente',
       };
-
       if (role === 'formando') {
         profilePayload.bi_number = formData.bi_number;
-        profilePayload.school = formData.school;
-        profilePayload.province = formData.province;
+        profilePayload.escola = formData.school;
+        profilePayload.provincia = formData.province;
         profilePayload.cv_summary = formData.cv_summary;
       } else {
         profilePayload.especialidade = formData.specialty;
@@ -158,18 +140,15 @@ export default function RegisterPage() {
         if (finalAvatarUrl) profilePayload.avatar_url = finalAvatarUrl;
       }
 
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update(profilePayload)
-        .eq('id', authData.user.id);
+      await fetch("/api/db/profiles", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates: profilePayload, eq: { id: userId } }),
+      });
 
-      if (!profileError) {
-        setIsSuccess(true);
-      } else {
-        // O mesmo que no upload, idealmente apagar o user de auth se o perfil falhar.
-        console.error(profileError);
-        alert("Erro ao gravar os dados do perfil: " + profileError.message);
-      }
+      setIsSuccess(true);
+    } catch (err: any) {
+      alert(err.message);
     }
     setLoading(false);
   };

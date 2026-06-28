@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { type User as SupabaseUser } from "@supabase/supabase-js";
 import {
   LayoutDashboard,
   LogIn,
@@ -17,7 +16,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/hooks/useProfile";
 
 type Props = {
@@ -42,23 +40,21 @@ export function CommandCenter({ onLoginClick, isHero = false }: Props) {
   // Still loading - show nothing to prevent flash
   if (loading) return null;
 
-  // If not logged in, show the login button (only on hero page)
+  // Não autenticado no hero: botão Entrar no lado direito a meio do ecrã
   if (!profile && isHero) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.5 }}
-        className="fixed left-6 top-1/2 -translate-y-1/2 z-[110]"
+        className="fixed left-8 top-1/2 -translate-y-1/2 z-[110]"
       >
         <button
           onClick={onLoginClick}
-          className="w-20 h-20 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center group"
+          className="w-20 h-20 rounded-full bg-white/5 backdrop-blur-xl border border-white/15 flex items-center justify-center group hover:bg-white/10 hover:border-white/30 transition-all shadow-xl"
+          title="Entrar"
         >
-          <LogIn
-            size={24}
-            className="text-white/40 group-hover:text-white transition-colors"
-          />
+          <LogIn size={24} className="text-white/50 group-hover:text-white transition-colors" />
         </button>
       </motion.div>
     );
@@ -82,8 +78,8 @@ export function CommandCenter({ onLoginClick, isHero = false }: Props) {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/';
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/";
   };
 
   const displayName = profile?.first_name || 'Utilizador';

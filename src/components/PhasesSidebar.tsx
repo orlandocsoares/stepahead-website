@@ -11,7 +11,7 @@ interface PhasesSidebarProps {
 
 export function PhasesSidebar({ activePhaseIndex, goToPhase, phases, setIsHovering }: PhasesSidebarProps) {
   return (
-    <div className="flex flex-col items-end gap-2 sm:gap-4 lg:gap-5 py-2 sm:py-4 pointer-events-auto">
+    <div className="hidden md:flex flex-col items-end gap-2 sm:gap-4 lg:gap-5 py-2 sm:py-4 pointer-events-auto">
       {phases.map((phase, index) => {
         if (index === 0) return null;
         

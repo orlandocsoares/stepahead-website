@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
@@ -259,8 +259,7 @@ export default function HeroSection() {
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    await refreshProfile(); // Actualiza o estado do perfil para null
-    router.refresh();
+    window.location.href = "/";
   };
 
   const triggerVIPTransition = async () => {
@@ -437,17 +436,18 @@ export default function HeroSection() {
 
   const getDynamicPhaseContent = (index: number) => {
     const base = PROGRAM_PHASES[index];
-    const defaultTextClass = "text-[13px] font-bold text-white/95 leading-snug drop-shadow-md";
+    const defaultTextClass = "text-[13px] font-bold text-white leading-snug" + ' ' + "[text-shadow:0_1px_8px_rgba(0,0,0,0.95)]";
 
     if (!telemetry) return { ...base, description: <span className={defaultTextClass}>{base.description}</span> };
 
     switch (index) {
-      case 2:
+      case 1:
         return {
           ...base,
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
+<<<<<<< HEAD
               {telemetry.media_radar && (
                 <div className="flex items-center gap-4 mt-4 w-fit">
                   <div className="relative w-16 h-16 flex items-center justify-center">
@@ -464,12 +464,66 @@ export default function HeroSection() {
                   <div className="text-left">
                     <p className="text-[10px] uppercase tracking-[0.3em] text-blue-300 font-bold">Média Nacional</p>
                     <p className="text-base text-white font-bold">Radar de Integração</p>
+=======
+              <div className="flex flex-wrap gap-3 mt-2">
+                {[
+                  { icon: MapPin,     value: "2",        label: "Províncias" },
+                  { icon: Handshake,  value: "2026",     label: "Ano em curso" },
+                  { icon: GraduationCap, value: `${telemetry.total_formadores || 0}`, label: "Formadores" },
+                  { icon: Users,      value: `${telemetry.total_formandos || 0}`,    label: "Formandos" },
+                ].map(({ icon: Icon, value, label }) => (
+                  <div key={label} className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
+                    <Icon size={14} className="text-blue-400 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-white leading-none">{value}</p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-0.5">{label}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ),
+        };
+      case 2: {
+        const proximaData = telemetry.proximo_evento_data ? new Date(telemetry.proximo_evento_data) : null;
+        const diasRestantes = proximaData ? Math.max(0, Math.ceil((proximaData.getTime() - Date.now()) / 86400000)) : null;
+        return {
+          ...base,
+          description: (
+            <div className="space-y-4">
+              <p className={defaultTextClass}>{base.description}</p>
+              <div className="flex flex-wrap gap-3 mt-1">
+                <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
+                  <CheckCircle size={14} className="text-emerald-400 shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-white leading-none">{telemetry.sessoes_realizadas || 0}</p>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-0.5">Sessões realizadas</p>
+>>>>>>> 2c98e5ea17faa206f79da7188f627b0dd8df5fd1
                   </div>
                 </div>
-              )}
+                <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
+                  <GraduationCap size={14} className="text-blue-400 shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-white leading-none">{telemetry.total_turmas || 0}</p>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-0.5">Turmas activas</p>
+                  </div>
+                </div>
+                {telemetry.proximo_evento && (
+                  <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
+                    <Clock size={14} className="text-amber-400 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-white leading-none truncate max-w-[140px]">{telemetry.proximo_evento}</p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-amber-400/80 mt-0.5">
+                        {diasRestantes !== null ? `Em ${diasRestantes} dia${diasRestantes !== 1 ? 's' : ''}` : 'Próxima sessão'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          )
+          ),
         };
+      }
       case 3:
         return {
           ...base,
@@ -483,28 +537,70 @@ export default function HeroSection() {
             </div>
           )
         };
-      case 4:
+      case 4: {
+        const luanda = telemetry.provincias_stats?.luanda ?? { formadores: 0, formandos: 0 };
+        const bie    = telemetry.provincias_stats?.bie    ?? { formadores: 0, formandos: 0 };
         return {
           ...base,
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
+<<<<<<< HEAD
               <div className="flex items-center gap-4 mt-4">
                 <Calendar className="text-blue-400 w-12 h-12" />
                 <div className="text-left">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-blue-300 font-bold">Próxima Acção</p>
                   <p className="text-base text-white font-bold italic">{telemetry.proximo_evento || 'Agendada'}</p>
                 </div>
+=======
+              <div className="flex gap-3 mt-1">
+                {[
+                  { nome: "Luanda", data: luanda, color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-500/5" },
+                  { nome: "Bié",    data: bie,    color: "text-amber-400", border: "border-amber-500/20", bg: "bg-amber-500/5" },
+                ].map(({ nome, data, color, border, bg }) => (
+                  <div key={nome} className={`flex-1 rounded-xl border ${border} ${bg} backdrop-blur-sm px-4 py-3 space-y-2`}>
+                    <p className={`text-[10px] font-black uppercase tracking-[0.3em] ${color}`}>{nome}</p>
+                    <div className="flex gap-3">
+                      <div>
+                        <p className="text-lg font-bold text-white leading-none">{data.formadores}</p>
+                        <p className="text-[9px] text-white/40 uppercase tracking-[0.15em] mt-0.5">Formadores</p>
+                      </div>
+                      <div className="w-px bg-white/10" />
+                      <div>
+                        <p className="text-lg font-bold text-white leading-none">{data.formandos}</p>
+                        <p className="text-[9px] text-white/40 uppercase tracking-[0.15em] mt-0.5">Formandos</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+>>>>>>> 2c98e5ea17faa206f79da7188f627b0dd8df5fd1
               </div>
             </div>
-          )
+          ),
         };
-      case 5:
+      }
+      case 5: {
+        const areaColors: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+          "Matemática":        { bg: "bg-blue-900/60",    text: "text-blue-200",   border: "border-blue-400/40",   dot: "bg-blue-400" },
+          "Língua Portuguesa": { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400" },
+          "Português":         { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400" },
+          "Ciências":          { bg: "bg-cyan-900/60",    text: "text-cyan-200",   border: "border-cyan-400/40",   dot: "bg-cyan-400" },
+          "História":          { bg: "bg-amber-900/60",   text: "text-amber-200",  border: "border-amber-400/40",  dot: "bg-amber-400" },
+          "Geografia":         { bg: "bg-lime-900/60",    text: "text-lime-200",   border: "border-lime-400/40",   dot: "bg-lime-400" },
+          "Biologia":          { bg: "bg-green-900/60",   text: "text-green-200",  border: "border-green-400/40",  dot: "bg-green-400" },
+          "Física":            { bg: "bg-violet-900/60",  text: "text-violet-200", border: "border-violet-400/40", dot: "bg-violet-400" },
+          "Química":           { bg: "bg-pink-900/60",    text: "text-pink-200",   border: "border-pink-400/40",   dot: "bg-pink-400" },
+          "Geral":             { bg: "bg-white/10",       text: "text-white/80",   border: "border-white/20",      dot: "bg-white/50" },
+        };
+        const defaultAreaColor = { bg: "bg-white/10", text: "text-white/80", border: "border-white/20", dot: "bg-white/50" };
+        const areas: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
+
         return {
           ...base,
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
+<<<<<<< HEAD
               {telemetry.total_materials && (
                 <div className="flex items-center gap-4 mt-4">
                   <FileText className="text-amber-400 w-12 h-12" />
@@ -512,11 +608,126 @@ export default function HeroSection() {
                     <span className="text-5xl font-bold text-white tracking-tighter">{telemetry.total_materials}</span>
                     <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400 font-bold">Materiais no Cofre</p>
                   </div>
+=======
+
+              {/* Contador principal */}
+              <div className="flex items-end gap-3">
+                <div className="relative">
+                  <span className="text-[52px] font-black text-white leading-none tracking-tighter tabular-nums drop-shadow-lg">
+                    {telemetry.total_materials ?? 0}
+                  </span>
+                  <span className="absolute -top-1 -right-3 text-amber-400 text-lg font-bold">+</span>
+                </div>
+                <div className="pb-1.5">
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-amber-400 font-bold leading-tight">Materiais</p>
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-amber-400/60 font-bold leading-tight">pedagógicos</p>
+                </div>
+              </div>
+
+              {/* Pills por área */}
+              {areas.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {areas.map(({ area, total }) => {
+                    const c = areaColors[area] ?? defaultAreaColor;
+                    return (
+                      <motion.span
+                        key={area}
+                        initial={{ opacity: 0, scale: 0.85 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-semibold backdrop-blur-sm drop-shadow-md ${c.bg} ${c.text} ${c.border}`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.dot}`} />
+                        {area}
+                        <span className="opacity-60 font-normal">({total})</span>
+                      </motion.span>
+                    );
+                  })}
+>>>>>>> 2c98e5ea17faa206f79da7188f627b0dd8df5fd1
                 </div>
               )}
+
+              {/* CTA */}
+              <motion.a
+                href="/dashboard/ficheiros"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-amber-400 transition-colors pointer-events-auto group"
+              >
+                Aceder ao repositório
+                <span className="group-hover:translate-x-1 transition-transform">→</span>
+              </motion.a>
             </div>
-          )
+          ),
         };
+      }
+      case 6: {
+        const metrics = [
+          {
+            icon: Users,
+            value: telemetry.total_formandos || 0,
+            label: "Formandos activos",
+            color: "from-blue-500/20 to-blue-600/5",
+            border: "border-blue-500/20",
+            iconColor: "text-blue-400",
+            glow: "bg-blue-500/10",
+          },
+          {
+            icon: GraduationCap,
+            value: telemetry.total_formadores || 0,
+            label: "Formadores",
+            color: "from-emerald-500/20 to-emerald-600/5",
+            border: "border-emerald-500/20",
+            iconColor: "text-emerald-400",
+            glow: "bg-emerald-500/10",
+          },
+          {
+            icon: FileText,
+            value: telemetry.total_materials || 0,
+            label: "Materiais pedagógicos",
+            color: "from-amber-500/20 to-amber-600/5",
+            border: "border-amber-500/20",
+            iconColor: "text-amber-400",
+            glow: "bg-amber-500/10",
+          },
+          {
+            icon: BookOpen,
+            value: telemetry.total_turmas || 0,
+            label: "Turmas criadas",
+            color: "from-violet-500/20 to-violet-600/5",
+            border: "border-violet-500/20",
+            iconColor: "text-violet-400",
+            glow: "bg-violet-500/10",
+          },
+        ];
+        return {
+          ...base,
+          description: (
+            <div className="space-y-3">
+              <p className={defaultTextClass}>{base.description}</p>
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                {metrics.map(({ icon: Icon, value, label, color, border, iconColor, glow }) => (
+                  <motion.div
+                    key={label}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className={`relative rounded-xl border ${border} bg-gradient-to-br ${color} backdrop-blur-md p-3 overflow-hidden`}
+                  >
+                    <div className={`absolute top-0 right-0 w-12 h-12 rounded-full blur-xl ${glow} -translate-y-1/2 translate-x-1/2`} />
+                    <div className={`w-7 h-7 rounded-lg ${glow} border ${border} flex items-center justify-center mb-2`}>
+                      <Icon size={14} className={iconColor} />
+                    </div>
+                    <p className="text-xl font-bold text-white tabular-nums leading-none">{value}</p>
+                    <p className="text-[9px] text-white/50 uppercase tracking-[0.15em] mt-0.5 font-medium leading-tight">{label}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          ),
+        };
+      }
       default:
         return { ...base, description: <span className={defaultTextClass}>{base.description}</span> };
     }
@@ -527,8 +738,20 @@ export default function HeroSection() {
   return (
     <div ref={containerRef} className="relative h-[100dvh] w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
 
-      {!isDashboardView && !isVIPWelcomeOpen && (
-        <CommandCenter onLoginClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} />
+      {!isDashboardView && !isVIPWelcomeOpen && !profile && (
+        <div className="hidden md:block">
+          <CommandCenter isHero onLoginClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} />
+        </div>
+      )}
+
+      {!isDashboardView && !isVIPWelcomeOpen && profile && (
+        <a
+          href="/dashboard"
+          className="hidden md:flex fixed left-6 bottom-8 z-[110] items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/25 transition-all shadow-lg group"
+        >
+          <LayoutDashboard size={16} className="text-white/50 group-hover:text-white transition-colors" />
+          <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors">Backoffice</span>
+        </a>
       )}
 
       <motion.div className="fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[100] mix-blend-difference hidden md:block" style={{ x: mouseX, y: mouseY, translateX: "-50%", translateY: "-50%" }} animate={{ scale: isHovering ? 3.5 : 1, opacity: 0.8 }} transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.2 }} />
@@ -536,23 +759,14 @@ export default function HeroSection() {
       <div className="absolute inset-0 z-10">
         <canvas ref={canvasRef} className="w-full h-full contrast-115 saturate-110 brightness-95 transform-gpu" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80 pointer-events-none" />
+        {/* Vignette lateral esquerda — garante legibilidade do texto em qualquer frame do vídeo */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/20 to-transparent pointer-events-none" />
       </div>
 
       <AnimatePresence>
         {!isDashboardView && (
           <motion.div key="hero-main-ui" initial={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(20px)" }} className="absolute inset-0 z-30 pointer-events-none" >
             
-            {/* BANDEIRAS DA COOPERAÇÃO */}
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ duration: 1, delay: 1.2, ease: "easeOut" }}
-              className="fixed top-6 left-6 sm:top-10 sm:left-10 z-50 pointer-events-auto flex items-center gap-3"
-            >
-              {/* As imagens são servidas a partir da pasta 'public' */}
-              <img src="/flags/Flag_of_Angola.svg.png" alt="Bandeira de Angola" className="h-5 w-auto rounded-sm shadow-lg" />
-              <img src="/flags/Flag_of_Portugal.svg.webp" alt="Bandeira de Portugal" className="h-5 w-auto rounded-sm shadow-lg" />
-            </motion.div>
             
             {/* O SEU POP-UP ORIGINAL, AGORA COM TUDO LÁ DENTRO */}
             <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
@@ -730,18 +944,18 @@ export default function HeroSection() {
             <HelpGuide open={helpOpen} setOpen={setHelpOpen} />
 
             {/* BARRA DIREITA UNIFICADA (Evita sobreposição em ecrãs de menor altura) */}
-            <div className="fixed top-0 right-6 sm:right-16 md:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-6 sm:py-10 pointer-events-none">
-              
+            <div className="fixed top-0 right-4 sm:right-6 md:right-16 lg:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-5 sm:py-10 pointer-events-none">
+
               {/* TOPO: Botão de Ajuda */}
               <div className="pointer-events-auto shrink-0">
-                <button onClick={() => setHelpOpen(true)} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white transition hover:border-sky-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-400/50">
+                <button onClick={() => setHelpOpen(true)} className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white transition hover:border-sky-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-400/50">
                   <span className="text-lg font-black">?</span>
                   <span className="sr-only">Abrir guia de ajuda</span>
                 </button>
               </div>
 
-              {/* CENTRO: Fases e Navegador */}
-              <div className="flex flex-col items-end gap-4 md:gap-8 pointer-events-auto my-auto shrink-0 transform-gpu min-[1000px]:scale-100 scale-90 origin-right">
+              {/* CENTRO: Fases e Navegador — apenas desktop */}
+              <div className="hidden md:flex flex-col items-end gap-4 md:gap-8 pointer-events-auto my-auto shrink-0 transform-gpu min-[1000px]:scale-100 scale-90 origin-right">
                 <PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} phases={PROGRAM_PHASES} setIsHovering={setIsHovering} />
                 <Navigator activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} setIsHovering={setIsHovering} />
               </div>
@@ -752,19 +966,19 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div className="absolute top-[28vh] left-8 sm:left-24 lg:left-[160px] w-[85%] md:w-[540px] h-[320px] z-40 pointer-events-auto flex flex-col justify-between">
+            <div className="absolute top-[14vh] sm:top-[28vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-auto sm:w-[90%] md:w-[540px] z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '75vh'}}>
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
                   <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">
                     <div className="shrink-0">
-                      <p className="text-[10px] md:text-[11px] tracking-[0.6em] text-white/70 uppercase font-medium truncate drop-shadow-md">{activeData.subtitle}</p>
-                      <h1 className="text-4xl sm:text-5xl font-bold uppercase tracking-tight text-white mt-2 drop-shadow-lg">{activeData.name}</h1>
+                      <p className="text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.6em] text-white/90 uppercase font-medium truncate" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{activeData.subtitle}</p>
+                      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold uppercase tracking-tight text-white mt-2" style={{textShadow:"0 2px 12px rgba(0,0,0,0.9)"}}>{activeData.name}</h1>
                     </div>
                     <div className="flex-1 mt-4">{activeData.description}</div>
                     <div className="shrink-0 pt-2 mt-auto">
                       <button onClick={() => window.open(DASHBOARD_URL, "_blank")} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-4 w-fit outline-none">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80 group-hover:text-white transition-colors">Saber Mais</span>
-                        <div className="relative w-12 h-[1px] bg-white/30 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div>
+                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white transition-colors" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Saber Mais</span>
+                        <div className="relative w-12 h-[1px] bg-white/50 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div>
                       </button>
                     </div>
                   </motion.div>
@@ -772,7 +986,20 @@ export default function HeroSection() {
               </AnimatePresence>
             </div>
 
-            <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-10 sm:bottom-12 md:bottom-16 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
+            {/* BANDEIRAS DA COOPERAÇÃO */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 1.2, ease: "easeOut" }}
+              className="fixed top-6 left-6 sm:top-10 sm:left-10 z-50 pointer-events-auto flex items-center gap-3"
+            >
+              <img src="/flags/Flag_of_Angola.svg.png" alt="Bandeira de Angola" className="h-5 w-auto rounded-sm shadow-lg" />
+              <img src="/flags/Flag_of_Portugal.svg.webp" alt="Bandeira de Portugal" className="h-5 w-auto rounded-sm shadow-lg" />
+            </motion.div>
+
+
+
+            <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-[72px] sm:bottom-12 md:bottom-16 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>
@@ -803,10 +1030,76 @@ export default function HeroSection() {
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative h-28 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
+                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative h-16 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
                 </motion.div>
               </div>
             </motion.div>
+
+            {/* Barra de navegação mobile */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden pointer-events-auto">
+              <div className="flex items-stretch bg-black/60 backdrop-blur-2xl border-t border-white/[0.08]">
+                {/* Fase anterior */}
+                <button
+                  onClick={() => goToPhase(activePhaseIndex - 1)}
+                  disabled={activePhaseIndex <= 1}
+                  className="flex-1 flex flex-col items-start justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
+                >
+                  <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">anterior</span>
+                  <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wide truncate max-w-[90px]">
+                    {activePhaseIndex > 1 ? PROGRAM_PHASES[activePhaseIndex - 1]?.name : ''}
+                  </span>
+                </button>
+
+                {/* Fase actual — centro */}
+                <div className="flex flex-col items-center justify-center px-3 py-2 border-x border-white/[0.08] min-w-[110px]">
+                  <span className="text-[8px] uppercase tracking-[0.4em] text-white/40 font-medium">
+                    {String(activePhaseIndex).padStart(2,'0')} / {String(PROGRAM_PHASES.length - 1).padStart(2,'0')}
+                  </span>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={activePhaseIndex}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-[11px] font-bold text-white uppercase tracking-[0.15em] mt-0.5"
+                    >
+                      {PROGRAM_PHASES[activePhaseIndex]?.name}
+                    </motion.span>
+                  </AnimatePresence>
+                  {!profile && (
+                    <button
+                      onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
+                      className="mt-1.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[9px] font-bold uppercase tracking-[0.25em] text-white/80 hover:bg-white/20 transition-colors"
+                    >
+                      <LogIn size={10} />
+                      Entrar
+                    </button>
+                  )}
+                  {profile && (
+                    <a
+                      href="/dashboard"
+                      className="mt-1.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 text-[9px] font-bold uppercase tracking-[0.25em] text-blue-300 hover:bg-blue-500/30 transition-colors"
+                    >
+                      <LayoutDashboard size={10} />
+                      Backoffice
+                    </a>
+                  )}
+                </div>
+
+                {/* Fase seguinte */}
+                <button
+                  onClick={() => goToPhase(activePhaseIndex + 1)}
+                  disabled={activePhaseIndex >= PROGRAM_PHASES.length - 1}
+                  className="flex-1 flex flex-col items-end justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
+                >
+                  <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">seguinte</span>
+                  <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wide truncate max-w-[90px] text-right">
+                    {activePhaseIndex < PROGRAM_PHASES.length - 1 ? PROGRAM_PHASES[activePhaseIndex + 1]?.name : ''}
+                  </span>
+                </button>
+              </div>
+            </div>
 
           </motion.div>
         )}
@@ -816,7 +1109,7 @@ export default function HeroSection() {
         {isVIPWelcomeOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.9 }} className="fixed inset-0 bg-black/50 backdrop-blur-xl z-[300] flex flex-col items-center justify-center text-center p-6 pointer-events-auto">
             <motion.div initial={{ opacity: 0, y: 30, scale: 0.99, filter: "blur(15px)" }} animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }} transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center">
-              <motion.img src="/logo-sabermais.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ repeat: Infinity, duration: 4 }} className="h-16 w-auto object-contain mb-8 filter brightness-110 select-none mix-blend-screen" />
+              <motion.img src="/logo-sabermais.png" alt="Saber Mais" animate={{ scale: [1, 1.04, 1], opacity: [0.6, 0.9, 0.6] }} transition={{ repeat: Infinity, duration: 4 }} className="h-20 w-auto object-contain mb-8 select-none mix-blend-screen contrast-125 brightness-110" style={{ filter: "drop-shadow(0 0 24px rgba(120,200,255,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.5)) contrast(1.25) brightness(1.1)" }} />
               <h2 className="text-5xl font-extralight uppercase tracking-tighter text-white italic leading-none">Bem-vindo</h2>
               <h3 className="text-3xl font-bold uppercase tracking-tight text-blue-500 mt-3 drop-shadow-[0_0_20px_rgba(59,130,246,0.3)]">{finalFullName}</h3>
             </motion.div>

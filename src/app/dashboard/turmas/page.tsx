@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Plus, Trash2, Users, ChevronDown, ChevronUp, Loader2, X, UserCheck, UserX } from "lucide-react";
+import { Plus, Trash2, Users, ChevronDown, ChevronUp, Loader2, X, UserCheck, UserX, UserPlus } from "lucide-react";
 
 const AREAS = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
@@ -26,6 +26,9 @@ export default function TurmasPage() {
   const [formandos, setFormandos] = useState<Formando[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendentes, setPendentes] = useState<any[]>([]);
+  const [semTurma, setSemTurma] = useState<any[]>([]);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [assignTurmaId, setAssignTurmaId] = useState<string>("");
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [membros, setMembros] = useState<Record<string, Membro[]>>({});
@@ -41,20 +44,40 @@ export default function TurmasPage() {
 
   async function fetchAll() {
     setLoading(true);
-    const [turmasRes, formadoresRes, formandosRes, pendentesRes] = await Promise.all([
-      fetch("/api/turmas").then(r => r.json()),
-      fetch("/api/db/profiles?eq.role=formador").then(r => r.json()),
-      fetch("/api/db/profiles?eq.role=formando").then(r => r.json()),
-      fetch("/api/formandos-pendentes").then(r => r.json()),
-    ]);
-    setTurmas(turmasRes.data ?? []);
-    setFormadores(formadoresRes.data ?? formadoresRes ?? []);
-    setFormandos(formandosRes.data ?? formandosRes ?? []);
-    setPendentes(pendentesRes.formandos ?? []);
-    setLoading(false);
+    try {
+      const safe = (p: Promise<Response>) => p.then(r => r.ok ? r.json() : {}).catch(() => ({}));
+      const [turmasRes, formadoresRes, formandosRes, pendentesRes] = await Promise.all([
+        safe(fetch("/api/turmas")),
+        safe(fetch("/api/db/profiles?eq.role=formador")),
+        safe(fetch("/api/db/profiles?eq.role=formando")),
+        safe(fetch("/api/formandos-pendentes")),
+      ]);
+      setTurmas(turmasRes.data ?? []);
+      setSemTurma(turmasRes.formandos_sem_turma ?? []);
+      setFormadores(formadoresRes.data ?? formadoresRes ?? []);
+      setFormandos(formandosRes.data ?? formandosRes ?? []);
+      setPendentes(pendentesRes.formandos ?? []);
+    } catch {
+      // falha silenciosa — mostra lista vazia
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { if (user) fetchAll(); }, [user]);
+
+  async function handleAssignTurma(formandoId: string) {
+    if (!assignTurmaId) return;
+    setAssigningId(formandoId);
+    await fetch(`/api/turmas/${assignTurmaId}/membros`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ formando_ids: [formandoId] }),
+    });
+    setSemTurma(prev => prev.filter(f => f.id !== formandoId));
+    setAssigningId(null);
+    fetchAll();
+  }
 
   async function handleAprovar(formando_id: string, acao: "aprovar" | "rejeitar") {
     setApprovingId(formando_id);
@@ -167,6 +190,48 @@ export default function TurmasPage() {
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium transition-colors disabled:opacity-40"
                   >
                     <UserX size={12} /> Rejeitar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Formandos sem turma */}
+      {semTurma.length > 0 && (
+        <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-500/10">
+            <UserPlus size={15} className="text-blue-400" />
+            <span className="text-sm font-semibold text-blue-400">
+              {semTurma.length} formando{semTurma.length !== 1 ? "s" : ""} sem turma atribuída
+            </span>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {semTurma.map(f => (
+              <div key={f.id} className="flex items-center justify-between gap-4 px-5 py-3 flex-wrap">
+                <div>
+                  <p className="text-sm text-white font-medium">{f.first_name} {f.last_name}</p>
+                  <p className="text-xs text-white/40">{f.email}{f.provincia ? ` · ${f.provincia}` : ""}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <select
+                    value={assignTurmaId}
+                    onChange={e => setAssignTurmaId(e.target.value)}
+                    className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-blue-500/50"
+                  >
+                    <option value="" className="bg-[#0d0d14]">Escolher turma...</option>
+                    {turmas.map(t => (
+                      <option key={t.id} value={t.id} className="bg-[#0d0d14]">{t.nome}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => handleAssignTurma(f.id)}
+                    disabled={!assignTurmaId || assigningId === f.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-medium transition-colors disabled:opacity-40"
+                  >
+                    {assigningId === f.id ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
+                    Adicionar
                   </button>
                 </div>
               </div>

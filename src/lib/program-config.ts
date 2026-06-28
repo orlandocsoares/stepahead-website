@@ -1,6 +1,6 @@
 export const TOTAL_FRAMES = 280; 
 export const BASE_FRAME_URL = "/storage/v1/object/public/Nuvem%20LooP/";
-export const DASHBOARD_URL = "#";
+export const DASHBOARD_URL = "/dashboard";
 
 export const PROGRAM_INFO = {
   name: "Portal Saber Mais",

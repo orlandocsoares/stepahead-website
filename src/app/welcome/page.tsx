@@ -4,28 +4,17 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck, ArrowRight, Hourglass, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-
 export default function WelcomePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        supabase.from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single()
-          .then(({ data }) => {
-            setProfile(data);
-            setLoading(false);
-          });
-      } else {
-        setLoading(false);
-      }
-    });
+    fetch("/api/auth/me")
+      .then(r => r.json())
+      .then(({ profile }) => setProfile(profile ?? null))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   return (

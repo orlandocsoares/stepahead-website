@@ -5,17 +5,18 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   FileText, Video, Search, Download, Loader2, Plus, FolderOpen, Lock,
   Globe, Users, GraduationCap, LayoutGrid, List, ExternalLink,
-  FileImage, FileVideo, FileArchive, File, Trash2,
+  FileImage, FileVideo, FileArchive, File, Trash2, ImagePlus,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const CATEGORIES = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
 const VISIBILIDADE_OPTIONS = [
-  { value: "privado",    label: "Só eu",          icon: Lock,          color: "text-white/40",   roles: ["formador", "admin"] },
-  { value: "turma",      label: "Minha turma",    icon: GraduationCap, color: "text-amber-400",  roles: ["formador"] },
-  { value: "formadores", label: "Formadores",      icon: Users,         color: "text-blue-400",   roles: ["formador", "admin"] },
-  { value: "publico",    label: "Todos",           icon: Globe,         color: "text-emerald-400", roles: ["formador", "admin"] },
+  { value: "privado",           label: "Só eu",              icon: Lock,          color: "text-white/40",    roles: ["formador", "admin"] },
+  { value: "turma",             label: "Minha turma",        icon: GraduationCap, color: "text-amber-400",   roles: ["formador"] },
+  { value: "formadores",        label: "Formadores",         icon: Users,         color: "text-blue-400",    roles: ["formador", "admin"] },
+  { value: "formadores_turma",  label: "Formadores + Turma", icon: Users,         color: "text-purple-400",  roles: ["formador"] },
+  { value: "publico",           label: "Todos",              icon: Globe,         color: "text-emerald-400", roles: ["formador", "admin"] },
 ];
 
 function VisibilidadeBadge({ v, small }: { v: string; small?: boolean }) {
@@ -70,7 +71,7 @@ function getVisibleCategories(role?: string, specialization?: string): string[] 
 function getUploadAreas(role?: string, specialization?: string): string[] | null {
   if (role === "admin") return null;
   const areas = parseSpecializations(specialization);
-  return role === "formador" && areas.length > 0 ? areas : null;
+  return role === "formador" && areas.length > 0 ? ["Geral", ...areas] : null;
 }
 
 export default function FicheirosPage() {
@@ -78,7 +79,7 @@ export default function FicheirosPage() {
   const [files, setFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("Geral");
+  const [activeCategory, setActiveCategory] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -89,6 +90,9 @@ export default function FicheirosPage() {
   const [minhasTurmas, setMinhasTurmas] = useState<{ id: string; nome: string; area: string }[]>([]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [generatingThumbs, setGeneratingThumbs] = useState(false);
+  const [thumbProgress, setThumbProgress] = useState<{ done: number; total: number } | null>(null);
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
 
@@ -96,6 +100,8 @@ export default function FicheirosPage() {
     () => getVisibleCategories(user?.role, user?.specialization),
     [user?.role, user?.specialization]
   );
+
+  const showGeral = true;
   const uploadAreas = useMemo(
     () => getUploadAreas(user?.role, user?.specialization),
     [user?.role, user?.specialization]
@@ -105,10 +111,73 @@ export default function FicheirosPage() {
   function openUploadModal() {
     setTitle("");
     setUploadFile(null);
+    setThumbnailPreview(null);
     setVisibilidade("publico");
     setTurmaId(minhasTurmas[0]?.id ?? "");
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
     setIsModalOpen(true);
+  }
+
+  async function handleGenerateMissingThumbnails() {
+    setGeneratingThumbs(true);
+    setThumbProgress(null);
+    try {
+      const res = await fetch("/api/arquivos/gerar-thumbnails");
+      const { ficheiros } = await res.json();
+      if (!ficheiros?.length) { setGeneratingThumbs(false); return; }
+
+      const { generatePdfThumbnail } = await import("@/lib/pdf-thumbnail");
+      setThumbProgress({ done: 0, total: ficheiros.length });
+
+      let ok = 0;
+      for (let i = 0; i < ficheiros.length; i++) {
+        const f = ficheiros[i];
+        try {
+          const fileUrl = `/storage/v1/object/public/materiais/${encodeURIComponent(f.nome_arquivo)}`;
+          const fileRes = await fetch(fileUrl);
+          if (!fileRes.ok) { console.warn("[thumb] ficheiro não encontrado:", f.nome_arquivo); continue; }
+
+          const blob = await fileRes.blob();
+          const pdfFile = new File([blob], f.nome_arquivo, { type: "application/pdf" });
+          const thumbBlob = await generatePdfThumbnail(pdfFile);
+          if (!thumbBlob) { console.warn("[thumb] falhou renderizar:", f.nome_arquivo); continue; }
+
+          const thumbName = `thumb_${f.id}.jpg`;
+          const thumbForm = new FormData();
+          thumbForm.append("bucket", "materiais");
+          thumbForm.append("path", `thumbnails/${thumbName}`);
+          thumbForm.append("upsert", "true");
+          thumbForm.append("file", new File([thumbBlob], thumbName, { type: "image/jpeg" }));
+          const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: thumbForm });
+          if (!uploadRes.ok) { console.warn("[thumb] upload falhou:", await uploadRes.text()); continue; }
+
+          const thumbnailUrl = `/storage/v1/object/public/materiais/thumbnails/${thumbName}`;
+          const patchRes = await fetch("/api/arquivos/gerar-thumbnails", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: f.id, thumbnail_url: thumbnailUrl }),
+          });
+          if (patchRes.ok) ok++;
+          else console.warn("[thumb] patch falhou:", await patchRes.text());
+        } catch (err) {
+          console.error("[thumb] erro:", err);
+        }
+        setThumbProgress({ done: i + 1, total: ficheiros.length });
+      }
+      alert(`Capas geradas: ${ok}/${ficheiros.length}`);
+      fetchFiles();
+    } finally {
+      setGeneratingThumbs(false);
+      setThumbProgress(null);
+    }
+  }
+
+  function handleFileSelect(file: File) {
+    setUploadFile(file);
+    setThumbnailPreview(null);
+    if (file.type === "application/pdf") {
+      setThumbnailPreview(URL.createObjectURL(file));
+    }
   }
 
   async function fetchFiles() {
@@ -123,6 +192,12 @@ export default function FicheirosPage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (!user) return;
+    // Definir categoria activa inicial
+    setActiveCategory("Geral");
+  }, [user?.role, user?.specialization]);
 
   useEffect(() => {
     fetchFiles();
@@ -192,6 +267,7 @@ export default function FicheirosPage() {
       if (!dbRes.ok) throw new Error("Erro ao registar o ficheiro.");
 
       setIsModalOpen(false);
+      setThumbnailPreview(null);
       fetchFiles();
     } catch (err: any) {
       alert(err.message ?? "Erro desconhecido.");
@@ -278,7 +354,7 @@ export default function FicheirosPage() {
 
       {/* Filtros de categoria */}
       <div className="flex gap-2 flex-wrap">
-        {visibleCategories.map((cat) => (
+        {visibleCategories.filter(cat => showGeral || cat !== "Geral").map((cat) => (
           <button key={cat} onClick={() => setActiveCategory(cat)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               activeCategory === cat
@@ -322,12 +398,18 @@ export default function FicheirosPage() {
               <div key={f.id} className="group bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/[0.12] transition-all flex flex-col">
                 {/* Miniatura */}
                 <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="block">
-                  <div className={`${bg} flex items-center justify-center h-28 relative`}>
-                    <Icon size={40} className={`${text} opacity-60`} />
-                    <span className={`absolute bottom-2 right-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${bg} ${text} border border-current/20`}>
+                  <div className={`flex items-center justify-center h-28 relative overflow-hidden ${f.thumbnail_url ? "" : bg}`}>
+                    {f.thumbnail_url ? (
+                      <img src={f.thumbnail_url} alt={f.label} className="w-full h-full object-cover" />
+                    ) : label === "PDF" ? (
+                      <embed src={fileUrl} type="application/pdf" className="w-full h-full pointer-events-none" />
+                    ) : (
+                      <Icon size={40} className={`${text} opacity-60`} />
+                    )}
+                    <span className={`absolute bottom-2 right-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-black/60 ${text}`}>
                       {label}
                     </span>
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                       <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
@@ -335,7 +417,7 @@ export default function FicheirosPage() {
                 {/* Info */}
                 <div className="px-3 py-2.5 flex flex-col gap-1.5 flex-1">
                   <p className="text-xs text-white/80 font-medium leading-tight line-clamp-2">{f.label}</p>
-                  <p className="text-[10px] text-white/30">{f.area} · {f.tamanho ?? "—"}</p>
+                  <p className="text-[10px] text-white/30">{f.area} · {f.tamanho ?? "—"} · {formatDate(f.created_at)}</p>
                   {canChangeVis ? (
                     <select
                       value={f.visibilidade ?? "publico"}
@@ -490,7 +572,8 @@ export default function FicheirosPage() {
               <label className="text-xs text-white/40">Visibilidade</label>
               <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-4" : "grid-cols-3"}`}>
                 {VISIBILIDADE_OPTIONS.filter(opt => {
-                  if (opt.value === "turma") return user?.role === "formador" && minhasTurmas.length > 0;
+                  if (opt.value === "turma" || opt.value === "formadores_turma")
+                    return user?.role === "formador" && minhasTurmas.length > 0;
                   return true;
                 }).map((opt) => {
                   const Icon = opt.icon;
@@ -514,9 +597,10 @@ export default function FicheirosPage() {
                 {visibilidade === "privado" && "Só você tem acesso a este documento."}
                 {visibilidade === "turma" && "Apenas os formandos da turma seleccionada têm acesso."}
                 {visibilidade === "formadores" && "Você e todos os formadores podem ver este documento."}
+                {visibilidade === "formadores_turma" && "Formadores e os formandos da turma seleccionada podem ver este documento."}
                 {visibilidade === "publico" && "Todos os utilizadores da plataforma podem ver este documento."}
               </p>
-              {visibilidade === "turma" && minhasTurmas.length > 0 && (
+              {(visibilidade === "turma" || visibilidade === "formadores_turma") && minhasTurmas.length > 0 && (
                 <select value={turmaId} onChange={e => setTurmaId(e.target.value)}
                   className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500/50">
                   {minhasTurmas.map(t => (
@@ -528,12 +612,21 @@ export default function FicheirosPage() {
 
             <div className="space-y-1.5">
               <label className="text-xs text-white/40">Ficheiro</label>
-              <label className="relative flex flex-col items-center justify-center gap-2 border border-dashed border-white/[0.10] rounded-lg p-8 cursor-pointer hover:border-blue-500/40 transition-colors">
-                <input type="file" required onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)} className="absolute inset-0 opacity-0 cursor-pointer" />
-                <Download size={20} className="text-white/20" />
-                <p className="text-xs text-white/40 text-center">
-                  {uploadFile ? uploadFile.name : "Arraste ou clique para seleccionar"}
-                </p>
+              <label className="relative flex flex-col items-center justify-center gap-2 border border-dashed border-white/[0.10] rounded-lg p-6 cursor-pointer hover:border-blue-500/40 transition-colors overflow-hidden">
+                <input type="file" required onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                {thumbnailPreview ? (
+                  <>
+                    <embed src={thumbnailPreview} type="application/pdf" className="w-full h-32 rounded pointer-events-none" />
+                    <p className="text-[10px] text-white/40 truncate max-w-full mt-1">{uploadFile?.name}</p>
+                  </>
+                ) : (
+                  <>
+                    <Download size={20} className="text-white/20" />
+                    <p className="text-xs text-white/40 text-center">
+                      {uploadFile ? uploadFile.name : "Arraste ou clique para seleccionar"}
+                    </p>
+                  </>
+                )}
               </label>
             </div>
 

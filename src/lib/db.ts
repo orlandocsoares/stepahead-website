@@ -28,6 +28,12 @@ async function initializeDatabase(pool: Pool) {
       ADD COLUMN IF NOT EXISTS destinatario_email TEXT DEFAULT NULL;
     `);
 
+    // 5. Add thumbnail_url to arquivos
+    await pool.query(`
+      ALTER TABLE arquivos
+      ADD COLUMN IF NOT EXISTS thumbnail_url TEXT DEFAULT NULL;
+    `);
+
     console.log("Database schema initialized successfully.");
   } catch (error) {
     console.error("Failed to initialize database schema:", error);
@@ -40,12 +46,9 @@ function getPool(): Pool {
   if (!connectionString) {
     throw new Error("DATABASE_URL is not configured");
   }
-  const pool = new Pool({ connectionString, max: 10 });
-  if (process.env.NODE_ENV !== "production") {
-    globalForDb.pool = pool;
-  }
+  const pool = new Pool({ connectionString, max: 5 });
+  globalForDb.pool = pool; // sempre reutilizar — evita "too many clients"
 
-  // Executa migração dinâmica
   initializeDatabase(pool);
 
   return pool;

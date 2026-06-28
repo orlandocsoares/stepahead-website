@@ -88,18 +88,18 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
       if (sessionUser) {
         if (userRole !== "super-admin" && userRole !== "admin") {
           if (userRole === "formador") {
-            // formador: vê os seus + publico + formadores + turma das suas turmas
+            // formador: vê os seus + publico + formadores + turma/formadores_turma das suas turmas
             filters.push(`(
               ${tableSql}.uploader_id = $${valueIndex}
               OR ${tableSql}.visibilidade IN ('publico', 'formadores')
-              OR (${tableSql}.visibilidade = 'turma' AND ${tableSql}.turma_id IN (
+              OR (${tableSql}.visibilidade IN ('turma', 'formadores_turma') AND ${tableSql}.turma_id IN (
                 SELECT id FROM turmas WHERE formador_id = $${valueIndex}
               ))
             )`);
             values.push(sessionUser.id);
             valueIndex++;
           } else {
-            // formando: vê Geral + áreas dos formadores aceites + turmas onde é membro
+            // formando: vê publico/formadores (área certa), turma propria, formadores_turma se membro
             filters.push(`(
               (${tableSql}.visibilidade IN ('publico', 'formadores') AND (
                 ${tableSql}.area = 'Geral'
@@ -115,6 +115,9 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
                 )
               ))
               OR (${tableSql}.visibilidade = 'turma' AND ${tableSql}.turma_id IN (
+                SELECT turma_id FROM turma_membros WHERE formando_id = $${valueIndex}
+              ))
+              OR (${tableSql}.visibilidade = 'formadores_turma' AND ${tableSql}.turma_id IN (
                 SELECT turma_id FROM turma_membros WHERE formando_id = $${valueIndex}
               ))
             )`);

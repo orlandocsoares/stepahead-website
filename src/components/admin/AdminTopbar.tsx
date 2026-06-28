@@ -2,17 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { Menu, MessageSquare } from "lucide-react";
-=======
-import { Menu, MessageSquare, Globe } from "lucide-react";
->>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
-import { useEffect, useState } from "react";
-=======
-import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X } from "lucide-react";
+import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
->>>>>>> 0f734c167fa484fa9acd18f356e0b784c4adf9b7
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard":               "Dashboard",
@@ -34,13 +25,15 @@ type Props = { onMobileMenuToggle: () => void };
 export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAdminUser();
+  const { user, logout } = useAdminUser();
   const [unread, setUnread] = useState(0);
   const [notifs, setNotifs] = useState<any[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [msgUnread, setMsgUnread] = useState(0);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
 
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
   const displayName = user?.first_name ?? user?.email?.split("@")[0] ?? "";
@@ -85,13 +78,12 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
     return () => clearInterval(i);
   }, [user]);
 
-  // Reaparecer banner ao mudar de página
   useEffect(() => { setBannerDismissed(false); }, [pathname]);
 
-  // Fechar ao clicar fora
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (bellRef.current && !bellRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) setAvatarOpen(false);
     }
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
@@ -138,34 +130,11 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
       <h1 className="flex-1 text-sm md:text-base font-semibold text-white text-center md:text-left">{title}</h1>
 
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        {/* Voltar ao site público */}
-        <a
-          href="/"
-          className="p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors"
-          aria-label="Ver site público"
-          title="Ver site público"
-        >
-          <Globe size={18} />
-        </a>
-
->>>>>>> d2f82045cce2d043fe5f170db18eac4eb028e879
-        {/* Badge de mensagens não lidas */}
-        <button
-          onClick={() => router.push("/dashboard/mensagens")}
-          className="relative p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors"
-          aria-label="Mensagens"
-        >
-=======
         <a href="/" className="p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors" title="Ver site público">
           <Globe size={18} />
         </a>
 
-        {/* Mensagens */}
         <button onClick={() => router.push("/dashboard/mensagens")} className="relative p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors">
->>>>>>> 0f734c167fa484fa9acd18f356e0b784c4adf9b7
           <MessageSquare size={18} />
           {msgUnread > 0 && (
             <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-blue-500 text-[9px] text-white flex items-center justify-center font-bold">
@@ -229,12 +198,30 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           )}
         </div>
 
-        <div className="text-right hidden sm:block">
-          <p className="text-xs font-medium text-white/70">{displayName}</p>
-          <p className="text-[10px] text-white/30 capitalize">{user?.role ?? ""}</p>
-        </div>
-        <div className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-400 uppercase shrink-0">
-          {initial}
+        {/* Avatar com dropdown de logout */}
+        <div className="relative" ref={avatarRef}>
+          <button
+            onClick={() => setAvatarOpen(o => !o)}
+            className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-400 uppercase shrink-0 hover:bg-blue-600/50 transition-colors"
+          >
+            {initial}
+          </button>
+
+          {avatarOpen && (
+            <div className="absolute right-0 top-10 w-48 bg-[#13131f] border border-white/[0.08] rounded-xl shadow-2xl z-50 overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/[0.06]">
+                <p className="text-xs font-semibold text-white truncate">{displayName}</p>
+                <p className="text-[10px] text-white/30 capitalize">{user?.role ?? ""}</p>
+              </div>
+              <button
+                onClick={() => { setAvatarOpen(false); logout(); }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-sm text-white/50 hover:text-red-400 hover:bg-red-500/[0.08] transition-colors"
+              >
+                <LogOut size={15} />
+                Terminar sessão
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

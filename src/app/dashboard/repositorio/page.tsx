@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
-import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText, Video, Search, Download,
@@ -50,33 +49,16 @@ export default function RepositorioPage() {
 
   useEffect(() => {
     fetchFiles();
-
-    // Sincronização em Tempo Real (Realtime)
-    const channel = supabase.channel('repo-sync-detailed')
-      .on(
-        'postgres_changes', 
-        { event: '*', schema: 'public', table: 'arquivos' }, 
-        () => fetchFiles()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   async function fetchFiles() {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('arquivos')
-        .select('*, profiles(*)')
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      if (data) setFiles(data);
+      const res = await fetch("/api/db/arquivos?select=*,profiles(*)&orderBy=created_at&ascending=false");
+      const json = await res.json();
+      if (json.data) setFiles(json.data);
     } catch (err) {
-      console.error("Erro ao sincronizar repositório:", err);
+      console.error("Erro ao carregar repositório:", err);
     } finally {
       setLoading(false);
     }
@@ -99,11 +81,12 @@ export default function RepositorioPage() {
 
   const handlePublish = async (fileId: string) => {
     try {
-      const { error } = await supabase
-        .from('arquivos')
-        .update({ status: 'publicado' })
-        .eq('id', fileId);
-      if (error) throw error;
+      const res = await fetch("/api/db/arquivos", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates: { visibilidade: 'publico' }, eq: { id: fileId } }),
+      });
+      if (!res.ok) throw new Error("Erro ao publicar");
       fetchFiles();
     } catch (err) {
       console.error("Erro ao publicar:", err);
@@ -121,24 +104,29 @@ export default function RepositorioPage() {
       const sanitizedName = uploadFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
       const fileName = `${Date.now()}_${sanitizedName}`;
       
-      const { error: storageError } = await supabase.storage
-        .from('materiais')
-        .upload(fileName, uploadFile);
-        
-      if (storageError) throw storageError;
+      const fd = new FormData();
+      fd.append("bucket", "materiais");
+      fd.append("path", fileName);
+      fd.append("file", uploadFile);
+      const upRes = await fetch("/api/storage/upload", { method: "POST", body: fd });
+      const upJson = await upRes.json();
+      if (!upRes.ok || upJson.error) throw new Error(upJson.error?.message ?? "Erro no upload.");
 
-      const { error: dbError } = await supabase.from('arquivos').insert({
-        label: title,
-        nome_arquivo: fileName,
-        area: category,
-        tamanho: (uploadFile.size / (1024 * 1024)).toFixed(2) + " MB",
-        tipo: uploadFile.type.includes("video") ? "video" : "pdf",
-        status: docStatus,
-        visibilidade: visibilidade,
-        destinatario_email: visibilidade === "especifico" ? destinatarioEmail : null
+      const dbRes = await fetch("/api/db/arquivos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: title,
+          nome_arquivo: fileName,
+          area: category,
+          tamanho: (uploadFile.size / (1024 * 1024)).toFixed(2) + " MB",
+          tipo: uploadFile.type.includes("video") ? "video" : "pdf",
+          visibilidade: visibilidade,
+          destinatario_email: visibilidade === "especifico" ? destinatarioEmail : null,
+        }),
       });
-      
-      if (dbError) throw dbError;
+      const dbJson = await dbRes.json();
+      if (!dbRes.ok || dbJson.error) throw new Error(dbJson.error?.message ?? "Erro ao guardar.");
 
       setIsModalOpen(false);
       resetForm();
