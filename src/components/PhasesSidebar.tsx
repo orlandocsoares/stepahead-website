@@ -37,16 +37,27 @@ export function PhasesSidebar({ activePhaseIndex, goToPhase, phases, setIsHoveri
                 : "bg-white/[0.04] group-hover:bg-white/[0.10]"}
             `} />
 
-            {/* 2. CONTORNO LUMINOSO ACTIVO */}
+            {/* 2. CONTORNO LUMINOSO ACTIVO COM PULSAR */}
             <AnimatePresence>
               {isActive && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                  className="absolute inset-0 rounded-xl border border-white/70 shadow-[0_0_18px_rgba(255,255,255,0.35),inset_0_0_12px_rgba(255,255,255,0.08)] z-10 pointer-events-none"
-                />
+                <>
+                  {/* Contorno fixo */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="absolute inset-0 rounded-xl border border-white/60 z-10 pointer-events-none"
+                  />
+                  {/* Glow pulsante por cima */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute inset-0 rounded-xl shadow-[0_0_22px_rgba(255,255,255,0.5),inset_0_0_14px_rgba(255,255,255,0.1)] z-10 pointer-events-none"
+                  />
+                </>
               )}
             </AnimatePresence>
 
