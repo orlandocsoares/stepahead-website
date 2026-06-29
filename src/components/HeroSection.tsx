@@ -158,13 +158,27 @@ useEffect(() => {
   return () => subscription.unsubscribe();
 }, []);
 
-// CAPTURA DA TELEMETRIA + PERFIS DOS FORMADORES
+// CAPTURA DA TELEMETRIA + PERFIS DOS FORMADORES + RECURSOS PÚBLICOS
 useEffect(() => {
   const fetchTelemetry = async () => {
-    if (isDashboardView) return; 
+    if (isDashboardView) return;
     const { data: telData } = await supabase.from('hero_telemetria').select('*').single();
     const { data: formadoresData } = await supabase.from('profiles').select('*').eq('role', 'formador').limit(4);
-    if (telData) setTelemetry({ ...telData, formadores_lista: formadoresData || [] });
+    // Recursos públicos reais (site_publico=true, visibilidade=publico)
+    const recursosRes = await fetch('/api/recursos').then(r => r.json()).catch(() => ({ data: [] }));
+    const recursosPublicos: any[] = recursosRes.data ?? [];
+    const areasCounts: Record<string, number> = {};
+    for (const r of recursosPublicos) {
+      areasCounts[r.area] = (areasCounts[r.area] ?? 0) + 1;
+    }
+    const areasPublicas = Object.entries(areasCounts).map(([area, total]) => ({ area, total }));
+    if (telData) setTelemetry({
+      ...telData,
+      formadores_lista: formadoresData || [],
+      recursos_publicos: recursosPublicos,
+      areas_publicas: areasPublicas,
+      total_recursos_publicos: recursosPublicos.length,
+    });
   };
   fetchTelemetry();
 }, [isDashboardView]);

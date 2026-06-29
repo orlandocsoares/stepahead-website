@@ -565,7 +565,11 @@ export default function HeroSection() {
           "Geral":             { bg: "bg-white/10",       text: "text-white/80",   border: "border-white/20",      dot: "bg-white/50" },
         };
         const defaultAreaColor = { bg: "bg-white/10", text: "text-white/80", border: "border-white/20", dot: "bg-white/50" };
-        const areas: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
+        // Usar áreas dos recursos públicos reais; fallback para telemetria
+        const areasPublicas: { area: string; total: number }[] = telemetry.areas_publicas ?? [];
+        const areasFallback: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
+        const areas = areasPublicas.length > 0 ? areasPublicas : areasFallback;
+        const totalPublicos: number = telemetry.total_recursos_publicos ?? 0;
 
         return {
           ...base,
@@ -573,11 +577,11 @@ export default function HeroSection() {
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
 
-              {/* Contador principal */}
+              {/* Contador principal — mostra recursos públicos se existirem */}
               <div className="flex items-end gap-3">
                 <div className="relative">
                   <span className="text-[52px] font-black text-white leading-none tracking-tighter tabular-nums drop-shadow-lg">
-                    {telemetry.total_materials ?? 0}
+                    {totalPublicos > 0 ? totalPublicos : (telemetry.total_materials ?? 0)}
                   </span>
                   <span className="absolute -top-1 -right-3 text-amber-400 text-lg font-bold">+</span>
                 </div>
@@ -609,19 +613,33 @@ export default function HeroSection() {
                 </div>
               )}
 
-              {/* CTA */}
-              {profile && (
-                <motion.a
-                  href="/dashboard/ficheiros"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-amber-400 transition-colors pointer-events-auto group"
-                >
-                  Aceder ao repositório
-                  <span className="group-hover:translate-x-1 transition-transform">→</span>
-                </motion.a>
-              )}
+              {/* CTAs */}
+              <div className="flex flex-col gap-2">
+                {totalPublicos > 0 && (
+                  <motion.a
+                    href="/recursos"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-amber-400 hover:text-amber-300 transition-colors pointer-events-auto group font-semibold"
+                  >
+                    Ver materiais disponíveis
+                    <span className="group-hover:translate-x-1 transition-transform">→</span>
+                  </motion.a>
+                )}
+                {profile && (
+                  <motion.a
+                    href="/dashboard/ficheiros"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-white/70 transition-colors pointer-events-auto group"
+                  >
+                    Aceder ao repositório completo
+                    <span className="group-hover:translate-x-1 transition-transform">→</span>
+                  </motion.a>
+                )}
+              </div>
             </div>
           ),
         };
