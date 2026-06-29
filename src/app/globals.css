@@ -21,20 +21,20 @@
   --c-ov:   rgba(13,13,20,0.88);  /* overlay escuro sobre dashboard-bg.png */
 }
 html.light {
-  --dash-bg-image: linear-gradient(160deg, #c8dff5 0%, #ddeeff 40%, #e8f4fd 70%, #d0e8f8 100%);
-  --c-bg:   #dce8f5;
-  --c-bg2:  rgba(255,255,255,0.85);
-  --c-s1:   rgba(255,255,255,0.55);
-  --c-s2:   rgba(255,255,255,0.75);
-  --c-s3:   rgba(255,255,255,0.90);
-  --c-tx:   #0d1b2e;
-  --c-tx2:  rgba(13,27,46,0.70);
-  --c-tx3:  rgba(13,27,46,0.55);
-  --c-tx4:  rgba(13,27,46,0.40);
-  --c-tx5:  rgba(13,27,46,0.25);
-  --c-br:   rgba(13,27,46,0.10);
-  --c-br2:  rgba(13,27,46,0.18);
-  --c-ov:   rgba(180,210,240,0.60);
+  --dash-bg-image: none;
+  --c-bg:   #eef2f7;
+  --c-bg2:  #ffffff;
+  --c-s1:   #ffffff;
+  --c-s2:   #ffffff;
+  --c-s3:   #f8fafc;
+  --c-tx:   #0f172a;
+  --c-tx2:  #334155;
+  --c-tx3:  #64748b;
+  --c-tx4:  #94a3b8;
+  --c-tx5:  #cbd5e1;
+  --c-br:   #e2e8f0;
+  --c-br2:  #cbd5e1;
+  --c-ov:   transparent;
 }
 
 /* ─── Utility classes ────────────────────────────────────────────────────── */
@@ -72,22 +72,27 @@ html.light {
 html:not(.light) .theme-logo { filter: brightness(0) invert(1); }
 html.light .theme-logo       { filter: none; }
 
-/* Sidebar e topbar: sombra no modo claro para separar do conteúdo */
+/* Modo claro: sidebar e topbar brancos com sombra */
 html.light .dashboard-root aside {
-  box-shadow: 2px 0 20px rgba(13,27,46,0.08);
-  background: rgba(255,255,255,0.70) !important;
-  backdrop-filter: blur(20px);
+  background: #ffffff !important;
+  box-shadow: 1px 0 0 #e2e8f0, 4px 0 16px rgba(15,23,42,0.04);
 }
 html.light .dashboard-root header {
-  box-shadow: 0 1px 20px rgba(13,27,46,0.06);
-  background: rgba(255,255,255,0.70) !important;
-  backdrop-filter: blur(20px);
+  background: #ffffff !important;
+  box-shadow: 0 1px 0 #e2e8f0, 0 2px 8px rgba(15,23,42,0.04);
 }
 
-/* Cards no modo claro: fundo branco fosco */
-html.light .c-s1 { background-color: rgba(255,255,255,0.55) !important; backdrop-filter: blur(8px); }
-html.light .c-s2 { background-color: rgba(255,255,255,0.75) !important; backdrop-filter: blur(8px); }
-html.light .c-s3 { background-color: rgba(255,255,255,0.90) !important; backdrop-filter: blur(8px); }
+/* Cards com sombra sólida */
+html.light .c-s1,
+html.light .c-s2 {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+  backdrop-filter: none !important;
+}
+html.light .c-s3 {
+  background-color: #f8fafc !important;
+  backdrop-filter: none !important;
+}
 
 
 @layer base {
