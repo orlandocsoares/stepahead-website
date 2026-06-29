@@ -69,10 +69,10 @@ export default function DashboardPage() {
 
       {/* Boas-vindas */}
       <div>
-        <h2 className="text-lg font-semibold text-white">
+        <h2 className="text-lg font-semibold c-tx">
           Olá, {user?.first_name ?? "utilizador"} 👋
         </h2>
-        <p className="text-sm text-white/40 mt-0.5">Aqui está o pulso da plataforma.</p>
+        <p className="text-sm c-tx3 mt-0.5">Aqui está o pulso da plataforma.</p>
       </div>
 
       {/* KPIs */}
@@ -84,14 +84,14 @@ export default function DashboardPage() {
           { label: "Publicações", value: t.total_posts ?? "—", icon: MessageSquare, color: "text-amber-400 bg-amber-500/10", href: "/dashboard/comunidade" },
         ].map(s => (
           <Link key={s.label} href={s.href}
-            className="bg-[#13131f] border border-white/[0.06] rounded-xl p-4 flex items-center gap-3 hover:border-white/[0.14] transition-colors group"
+            className="c-bg2 border c-br rounded-xl p-4 flex items-center gap-3 hover:border-white/[0.14] transition-colors group"
           >
             <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${s.color}`}>
               <s.icon size={16} />
             </div>
             <div>
-              <p className="text-xl font-bold text-white leading-none">{s.value}</p>
-              <p className="text-[10px] text-white/35 mt-0.5">{s.label}</p>
+              <p className="text-xl font-bold c-tx leading-none">{s.value}</p>
+              <p className="text-[10px] c-tx3 mt-0.5">{s.label}</p>
             </div>
           </Link>
         ))}
@@ -101,26 +101,26 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Top Uploaders */}
-        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+        <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Upload size={14} className="text-emerald-400" />
-            <h3 className="text-sm font-semibold text-white">Quem mais contribui</h3>
+            <h3 className="text-sm font-semibold c-tx">Quem mais contribui</h3>
           </div>
           {topUploaders.length === 0 ? (
-            <p className="text-xs text-white/25 py-4 text-center">Sem dados ainda.</p>
+            <p className="text-xs c-tx4 py-4 text-center">Sem dados ainda.</p>
           ) : (
             <ol className="space-y-3">
               {topUploaders.map((u, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className={`text-xs font-bold w-5 text-center shrink-0 ${i === 0 ? "text-amber-400" : i === 1 ? "text-white/50" : i === 2 ? "text-amber-700" : "text-white/25"}`}>
+                  <span className={`text-xs font-bold w-5 text-center shrink-0 ${i === 0 ? "text-amber-400" : i === 1 ? "c-tx3" : i === 2 ? "text-amber-700" : "c-tx4"}`}>
                     {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i+1}.`}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-white/80 truncate">{u.first_name} {u.last_name}</span>
-                      <span className="text-xs text-white/40 shrink-0 ml-2">{u.total}</span>
+                      <span className="text-xs c-tx2 truncate">{u.first_name} {u.last_name}</span>
+                      <span className="text-xs c-tx3 shrink-0 ml-2">{u.total}</span>
                     </div>
-                    <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                    <div className="h-1.5 c-s2 rounded-full overflow-hidden">
                       <div className="h-full bg-emerald-500/60 rounded-full" style={{ width: `${(Number(u.total) / maxUpload) * 100}%` }} />
                     </div>
                   </div>
@@ -131,22 +131,22 @@ export default function DashboardPage() {
         </div>
 
         {/* Top Áreas */}
-        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+        <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-2">
             <BarChart3 size={14} className="text-blue-400" />
-            <h3 className="text-sm font-semibold text-white">Áreas mais activas</h3>
+            <h3 className="text-sm font-semibold c-tx">Áreas mais activas</h3>
           </div>
           {topAreas.length === 0 ? (
-            <p className="text-xs text-white/25 py-4 text-center">Sem dados ainda.</p>
+            <p className="text-xs c-tx4 py-4 text-center">Sem dados ainda.</p>
           ) : (
             <ol className="space-y-3">
               {topAreas.map((a, i) => (
                 <li key={i} className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-white/70 truncate">{a.area}</span>
-                    <span className="text-xs text-white/40 shrink-0 ml-2">{a.total} fich.</span>
+                    <span className="text-xs c-tx2 truncate">{a.area}</span>
+                    <span className="text-xs c-tx3 shrink-0 ml-2">{a.total} fich.</span>
                   </div>
-                  <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                  <div className="h-1.5 c-s2 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${AREA_COLORS[i % AREA_COLORS.length]}/60`}
                       style={{ width: `${(Number(a.total) / maxArea) * 100}%` }} />
                   </div>
@@ -157,31 +157,31 @@ export default function DashboardPage() {
         </div>
 
         {/* Utilizadores mais activos (contribuições) */}
-        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+        <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Trophy size={14} className="text-amber-400" />
-            <h3 className="text-sm font-semibold text-white">Mais activos na plataforma</h3>
+            <h3 className="text-sm font-semibold c-tx">Mais activos na plataforma</h3>
           </div>
           {topContrib.length === 0 ? (
-            <p className="text-xs text-white/25 py-4 text-center">Sem dados ainda.</p>
+            <p className="text-xs c-tx4 py-4 text-center">Sem dados ainda.</p>
           ) : (
             <ol className="space-y-3">
               {topContrib.map((u, i) => {
                 const maxC = Number(topContrib[0]?.contribuicoes) || 1;
                 return (
                   <li key={i} className="flex items-center gap-3">
-                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i === 0 ? "text-amber-400" : i === 1 ? "text-white/50" : i === 2 ? "text-amber-700" : "text-white/25"}`}>
+                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i === 0 ? "text-amber-400" : i === 1 ? "c-tx3" : i === 2 ? "text-amber-700" : "c-tx4"}`}>
                       {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i+1}.`}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <div>
-                          <span className="text-xs text-white/80 truncate">{u.first_name} {u.last_name}</span>
-                          <span className="text-[9px] text-white/25 ml-1.5">{ROLE_LABEL[u.role] ?? u.role}</span>
+                          <span className="text-xs c-tx2 truncate">{u.first_name} {u.last_name}</span>
+                          <span className="text-[9px] c-tx4 ml-1.5">{ROLE_LABEL[u.role] ?? u.role}</span>
                         </div>
-                        <span className="text-xs text-white/40 shrink-0 ml-2">{u.contribuicoes}</span>
+                        <span className="text-xs c-tx3 shrink-0 ml-2">{u.contribuicoes}</span>
                       </div>
-                      <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                      <div className="h-1.5 c-s2 rounded-full overflow-hidden">
                         <div className="h-full bg-amber-500/60 rounded-full" style={{ width: `${(Number(u.contribuicoes) / maxC) * 100}%` }} />
                       </div>
                     </div>
@@ -197,16 +197,16 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Próximos eventos */}
-        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+        <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar size={14} className="text-purple-400" />
-              <h3 className="text-sm font-semibold text-white">Próximos eventos</h3>
+              <h3 className="text-sm font-semibold c-tx">Próximos eventos</h3>
             </div>
             <Link href="/dashboard/agenda" className="text-xs text-blue-400 hover:text-blue-300">Ver todos</Link>
           </div>
           {eventos.length === 0 ? (
-            <p className="text-xs text-white/25 py-4 text-center">Sem eventos futuros.</p>
+            <p className="text-xs c-tx4 py-4 text-center">Sem eventos futuros.</p>
           ) : (
             <ul className="space-y-3">
               {eventos.map((e, i) => (
@@ -215,8 +215,8 @@ export default function DashboardPage() {
                     {formatDate(e.data_evento)}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-white truncate">{e.titulo}</p>
-                    <p className="text-[10px] text-white/30">{e.local}</p>
+                    <p className="text-xs font-medium c-tx truncate">{e.titulo}</p>
+                    <p className="text-[10px] c-tx4">{e.local}</p>
                   </div>
                 </li>
               ))}
@@ -226,11 +226,11 @@ export default function DashboardPage() {
 
         {/* Tickets pendentes — só admin */}
         {isAdmin && (
-          <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+          <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <LifeBuoy size={14} className="text-amber-400" />
-                <h3 className="text-sm font-semibold text-white">Suporte</h3>
+                <h3 className="text-sm font-semibold c-tx">Suporte</h3>
               </div>
               <Link href="/dashboard/suporte" className="text-xs text-blue-400 hover:text-blue-300">Ver todos</Link>
             </div>
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                 <p className={`text-5xl font-bold ${Number(t.tickets_pendentes) > 0 ? "text-amber-400" : "text-emerald-400"}`}>
                   {t.tickets_pendentes ?? "0"}
                 </p>
-                <p className="text-xs text-white/30 mt-1">ticket{Number(t.tickets_pendentes) !== 1 ? "s" : ""} pendente{Number(t.tickets_pendentes) !== 1 ? "s" : ""}</p>
+                <p className="text-xs c-tx4 mt-1">ticket{Number(t.tickets_pendentes) !== 1 ? "s" : ""} pendente{Number(t.tickets_pendentes) !== 1 ? "s" : ""}</p>
               </div>
             </div>
           </div>
@@ -247,10 +247,10 @@ export default function DashboardPage() {
 
         {/* Disco */}
         {disk && (
-          <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 space-y-4">
+          <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
             <div className="flex items-center gap-2">
               <HardDrive size={14} className="text-slate-400" />
-              <h3 className="text-sm font-semibold text-white">Armazenamento</h3>
+              <h3 className="text-sm font-semibold c-tx">Armazenamento</h3>
             </div>
             <div className="flex items-center justify-center py-2">
               <div className="relative w-24 h-24">
@@ -265,7 +265,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            <p className="text-center text-[10px] text-white/30">{fmt(disk.used)} de {fmt(disk.total)}</p>
+            <p className="text-center text-[10px] c-tx4">{fmt(disk.used)} de {fmt(disk.total)}</p>
           </div>
         )}
 

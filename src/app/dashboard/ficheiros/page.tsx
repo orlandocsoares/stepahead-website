@@ -13,7 +13,7 @@ import { CalendarClock } from "lucide-react";
 const CATEGORIES = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
 const VISIBILIDADE_OPTIONS = [
-  { value: "privado",           label: "Só eu",              icon: Lock,          color: "text-white/40",    roles: ["formador", "admin"] },
+  { value: "privado",           label: "Só eu",              icon: Lock,          color: "c-tx3",    roles: ["formador", "admin"] },
   { value: "turma",             label: "Minha turma",        icon: GraduationCap, color: "text-amber-400",   roles: ["formador"] },
   { value: "formadores",        label: "Formadores",         icon: Users,         color: "text-blue-400",    roles: ["formador", "admin"] },
   { value: "formadores_turma",  label: "Formadores + Turma", icon: Users,         color: "text-purple-400",  roles: ["formador"] },
@@ -84,7 +84,7 @@ function getFileStyle(nome?: string, tipo?: string) {
     return { Icon: FileText,    bg: "bg-orange-500/10", text: "text-orange-400",  label: "PPT" };
   if (["xls","xlsx"].includes(ext))
     return { Icon: FileText,    bg: "bg-emerald-500/10","text": "text-emerald-400", label: "Excel" };
-  return { Icon: File,          bg: "bg-white/[0.06]",  text: "text-white/40",    label: ext.toUpperCase() || "—" };
+  return { Icon: File,          bg: "c-s2",  text: "c-tx3",    label: ext.toUpperCase() || "—" };
 }
 
 function parseSpecializations(raw?: string): string[] {
@@ -357,8 +357,8 @@ export default function FicheirosPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-lg font-semibold text-white">Ficheiros</h2>
-          <p className="text-sm text-white/40 mt-0.5">
+          <h2 className="text-lg font-semibold c-tx">Ficheiros</h2>
+          <p className="text-sm c-tx3 mt-0.5">
             {filtered.length} ficheiro{filtered.length !== 1 ? "s" : ""}
             {isRestricted && (
               <span className="ml-2 inline-flex items-center gap-1 text-[10px] text-amber-400/70">
@@ -369,27 +369,27 @@ export default function FicheirosPage() {
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Pesquisar..."
-              className="pl-9 pr-4 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 w-48 transition-colors"
+              className="pl-9 pr-4 py-2 rounded-lg c-s1 border c-br text-sm c-tx placeholder:c-tx4 outline-none focus:border-blue-500/50 w-48 transition-colors"
             />
           </div>
-          <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-lg p-1">
+          <div className="flex items-center gap-1 c-s1 border c-br rounded-lg p-1">
             <button onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-white/[0.08] text-white" : "text-white/30 hover:text-white/60"}`}>
+              className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "c-s3 c-tx" : "c-tx4 hc-tx2"}`}>
               <LayoutGrid size={14} />
             </button>
             <button onClick={() => setViewMode("list")}
-              className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-white/[0.08] text-white" : "text-white/30 hover:text-white/60"}`}>
+              className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "c-s3 c-tx" : "c-tx4 hc-tx2"}`}>
               <List size={14} />
             </button>
           </div>
           {canUpload && (
             <button onClick={openUploadModal}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors">
               <Plus size={14} /> Upload
             </button>
           )}
@@ -403,7 +403,7 @@ export default function FicheirosPage() {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               activeCategory === cat
                 ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
-                : "bg-white/[0.03] text-white/40 border border-white/[0.06] hover:text-white/70"
+                : "c-s1 c-tx3 border c-br hover:c-tx2"
             }`}>
             {cat}
           </button>
@@ -416,13 +416,13 @@ export default function FicheirosPage() {
           <Loader2 size={22} className="animate-spin text-blue-500" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl flex flex-col items-center justify-center py-20 gap-4 text-center">
+        <div className="c-bg2 border c-br rounded-xl flex flex-col items-center justify-center py-20 gap-4 text-center">
           <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
             <FolderOpen size={22} className="text-blue-400" />
           </div>
           <div>
-            <p className="text-sm font-medium text-white">Sem ficheiros</p>
-            <p className="text-xs text-white/30 mt-1">
+            <p className="text-sm font-medium c-tx">Sem ficheiros</p>
+            <p className="text-xs c-tx4 mt-1">
               {canUpload ? "Clica em \"Upload\" para adicionar o primeiro ficheiro." : "Ainda não há ficheiros nesta categoria."}
             </p>
           </div>
@@ -439,7 +439,7 @@ export default function FicheirosPage() {
               ? `/storage/v1/object/public/materiais/${encodeURIComponent(f.nome_arquivo)}`
               : "#";
             return (
-              <div key={f.id} className="group bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/[0.12] transition-all flex flex-col">
+              <div key={f.id} className="group c-bg2 border c-br rounded-xl overflow-hidden hover:border-white/[0.12] transition-all flex flex-col">
                 {/* Miniatura */}
                 <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="block">
                   <div className={`flex items-center justify-center h-28 relative overflow-hidden ${f.thumbnail_url ? "" : bg}`}>
@@ -454,24 +454,24 @@ export default function FicheirosPage() {
                       {label}
                     </span>
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                      <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ExternalLink size={18} className="c-tx opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
                 </a>
                 {/* Info */}
                 <div className="px-3 py-2.5 flex flex-col gap-1.5 flex-1">
-                  <p className="text-xs text-white/80 font-medium leading-tight line-clamp-2">{f.label}</p>
-                  <p className="text-[10px] text-white/30">{f.area} · {f.tamanho ?? "—"} · {formatDate(f.created_at)}</p>
+                  <p className="text-xs c-tx2 font-medium leading-tight line-clamp-2">{f.label}</p>
+                  <p className="text-[10px] c-tx4">{f.area} · {f.tamanho ?? "—"} · {formatDate(f.created_at)}</p>
                   <DisponibilidadeBadge disponivel_de={f.disponivel_de} disponivel_ate={f.disponivel_ate} />
                   {canChangeVis ? (
                     <select
                       value={f.visibilidade ?? "publico"}
                       onChange={(e) => handleVisibilidadeChange(f.id, e.target.value)}
                       disabled={updatingId === f.id}
-                      className="mt-auto bg-transparent border border-white/[0.06] rounded px-1.5 py-1 text-[10px] text-white/40 outline-none cursor-pointer hover:border-white/20 transition-colors w-full"
+                      className="mt-auto bg-transparent border c-br rounded px-1.5 py-1 text-[10px] c-tx3 outline-none cursor-pointer hc-br transition-colors w-full"
                     >
                       {VISIBILIDADE_OPTIONS.map(o => (
-                        <option key={o.value} value={o.value} className="bg-[#0d0d14]">{o.label}</option>
+                        <option key={o.value} value={o.value} className="c-bg">{o.label}</option>
                       ))}
                     </select>
                   ) : (
@@ -494,16 +494,16 @@ export default function FicheirosPage() {
         </div>
       ) : (
         /* ── LISTA ── */
-        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden">
+        <div className="c-bg2 border c-br rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[500px]">
               <thead>
-                <tr className="border-b border-white/[0.06]">
-                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3">Nome</th>
-                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3 hidden sm:table-cell">Área</th>
-                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3 hidden md:table-cell">Tamanho</th>
-                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3 hidden lg:table-cell">Data</th>
-                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3">Visibilidade</th>
+                <tr className="border-b c-br">
+                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3">Nome</th>
+                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3 hidden sm:table-cell">Área</th>
+                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3 hidden md:table-cell">Tamanho</th>
+                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3 hidden lg:table-cell">Data</th>
+                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3">Visibilidade</th>
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
@@ -518,21 +518,21 @@ export default function FicheirosPage() {
                     ? `/storage/v1/object/public/materiais/${encodeURIComponent(f.nome_arquivo)}`
                     : "#";
                   return (
-                    <tr key={f.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                    <tr key={f.id} className="border-b c-br hover:bg-white/[0.02] transition-colors">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${bg} ${text}`}>
                             <Icon size={14} />
                           </div>
                           <div>
-                            <p className="text-white/80 font-medium truncate max-w-[180px]">{f.label}</p>
-                            <p className="text-[10px] text-white/30 font-mono">{ext}</p>
+                            <p className="c-tx2 font-medium truncate max-w-[180px]">{f.label}</p>
+                            <p className="text-[10px] c-tx4 font-mono">{ext}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-white/40 hidden sm:table-cell">{f.area}</td>
-                      <td className="px-5 py-3 text-white/40 hidden md:table-cell">{f.tamanho ?? "—"}</td>
-                      <td className="px-5 py-3 text-white/40 hidden lg:table-cell">
+                      <td className="px-5 py-3 c-tx3 hidden sm:table-cell">{f.area}</td>
+                      <td className="px-5 py-3 c-tx3 hidden md:table-cell">{f.tamanho ?? "—"}</td>
+                      <td className="px-5 py-3 c-tx3 hidden lg:table-cell">
                         <div className="flex flex-col gap-1">
                           <span>{formatDate(f.created_at)}</span>
                           <DisponibilidadeBadge disponivel_de={f.disponivel_de} disponivel_ate={f.disponivel_ate} />
@@ -543,9 +543,9 @@ export default function FicheirosPage() {
                           <select value={f.visibilidade ?? "publico"}
                             onChange={(e) => handleVisibilidadeChange(f.id, e.target.value)}
                             disabled={updatingId === f.id}
-                            className="bg-transparent border border-white/[0.08] rounded-lg px-2 py-1 text-[11px] text-white/60 outline-none cursor-pointer hover:border-white/20 transition-colors disabled:opacity-40">
+                            className="bg-transparent border c-br rounded-lg px-2 py-1 text-[11px] c-tx2 outline-none cursor-pointer hc-br transition-colors disabled:opacity-40">
                             {VISIBILIDADE_OPTIONS.map(o => (
-                              <option key={o.value} value={o.value} className="bg-[#0d0d14]">{o.label}</option>
+                              <option key={o.value} value={o.value} className="c-bg">{o.label}</option>
                             ))}
                           </select>
                         ) : (
@@ -555,7 +555,7 @@ export default function FicheirosPage() {
                       <td className="px-5 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors">
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs c-tx3 hc-tx hc-s2 transition-colors">
                             <Download size={13} /> Abrir
                           </a>
                           {(isOwner || isAdmin) && (
@@ -579,8 +579,8 @@ export default function FicheirosPage() {
 
       {/* Modal de upload */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-[#0d0d14] border border-white/[0.08] text-white max-w-md rounded-xl p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
+        <DialogContent className="c-bg border c-br c-tx max-w-md rounded-xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b c-br">
             <DialogTitle className="text-base font-semibold flex items-center gap-2">
               <Plus size={16} className="text-blue-400" /> Registar novo ficheiro
             </DialogTitle>
@@ -588,14 +588,14 @@ export default function FicheirosPage() {
 
           <form onSubmit={handleUpload} className="px-6 py-5 space-y-5">
             <div className="space-y-1.5">
-              <label className="text-xs text-white/40">Título</label>
+              <label className="text-xs c-tx3">Título</label>
               <input required value={title} onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ex: Guia Pedagógico III"
-                className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50 transition-colors" />
+                className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors" />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs text-white/40 flex items-center justify-between">
+              <label className="text-xs c-tx3 flex items-center justify-between">
                 <span>Área</span>
                 {isRestricted && (
                   <span className="text-[10px] text-amber-400/70 flex items-center gap-1">
@@ -604,14 +604,14 @@ export default function FicheirosPage() {
                 )}
               </label>
               {uploadAreaLocked ? (
-                <div className="w-full bg-white/[0.02] border border-white/[0.04] rounded-lg px-3 py-2.5 text-sm text-white/50 flex items-center justify-between cursor-not-allowed">
-                  <span>{uploadAreas![0]}</span><Lock size={12} className="text-white/20" />
+                <div className="w-full bg-white/[0.02] border c-br rounded-lg px-3 py-2.5 text-sm c-tx3 flex items-center justify-between cursor-not-allowed">
+                  <span>{uploadAreas![0]}</span><Lock size={12} className="c-tx5" />
                 </div>
               ) : (
                 <select value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value)}
-                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50 transition-colors">
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
                   {uploadCategoryOptions.map((c) => (
-                    <option key={c} value={c} className="bg-[#0d0d14]">{c}</option>
+                    <option key={c} value={c} className="c-bg">{c}</option>
                   ))}
                 </select>
               )}
@@ -619,7 +619,7 @@ export default function FicheirosPage() {
 
             {/* Visibilidade */}
             <div className="space-y-2">
-              <label className="text-xs text-white/40">Visibilidade</label>
+              <label className="text-xs c-tx3">Visibilidade</label>
               <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-4" : "grid-cols-3"}`}>
                 {VISIBILIDADE_OPTIONS.filter(opt => {
                   if (opt.value === "turma" || opt.value === "formadores_turma")
@@ -633,17 +633,17 @@ export default function FicheirosPage() {
                       className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border text-center transition-all ${
                         visibilidade === opt.value
                           ? "border-blue-500/50 bg-blue-500/10"
-                          : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]"
+                          : "c-br bg-white/[0.02] hc-s2"
                       }`}>
-                      <Icon size={16} className={visibilidade === opt.value ? "text-blue-400" : "text-white/30"} />
-                      <span className={`text-[10px] font-medium ${visibilidade === opt.value ? "text-blue-300" : "text-white/40"}`}>
+                      <Icon size={16} className={visibilidade === opt.value ? "text-blue-400" : "c-tx4"} />
+                      <span className={`text-[10px] font-medium ${visibilidade === opt.value ? "text-blue-300" : "c-tx3"}`}>
                         {opt.label}
                       </span>
                     </button>
                   );
                 })}
               </div>
-              <p className="text-[10px] text-white/25 leading-relaxed">
+              <p className="text-[10px] c-tx4 leading-relaxed">
                 {visibilidade === "privado" && "Só você tem acesso a este documento."}
                 {visibilidade === "turma" && "Apenas os formandos da turma seleccionada têm acesso."}
                 {visibilidade === "formadores" && "Você e todos os formadores podem ver este documento."}
@@ -652,9 +652,9 @@ export default function FicheirosPage() {
               </p>
               {(visibilidade === "turma" || visibilidade === "formadores_turma") && minhasTurmas.length > 0 && (
                 <select value={turmaId} onChange={e => setTurmaId(e.target.value)}
-                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500/50">
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50">
                   {minhasTurmas.map(t => (
-                    <option key={t.id} value={t.id} className="bg-[#0d0d14]">{t.nome} ({t.area})</option>
+                    <option key={t.id} value={t.id} className="c-bg">{t.nome} ({t.area})</option>
                   ))}
                 </select>
               )}
@@ -662,20 +662,20 @@ export default function FicheirosPage() {
 
             {/* Período de disponibilidade */}
             <div className="space-y-2">
-              <label className="text-xs text-white/40 flex items-center gap-1.5">
+              <label className="text-xs c-tx3 flex items-center gap-1.5">
                 <CalendarClock size={11} /> Disponibilidade (opcional)
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <span className="text-[10px] text-white/30">Disponível a partir de</span>
+                  <span className="text-[10px] c-tx4">Disponível a partir de</span>
                   <input type="date" value={disponivel_de} onChange={e => setDisponivelDe(e.target.value)}
-                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white/70 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] text-white/30">Expira em</span>
+                  <span className="text-[10px] c-tx4">Expira em</span>
                   <input type="date" value={disponivel_ate} onChange={e => setDisponivelAte(e.target.value)}
                     min={disponivel_de || undefined}
-                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white/70 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
                 </div>
               </div>
               {(disponivel_de || disponivel_ate) && (
@@ -688,18 +688,18 @@ export default function FicheirosPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs text-white/40">Ficheiro</label>
+              <label className="text-xs c-tx3">Ficheiro</label>
               <label className="relative flex flex-col items-center justify-center gap-2 border border-dashed border-white/[0.10] rounded-lg p-6 cursor-pointer hover:border-blue-500/40 transition-colors overflow-hidden">
                 <input type="file" required onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} className="absolute inset-0 opacity-0 cursor-pointer" />
                 {thumbnailPreview ? (
                   <>
                     <embed src={thumbnailPreview} type="application/pdf" className="w-full h-32 rounded pointer-events-none" />
-                    <p className="text-[10px] text-white/40 truncate max-w-full mt-1">{uploadFile?.name}</p>
+                    <p className="text-[10px] c-tx3 truncate max-w-full mt-1">{uploadFile?.name}</p>
                   </>
                 ) : (
                   <>
-                    <Download size={20} className="text-white/20" />
-                    <p className="text-xs text-white/40 text-center">
+                    <Download size={20} className="c-tx5" />
+                    <p className="text-xs c-tx3 text-center">
                       {uploadFile ? uploadFile.name : "Arraste ou clique para seleccionar"}
                     </p>
                   </>
@@ -709,11 +709,11 @@ export default function FicheirosPage() {
 
             <div className="flex gap-3 pt-1">
               <button type="button" onClick={() => setIsModalOpen(false)}
-                className="flex-1 py-2.5 rounded-lg border border-white/[0.06] text-sm text-white/50 hover:text-white hover:bg-white/[0.04] transition-colors">
+                className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx hc-s1 transition-colors">
                 Cancelar
               </button>
               <button type="submit" disabled={isUploading}
-                className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                 {isUploading ? <><Loader2 size={14} className="animate-spin" /> A enviar...</> : "Guardar"}
               </button>
             </div>

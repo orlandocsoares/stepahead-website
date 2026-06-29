@@ -2,6 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Theme tokens ───────────────────────────────────────────────────────── */
+:root {
+  /* DARK (default) */
+  --c-bg:   #0d0d14;
+  --c-bg2:  #13131f;
+  --c-s1:   rgba(255,255,255,0.025);
+  --c-s2:   rgba(255,255,255,0.05);
+  --c-s3:   rgba(255,255,255,0.08);
+  --c-tx:   #ffffff;
+  --c-tx2:  rgba(255,255,255,0.65);
+  --c-tx3:  rgba(255,255,255,0.40);
+  --c-tx4:  rgba(255,255,255,0.25);
+  --c-tx5:  rgba(255,255,255,0.12);
+  --c-br:   rgba(255,255,255,0.06);
+  --c-br2:  rgba(255,255,255,0.12);
+  --c-ov:   rgba(13,13,20,0.88);
+}
+html.light {
+  --c-bg:   #f0f4f8;
+  --c-bg2:  #ffffff;
+  --c-s1:   rgba(0,0,0,0.03);
+  --c-s2:   rgba(0,0,0,0.055);
+  --c-s3:   rgba(0,0,0,0.09);
+  --c-tx:   #0f172a;
+  --c-tx2:  rgba(15,23,42,0.65);
+  --c-tx3:  rgba(15,23,42,0.45);
+  --c-tx4:  rgba(15,23,42,0.28);
+  --c-tx5:  rgba(15,23,42,0.14);
+  --c-br:   rgba(0,0,0,0.08);
+  --c-br2:  rgba(0,0,0,0.15);
+  --c-ov:   rgba(240,244,248,0.88);
+}
+
+/* ─── Utility classes ────────────────────────────────────────────────────── */
+/* Backgrounds */
+.c-bg  { background-color: var(--c-bg)  !important; }
+.c-bg2 { background-color: var(--c-bg2) !important; }
+.c-s1  { background-color: var(--c-s1)  !important; }
+.c-s2  { background-color: var(--c-s2)  !important; }
+.c-s3  { background-color: var(--c-s3)  !important; }
+.c-ov  { background-color: var(--c-ov)  !important; }
+/* Hover backgrounds */
+.hc-s1:hover { background-color: var(--c-s1) !important; }
+.hc-s2:hover { background-color: var(--c-s2) !important; }
+.hc-s3:hover { background-color: var(--c-s3) !important; }
+/* Text */
+.c-tx  { color: var(--c-tx)  !important; }
+.c-tx2 { color: var(--c-tx2) !important; }
+.c-tx3 { color: var(--c-tx3) !important; }
+.c-tx4 { color: var(--c-tx4) !important; }
+.c-tx5 { color: var(--c-tx5) !important; }
+/* Hover text */
+.hc-tx:hover  { color: var(--c-tx)  !important; }
+.hc-tx2:hover { color: var(--c-tx2) !important; }
+.hc-tx3:hover { color: var(--c-tx3) !important; }
+/* Borders */
+.c-br  { border-color: var(--c-br)  !important; }
+.c-br2 { border-color: var(--c-br2) !important; }
+/* Hover borders */
+.hc-br:hover  { border-color: var(--c-br)  !important; }
+.hc-br2:hover { border-color: var(--c-br2) !important; }
+/* Placeholder */
+.c-ph::placeholder { color: var(--c-tx5) !important; }
+
+/* Logo: inverte no escuro, natural no claro */
+html:not(.light) .theme-logo { filter: brightness(0) invert(1); }
+html.light .theme-logo       { filter: none; }
+
 
 @layer base {
   :root {
