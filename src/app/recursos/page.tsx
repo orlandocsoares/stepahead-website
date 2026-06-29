@@ -75,9 +75,12 @@ function RecursosContent() {
   }, [recursosFiltrados]);
 
   return (
-    <div className="min-h-screen bg-[#0d0d14] text-white overflow-y-auto">
+    <div className="min-h-screen text-white overflow-y-auto relative"
+      style={{ backgroundImage: "url('/modos/meio-escuro.webp')", backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
+      {/* Overlay escuro para legibilidade */}
+      <div className="fixed inset-0 bg-[#080c1a]/70 pointer-events-none z-0" />
       {/* Header */}
-      <header className="border-b border-white/[0.06] bg-[#0d0d14]/95 backdrop-blur sticky top-0 z-10">
+      <header className="border-b border-white/[0.06] bg-[#080c1a]/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-3">
             <Image
@@ -93,7 +96,7 @@ function RecursosContent() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-12">
+      <main className="max-w-4xl mx-auto px-6 py-12 relative z-10">
         {/* Título */}
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-3">
