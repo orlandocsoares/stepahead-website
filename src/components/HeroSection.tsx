@@ -158,23 +158,22 @@ useEffect(() => {
   return () => subscription.unsubscribe();
 }, []);
 
-// CAPTURA DA TELEMETRIA + PERFIS DOS FORMADORES + RECURSOS PÚBLICOS
+// CAPTURA DA TELEMETRIA VIA API PRÓPRIA (PostgreSQL) + RECURSOS PÚBLICOS
 useEffect(() => {
   const fetchTelemetry = async () => {
     if (isDashboardView) return;
-    const { data: telData } = await supabase.from('hero_telemetria').select('*').single();
-    const { data: formadoresData } = await supabase.from('profiles').select('*').eq('role', 'formador').limit(4);
-    // Recursos públicos reais (site_publico=true, visibilidade=publico)
-    const recursosRes = await fetch('/api/recursos').then(r => r.json()).catch(() => ({ data: [] }));
-    const recursosPublicos: any[] = recursosRes.data ?? [];
+    const [statsJson, recursosJson] = await Promise.all([
+      fetch('/api/hero-stats').then(r => r.json()).catch(() => ({})),
+      fetch('/api/recursos').then(r => r.json()).catch(() => ({ data: [] })),
+    ]);
+    const recursosPublicos: any[] = recursosJson.data ?? [];
     const areasCounts: Record<string, number> = {};
     for (const r of recursosPublicos) {
       areasCounts[r.area] = (areasCounts[r.area] ?? 0) + 1;
     }
     const areasPublicas = Object.entries(areasCounts).map(([area, total]) => ({ area, total }));
-    if (telData) setTelemetry({
-      ...telData,
-      formadores_lista: formadoresData || [],
+    setTelemetry({
+      ...statsJson,
       recursos_publicos: recursosPublicos,
       areas_publicas: areasPublicas,
       total_recursos_publicos: recursosPublicos.length,
