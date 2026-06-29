@@ -72,12 +72,13 @@ html.light {
 html:not(.light) .theme-logo { filter: brightness(0) invert(1); }
 html.light .theme-logo       { filter: none; }
 
-/* Fundo base do dashboard */
-.dashboard-root {
-  background-color: #0d0d14;
-}
+/* Modo claro: substituir fundo escuro e overlay */
 html.light .dashboard-root {
   background-color: #eef2f7 !important;
+  background-image: none !important;
+}
+html.light .dashboard-overlay {
+  display: none !important;
 }
 
 /* Modo claro: sidebar e topbar brancos com sombra */
