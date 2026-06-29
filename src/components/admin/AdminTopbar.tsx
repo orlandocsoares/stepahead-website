@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut, ShieldCheck, Megaphone, ClipboardList } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
-import { ModeSelector } from "@/components/ModeSelector";
+import { BrightnessSlider } from "@/components/BrightnessSlider";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard":               "Dashboard",
@@ -141,7 +141,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
       <h1 className="flex-1 text-sm md:text-base font-semibold c-tx text-center md:text-left">{title}</h1>
 
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
-        <ModeSelector />
+        <BrightnessSlider />
 
         <a href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border c-br c-tx4 hc-tx hc-br2 hc-s2 transition-all text-[10px] font-bold uppercase tracking-[0.2em]" title="Ver site público">
           <Globe size={12} />

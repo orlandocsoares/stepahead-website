@@ -1,55 +1,39 @@
 "use client";
 
-import { useEffect, useState, createContext, useContext } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { getSavedMode, applyMode, saveMode, MODES, type SiteMode } from "@/lib/site-mode";
-
-type AppShellCtx = { mode: SiteMode; changeMode: (m: SiteMode) => void };
-const AppShellContext = createContext<AppShellCtx>({ mode: "escuro", changeMode: () => {} });
-export const useAppMode = () => useContext(AppShellContext);
+import { getSavedBrightness, applyBrightness } from "@/lib/brightness";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [mode, setMode] = useState<SiteMode>("escuro");
 
   const isCleanPage = pathname === "/recursos" || pathname?.startsWith("/recursos/");
 
+  // Aplicar luminosidade guardada ao carregar
   useEffect(() => {
-    const saved = getSavedMode();
-    setMode(saved);
-    applyMode(saved);
+    applyBrightness(getSavedBrightness());
   }, []);
 
-  const changeMode = (newMode: SiteMode) => {
-    setMode(newMode);
-    saveMode(newMode);
-    applyMode(newMode);
-  };
-
   if (isCleanPage) return <>{children}</>;
-
-  const modeConfig = MODES.find(m => m.id === mode) ?? MODES[0];
 
   return (
     <>
       <div className="fixed inset-0 z-0">
+        {/* Imagem de fundo fixa */}
         <img
-          src={modeConfig.thumb}
+          src="/modos/escuro.webp"
           alt=""
-          className="w-full h-full object-cover"
-          style={{
-            filter: mode === "claro"
-              ? "saturate(1.1) brightness(1.05)"
-              : "saturate(1.15) contrast(1.05) brightness(0.88)",
-          }}
+          className="w-full h-full object-cover saturate-110 contrast-105"
         />
-        <div className={`absolute inset-0 ${modeConfig.overlay} ${modeConfig.blur} pointer-events-none transition-all duration-700`} />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70 pointer-events-none" />
+        {/* Overlay controlado pelo slider — opacidade via CSS var */}
+        <div
+          className="absolute inset-0 pointer-events-none transition-[background-color] duration-300"
+          style={{ backgroundColor: "rgba(0,0,0,var(--brightness-overlay,0.38))" }}
+        />
+        {/* Gradiente fixo de rodapé */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
       </div>
-
-      <AppShellContext.Provider value={{ mode, changeMode }}>
-        {children}
-      </AppShellContext.Provider>
+      {children}
     </>
   );
 }
