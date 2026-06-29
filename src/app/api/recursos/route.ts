@@ -5,7 +5,7 @@ import { dbQuery } from "@/lib/db";
 // Rota pública, sem autenticação
 export async function GET() {
   const res = await dbQuery(
-    `SELECT a.id, a.label, a.area, a.tamanho, a.created_at, a.thumbnail_url,
+    `SELECT a.id, a.label, a.area, a.tamanho, a.created_at, a.thumbnail_url, a.nome_arquivo,
             d.nome AS disciplina_nome
      FROM arquivos a
      LEFT JOIN disciplinas d ON d.nome = a.area

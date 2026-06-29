@@ -22,6 +22,7 @@ type Recurso = {
   tamanho?: string;
   created_at: string;
   thumbnail_url?: string;
+  nome_arquivo?: string;
 };
 
 function formatDate(d: string) {
@@ -220,7 +221,11 @@ function RecursosContent() {
 
           {/* PDF */}
           <div className="flex-1 overflow-y-auto flex justify-center py-6 px-4">
-            <PdfViewer url={`/api/recursos/pdf/${viewing.id}`} />
+            <PdfViewer url={
+              viewing.nome_arquivo
+                ? `/storage/v1/object/public/materiais/${encodeURIComponent(viewing.nome_arquivo)}`
+                : `/api/recursos/pdf/${viewing.id}`
+            } />
           </div>
         </div>
       )}
