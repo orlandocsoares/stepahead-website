@@ -21,6 +21,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/turmas":        "Turmas",
   "/dashboard/tarefas":       "Tarefas",
   "/dashboard/config":        "Configurações",
+  "/dashboard/admin/audit":   "Audit Log",
 };
 
 type Props = { onMobileMenuToggle: () => void };

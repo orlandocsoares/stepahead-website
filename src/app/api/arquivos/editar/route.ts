@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/server-auth";
 import { dbQuery } from "@/lib/db";
+import { auditLog } from "@/lib/audit";
 
 // PATCH /api/arquivos/editar — editar metadados de um ficheiro
 export async function PATCH(request: Request) {
@@ -55,6 +56,13 @@ export async function PATCH(request: Request) {
     // Manter coluna legada em sync com o primeiro grupo (ou null)
     await dbQuery(`UPDATE arquivos SET grupo_formacao_id = $2 WHERE id = $1`, [id, grupos[0] ?? null]);
   }
+
+  await auditLog(
+    typeof site_publico === "boolean" && site_publico !== file.site_publico
+      ? "ficheiro_site_publico"
+      : "ficheiro_edit",
+    { actorId: session.id, targetId: id, details: { label: label?.trim(), area, site_publico } }
+  );
 
   return NextResponse.json({ ok: true });
 }

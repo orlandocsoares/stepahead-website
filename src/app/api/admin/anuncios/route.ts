@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/server-auth";
 import { dbQuery } from "@/lib/db";
 import { Resend } from "resend";
+import { auditLog } from "@/lib/audit";
 
 const APP_URL = process.env.APP_URL ?? "https://sabermais.edu.ao";
 
@@ -82,5 +83,9 @@ export async function POST(request: Request) {
     }
   }
 
+  await auditLog("anuncio_create", {
+    actorId: sessionUser.id,
+    details: { titulo: titulo.trim(), destinatarios, enviados: users.rows.length },
+  });
   return NextResponse.json({ enviados: users.rows.length, emails: emailsEnviados });
 }

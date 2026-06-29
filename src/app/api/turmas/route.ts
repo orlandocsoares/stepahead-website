@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
+import { auditLog } from "@/lib/audit";
 
 // GET /api/turmas — lista turmas com formador e contagem de membros
 export async function GET() {
@@ -59,6 +60,7 @@ export async function POST(req: Request) {
     `INSERT INTO turmas (nome, area, formador_id) VALUES ($1, $2, $3) RETURNING *`,
     [nome, area, effectiveFormadorId]
   );
+  await auditLog("turma_create", { actorId: sessionUser.id, targetId: result.rows[0].id, details: { nome, area } });
   return NextResponse.json({ data: result.rows[0] });
 }
 
@@ -82,5 +84,6 @@ export async function DELETE(req: Request) {
   }
 
   await dbQuery(`DELETE FROM turmas WHERE id = $1`, [id]);
+  await auditLog("turma_delete", { actorId: sessionUser.id, targetId: id });
   return NextResponse.json({ ok: true });
 }

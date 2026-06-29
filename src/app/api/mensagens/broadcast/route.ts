@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db, dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
+import { auditLog } from "@/lib/audit";
 
 // POST /api/mensagens/broadcast
 // Body: { destinatario: "todos" | "formandos" | "formadores" | "ids", ids?: string[], content: string }
@@ -56,6 +57,10 @@ export async function POST(request: Request) {
       params
     );
 
+    await auditLog("mensagem_broadcast", {
+      actorId: session.id,
+      details: { destinatario, sent: recipientIds.length, preview: content.trim().slice(0, 80) },
+    });
     return NextResponse.json({ ok: true, sent: recipientIds.length });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Erro desconhecido";

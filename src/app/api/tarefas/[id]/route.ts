@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/server-auth";
 import { dbQuery } from "@/lib/db";
+import { auditLog } from "@/lib/audit";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -73,6 +74,7 @@ export async function PATCH(request: Request, { params }: Params) {
       [estado, estado === "entregue" ? new Date().toISOString() : null, id, sessionUser.id]
     );
     if (!res.rows.length) return NextResponse.json({ error: "Tarefa não encontrada." }, { status: 404 });
+    await auditLog("tarefa_status_change", { actorId: sessionUser.id, targetId: id, details: { estado } });
     return NextResponse.json({ estado: res.rows[0].estado });
   }
 
@@ -104,5 +106,6 @@ export async function DELETE(_req: Request, { params }: Params) {
     [id, sessionUser.id]
   );
   if (!res.rows.length) return NextResponse.json({ error: "Sem permissão ou não encontrado." }, { status: 403 });
+  await auditLog("tarefa_delete", { actorId: sessionUser.id, targetId: id });
   return NextResponse.json({ ok: true });
 }

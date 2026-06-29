@@ -1,44 +1,40 @@
-/**
- * Registo de auditoria para acções críticas do sistema.
- *
- * Grava na tabela `audit_logs` quem fez o quê, quando e de onde.
- * Falhas de gravação nunca bloqueiam a acção principal — são apenas logadas
- * no console para não penalizar o utilizador por erros de BD secundários.
- *
- * Acções registadas:
- *   - login_success / login_fail
- *   - register
- *   - approve_formando / reject_formando
- *   - approve_formador / reject_formador
- *   - role_change
- *   - session_cleanup
- */
-
 import { dbQuery } from "@/lib/db";
 
 export type AuditAction =
-  | "login_success"
-  | "login_fail"
-  | "register"
-  | "approve_formando"
-  | "reject_formando"
-  | "approve_formador"
-  | "reject_formador"
-  | "role_change"
-  | "password_reset_request"
-  | "password_reset_complete"
-  | "session_cleanup";
+  // Auth
+  | "login_success" | "login_fail" | "logout" | "register"
+  | "password_reset_request" | "password_reset_complete" | "password_change"
+  | "session_cleanup"
+  // Ficheiros
+  | "ficheiro_upload" | "ficheiro_edit" | "ficheiro_delete" | "ficheiro_site_publico"
+  // Utilizadores
+  | "user_create" | "user_approve" | "user_reject" | "user_delete"
+  | "user_role_change" | "user_status_change"
+  // Mensagens
+  | "mensagem_send" | "mensagem_broadcast" | "mensagem_delete"
+  // Tarefas
+  | "tarefa_create" | "tarefa_delete" | "tarefa_status_change"
+  // Turmas
+  | "turma_create" | "turma_delete" | "turma_membro_add" | "turma_membro_remove"
+  // Comunidade
+  | "post_create" | "post_delete" | "comentario_create" | "comentario_delete"
+  // Agenda
+  | "evento_create" | "evento_delete"
+  // Anúncios
+  | "anuncio_create" | "anuncio_delete"
+  // Config
+  | "disciplina_create" | "disciplina_update" | "disciplina_delete"
+  | "grupo_formacao_create" | "grupo_formacao_update" | "grupo_formacao_delete"
+  // Legado (aprovações via rotas antigas)
+  | "approve_formando" | "reject_formando" | "approve_formador" | "reject_formador"
+  | "role_change";
 
 export async function auditLog(
   action: AuditAction,
   opts: {
-    /** ID do utilizador que executa a acção (quem age) */
     actorId?: string;
-    /** ID do utilizador alvo (sobre quem a acção recai) */
     targetId?: string;
-    /** IP do pedido */
     ip?: string;
-    /** Dados adicionais relevantes (sem passwords nem secrets) */
     details?: Record<string, unknown>;
   } = {}
 ): Promise<void> {
@@ -55,7 +51,6 @@ export async function auditLog(
       ]
     );
   } catch (err: any) {
-    // Nunca bloquear a acção principal por falha de auditoria
     console.error("[audit] failed to write log:", err.message, { action, ...opts });
   }
 }

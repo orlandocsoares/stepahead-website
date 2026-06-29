@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/server-auth";
 import { dbQuery } from "@/lib/db";
+import { auditLog } from "@/lib/audit";
 
 // GET /api/tarefas — lista tarefas relevantes para o utilizador
 export async function GET() {
@@ -94,5 +95,10 @@ export async function POST(request: Request) {
     await dbQuery(`INSERT INTO notificacoes (user_id, tipo, titulo, mensagem) VALUES ${notifValues}`, []);
   }
 
+  await auditLog("tarefa_create", {
+    actorId: sessionUser.id,
+    targetId: tarefaId,
+    details: { titulo: titulo.trim(), destinatarios: String(destinatarios), total: formandoIds.length },
+  });
   return NextResponse.json({ id: tarefaId, destinatarios: formandoIds.length });
 }
