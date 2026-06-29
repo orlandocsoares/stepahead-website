@@ -55,8 +55,30 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
   const f = formadores[idx];
   const avatar = f.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${f.first_name}&backgroundColor=ffffff&textColor=000000`;
 
+  // Sanitizar especialidade: pode vir como JSON array com emails misturados
+  function sanitizeEspecialidade(raw: any): string {
+    if (!raw) return "Formador Credenciado";
+    let val = raw;
+    // Tentar fazer parse se parecer JSON
+    if (typeof val === "string" && val.trim().startsWith("[")) {
+      try { val = JSON.parse(val); } catch {}
+    }
+    // Se for array, filtrar emails e juntar
+    if (Array.isArray(val)) {
+      const clean = val
+        .map((s: any) => String(s).trim())
+        .filter(s => !s.includes("@") && s.length > 0);
+      return clean.join(" · ") || "Formador Credenciado";
+    }
+    // String simples: remover emails inline
+    return String(val).replace(/\S+@\S+\.\S+/g, "").replace(/[,;]\s*$/, "").trim() || "Formador Credenciado";
+  }
+
+  const especialidade = sanitizeEspecialidade(f.especialidade);
+  const bio = f.biografia?.trim() || "";
+
   return (
-    <div className="flex items-center gap-6 bg-black/60 backdrop-blur-xl border border-white/10 p-6 rounded-3xl mt-6 shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative overflow-hidden w-fit max-w-[500px]">
+    <div className="flex items-center gap-6 bg-black/60 backdrop-blur-xl border border-white/10 p-6 rounded-3xl mt-6 shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative overflow-hidden w-fit max-w-[520px]">
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
       <AnimatePresence mode="wait">
         <motion.div
@@ -73,10 +95,12 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
               <UserCheck size={14} className="text-white" />
             </div>
           </div>
-          <div className="flex flex-col text-left">
+          <div className="flex flex-col text-left min-w-0">
             <span className="text-xl md:text-2xl text-white font-bold tracking-tight">{f.first_name} {f.last_name}</span>
-            <span className="text-sm md:text-base text-emerald-400 uppercase tracking-[0.2em] font-medium mt-1">{f.especialidade || 'Formador Credenciado'}</span>
-            <span className="text-base text-white/60 mt-2 font-light leading-snug">Acção focal no reforço e desenvolvimento das novas metodologias de ensino activo.</span>
+            <span className="text-sm md:text-base text-emerald-400 uppercase tracking-[0.2em] font-medium mt-1 line-clamp-1">{especialidade}</span>
+            {bio && (
+              <span className="text-sm text-white/60 mt-2 font-light leading-snug line-clamp-3">{bio}</span>
+            )}
           </div>
         </motion.div>
       </AnimatePresence>
