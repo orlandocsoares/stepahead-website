@@ -591,7 +591,7 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              {/* Pills por área — clicáveis, abrem /recursos */}
+              {/* Pills por área — clicáveis, filtram /recursos por disciplina */}
               {areas.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {areas.map(({ area, total }) => {
@@ -599,7 +599,7 @@ export default function HeroSection() {
                     return (
                       <motion.a
                         key={area}
-                        href={`/recursos`}
+                        href={`/recursos?area=${encodeURIComponent(area)}`}
                         initial={{ opacity: 0, scale: 0.85 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3 }}
@@ -614,34 +614,19 @@ export default function HeroSection() {
                 </div>
               )}
 
-              {/* CTAs */}
-              <div className="flex flex-col gap-2">
-                {/* Mostrar sempre que há áreas (não depender do contador público) */}
-                {areas.length > 0 && (
-                  <motion.a
-                    href="/recursos"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-amber-400 hover:text-amber-300 transition-colors pointer-events-auto group font-semibold"
-                  >
-                    Ver materiais disponíveis
-                    <span className="group-hover:translate-x-1 transition-transform">→</span>
-                  </motion.a>
-                )}
-                {profile && (
-                  <motion.a
-                    href="/dashboard/ficheiros"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-white/70 transition-colors pointer-events-auto group"
-                  >
-                    Aceder ao repositório completo
-                    <span className="group-hover:translate-x-1 transition-transform">→</span>
-                  </motion.a>
-                )}
-              </div>
+              {/* CTA apenas para autenticados */}
+              {profile && (
+                <motion.a
+                  href="/dashboard/ficheiros"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-white/70 transition-colors pointer-events-auto group"
+                >
+                  Aceder ao repositório completo
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </motion.a>
+              )}
             </div>
           ),
         };

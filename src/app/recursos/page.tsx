@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { FileText, X, ChevronRight, BookOpen, Loader2, ExternalLink } from "lucide-react";
 import Image from "next/image";
@@ -41,6 +42,9 @@ const AREA_COLORS: Record<string, string> = {
 const DEFAULT_COLOR = "bg-white/5 text-white/60 border-white/10";
 
 export default function RecursosPage() {
+  const searchParams = useSearchParams();
+  const areaFiltro = searchParams.get("area") ?? null;
+
   const [recursos, setRecursos] = useState<Recurso[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewing, setViewing] = useState<Recurso | null>(null);
@@ -52,16 +56,22 @@ export default function RecursosPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Filtrar por área se vier query param
+  const recursosFiltrados = useMemo(() => {
+    if (!areaFiltro) return recursos;
+    return recursos.filter(r => (r.area || "Geral") === areaFiltro);
+  }, [recursos, areaFiltro]);
+
   // Agrupar por área
   const grupos = useMemo(() => {
     const map: Record<string, Recurso[]> = {};
-    for (const r of recursos) {
+    for (const r of recursosFiltrados) {
       const key = r.area || "Geral";
       if (!map[key]) map[key] = [];
       map[key].push(r);
     }
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
-  }, [recursos]);
+  }, [recursosFiltrados]);
 
   return (
     <div className="min-h-screen bg-[#0d0d14] text-white overflow-y-auto">
@@ -89,10 +99,24 @@ export default function RecursosPage() {
             <BookOpen size={16} className="text-blue-400" />
             <span className="text-xs uppercase tracking-widest text-blue-400 font-semibold">Materiais pedagógicos</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Recursos</h1>
-          <p className="text-white/40 text-sm max-w-xl">
-            Materiais pedagógicos disponibilizados pela plataforma Saber Mais. Clica em qualquer documento para o consultar.
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-bold tracking-tight">Recursos</h1>
+            {areaFiltro && (
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${AREA_COLORS[areaFiltro] ?? DEFAULT_COLOR}`}>
+                {areaFiltro}
+              </span>
+            )}
+          </div>
+          <p className="text-white/40 text-sm max-w-xl mt-2">
+            {areaFiltro
+              ? `Documentos disponíveis em ${areaFiltro}.`
+              : "Materiais pedagógicos disponibilizados pela plataforma Saber Mais. Clica em qualquer documento para o consultar."}
           </p>
+          {areaFiltro && (
+            <a href="/recursos" className="inline-flex items-center gap-1 mt-3 text-xs text-white/30 hover:text-white/60 transition-colors">
+              ← Ver todas as disciplinas
+            </a>
+          )}
         </div>
 
         {/* Conteúdo */}
@@ -104,7 +128,16 @@ export default function RecursosPage() {
         ) : grupos.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 gap-3 text-white/20">
             <FileText size={40} strokeWidth={1} />
-            <p className="text-sm">Nenhum material disponível de momento.</p>
+            <p className="text-sm">
+              {areaFiltro
+                ? `Ainda não existem documentos disponíveis em ${areaFiltro}.`
+                : "Nenhum material disponível de momento."}
+            </p>
+            {areaFiltro && (
+              <a href="/recursos" className="text-xs text-white/30 hover:text-white/50 transition-colors mt-1">
+                Ver todas as disciplinas →
+              </a>
+            )}
           </div>
         ) : (
           <div className="space-y-10">
