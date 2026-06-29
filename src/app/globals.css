@@ -56,20 +56,7 @@ html.meio-claro {
 
 /* CLARO — dia, céu azul */
 html.light {
-  --dash-bg-image: none;
-  --c-bg:   #eef2f7;
-  --c-bg2:  #ffffff;
-  --c-s1:   #ffffff;
-  --c-s2:   #ffffff;
-  --c-s3:   #f8fafc;
-  --c-tx:   #0f172a;
-  --c-tx2:  #334155;
-  --c-tx3:  #64748b;
-  --c-tx4:  #94a3b8;
-  --c-tx5:  #cbd5e1;
-  --c-br:   #e2e8f0;
-  --c-br2:  #cbd5e1;
-  --c-ov:   transparent;
+  /* Modo claro: mantém tema escuro nos cards, só muda a imagem de fundo */
 }
 
 /* ─── Utility classes ────────────────────────────────────────────────────── */
@@ -108,47 +95,18 @@ html:not(.light) .theme-logo { filter: brightness(0) invert(1); }
 html.light .theme-logo       { filter: none; }
 
 /* Modo claro: substituir fundo escuro e overlay */
-html.light .dashboard-root {
-  background-color: #eef2f7;
-}
-html.light .dashboard-overlay {
-  background: rgba(220, 228, 240, 0.45) !important;
-}
-
 /* Overlay do dashboard por modo — controla quanto a imagem de fundo aparece */
 html.meio-escuro .dashboard-overlay { background: rgba(5, 10, 30, 0.55) !important; }
 html.meio-claro  .dashboard-overlay { background: rgba(20, 10, 0, 0.50) !important; }
+html.light       .dashboard-overlay { background: rgba(10, 5, 25, 0.42) !important; }
 
-/* Meio Escuro: sidebar/topbar azul-noite */
+/* Sidebar/topbar por modo */
 html.meio-escuro .dashboard-root aside  { background: rgba(10,15,30,0.75) !important; backdrop-filter: blur(16px); }
 html.meio-escuro .dashboard-root header { background: rgba(10,15,30,0.70) !important; backdrop-filter: blur(16px); }
-
-/* Meio Claro: sidebar/topbar âmbar escuro */
-html.meio-claro .dashboard-root aside  { background: rgba(26,16,8,0.75) !important; backdrop-filter: blur(16px); }
-html.meio-claro .dashboard-root header { background: rgba(26,16,8,0.70) !important; backdrop-filter: blur(16px); }
-
-/* Modo Claro: sidebar e topbar brancos com sombra */
-html.light .dashboard-root aside {
-  background: #ffffff !important;
-  box-shadow: 1px 0 0 #e2e8f0, 4px 0 16px rgba(15,23,42,0.04);
-}
-html.light .dashboard-root header {
-  background: #ffffff !important;
-  box-shadow: 0 1px 0 #e2e8f0, 0 2px 8px rgba(15,23,42,0.04);
-}
-
-/* Cards modo claro — sólidos, sem blur */
-html.light .c-s1,
-html.light .c-s2 {
-  background-color: rgba(245, 248, 252, 0.96) !important;
-  backdrop-filter: none !important;
-  box-shadow: 0 2px 8px rgba(15,23,42,0.09), 0 1px 2px rgba(15,23,42,0.05);
-  border-color: rgba(210,220,235,0.9) !important;
-}
-html.light .c-s3 {
-  background-color: rgba(236, 241, 248, 0.95) !important;
-  backdrop-filter: none !important;
-}
+html.meio-claro  .dashboard-root aside  { background: rgba(26,16,8,0.75) !important; backdrop-filter: blur(16px); }
+html.meio-claro  .dashboard-root header { background: rgba(26,16,8,0.70) !important; backdrop-filter: blur(16px); }
+html.light       .dashboard-root aside  { background: rgba(18,12,35,0.72) !important; backdrop-filter: blur(16px); }
+html.light       .dashboard-root header { background: rgba(18,12,35,0.68) !important; backdrop-filter: blur(16px); }
 
 
 @layer base {
