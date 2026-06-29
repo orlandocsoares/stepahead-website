@@ -3,7 +3,6 @@ import { getSessionUser } from "@/lib/server-auth";
 import { dbQuery } from "@/lib/db";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const APP_URL = process.env.APP_URL ?? "https://sabermais.edu.ao";
 
 export async function POST(request: Request) {
@@ -48,6 +47,7 @@ export async function POST(request: Request) {
   // Enviar emails se pedido
   let emailsEnviados = 0;
   if (enviarEmail) {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const emailHtml = (nome: string) => `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#0d0d14;color:#fff;border-radius:16px;">
         <img src="https://sabermais.edu.ao/storage/v1/object/public/logo-sabermais/logo-sabermais.png" alt="SaberMais" style="height:40px;margin-bottom:24px;" />
