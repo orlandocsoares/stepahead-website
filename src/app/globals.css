@@ -94,19 +94,19 @@ html.light {
 html:not(.light) .theme-logo { filter: brightness(0) invert(1); }
 html.light .theme-logo       { filter: none; }
 
-/* Modo claro: substituir fundo escuro e overlay */
-/* Overlay do dashboard por modo — controla quanto a imagem de fundo aparece */
-html.meio-escuro .dashboard-overlay { background: rgba(5, 10, 30, 0.55) !important; }
-html.meio-claro  .dashboard-overlay { background: rgba(20, 10, 0, 0.50) !important; }
-html.light       .dashboard-overlay { background: rgba(10, 5, 25, 0.42) !important; }
-
-/* Sidebar/topbar por modo */
-html.meio-escuro .dashboard-root aside  { background: rgba(10,15,30,0.75) !important; backdrop-filter: blur(16px); }
-html.meio-escuro .dashboard-root header { background: rgba(10,15,30,0.70) !important; backdrop-filter: blur(16px); }
-html.meio-claro  .dashboard-root aside  { background: rgba(26,16,8,0.75) !important; backdrop-filter: blur(16px); }
-html.meio-claro  .dashboard-root header { background: rgba(26,16,8,0.70) !important; backdrop-filter: blur(16px); }
-html.light       .dashboard-root aside  { background: rgba(18,12,35,0.72) !important; backdrop-filter: blur(16px); }
-html.light       .dashboard-root header { background: rgba(18,12,35,0.68) !important; backdrop-filter: blur(16px); }
+/* Sidebar/topbar com vidro tintado por modo — overlay geral removido */
+/* Escuro: vidro muito escuro */
+.dashboard-root aside  { background: rgba(8,8,20,0.82) !important; backdrop-filter: blur(16px); }
+.dashboard-root header { background: rgba(8,8,20,0.78) !important; backdrop-filter: blur(16px); }
+/* Meia Noite: tinte azul */
+html.meio-escuro .dashboard-root aside  { background: rgba(5,10,30,0.78) !important; backdrop-filter: blur(16px); }
+html.meio-escuro .dashboard-root header { background: rgba(5,10,30,0.74) !important; backdrop-filter: blur(16px); }
+/* Pôr do Sol: tinte âmbar */
+html.meio-claro  .dashboard-root aside  { background: rgba(26,14,4,0.78) !important; backdrop-filter: blur(16px); }
+html.meio-claro  .dashboard-root header { background: rgba(26,14,4,0.74) !important; backdrop-filter: blur(16px); }
+/* Claro: vidro neutro escuro */
+html.light       .dashboard-root aside  { background: rgba(10,8,22,0.74) !important; backdrop-filter: blur(16px); }
+html.light       .dashboard-root header { background: rgba(10,8,22,0.70) !important; backdrop-filter: blur(16px); }
 
 
 @layer base {
