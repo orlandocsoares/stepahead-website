@@ -138,16 +138,17 @@ html.light .dashboard-root header {
   box-shadow: 0 1px 0 #e2e8f0, 0 2px 8px rgba(15,23,42,0.04);
 }
 
-/* Cards com sombra sólida */
+/* Cards translúcidos sobre a imagem de fundo */
 html.light .c-s1,
 html.light .c-s2 {
-  background-color: #ffffff !important;
-  box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
-  backdrop-filter: none !important;
+  background-color: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 2px 12px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.05);
+  border-color: rgba(255,255,255,0.7) !important;
 }
 html.light .c-s3 {
-  background-color: #f8fafc !important;
-  backdrop-filter: none !important;
+  background-color: rgba(248, 250, 252, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
 }
 
 
