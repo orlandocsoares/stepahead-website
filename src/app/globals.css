@@ -141,14 +141,14 @@ html.light .dashboard-root header {
 /* Cards translúcidos sobre a imagem de fundo */
 html.light .c-s1,
 html.light .c-s2 {
-  background-color: rgba(255, 255, 255, 0.82) !important;
-  backdrop-filter: blur(12px) !important;
-  box-shadow: 0 2px 12px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.05);
-  border-color: rgba(255,255,255,0.7) !important;
+  background-color: rgba(240, 244, 250, 0.93) !important;
+  backdrop-filter: blur(6px) !important;
+  box-shadow: 0 2px 12px rgba(15,23,42,0.10), 0 1px 3px rgba(15,23,42,0.06);
+  border-color: rgba(200,212,230,0.8) !important;
 }
 html.light .c-s3 {
-  background-color: rgba(248, 250, 252, 0.75) !important;
-  backdrop-filter: blur(8px) !important;
+  background-color: rgba(232, 238, 246, 0.90) !important;
+  backdrop-filter: blur(4px) !important;
 }
 
 
