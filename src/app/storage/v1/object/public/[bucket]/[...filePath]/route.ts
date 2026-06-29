@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
+import { getSessionUser } from "@/lib/server-auth";
 
 const STORAGE_ROOT = path.join(process.cwd(), "storage");
 
@@ -9,6 +10,9 @@ const BUCKET_ALIAS_MAP: Record<string, string> = {
   "logo-institutos": "Logo Institutos",
   "nuvem-loop": "Nuvem LooP",
 };
+
+// Buckets acessíveis sem autenticação (assets públicos do site)
+const PUBLIC_BUCKETS = new Set(["logo-sabermais", "logo-institutos", "nuvem-loop"]);
 
 function inferContentType(fileName: string) {
   const lower = fileName.toLowerCase();
@@ -22,12 +26,21 @@ function inferContentType(fileName: string) {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ bucket: string; filePath: string[] }> }
 ) {
   try {
     const { bucket, filePath } = await context.params;
     const normalizedBucket = String(bucket);
+
+    // Buckets privados (ex: materiais) exigem sessão autenticada
+    if (!PUBLIC_BUCKETS.has(normalizedBucket)) {
+      const session = await getSessionUser();
+      if (!session) {
+        return new NextResponse("Não autorizado.", { status: 401 });
+      }
+    }
+
     const bucketName = BUCKET_ALIAS_MAP[normalizedBucket] ?? normalizedBucket;
     const relative = filePath.map((part) => decodeURIComponent(part)).join("/");
 
@@ -44,7 +57,7 @@ export async function GET(
     return new NextResponse(data, {
       headers: {
         "content-type": contentType,
-        "cache-control": "public, max-age=60",
+        "cache-control": "private, no-store",
       },
     });
   } catch {
