@@ -545,14 +545,6 @@ export default function HeroSection() {
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-<<<<<<< HEAD
-              <div className="flex items-center gap-4 mt-4">
-                <Calendar className="text-blue-400 w-12 h-12" />
-                <div className="text-left">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-blue-300 font-bold">Próxima Acção</p>
-                  <p className="text-base text-white font-bold italic">{telemetry.proximo_evento || 'Agendada'}</p>
-                </div>
-=======
               <div className="flex gap-3 mt-1">
                 {[
                   { nome: "Luanda", data: luanda, color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-500/5" },
@@ -573,7 +565,6 @@ export default function HeroSection() {
                     </div>
                   </div>
                 ))}
->>>>>>> 2c98e5ea17faa206f79da7188f627b0dd8df5fd1
               </div>
             </div>
           ),
@@ -600,15 +591,6 @@ export default function HeroSection() {
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-<<<<<<< HEAD
-              {telemetry.total_materials && (
-                <div className="flex items-center gap-4 mt-4">
-                  <FileText className="text-amber-400 w-12 h-12" />
-                  <div className="text-left">
-                    <span className="text-5xl font-bold text-white tracking-tighter">{telemetry.total_materials}</span>
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400 font-bold">Materiais no Cofre</p>
-                  </div>
-=======
 
               {/* Contador principal */}
               <div className="flex items-end gap-3">
@@ -643,7 +625,6 @@ export default function HeroSection() {
                       </motion.span>
                     );
                   })}
->>>>>>> 2c98e5ea17faa206f79da7188f627b0dd8df5fd1
                 </div>
               )}
 
