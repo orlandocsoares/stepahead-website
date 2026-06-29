@@ -16,6 +16,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const pathname = usePathname();
 
+  // Páginas limpas — sem canvas animado, sem overflow-hidden
+  const isCleanPage = pathname === "/recursos" || pathname?.startsWith("/recursos/");
+
   const isDashboard = pathname?.startsWith("/dashboard")
     || pathname === "/reset-password"
     || pathname === "/forgot-password"
@@ -137,6 +140,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         cancelAnimationFrame(animationId);
     };
   }, []);
+
+  if (isCleanPage) {
+    return <>{children}</>;
+  }
 
   return (
     <>
