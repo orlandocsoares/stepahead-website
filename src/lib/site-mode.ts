@@ -47,4 +47,10 @@ export function applyMode(mode: SiteMode) {
   html.classList.remove("escuro", "meio-escuro", "meio-claro", "light");
   if (mode === "claro") html.classList.add("light");
   else if (mode !== "escuro") html.classList.add(mode);
+
+  // Define a imagem de fundo usada pelo dashboard layout via --dash-bg-image
+  const config = MODES.find(m => m.id === mode);
+  if (config) {
+    html.style.setProperty("--dash-bg-image", `url('${config.thumb}')`);
+  }
 }

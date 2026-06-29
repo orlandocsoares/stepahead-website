@@ -116,6 +116,10 @@ html.light .dashboard-overlay {
   display: none !important;
 }
 
+/* Overlay do dashboard por modo — controla quanto a imagem de fundo aparece */
+html.meio-escuro .dashboard-overlay { background: rgba(5, 10, 30, 0.55) !important; }
+html.meio-claro  .dashboard-overlay { background: rgba(20, 10, 0, 0.50) !important; }
+
 /* Meio Escuro: sidebar/topbar azul-noite */
 html.meio-escuro .dashboard-root aside  { background: rgba(10,15,30,0.75) !important; backdrop-filter: blur(16px); }
 html.meio-escuro .dashboard-root header { background: rgba(10,15,30,0.70) !important; backdrop-filter: blur(16px); }
