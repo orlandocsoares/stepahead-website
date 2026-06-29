@@ -135,6 +135,7 @@ export default function FicheirosPage() {
   const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
   const [gruposFormacao, setGruposFormacao] = useState<{ id: string; nome: string }[]>([]);
   const [gruposUpload, setGruposUpload] = useState<string[]>([]);
+  const [sitePublico, setSitePublico] = useState(false);
   const [activeGrupo, setActiveGrupo] = useState<string>("todos");
   // Edit modal
   const [editingFile, setEditingFile] = useState<any>(null);
@@ -145,6 +146,7 @@ export default function FicheirosPage() {
   const [editDisponivelDe, setEditDisponivelDe] = useState("");
   const [editDisponivelAte, setEditDisponivelAte] = useState("");
   const [editGrupos, setEditGrupos] = useState<string[]>([]);
+  const [editSitePublico, setEditSitePublico] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
@@ -173,6 +175,7 @@ export default function FicheirosPage() {
     setDisponivelDe("");
     setDisponivelAte("");
     setGruposUpload([]);
+    setSitePublico(false);
     setIsModalOpen(true);
   }
 
@@ -338,6 +341,7 @@ export default function FicheirosPage() {
           ...(disponivel_de ? { disponivel_de } : {}),
           ...(disponivel_ate ? { disponivel_ate } : {}),
           ...(gruposUpload[0] ? { grupo_formacao_id: gruposUpload[0] } : {}),
+          site_publico: sitePublico && visibilidade === "publico",
         }),
       });
       if (!dbRes.ok) throw new Error("Erro ao registar o ficheiro.");
@@ -387,6 +391,7 @@ export default function FicheirosPage() {
     setEditDisponivelDe(f.disponivel_de ? f.disponivel_de.slice(0, 10) : "");
     setEditDisponivelAte(f.disponivel_ate ? f.disponivel_ate.slice(0, 10) : "");
     setEditGrupos(Array.isArray(f.grupos) ? f.grupos : []);
+    setEditSitePublico(f.site_publico ?? false);
   }
 
   async function handleSaveEdit(e: React.FormEvent) {
@@ -406,6 +411,7 @@ export default function FicheirosPage() {
           disponivel_de: editDisponivelDe || null,
           disponivel_ate: editDisponivelAte || null,
           grupos: editGrupos,
+          site_publico: editSitePublico && editVisibilidade === "publico",
         }),
       });
       if (!res.ok) throw new Error("Erro ao guardar alterações.");
@@ -816,6 +822,20 @@ export default function FicheirosPage() {
               </div>
             </div>
 
+            {/* Toggle site público */}
+            {visibilidade === "publico" && (
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border c-br hc-s1 transition-colors mb-1">
+                <div className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${sitePublico ? "bg-emerald-500" : "bg-white/10"}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${sitePublico ? "translate-x-4" : "translate-x-0.5"}`} />
+                </div>
+                <input type="checkbox" className="sr-only" checked={sitePublico} onChange={e => setSitePublico(e.target.checked)} />
+                <div>
+                  <p className="text-xs font-medium c-tx">Partilhar no site público</p>
+                  <p className="text-[10px] c-tx4">Visível em sabermais.edu.ao/recursos (só leitura)</p>
+                </div>
+              </label>
+            )}
+
             <div className="flex gap-3">
               <button type="button" onClick={() => setIsModalOpen(false)}
                 className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx hc-s1 transition-colors">
@@ -923,6 +943,20 @@ export default function FicheirosPage() {
                 </div>
               </div>
             </div>
+
+            {/* Toggle site público */}
+            {editVisibilidade === "publico" && (
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border c-br hc-s1 transition-colors mb-1">
+                <div className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${editSitePublico ? "bg-emerald-500" : "bg-white/10"}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${editSitePublico ? "translate-x-4" : "translate-x-0.5"}`} />
+                </div>
+                <input type="checkbox" className="sr-only" checked={editSitePublico} onChange={e => setEditSitePublico(e.target.checked)} />
+                <div>
+                  <p className="text-xs font-medium c-tx">Partilhar no site público</p>
+                  <p className="text-[10px] c-tx4">Visível em sabermais.edu.ao/recursos (só leitura)</p>
+                </div>
+              </label>
+            )}
 
             <div className="flex gap-3">
               <button type="button" onClick={() => setEditingFile(null)}

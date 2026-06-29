@@ -10,7 +10,7 @@ export async function PATCH(request: Request) {
   const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [session.id]);
   const role = profileRes.rows[0]?.role;
 
-  const { id, label, area, visibilidade, turma_id, disponivel_de, disponivel_ate, grupos } = await request.json();
+  const { id, label, area, visibilidade, turma_id, disponivel_de, disponivel_ate, grupos, site_publico } = await request.json();
   if (!id) return NextResponse.json({ error: "ID obrigatório." }, { status: 400 });
 
   // Verificar que o utilizador é dono ou admin
@@ -30,7 +30,8 @@ export async function PATCH(request: Request) {
        visibilidade   = COALESCE($4, visibilidade),
        turma_id       = $5,
        disponivel_de  = $6,
-       disponivel_ate = $7
+       disponivel_ate = $7,
+       site_publico   = COALESCE($8, site_publico)
      WHERE id = $1`,
     [
       id,
@@ -40,6 +41,7 @@ export async function PATCH(request: Request) {
       (visibilidade === "turma" || visibilidade === "formadores_turma") ? (turma_id || null) : null,
       disponivel_de || null,
       disponivel_ate || null,
+      typeof site_publico === "boolean" ? site_publico : null,
     ]
   );
 

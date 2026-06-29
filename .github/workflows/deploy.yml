@@ -237,6 +237,9 @@ jobs:
                 WHERE grupo_formacao_id IS NOT NULL
               ON CONFLICT DO NOTHING;
 
+              -- Partilha no site público
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS site_publico BOOLEAN NOT NULL DEFAULT false;
+
               -- Limpar sessoes expiradas
               DELETE FROM user_sessions WHERE expires_at < NOW();
             " || echo "Aviso: migração já aplicada ou erro ignorado"
