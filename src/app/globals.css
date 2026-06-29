@@ -109,11 +109,11 @@ html.light .theme-logo       { filter: none; }
 
 /* Modo claro: substituir fundo escuro e overlay */
 html.light .dashboard-root {
-  background-color: #eef2f7 !important;
-  background-image: none !important;
+  background-color: #eef2f7;
 }
 html.light .dashboard-overlay {
-  display: none !important;
+  background: rgba(238, 242, 247, 0.72) !important;
+  backdrop-filter: blur(2px);
 }
 
 /* Overlay do dashboard por modo — controla quanto a imagem de fundo aparece */
