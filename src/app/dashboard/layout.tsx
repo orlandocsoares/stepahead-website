@@ -61,9 +61,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       )}
 
-      <div className="fixed inset-0 c-bg flex overflow-hidden"
-        style={{ backgroundImage: "url('/dashboard-bg.png')", backgroundSize: "cover", backgroundPosition: "center" }}>
-        <div className="absolute inset-0 c-ov pointer-events-none" />
+      <div className="fixed inset-0 flex overflow-hidden dashboard-root"
+        style={{ backgroundImage: "var(--dash-bg-image)", backgroundSize: "cover", backgroundPosition: "center" }}>
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: "var(--c-ov)" }} />
         {mobileOpen && (
           <div
             className="fixed inset-0 bg-black/60 z-40 md:hidden"

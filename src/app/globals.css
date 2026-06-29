@@ -5,6 +5,7 @@
 /* ─── Theme tokens ───────────────────────────────────────────────────────── */
 :root {
   /* DARK (default) */
+  --dash-bg-image: url('/dashboard-bg.png');
   --c-bg:   #0d0d14;
   --c-bg2:  #13131f;
   --c-s1:   rgba(255,255,255,0.025);
@@ -17,22 +18,23 @@
   --c-tx5:  rgba(255,255,255,0.12);
   --c-br:   rgba(255,255,255,0.06);
   --c-br2:  rgba(255,255,255,0.12);
-  --c-ov:   rgba(13,13,20,0.88);
+  --c-ov:   rgba(13,13,20,0.88);  /* overlay escuro sobre dashboard-bg.png */
 }
 html.light {
-  --c-bg:   #f0f4f8;
-  --c-bg2:  #ffffff;
-  --c-s1:   rgba(0,0,0,0.03);
-  --c-s2:   rgba(0,0,0,0.055);
-  --c-s3:   rgba(0,0,0,0.09);
-  --c-tx:   #0f172a;
-  --c-tx2:  rgba(15,23,42,0.65);
-  --c-tx3:  rgba(15,23,42,0.45);
-  --c-tx4:  rgba(15,23,42,0.28);
-  --c-tx5:  rgba(15,23,42,0.14);
-  --c-br:   rgba(0,0,0,0.08);
-  --c-br2:  rgba(0,0,0,0.15);
-  --c-ov:   rgba(240,244,248,0.88);
+  --dash-bg-image: linear-gradient(160deg, #c8dff5 0%, #ddeeff 40%, #e8f4fd 70%, #d0e8f8 100%);
+  --c-bg:   #dce8f5;
+  --c-bg2:  rgba(255,255,255,0.85);
+  --c-s1:   rgba(255,255,255,0.55);
+  --c-s2:   rgba(255,255,255,0.75);
+  --c-s3:   rgba(255,255,255,0.90);
+  --c-tx:   #0d1b2e;
+  --c-tx2:  rgba(13,27,46,0.70);
+  --c-tx3:  rgba(13,27,46,0.55);
+  --c-tx4:  rgba(13,27,46,0.40);
+  --c-tx5:  rgba(13,27,46,0.25);
+  --c-br:   rgba(13,27,46,0.10);
+  --c-br2:  rgba(13,27,46,0.18);
+  --c-ov:   rgba(180,210,240,0.60);
 }
 
 /* ─── Utility classes ────────────────────────────────────────────────────── */
@@ -69,6 +71,23 @@ html.light {
 /* Logo: inverte no escuro, natural no claro */
 html:not(.light) .theme-logo { filter: brightness(0) invert(1); }
 html.light .theme-logo       { filter: none; }
+
+/* Sidebar e topbar: sombra no modo claro para separar do conteúdo */
+html.light .dashboard-root aside {
+  box-shadow: 2px 0 20px rgba(13,27,46,0.08);
+  background: rgba(255,255,255,0.70) !important;
+  backdrop-filter: blur(20px);
+}
+html.light .dashboard-root header {
+  box-shadow: 0 1px 20px rgba(13,27,46,0.06);
+  background: rgba(255,255,255,0.70) !important;
+  backdrop-filter: blur(20px);
+}
+
+/* Cards no modo claro: fundo branco fosco */
+html.light .c-s1 { background-color: rgba(255,255,255,0.55) !important; backdrop-filter: blur(8px); }
+html.light .c-s2 { background-color: rgba(255,255,255,0.75) !important; backdrop-filter: blur(8px); }
+html.light .c-s3 { background-color: rgba(255,255,255,0.90) !important; backdrop-filter: blur(8px); }
 
 
 @layer base {
