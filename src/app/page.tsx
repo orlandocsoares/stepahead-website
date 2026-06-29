@@ -702,8 +702,7 @@ export default function HeroSection() {
   return (
     <div ref={containerRef} className="relative h-[100dvh] w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
 
-      {/* O CommandCenter (avatar à esquerda) só aparece para utilizadores com sessão iniciada */}
-      {!isDashboardView && !isVIPWelcomeOpen && profile && <CommandCenter isHero />}
+      {/* CommandCenter removido da hero — navegação feita pelo topo direito */}
 
       <motion.div className="fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[100] mix-blend-difference hidden md:block" style={{ x: mouseX, y: mouseY, translateX: "-50%", translateY: "-50%" }} animate={{ scale: isHovering ? 3.5 : 1, opacity: 0.8 }} transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.2 }} />
 
@@ -895,9 +894,9 @@ export default function HeroSection() {
             <HelpGuide open={helpOpen} setOpen={setHelpOpen} />
 
             <div className="fixed top-0 right-4 sm:right-6 md:right-16 lg:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-5 sm:py-10 pointer-events-none">
-              {/* TOPO: Botões de Ação (Login e Ajuda) */}
+              {/* TOPO: Botões de Ação */}
               <div className="pointer-events-auto shrink-0 flex items-center gap-2">
-                {!profile && !profileLoading && (
+                {!profileLoading && !profile && (
                   <motion.button
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -908,6 +907,38 @@ export default function HeroSection() {
                     <LogIn size={14} />
                     <span>Entrar</span>
                   </motion.button>
+                )}
+                {!profileLoading && profile && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="flex items-center gap-2"
+                  >
+                    {/* Avatar */}
+                    <button
+                      onClick={() => router.push("/dashboard/perfil")}
+                      className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-white/20 bg-slate-950/80 overflow-hidden hover:border-white/50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.08)]"
+                      title={profile.first_name || "Perfil"}
+                    >
+                      {profile.avatar_url ? (
+                        <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="w-full h-full flex items-center justify-center text-[11px] font-bold text-white/80 uppercase">
+                          {(profile.first_name?.[0] ?? "") + (profile.last_name?.[0] ?? "")}
+                        </span>
+                      )}
+                      <span className="absolute bottom-0.5 right-0.5 w-2 h-2 bg-green-500 rounded-full border border-black" />
+                    </button>
+                    {/* Botão Dashboard */}
+                    <button
+                      onClick={() => router.push("/dashboard")}
+                      className="inline-flex items-center gap-2 px-4 h-10 sm:h-11 rounded-full border border-white/20 bg-slate-950/80 text-white/80 text-[11px] font-bold uppercase tracking-[0.25em] transition-all hover:border-blue-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(59,130,246,0.18)]"
+                    >
+                      <LayoutDashboard size={14} />
+                      <span>Dashboard</span>
+                    </button>
+                  </motion.div>
                 )}
                 <button onClick={() => setHelpOpen(true)} className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white transition hover:border-sky-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-400/50">
                   <span className="text-lg font-black">?</span>
