@@ -2,6 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Dashboard theme variables ─────────────────────────────────────────── */
+/* Dark (default) */
+:root {
+  --dash-bg:           #0d0d14;
+  --dash-bg-secondary: #13131f;
+  --dash-surface:      rgba(255,255,255,0.03);
+  --dash-surface-md:   rgba(255,255,255,0.05);
+  --dash-surface-hover:rgba(255,255,255,0.06);
+  --dash-border:       rgba(255,255,255,0.06);
+  --dash-border-md:    rgba(255,255,255,0.10);
+  --dash-text:         rgba(255,255,255,1);
+  --dash-text-muted:   rgba(255,255,255,0.50);
+  --dash-text-subtle:  rgba(255,255,255,0.30);
+  --dash-text-faint:   rgba(255,255,255,0.20);
+  --dash-overlay:      rgba(0,0,0,0.60);
+}
+/* Dark explicit (redundant but clear) */
+html.dark {
+  --logo-filter: brightness(0) invert(1);
+}
+/* Light override */
+html.light {
+  --logo-filter: none;
+  --dash-bg:           #eef1f6;
+  --dash-bg-secondary: #ffffff;
+  --dash-surface:      rgba(255,255,255,0.80);
+  --dash-surface-md:   rgba(255,255,255,0.95);
+  --dash-surface-hover:rgba(255,255,255,1);
+  --dash-border:       rgba(0,0,0,0.07);
+  --dash-border-md:    rgba(0,0,0,0.12);
+  --dash-text:         rgba(15,23,42,1);
+  --dash-text-muted:   rgba(15,23,42,0.55);
+  --dash-text-subtle:  rgba(15,23,42,0.35);
+  --dash-text-faint:   rgba(15,23,42,0.20);
+  --dash-overlay:      rgba(0,0,0,0.30);
+}
+
 @layer base {
   :root {
     --background: 0 0% 95%; /* Mantive os teus originais */
@@ -129,4 +166,21 @@ input:focus {
 }
 .h-screen-safe {
   height: 100vh;
+}
+
+/* ─── Dashboard theme utility classes ───────────────────────────────────── */
+.dash-bg           { background-color: var(--dash-bg) !important; }
+.dash-bg-secondary { background-color: var(--dash-bg-secondary) !important; }
+.dash-surface      { background-color: var(--dash-surface) !important; }
+.dash-surface-md   { background-color: var(--dash-surface-md) !important; }
+.dash-border       { border-color: var(--dash-border) !important; }
+.dash-border-md    { border-color: var(--dash-border-md) !important; }
+.dash-text         { color: var(--dash-text) !important; }
+.dash-text-muted   { color: var(--dash-text-muted) !important; }
+.dash-text-subtle  { color: var(--dash-text-subtle) !important; }
+.dash-text-faint   { color: var(--dash-text-faint) !important; }
+
+/* Backdrop fallback for light theme */
+html.light .dashboard-glass {
+  background-color: rgba(238, 241, 246, 0.97) !important;
 }

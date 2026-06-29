@@ -22,21 +22,25 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const email = String(body.email ?? "").trim().toLowerCase();
+    const identifier = String(body.email ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
 
-    if (!email || !password) {
-      return NextResponse.json({ error: { message: "Email e password sao obrigatorios." } }, { status: 400 });
+    if (!identifier || !password) {
+      return NextResponse.json({ error: { message: "Email/utilizador e password sao obrigatorios." } }, { status: 400 });
     }
 
+    // Aceita email ou username
+    const isEmail = identifier.includes("@");
     const result = await dbQuery<{ id: string; email: string; password_hash: string }>(
-      "SELECT id, email, password_hash FROM auth_users WHERE email = $1 LIMIT 1",
-      [email]
+      isEmail
+        ? "SELECT id, email, password_hash FROM auth_users WHERE email = $1 LIMIT 1"
+        : "SELECT id, email, password_hash FROM auth_users WHERE username = $1 LIMIT 1",
+      [identifier]
     );
 
     const user = result.rows[0];
     if (!user || !verifyPassword(password, user.password_hash)) {
-      await auditLog("login_fail", { ip, details: { email } });
+      await auditLog("login_fail", { ip, details: { identifier } });
       // Mensagem deliberadamente genérica — não revelar se o email existe
       return NextResponse.json({ error: { message: "Credenciais invalidas." } }, { status: 401 });
     }

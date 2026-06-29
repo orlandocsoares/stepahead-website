@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FileText, FolderOpen, Users, Calendar,
-  Shield, Settings, LogOut, ChevronLeft, ChevronRight, Globe, X, UserCircle, LifeBuoy, MessageSquare, Mail, GraduationCap,
+  Shield, Settings, LogOut, ChevronLeft, ChevronRight, Globe, X, UserCircle, LifeBuoy, MessageSquare, Mail, GraduationCap, ClipboardList,
 } from "lucide-react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 
@@ -15,6 +15,7 @@ const NAV = [
   { label: "Agenda",       icon: Calendar,         path: "/dashboard/agenda" },
   { label: "Comunidade",   icon: MessageSquare,    path: "/dashboard/comunidade" },
   { label: "Mensagens",    icon: Mail,             path: "/dashboard/mensagens" },
+  { label: "Tarefas",      icon: ClipboardList,    path: "/dashboard/tarefas" },
   { label: "Turmas",       icon: GraduationCap,    path: "/dashboard/turmas",       staffOnly: true },
   { label: "Utilizadores", icon: Users,            path: "/dashboard/admin",        staffOnly: true },
   { label: "Suporte",      icon: LifeBuoy,         path: "/dashboard/suporte" },
@@ -49,7 +50,7 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
     <aside
       className={`
         fixed left-0 top-0 h-screen z-50 flex flex-col
-        bg-[#0d0d14] border-r border-white/[0.06]
+        dash-bg border-r dash-border
         transition-all duration-300 ease-in-out
         /* Mobile: drawer oculto por defeito (-translate-x-full), abre via mobileOpen.
            Desktop (md+): sempre visível; colapsa para 68px (só ícones) via collapsed.
@@ -61,13 +62,12 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
       `}
     >
       {/* Logo */}
-      <div className={`flex items-center gap-3 px-4 h-16 border-b border-white/[0.06] shrink-0 ${collapsed ? "md:justify-center" : ""}`}>
+      <div className={`flex items-center gap-3 px-4 h-16 border-b dash-border shrink-0 ${collapsed ? "md:justify-center" : ""}`}>
         <img
           src="/logo.png"
           alt="Saber Mais"
           className={`object-contain shrink-0 transition-all duration-300 ${collapsed ? "md:h-8 md:w-8" : "h-9 w-auto max-w-[140px]"}`}
-          // Logo PNG tem conteúdo escuro — invertido para branco sobre fundo #0d0d14
-          style={{ filter: "brightness(0) invert(1)" }}
+          style={{ filter: "var(--logo-filter, brightness(0) invert(1))" }}
         />
         {/* Botão de fechar em mobile */}
         <button
@@ -97,7 +97,7 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
                 transition-colors duration-150 relative
                 ${active
                   ? "bg-blue-600/20 text-blue-400"
-                  : "text-white/40 hover:text-white/80 hover:bg-white/[0.04]"
+                  : "dash-text-subtle hover:dash-text hover:dash-surface-md"
                 }
                 ${collapsed ? "md:justify-center" : ""}
               `}
@@ -113,21 +113,21 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
       </nav>
 
       {/* User + actions */}
-      <div className="border-t border-white/[0.06] p-3 space-y-1 shrink-0">
+      <div className="border-t dash-border p-3 space-y-1 shrink-0">
         <div className={`flex items-center gap-3 px-2 py-2 ${collapsed ? "md:hidden" : ""}`}>
           <div className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/30 flex items-center justify-center shrink-0 text-xs font-bold text-blue-400 uppercase">
             {displayName?.[0] ?? "?"}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-white truncate">{displayName}</p>
-            <p className="text-[10px] text-white/30 truncate">{roleLabel}</p>
+            <p className="text-xs font-semibold dash-text truncate">{displayName}</p>
+            <p className="text-[10px] dash-text-subtle truncate">{roleLabel}</p>
           </div>
         </div>
 
         <button
           onClick={logout}
           title={collapsed ? "Terminar sessão" : undefined}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/30 hover:text-red-400 hover:bg-red-500/[0.08] transition-colors duration-150 ${collapsed ? "md:justify-center" : ""}`}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm dash-text-subtle hover:text-red-400 hover:bg-red-500/[0.08] transition-colors duration-150 ${collapsed ? "md:justify-center" : ""}`}
         >
           <LogOut size={16} strokeWidth={1.5} className="shrink-0" />
           <span className={collapsed ? "md:hidden" : ""}>Terminar sessão</span>

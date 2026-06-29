@@ -6,14 +6,14 @@ import {
   ShieldCheck, Trash2, Calendar, FileText,
   BarChart3, Loader2, Key, Plus, Clock, X, MapPin, Target,
   Users, Activity, Database, Search, User, Download, Pencil,
-  Eye, EyeOff, CheckCircle2, AlertCircle, Upload, Trophy, LifeBuoy, MessageSquare, TrendingUp
+  Eye, EyeOff, CheckCircle2, AlertCircle, Upload, Trophy, LifeBuoy, MessageSquare, TrendingUp, Megaphone, Send
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
 
 export default function SuperAdminPage() {
   const { user: profile, loading: profileLoading } = useAdminUser();
-  const [activeTab, setActiveTab] = useState<"users" | "agenda" | "arquivos" | "stats">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "agenda" | "arquivos" | "stats" | "anuncios">("users");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
@@ -33,6 +33,14 @@ export default function SuperAdminPage() {
   const [mediaRadarSaving, setMediaRadarSaving] = useState(false);
   const [mediaRadarSaved, setMediaRadarSaved] = useState(false);
 
+  // Anúncios
+  const [anuncioTitulo, setAnuncioTitulo] = useState("");
+  const [anuncioMensagem, setAnuncioMensagem] = useState("");
+  const [anuncioDestinatarios, setAnuncioDestinatarios] = useState<"todos" | "formadores" | "formandos">("todos");
+  const [anuncioEnviarEmail, setAnuncioEnviarEmail] = useState(false);
+  const [anuncioSending, setAnuncioSending] = useState(false);
+  const [anuncioResult, setAnuncioResult] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   const [agendaForm, setAgendaForm] = useState({ titulo: "", local: "Luanda", data_evento: "", tipo: "Global" });
   const [powerForm, setPowerForm] = useState({ poder: "", data_expiracao: "" });
   const [exportFilters, setExportFilters] = useState({ role: "all", period: "all", startDate: "", endDate: "" });
@@ -46,6 +54,13 @@ export default function SuperAdminPage() {
   const [newUserForm, setNewUserForm] = useState({ firstName: "", lastName: "", email: "", password: "", role: "formando" });
   const [showNewUserPwd, setShowNewUserPwd] = useState(false);
   const [newUserSubmitting, setNewUserSubmitting] = useState(false);
+
+  // Criar formando sem email
+  const [isNoEmailModalOpen, setIsNoEmailModalOpen] = useState(false);
+  const [noEmailForm, setNoEmailForm] = useState({ firstName: "", lastName: "", password: "" });
+  const [showNoEmailPwd, setShowNoEmailPwd] = useState(false);
+  const [noEmailSubmitting, setNoEmailSubmitting] = useState(false);
+  const [noEmailResult, setNoEmailResult] = useState<{ username: string } | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   async function saveMediaRadar() {
@@ -116,10 +131,60 @@ export default function SuperAdminPage() {
   }, [profile]);
 
   const visibleTabs = useMemo(() => {
-    if (isAdminOrSuper(profile?.role)) return ["users", "agenda", "arquivos", "stats"] as const;
+    if (isAdminOrSuper(profile?.role)) return ["users", "agenda", "arquivos", "stats", "anuncios"] as const;
     if (profile?.role === "formador") return ["users"] as const;
     return [] as const;
   }, [profile]);
+
+  async function handleCriarFormandoSemEmail(e: React.FormEvent) {
+    e.preventDefault();
+    setNoEmailSubmitting(true);
+    setNoEmailResult(null);
+    try {
+      const res = await fetch("/api/formador/criar-formando", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: noEmailForm.firstName,
+          last_name: noEmailForm.lastName,
+          password: noEmailForm.password,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro ao criar utilizador.");
+      setNoEmailResult({ username: json.username });
+      setNoEmailForm({ firstName: "", lastName: "", password: "" });
+      fetchData();
+    } catch (err: any) {
+      setToast({ type: "error", text: err.message });
+      setIsNoEmailModalOpen(false);
+    } finally {
+      setNoEmailSubmitting(false);
+    }
+  }
+
+  async function enviarAnuncio() {
+    if (!anuncioTitulo.trim() || !anuncioMensagem.trim()) return;
+    setAnuncioSending(true);
+    setAnuncioResult(null);
+    try {
+      const res = await fetch("/api/admin/anuncios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ titulo: anuncioTitulo, mensagem: anuncioMensagem, destinatarios: anuncioDestinatarios, enviarEmail: anuncioEnviarEmail }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro ao enviar.");
+      const emailInfo = anuncioEnviarEmail ? ` · ${json.emails} email${json.emails !== 1 ? "s" : ""} enviado${json.emails !== 1 ? "s" : ""}.` : "";
+      setAnuncioResult({ type: "success", text: `Anúncio enviado para ${json.enviados} utilizador${json.enviados !== 1 ? "es" : ""}${emailInfo}` });
+      setAnuncioTitulo("");
+      setAnuncioMensagem("");
+    } catch (err: any) {
+      setAnuncioResult({ type: "error", text: err.message });
+    } finally {
+      setAnuncioSending(false);
+    }
+  }
 
   useEffect(() => {
     if (!profileLoading && !isStaff) {
@@ -348,7 +413,7 @@ export default function SuperAdminPage() {
             <button key={tab} onClick={() => setActiveTab(tab as any)}
               className={`px-5 py-2 rounded-lg text-xs font-medium transition-all ${activeTab === tab ? "bg-blue-600 text-white shadow" : "text-white/40 hover:text-white"}`}
             >
-              {tab === "users" ? "Utilizadores" : tab === "agenda" ? "Agenda" : tab === "arquivos" ? "Ficheiros" : "Estatísticas"}
+              {tab === "users" ? "Utilizadores" : tab === "agenda" ? "Agenda" : tab === "arquivos" ? "Ficheiros" : tab === "stats" ? "Estatísticas" : "Anúncios"}
             </button>
           ))}
         </div>
@@ -384,6 +449,12 @@ export default function SuperAdminPage() {
                 <Download size={14} /> <span className="hidden sm:inline">Exportar CSV</span>
               </button>
             </>
+          )}
+          {activeTab === "users" && (profile?.role === "formador" || isAdminOrSuper(profile?.role)) && (
+            <button onClick={() => { setNoEmailForm({ firstName: "", lastName: "", password: "" }); setNoEmailResult(null); setIsNoEmailModalOpen(true); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.06] text-sm text-white/60 hover:text-white hover:border-white/20 transition-colors">
+              <User size={14} /> <span className="hidden sm:inline">Formando sem email</span><span className="sm:hidden">Sem email</span>
+            </button>
           )}
           {activeTab === "agenda" && (
             <button onClick={() => setIsAgendaModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
@@ -824,6 +895,105 @@ export default function SuperAdminPage() {
                   );
                 })}
               </motion.div>
+            ) : activeTab === "anuncios" ? (
+              <motion.div key="anuncios" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-2xl space-y-6">
+                <div className="bg-[#13131f] border border-white/[0.06] rounded-2xl p-6 space-y-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                      <Megaphone size={16} className="text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">Novo Anúncio</h3>
+                      <p className="text-xs text-white/30">Envia uma notificação para os utilizadores da plataforma.</p>
+                    </div>
+                  </div>
+
+                  {/* Destinatários */}
+                  <div className="space-y-2">
+                    <label className="text-xs text-white/40">Destinatários</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {([
+                        { value: "todos", label: "Todos" },
+                        { value: "formadores", label: "Formadores" },
+                        { value: "formandos", label: "Formandos" },
+                      ] as const).map(opt => (
+                        <button key={opt.value} type="button"
+                          onClick={() => setAnuncioDestinatarios(opt.value)}
+                          className={`py-2 rounded-xl border text-xs font-medium transition-all ${
+                            anuncioDestinatarios === opt.value
+                              ? "border-amber-500/50 bg-amber-500/10 text-amber-300"
+                              : "border-white/[0.06] bg-white/[0.02] text-white/40 hover:bg-white/[0.05]"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Título */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-white/40">Título</label>
+                    <input
+                      value={anuncioTitulo}
+                      onChange={e => setAnuncioTitulo(e.target.value)}
+                      placeholder="Ex: Nova funcionalidade disponível"
+                      maxLength={100}
+                      className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-amber-500/50 transition-colors"
+                    />
+                  </div>
+
+                  {/* Mensagem */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-white/40">Mensagem</label>
+                    <textarea
+                      value={anuncioMensagem}
+                      onChange={e => setAnuncioMensagem(e.target.value)}
+                      placeholder="Descreve a novidade ou aviso que queres partilhar..."
+                      rows={4}
+                      maxLength={500}
+                      className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-amber-500/50 transition-colors resize-none"
+                    />
+                    <p className="text-[10px] text-white/20 text-right">{anuncioMensagem.length}/500</p>
+                  </div>
+
+                  {/* Toggle email */}
+                  <label className="flex items-center justify-between gap-3 py-3 border-t border-white/[0.06] cursor-pointer group">
+                    <div>
+                      <p className="text-xs font-medium text-white/70 group-hover:text-white transition-colors">Enviar também por email</p>
+                      <p className="text-[10px] text-white/30 mt-0.5">Cada utilizador recebe um email além da notificação na plataforma.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAnuncioEnviarEmail(v => !v)}
+                      className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${anuncioEnviarEmail ? "bg-amber-500" : "bg-white/10"}`}
+                    >
+                      <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${anuncioEnviarEmail ? "left-5" : "left-1"}`} />
+                    </button>
+                  </label>
+
+                  {/* Feedback */}
+                  {anuncioResult && (
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                      anuncioResult.type === "success"
+                        ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+                        : "bg-red-500/10 border border-red-500/20 text-red-400"
+                    }`}>
+                      {anuncioResult.type === "success" ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
+                      {anuncioResult.text}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={enviarAnuncio}
+                    disabled={anuncioSending || !anuncioTitulo.trim() || !anuncioMensagem.trim()}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-500 text-black text-sm font-semibold hover:bg-amber-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {anuncioSending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                    {anuncioSending ? "A enviar..." : "Enviar Anúncio"}
+                  </button>
+                </div>
+              </motion.div>
             ) : (
               <motion.div key="generic_list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
                 {filteredData.map((item, index) => (
@@ -1119,6 +1289,90 @@ export default function SuperAdminPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL: Criar formando sem email */}
+      {isNoEmailModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setIsNoEmailModalOpen(false); setNoEmailResult(null); }} />
+          <div className="relative bg-[#0d0d14] border border-white/[0.08] rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <User size={15} className="text-blue-400" />
+                <h3 className="text-sm font-semibold text-white">Registar formando sem email</h3>
+              </div>
+              <button onClick={() => { setIsNoEmailModalOpen(false); setNoEmailResult(null); }} className="text-white/30 hover:text-white transition-colors"><X size={16} /></button>
+            </div>
+
+            {noEmailResult ? (
+              <div className="px-6 py-8 space-y-5 text-center">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto">
+                  <CheckCircle2 size={24} className="text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">Formando criado com sucesso!</p>
+                  <p className="text-xs text-white/40 mt-1">Guarda estas credenciais — não serão mostradas novamente.</p>
+                </div>
+                <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-4 text-left space-y-2">
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider">Nome de utilizador</p>
+                    <p className="text-sm font-mono font-bold text-blue-300">{noEmailResult.username}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider">Password</p>
+                    <p className="text-sm font-mono font-bold text-white/70">{noEmailForm.password || "••••••••"}</p>
+                  </div>
+                </div>
+                <p className="text-[11px] text-white/30">O formando faz login em <span className="text-white/60">sabermais.edu.ao</span> com o utilizador e a password acima.</p>
+                <button onClick={() => { setIsNoEmailModalOpen(false); setNoEmailResult(null); }}
+                  className="w-full py-2.5 rounded-xl bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
+                  Fechar
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleCriarFormandoSemEmail} className="px-6 py-5 space-y-4">
+                <p className="text-xs text-white/40">O formando fará login com um <strong className="text-white/60">nome de utilizador</strong> gerado automaticamente a partir do nome.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-white/40">Nome</label>
+                    <input required value={noEmailForm.firstName} onChange={e => setNoEmailForm(f => ({ ...f, firstName: e.target.value }))}
+                      placeholder="João"
+                      className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50 transition-colors" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-white/40">Apelido</label>
+                    <input required value={noEmailForm.lastName} onChange={e => setNoEmailForm(f => ({ ...f, lastName: e.target.value }))}
+                      placeholder="Silva"
+                      className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50 transition-colors" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-white/40">Password temporária</label>
+                  <div className="relative">
+                    <input required type={showNoEmailPwd ? "text" : "password"} value={noEmailForm.password}
+                      onChange={e => setNoEmailForm(f => ({ ...f, password: e.target.value }))}
+                      minLength={6} placeholder="Mínimo 6 caracteres"
+                      className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 pr-10 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50 transition-colors" />
+                    <button type="button" onClick={() => setShowNoEmailPwd(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors">
+                      {showNoEmailPwd ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-1">
+                  <button type="button" onClick={() => setIsNoEmailModalOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl border border-white/[0.06] text-sm text-white/50 hover:text-white transition-colors">
+                    Cancelar
+                  </button>
+                  <button type="submit" disabled={noEmailSubmitting}
+                    className="flex-1 py-2.5 rounded-xl bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                    {noEmailSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                    {noEmailSubmitting ? "A criar..." : "Criar"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

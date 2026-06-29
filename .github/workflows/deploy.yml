@@ -172,6 +172,34 @@ jobs:
               UPDATE profiles SET status = 'activo' WHERE role IN ('admin', 'super-admin');
               UPDATE arquivos SET visibilidade = 'publico';
 
+              -- Disponibilidade agendada nos ficheiros
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS disponivel_de  TIMESTAMPTZ;
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS disponivel_ate TIMESTAMPTZ;
+
+              -- Username para login sem email
+              ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS username TEXT UNIQUE;
+              ALTER TABLE profiles   ALTER COLUMN email DROP NOT NULL;
+
+              -- Tarefas
+              CREATE TABLE IF NOT EXISTS tarefas (
+                id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+                titulo      TEXT        NOT NULL,
+                descricao   TEXT,
+                prazo       TIMESTAMPTZ,
+                criador_id  UUID        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_tarefas_criador ON tarefas(criador_id, created_at DESC);
+
+              CREATE TABLE IF NOT EXISTS tarefa_destinatarios (
+                tarefa_id   UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE,
+                formando_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                estado      TEXT NOT NULL DEFAULT 'pendente',
+                entregue_at TIMESTAMPTZ,
+                PRIMARY KEY (tarefa_id, formando_id)
+              );
+              CREATE INDEX IF NOT EXISTS idx_td_formando ON tarefa_destinatarios(formando_id, estado);
+
               -- Limpar sessoes expiradas
               DELETE FROM user_sessions WHERE expires_at < NOW();
             " || echo "Aviso: migração já aplicada ou erro ignorado"

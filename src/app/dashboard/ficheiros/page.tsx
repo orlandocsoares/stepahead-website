@@ -8,6 +8,7 @@ import {
   FileImage, FileVideo, FileArchive, File, Trash2, ImagePlus,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CalendarClock } from "lucide-react";
 
 const CATEGORIES = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
@@ -31,6 +32,40 @@ function VisibilidadeBadge({ v, small }: { v: string; small?: boolean }) {
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function getDisponibilidadeStatus(disponivel_de?: string | null, disponivel_ate?: string | null) {
+  const now = new Date();
+  const de = disponivel_de ? new Date(disponivel_de) : null;
+  const ate = disponivel_ate ? new Date(disponivel_ate) : null;
+  if (de && now < de) return "agendado";
+  if (ate && now > ate) return "expirado";
+  if (de || ate) return "activo";
+  return null;
+}
+
+function DisponibilidadeBadge({ disponivel_de, disponivel_ate }: { disponivel_de?: string | null; disponivel_ate?: string | null }) {
+  const status = getDisponibilidadeStatus(disponivel_de, disponivel_ate);
+  const ate = disponivel_ate ? new Date(disponivel_ate) : null;
+  const diasRestantes = ate ? Math.ceil((ate.getTime() - Date.now()) / 86400000) : null;
+
+  if (!status) return null;
+  if (status === "agendado") return (
+    <span className="inline-flex items-center gap-1 text-[9px] text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded px-1.5 py-0.5">
+      <CalendarClock size={9} /> Disponível a partir de {formatDate(disponivel_de!)}
+    </span>
+  );
+  if (status === "expirado") return (
+    <span className="inline-flex items-center gap-1 text-[9px] text-red-400 bg-red-400/10 border border-red-400/20 rounded px-1.5 py-0.5">
+      <CalendarClock size={9} /> Expirado
+    </span>
+  );
+  if (status === "activo" && diasRestantes !== null && diasRestantes <= 7) return (
+    <span className="inline-flex items-center gap-1 text-[9px] text-orange-400 bg-orange-400/10 border border-orange-400/20 rounded px-1.5 py-0.5">
+      <CalendarClock size={9} /> Expira em {diasRestantes}d
+    </span>
+  );
+  return null;
 }
 
 function getFileStyle(nome?: string, tipo?: string) {
@@ -93,6 +128,8 @@ export default function FicheirosPage() {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [generatingThumbs, setGeneratingThumbs] = useState(false);
   const [thumbProgress, setThumbProgress] = useState<{ done: number; total: number } | null>(null);
+  const [disponivel_de, setDisponivelDe] = useState("");
+  const [disponivel_ate, setDisponivelAte] = useState("");
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
 
@@ -115,6 +152,8 @@ export default function FicheirosPage() {
     setVisibilidade("publico");
     setTurmaId(minhasTurmas[0]?.id ?? "");
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
+    setDisponivelDe("");
+    setDisponivelAte("");
     setIsModalOpen(true);
   }
 
@@ -220,6 +259,9 @@ export default function FicheirosPage() {
       if (!isAdmin && !isOwner) {
         if (f.visibilidade === "privado") return false;
         if (f.visibilidade === "formadores" && !isFormador) return false;
+        // Ocultar ficheiros fora do intervalo de disponibilidade
+        const status = getDisponibilidadeStatus(f.disponivel_de, f.disponivel_ate);
+        if (status === "agendado" || status === "expirado") return false;
       }
 
       // Categoria
@@ -262,6 +304,8 @@ export default function FicheirosPage() {
           tipo: uploadFile.type.includes("video") ? "video" : "pdf",
           visibilidade,
           ...(visibilidade === "turma" && turmaId ? { turma_id: turmaId } : {}),
+          ...(disponivel_de ? { disponivel_de } : {}),
+          ...(disponivel_ate ? { disponivel_ate } : {}),
         }),
       });
       if (!dbRes.ok) throw new Error("Erro ao registar o ficheiro.");
@@ -418,6 +462,7 @@ export default function FicheirosPage() {
                 <div className="px-3 py-2.5 flex flex-col gap-1.5 flex-1">
                   <p className="text-xs text-white/80 font-medium leading-tight line-clamp-2">{f.label}</p>
                   <p className="text-[10px] text-white/30">{f.area} · {f.tamanho ?? "—"} · {formatDate(f.created_at)}</p>
+                  <DisponibilidadeBadge disponivel_de={f.disponivel_de} disponivel_ate={f.disponivel_ate} />
                   {canChangeVis ? (
                     <select
                       value={f.visibilidade ?? "publico"}
@@ -487,7 +532,12 @@ export default function FicheirosPage() {
                       </td>
                       <td className="px-5 py-3 text-white/40 hidden sm:table-cell">{f.area}</td>
                       <td className="px-5 py-3 text-white/40 hidden md:table-cell">{f.tamanho ?? "—"}</td>
-                      <td className="px-5 py-3 text-white/40 hidden lg:table-cell">{formatDate(f.created_at)}</td>
+                      <td className="px-5 py-3 text-white/40 hidden lg:table-cell">
+                        <div className="flex flex-col gap-1">
+                          <span>{formatDate(f.created_at)}</span>
+                          <DisponibilidadeBadge disponivel_de={f.disponivel_de} disponivel_ate={f.disponivel_ate} />
+                        </div>
+                      </td>
                       <td className="px-5 py-3">
                         {canChangeVis ? (
                           <select value={f.visibilidade ?? "publico"}
@@ -607,6 +657,33 @@ export default function FicheirosPage() {
                     <option key={t.id} value={t.id} className="bg-[#0d0d14]">{t.nome} ({t.area})</option>
                   ))}
                 </select>
+              )}
+            </div>
+
+            {/* Período de disponibilidade */}
+            <div className="space-y-2">
+              <label className="text-xs text-white/40 flex items-center gap-1.5">
+                <CalendarClock size={11} /> Disponibilidade (opcional)
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <span className="text-[10px] text-white/30">Disponível a partir de</span>
+                  <input type="date" value={disponivel_de} onChange={e => setDisponivelDe(e.target.value)}
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white/70 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] text-white/30">Expira em</span>
+                  <input type="date" value={disponivel_ate} onChange={e => setDisponivelAte(e.target.value)}
+                    min={disponivel_de || undefined}
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white/70 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                </div>
+              </div>
+              {(disponivel_de || disponivel_ate) && (
+                <p className="text-[10px] text-blue-400/70">
+                  {disponivel_de && !disponivel_ate && `Visível a partir de ${formatDate(disponivel_de)}`}
+                  {!disponivel_de && disponivel_ate && `Expira em ${formatDate(disponivel_ate)}`}
+                  {disponivel_de && disponivel_ate && `Visível de ${formatDate(disponivel_de)} até ${formatDate(disponivel_ate)}`}
+                </p>
               )}
             </div>
 

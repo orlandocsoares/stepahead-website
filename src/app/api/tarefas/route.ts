@@ -1,0 +1,89 @@
+import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/server-auth";
+import { dbQuery } from "@/lib/db";
+
+// GET /api/tarefas — lista tarefas relevantes para o utilizador
+export async function GET() {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+
+  const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
+  const role = profileRes.rows[0]?.role;
+
+  if (role === "formando") {
+    const res = await dbQuery(
+      `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
+              p.first_name AS criador_nome, p.last_name AS criador_apelido,
+              td.estado, td.entregue_at
+       FROM tarefa_destinatarios td
+       JOIN tarefas t ON t.id = td.tarefa_id
+       JOIN profiles p ON p.id = t.criador_id
+       WHERE td.formando_id = $1
+       ORDER BY t.prazo ASC NULLS LAST, t.created_at DESC`,
+      [sessionUser.id]
+    );
+    return NextResponse.json({ tarefas: res.rows });
+  } else {
+    const res = await dbQuery(
+      `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
+              COUNT(td.formando_id)                                         AS total,
+              COUNT(td.formando_id) FILTER (WHERE td.estado != 'pendente') AS entregues
+       FROM tarefas t
+       LEFT JOIN tarefa_destinatarios td ON td.tarefa_id = t.id
+       WHERE t.criador_id = $1
+       GROUP BY t.id
+       ORDER BY t.created_at DESC`,
+      [sessionUser.id]
+    );
+    return NextResponse.json({ tarefas: res.rows });
+  }
+}
+
+// POST /api/tarefas — criar tarefa (formador/admin)
+export async function POST(request: Request) {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+
+  const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
+  const role = profileRes.rows[0]?.role;
+  if (!["formador", "admin", "super-admin"].includes(role)) {
+    return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
+  }
+
+  const { titulo, descricao, prazo, destinatarios } = await request.json();
+  if (!titulo?.trim()) return NextResponse.json({ error: "Título obrigatório." }, { status: 400 });
+
+  const tarefaRes = await dbQuery(
+    `INSERT INTO tarefas (titulo, descricao, prazo, criador_id) VALUES ($1, $2, $3, $4) RETURNING id`,
+    [titulo.trim(), descricao?.trim() || null, prazo || null, sessionUser.id]
+  );
+  const tarefaId = tarefaRes.rows[0].id;
+
+  // Determinar formandos destinatários
+  let formandoIds: string[] = [];
+  if (Array.isArray(destinatarios)) {
+    formandoIds = destinatarios;
+  } else if (destinatarios === "todos") {
+    const res = await dbQuery(`SELECT id FROM profiles WHERE role = 'formando' AND status = 'activo'`, []);
+    formandoIds = res.rows.map((r: any) => r.id);
+  } else {
+    // "meus" — formandos deste formador
+    const res = await dbQuery(`SELECT id FROM profiles WHERE formador_id = $1 AND status = 'activo'`, [sessionUser.id]);
+    formandoIds = res.rows.map((r: any) => r.id);
+  }
+
+  if (formandoIds.length > 0) {
+    const destValues = formandoIds.map((id) => `('${tarefaId}', '${id}')`).join(", ");
+    await dbQuery(`INSERT INTO tarefa_destinatarios (tarefa_id, formando_id) VALUES ${destValues} ON CONFLICT DO NOTHING`, []);
+
+    const prazoStr = prazo ? ` — prazo: ${new Date(prazo).toLocaleDateString("pt-PT")}` : "";
+    const tituloEsc = titulo.trim().replace(/'/g, "''");
+    const mensagemEsc = `Nova tarefa${prazoStr}`.replace(/'/g, "''");
+    const notifValues = formandoIds.map((id) =>
+      `('${id}', 'tarefa', '${tituloEsc}', '${mensagemEsc}')`
+    ).join(", ");
+    await dbQuery(`INSERT INTO notificacoes (user_id, tipo, titulo, mensagem) VALUES ${notifValues}`, []);
+  }
+
+  return NextResponse.json({ id: tarefaId, destinatarios: formandoIds.length });
+}
