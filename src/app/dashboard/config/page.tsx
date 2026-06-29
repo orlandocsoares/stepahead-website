@@ -130,33 +130,40 @@ export default function ConfigPage() {
   if (!isAdmin) return null;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="space-y-5 max-w-2xl">
       {/* Header */}
-      <div className="flex items-center gap-2 px-6 py-4 border-b c-br shrink-0">
-        <Settings size={17} className="text-blue-400" />
-        <h1 className="text-sm font-semibold c-tx">Configurações</h1>
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+          <Settings size={16} className="text-blue-400" />
+        </div>
+        <div>
+          <h1 className="text-sm font-semibold c-tx">Configurações</h1>
+          <p className="text-[11px] c-tx4">Disciplinas e grupos de formação</p>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 px-6 pt-4 shrink-0">
-        {([
-          { key: "disciplinas", label: "Disciplinas", icon: BookOpen },
-          { key: "grupos",      label: "Grupos de Formação", icon: Users2 },
-        ] as const).map(({ key, label, icon: Icon }) => (
-          <button key={key} onClick={() => { setTab(key); setNewNome(""); setEditingId(null); }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === key ? "bg-blue-600/20 text-blue-400" : "c-tx3 hc-tx2 hc-s1"}`}>
-            <Icon size={14} /> {label}
-          </button>
-        ))}
-      </div>
+      {/* Card principal */}
+      <div className="c-bg2 border c-br rounded-xl overflow-hidden">
+        {/* Tabs dentro do card */}
+        <div className="flex gap-1 px-4 pt-4 pb-0 border-b c-br">
+          {([
+            { key: "disciplinas", label: "Disciplinas", icon: BookOpen },
+            { key: "grupos",      label: "Grupos de Formação", icon: Users2 },
+          ] as const).map(({ key, label, icon: Icon }) => (
+            <button key={key} onClick={() => { setTab(key); setNewNome(""); setEditingId(null); }}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${tab === key ? "border-blue-500 text-blue-400" : "border-transparent c-tx3 hc-tx2"}`}>
+              <Icon size={14} /> {label}
+            </button>
+          ))}
+        </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="p-4">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={22} className="animate-spin text-blue-500" />
           </div>
         ) : (
-          <div className="max-w-xl space-y-3">
+          <div className="space-y-3">
             {/* Table */}
             <div className="c-s1 border c-br rounded-xl overflow-hidden">
               <table className="w-full text-sm">
@@ -227,6 +234,7 @@ export default function ConfigPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
