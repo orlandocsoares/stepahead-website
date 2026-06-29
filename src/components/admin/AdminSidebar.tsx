@@ -20,6 +20,7 @@ const NAV = [
   { label: "Utilizadores", icon: Users,            path: "/dashboard/admin",        staffOnly: true },
   { label: "Suporte",      icon: LifeBuoy,         path: "/dashboard/suporte" },
   { label: "Perfil",       icon: UserCircle,       path: "/dashboard/perfil" },
+  { label: "Configurações", icon: Settings,         path: "/dashboard/config",           adminOnly: true },
 ];
 
 type Props = {

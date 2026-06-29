@@ -200,6 +200,32 @@ jobs:
               );
               CREATE INDEX IF NOT EXISTS idx_td_formando ON tarefa_destinatarios(formando_id, estado);
 
+              -- Disciplinas e grupos de formação
+              CREATE TABLE IF NOT EXISTS disciplinas (
+                id       UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+                nome     TEXT    NOT NULL UNIQUE,
+                activo   BOOLEAN NOT NULL DEFAULT true,
+                ordem    INT     NOT NULL DEFAULT 0
+              );
+              INSERT INTO disciplinas (nome, ordem) VALUES
+                ('Educação Especial',    1),
+                ('Educação Pré-Escolar', 2),
+                ('Expressão Plástica',   3),
+                ('Expressão Motora',     4),
+                ('Língua Portuguesa',    5),
+                ('Matemática',           6)
+              ON CONFLICT (nome) DO NOTHING;
+
+              CREATE TABLE IF NOT EXISTS grupos_formacao (
+                id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+                nome       TEXT        NOT NULL,
+                activo     BOOLEAN     NOT NULL DEFAULT true,
+                criado_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS grupo_formacao_id UUID REFERENCES grupos_formacao(id) ON DELETE SET NULL;
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS disciplina_id UUID REFERENCES disciplinas(id) ON DELETE SET NULL;
+
               -- Limpar sessoes expiradas
               DELETE FROM user_sessions WHERE expires_at < NOW();
             " || echo "Aviso: migração já aplicada ou erro ignorado"

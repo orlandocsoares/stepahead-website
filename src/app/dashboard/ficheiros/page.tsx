@@ -10,7 +10,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CalendarClock } from "lucide-react";
 
-const CATEGORIES = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
+const CATEGORIES_FALLBACK = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
 const VISIBILIDADE_OPTIONS = [
   { value: "privado",           label: "Só eu",              icon: Lock,          color: "c-tx3",    roles: ["formador", "admin"] },
@@ -87,25 +87,27 @@ function getFileStyle(nome?: string, tipo?: string) {
   return { Icon: File,          bg: "c-s2",  text: "c-tx3",    label: ext.toUpperCase() || "—" };
 }
 
-function parseSpecializations(raw?: string): string[] {
+function parseSpecializations(raw?: string, allCats?: string[]): string[] {
+  const cats = allCats ?? CATEGORIES_FALLBACK;
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed.filter((s: string) => CATEGORIES.includes(s));
+    if (Array.isArray(parsed)) return parsed.filter((s: string) => cats.includes(s));
   } catch {}
-  return CATEGORIES.includes(raw) ? [raw] : [];
+  return cats.includes(raw) ? [raw] : [];
 }
 
-function getVisibleCategories(role?: string, specialization?: string): string[] {
-  if (role === "admin") return CATEGORIES;
-  const areas = parseSpecializations(specialization);
+function getVisibleCategories(role?: string, specialization?: string, allCats?: string[]): string[] {
+  const cats = allCats ?? CATEGORIES_FALLBACK;
+  if (role === "admin") return cats;
+  const areas = parseSpecializations(specialization, cats);
   if (role === "formador" && areas.length > 0) return ["Geral", ...areas];
-  return CATEGORIES;
+  return cats;
 }
 
-function getUploadAreas(role?: string, specialization?: string): string[] | null {
+function getUploadAreas(role?: string, specialization?: string, allCats?: string[]): string[] | null {
   if (role === "admin") return null;
-  const areas = parseSpecializations(specialization);
+  const areas = parseSpecializations(specialization, allCats);
   return role === "formador" && areas.length > 0 ? ["Geral", ...areas] : null;
 }
 
@@ -130,18 +132,23 @@ export default function FicheirosPage() {
   const [thumbProgress, setThumbProgress] = useState<{ done: number; total: number } | null>(null);
   const [disponivel_de, setDisponivelDe] = useState("");
   const [disponivel_ate, setDisponivelAte] = useState("");
+  const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
+  const [gruposFormacao, setGruposFormacao] = useState<{ id: string; nome: string }[]>([]);
+  const [grupoFormacaoId, setGrupoFormacaoId] = useState("");
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
 
+  const allCatNames = useMemo(() => ["Geral", ...disciplinas.map(d => d.nome)], [disciplinas]);
+
   const visibleCategories = useMemo(
-    () => getVisibleCategories(user?.role, user?.specialization),
-    [user?.role, user?.specialization]
+    () => getVisibleCategories(user?.role, user?.specialization, allCatNames),
+    [user?.role, user?.specialization, allCatNames]
   );
 
   const showGeral = true;
   const uploadAreas = useMemo(
-    () => getUploadAreas(user?.role, user?.specialization),
-    [user?.role, user?.specialization]
+    () => getUploadAreas(user?.role, user?.specialization, allCatNames),
+    [user?.role, user?.specialization, allCatNames]
   );
   const isRestricted = user?.role === "formador" && uploadAreas !== null;
 
@@ -154,6 +161,7 @@ export default function FicheirosPage() {
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
     setDisponivelDe("");
     setDisponivelAte("");
+    setGrupoFormacaoId("");
     setIsModalOpen(true);
   }
 
@@ -240,6 +248,8 @@ export default function FicheirosPage() {
 
   useEffect(() => {
     fetchFiles();
+    fetch("/api/admin/disciplinas").then(r => r.json()).then(j => setDisciplinas(j.disciplinas?.filter((d: any) => d.activo) ?? []));
+    fetch("/api/admin/grupos-formacao").then(r => r.json()).then(j => setGruposFormacao(j.grupos?.filter((g: any) => g.activo) ?? []));
     if (user?.role === "formador") {
       fetch("/api/turmas").then(r => r.json()).then(json => {
         const todas = json.data ?? [];
@@ -306,6 +316,7 @@ export default function FicheirosPage() {
           ...(visibilidade === "turma" && turmaId ? { turma_id: turmaId } : {}),
           ...(disponivel_de ? { disponivel_de } : {}),
           ...(disponivel_ate ? { disponivel_ate } : {}),
+          ...(grupoFormacaoId ? { grupo_formacao_id: grupoFormacaoId } : {}),
         }),
       });
       if (!dbRes.ok) throw new Error("Erro ao registar o ficheiro.");
@@ -348,7 +359,7 @@ export default function FicheirosPage() {
     }
   }
 
-  const uploadCategoryOptions = uploadAreas ?? CATEGORIES;
+  const uploadCategoryOptions = uploadAreas ?? allCatNames;
   const uploadAreaLocked = uploadAreas?.length === 1;
 
   return (
@@ -686,6 +697,19 @@ export default function FicheirosPage() {
                 </p>
               )}
             </div>
+
+            {gruposFormacao.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Grupo de Formação (opcional)</label>
+                <select value={grupoFormacaoId} onChange={e => setGrupoFormacaoId(e.target.value)}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                  <option value="">— Nenhum —</option>
+                  {gruposFormacao.map(g => (
+                    <option key={g.id} value={g.id} className="c-bg">{g.nome}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <label className="text-xs c-tx3">Ficheiro</label>
