@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { FileText, X, ChevronRight, BookOpen, Loader2, ExternalLink } from "lucide-react";
@@ -41,7 +41,7 @@ const AREA_COLORS: Record<string, string> = {
 };
 const DEFAULT_COLOR = "bg-white/5 text-white/60 border-white/10";
 
-export default function RecursosPage() {
+function RecursosContent() {
   const searchParams = useSearchParams();
   const areaFiltro = searchParams.get("area") ?? null;
 
@@ -219,5 +219,18 @@ export default function RecursosPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function RecursosPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0d0d14] flex items-center justify-center gap-2 text-white/30">
+        <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white/60 animate-spin" />
+        <span className="text-sm">A carregar...</span>
+      </div>
+    }>
+      <RecursosContent />
+    </Suspense>
   );
 }
