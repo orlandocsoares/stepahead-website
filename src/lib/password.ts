@@ -11,15 +11,23 @@ export function hashPassword(password: string): string {
 }
 
 export function verifyPassword(password: string, stored: string): boolean {
-  const [iterationsRaw, salt, hashHex] = stored.split(":");
-  if (!iterationsRaw || !salt || !hashHex) return false;
-
-  const iterations = Number(iterationsRaw);
-  if (!Number.isFinite(iterations) || iterations < 10000) return false;
-
-  const hashBuffer = Buffer.from(hashHex, "hex");
-  const testHash = pbkdf2Sync(password, salt, iterations, hashBuffer.length, DIGEST);
-
-  if (hashBuffer.length !== testHash.length) return false;
-  return timingSafeEqual(hashBuffer, testHash);
+  try {
+    const parts = stored.split(":");
+    // dummy hash garante tempo constante mesmo em formato inválido
+    if (parts.length !== 3) {
+      pbkdf2Sync("dummy", "dummy-salt", ITERATIONS, KEY_LENGTH, DIGEST);
+      return false;
+    }
+    const [iterationsRaw, salt, hashHex] = parts;
+    const iterations = Math.max(Number(iterationsRaw) || ITERATIONS, 10000);
+    const hashBuffer = Buffer.from(hashHex, "hex");
+    const testHash = pbkdf2Sync(password, salt, iterations, KEY_LENGTH, DIGEST);
+    // buffers de tamanho fixo KEY_LENGTH — sem early exit por tamanho
+    const a = hashBuffer.length === KEY_LENGTH ? hashBuffer : Buffer.alloc(KEY_LENGTH);
+    const b = testHash;
+    return timingSafeEqual(a, b) && hashBuffer.length === KEY_LENGTH;
+  } catch {
+    pbkdf2Sync("dummy", "dummy-salt", ITERATIONS, KEY_LENGTH, DIGEST);
+    return false;
+  }
 }

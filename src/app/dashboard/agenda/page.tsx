@@ -89,22 +89,22 @@ export default function AgendaPage() {
     <div className="space-y-6 w-full">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-lg font-semibold text-white">Agenda</h2>
-          <p className="text-sm text-white/40 mt-0.5">{filtered.length} actividade{filtered.length !== 1 ? "s" : ""}.</p>
+          <h2 className="text-lg font-semibold c-tx">Agenda</h2>
+          <p className="text-sm c-tx3 mt-0.5">{filtered.length} actividade{filtered.length !== 1 ? "s" : ""}.</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pesquisar..." className="pl-9 pr-4 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 w-44 transition-colors" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pesquisar..." className="pl-9 pr-4 py-2 rounded-lg c-s1 border c-br text-sm c-tx placeholder:c-tx4 outline-none focus:border-blue-500/50 w-44 transition-colors" />
           </div>
-          <select value={filterFormat} onChange={(e) => setFilterFormat(e.target.value)} className="px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white/60 outline-none">
-            {["Todos", "Presencial", "Online"].map((f) => <option key={f} value={f} className="bg-[#0d0d14]">{f}</option>)}
+          <select value={filterFormat} onChange={(e) => setFilterFormat(e.target.value)} className="px-3 py-2 rounded-lg c-s1 border c-br text-sm c-tx2 outline-none">
+            {["Todos", "Presencial", "Online"].map((f) => <option key={f} value={f} className="c-bg">{f}</option>)}
           </select>
-          <select value={filterScope} onChange={(e) => setFilterScope(e.target.value)} className="px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white/60 outline-none">
-            {["Todos", "Global", "Restrito"].map((s) => <option key={s} value={s} className="bg-[#0d0d14]">{s}</option>)}
+          <select value={filterScope} onChange={(e) => setFilterScope(e.target.value)} className="px-3 py-2 rounded-lg c-s1 border c-br text-sm c-tx2 outline-none">
+            {["Todos", "Global", "Restrito"].map((s) => <option key={s} value={s} className="c-bg">{s}</option>)}
           </select>
           {canManage && (
-            <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
+            <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors">
               <Plus size={14} /> Novo evento
             </button>
           )}
@@ -118,19 +118,19 @@ export default function AgendaPage() {
             const isOnline = item.local === "Online";
             return (
               <motion.div key={item.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: index * 0.04 }}
-                className="bg-[#13131f] border border-white/[0.06] rounded-xl p-5 flex flex-col gap-4 hover:border-white/[0.12] transition-colors"
+                className="c-bg2 border c-br rounded-xl p-5 flex flex-col gap-4 hover:border-white/[0.12] transition-colors"
               >
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${item.tipo === "Restrito" ? "bg-amber-500/10 text-amber-400" : "bg-blue-500/10 text-blue-400"}`}>{item.tipo}</span>
                   <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${isOnline ? "bg-purple-500/10 text-purple-400" : "bg-emerald-500/10 text-emerald-400"}`}>{isOnline ? "Online" : "Presencial"}</span>
                 </div>
-                <p className="text-sm font-semibold text-white leading-snug">{item.titulo}</p>
-                <div className="flex items-center gap-4 text-xs text-white/40">
+                <p className="text-sm font-semibold c-tx leading-snug">{item.titulo}</p>
+                <div className="flex items-center gap-4 text-xs c-tx3">
                   <span className="flex items-center gap-1.5"><CalendarIcon size={12} className="text-blue-400" />{new Date(item.data_evento).toLocaleDateString("pt-PT")}</span>
                   <span className="flex items-center gap-1.5">{isOnline ? <Laptop size={12} className="text-purple-400" /> : <MapPin size={12} className="text-emerald-400" />}{item.local}</span>
                 </div>
                 <button onClick={() => handleInscription(item.id)}
-                  className={`mt-auto w-full py-2 rounded-lg text-xs font-medium transition-colors ${isRegistered ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30" : "bg-white/[0.04] text-white/50 border border-white/[0.06] hover:bg-white/[0.08]"}`}
+                  className={`mt-auto w-full py-2 rounded-lg text-xs font-medium transition-colors ${isRegistered ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30" : "c-s1 c-tx3 border c-br hc-s3"}`}
                 >
                   {isRegistered ? <span className="flex items-center justify-center gap-1.5"><CheckCircle2 size={13} /> Inscrito</span> : "Inscrever"}
                 </button>
@@ -140,52 +140,52 @@ export default function AgendaPage() {
         </AnimatePresence>
       </div>
 
-      {filtered.length === 0 && <div className="py-20 text-center text-sm text-white/20">Nenhuma actividade encontrada.</div>}
+      {filtered.length === 0 && <div className="py-20 text-center text-sm c-tx5">Nenhuma actividade encontrada.</div>}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-[#0d0d14] border border-white/[0.08] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/[0.06]">
-              <h3 className="text-base font-semibold text-white flex items-center gap-2"><CalendarIcon size={16} className="text-blue-400" /> Novo evento</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-white/30 hover:text-white"><X size={18} /></button>
+          <div className="relative w-full max-w-md c-bg border c-br rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b c-br">
+              <h3 className="text-base font-semibold c-tx flex items-center gap-2"><CalendarIcon size={16} className="text-blue-400" /> Novo evento</h3>
+              <button onClick={() => setIsModalOpen(false)} className="c-tx4 hc-tx"><X size={18} /></button>
             </div>
             <form onSubmit={handleCreate} className="px-6 py-5 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs text-white/40">Título</label>
-                <input required value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} placeholder="Ex: Sessão de Capacitação..." className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50" />
+                <label className="text-xs c-tx3">Título</label>
+                <input required value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} placeholder="Ex: Sessão de Capacitação..." className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs text-white/40">Formato</label>
-                  <select value={form.formato} onChange={(e) => setForm({ ...form, formato: e.target.value })} className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none">
-                    <option className="bg-[#0d0d14]">Presencial</option>
-                    <option className="bg-[#0d0d14]">Online</option>
+                  <label className="text-xs c-tx3">Formato</label>
+                  <select value={form.formato} onChange={(e) => setForm({ ...form, formato: e.target.value })} className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none">
+                    <option className="c-bg">Presencial</option>
+                    <option className="c-bg">Online</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs text-white/40">Data</label>
-                  <input required type="date" value={form.data_evento} onChange={(e) => setForm({ ...form, data_evento: e.target.value })} className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none [color-scheme:dark]" />
+                  <label className="text-xs c-tx3">Data</label>
+                  <input required type="date" value={form.data_evento} onChange={(e) => setForm({ ...form, data_evento: e.target.value })} className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none [color-scheme:dark]" />
                 </div>
               </div>
               {form.formato === "Presencial" && (
                 <div className="space-y-1.5">
-                  <label className="text-xs text-white/40">Local</label>
-                  <select value={form.provincia} onChange={(e) => setForm({ ...form, provincia: e.target.value })} className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none">
-                    {["Luanda", "Bié"].map((l) => <option key={l} className="bg-[#0d0d14]">{l}</option>)}
+                  <label className="text-xs c-tx3">Local</label>
+                  <select value={form.provincia} onChange={(e) => setForm({ ...form, provincia: e.target.value })} className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none">
+                    {["Luanda", "Bié"].map((l) => <option key={l} className="c-bg">{l}</option>)}
                   </select>
                 </div>
               )}
               <div className="space-y-1.5">
-                <label className="text-xs text-white/40">Âmbito</label>
-                <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none">
-                  <option value="Global" className="bg-[#0d0d14]">Global</option>
-                  <option value="Restrito" className="bg-[#0d0d14]">Restrito</option>
+                <label className="text-xs c-tx3">Âmbito</label>
+                <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none">
+                  <option value="Global" className="c-bg">Global</option>
+                  <option value="Restrito" className="c-bg">Restrito</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-lg border border-white/[0.06] text-sm text-white/50 hover:text-white transition-colors">Cancelar</button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx transition-colors">Cancelar</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                   {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : "Guardar"}
                 </button>
               </div>

@@ -5,14 +5,15 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   FileText, Video, Search, Download, Loader2, Plus, FolderOpen, Lock,
   Globe, Users, GraduationCap, LayoutGrid, List, ExternalLink,
-  FileImage, FileVideo, FileArchive, File, Trash2, ImagePlus,
+  FileImage, FileVideo, FileArchive, File, Trash2, ImagePlus, Pencil,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CalendarClock } from "lucide-react";
 
-const CATEGORIES = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
+const CATEGORIES_FALLBACK = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
 const VISIBILIDADE_OPTIONS = [
-  { value: "privado",           label: "Só eu",              icon: Lock,          color: "text-white/40",    roles: ["formador", "admin"] },
+  { value: "privado",           label: "Só eu",              icon: Lock,          color: "c-tx3",    roles: ["formador", "admin"] },
   { value: "turma",             label: "Minha turma",        icon: GraduationCap, color: "text-amber-400",   roles: ["formador"] },
   { value: "formadores",        label: "Formadores",         icon: Users,         color: "text-blue-400",    roles: ["formador", "admin"] },
   { value: "formadores_turma",  label: "Formadores + Turma", icon: Users,         color: "text-purple-400",  roles: ["formador"] },
@@ -33,6 +34,40 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function getDisponibilidadeStatus(disponivel_de?: string | null, disponivel_ate?: string | null) {
+  const now = new Date();
+  const de = disponivel_de ? new Date(disponivel_de) : null;
+  const ate = disponivel_ate ? new Date(disponivel_ate) : null;
+  if (de && now < de) return "agendado";
+  if (ate && now > ate) return "expirado";
+  if (de || ate) return "activo";
+  return null;
+}
+
+function DisponibilidadeBadge({ disponivel_de, disponivel_ate }: { disponivel_de?: string | null; disponivel_ate?: string | null }) {
+  const status = getDisponibilidadeStatus(disponivel_de, disponivel_ate);
+  const ate = disponivel_ate ? new Date(disponivel_ate) : null;
+  const diasRestantes = ate ? Math.ceil((ate.getTime() - Date.now()) / 86400000) : null;
+
+  if (!status) return null;
+  if (status === "agendado") return (
+    <span className="inline-flex items-center gap-1 text-[9px] text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded px-1.5 py-0.5">
+      <CalendarClock size={9} /> Disponível a partir de {formatDate(disponivel_de!)}
+    </span>
+  );
+  if (status === "expirado") return (
+    <span className="inline-flex items-center gap-1 text-[9px] text-red-400 bg-red-400/10 border border-red-400/20 rounded px-1.5 py-0.5">
+      <CalendarClock size={9} /> Expirado
+    </span>
+  );
+  if (status === "activo" && diasRestantes !== null && diasRestantes <= 7) return (
+    <span className="inline-flex items-center gap-1 text-[9px] text-orange-400 bg-orange-400/10 border border-orange-400/20 rounded px-1.5 py-0.5">
+      <CalendarClock size={9} /> Expira em {diasRestantes}d
+    </span>
+  );
+  return null;
+}
+
 function getFileStyle(nome?: string, tipo?: string) {
   const ext = nome?.split(".").pop()?.toLowerCase() ?? "";
   if (tipo === "video" || ["mp4","mov","avi","mkv"].includes(ext))
@@ -49,28 +84,30 @@ function getFileStyle(nome?: string, tipo?: string) {
     return { Icon: FileText,    bg: "bg-orange-500/10", text: "text-orange-400",  label: "PPT" };
   if (["xls","xlsx"].includes(ext))
     return { Icon: FileText,    bg: "bg-emerald-500/10","text": "text-emerald-400", label: "Excel" };
-  return { Icon: File,          bg: "bg-white/[0.06]",  text: "text-white/40",    label: ext.toUpperCase() || "—" };
+  return { Icon: File,          bg: "c-s2",  text: "c-tx3",    label: ext.toUpperCase() || "—" };
 }
 
-function parseSpecializations(raw?: string): string[] {
+function parseSpecializations(raw?: string, allCats?: string[]): string[] {
+  const cats = allCats ?? CATEGORIES_FALLBACK;
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed.filter((s: string) => CATEGORIES.includes(s));
+    if (Array.isArray(parsed)) return parsed.filter((s: string) => cats.includes(s));
   } catch {}
-  return CATEGORIES.includes(raw) ? [raw] : [];
+  return cats.includes(raw) ? [raw] : [];
 }
 
-function getVisibleCategories(role?: string, specialization?: string): string[] {
-  if (role === "admin") return CATEGORIES;
-  const areas = parseSpecializations(specialization);
+function getVisibleCategories(role?: string, specialization?: string, allCats?: string[]): string[] {
+  const cats = allCats ?? CATEGORIES_FALLBACK;
+  if (role === "admin") return cats;
+  const areas = parseSpecializations(specialization, cats);
   if (role === "formador" && areas.length > 0) return ["Geral", ...areas];
-  return CATEGORIES;
+  return cats;
 }
 
-function getUploadAreas(role?: string, specialization?: string): string[] | null {
+function getUploadAreas(role?: string, specialization?: string, allCats?: string[]): string[] | null {
   if (role === "admin") return null;
-  const areas = parseSpecializations(specialization);
+  const areas = parseSpecializations(specialization, allCats);
   return role === "formador" && areas.length > 0 ? ["Geral", ...areas] : null;
 }
 
@@ -93,18 +130,38 @@ export default function FicheirosPage() {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [generatingThumbs, setGeneratingThumbs] = useState(false);
   const [thumbProgress, setThumbProgress] = useState<{ done: number; total: number } | null>(null);
+  const [disponivel_de, setDisponivelDe] = useState("");
+  const [disponivel_ate, setDisponivelAte] = useState("");
+  const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
+  const [gruposFormacao, setGruposFormacao] = useState<{ id: string; nome: string }[]>([]);
+  const [gruposUpload, setGruposUpload] = useState<string[]>([]);
+  const [sitePublico, setSitePublico] = useState(false);
+  const [activeGrupo, setActiveGrupo] = useState<string>("todos");
+  // Edit modal
+  const [editingFile, setEditingFile] = useState<any>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editArea, setEditArea] = useState("Geral");
+  const [editVisibilidade, setEditVisibilidade] = useState("publico");
+  const [editTurmaId, setEditTurmaId] = useState("");
+  const [editDisponivelDe, setEditDisponivelDe] = useState("");
+  const [editDisponivelAte, setEditDisponivelAte] = useState("");
+  const [editGrupos, setEditGrupos] = useState<string[]>([]);
+  const [editSitePublico, setEditSitePublico] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
 
+  const allCatNames = useMemo(() => ["Geral", ...disciplinas.map(d => d.nome)], [disciplinas]);
+
   const visibleCategories = useMemo(
-    () => getVisibleCategories(user?.role, user?.specialization),
-    [user?.role, user?.specialization]
+    () => getVisibleCategories(user?.role, user?.specialization, allCatNames),
+    [user?.role, user?.specialization, allCatNames]
   );
 
   const showGeral = true;
   const uploadAreas = useMemo(
-    () => getUploadAreas(user?.role, user?.specialization),
-    [user?.role, user?.specialization]
+    () => getUploadAreas(user?.role, user?.specialization, allCatNames),
+    [user?.role, user?.specialization, allCatNames]
   );
   const isRestricted = user?.role === "formador" && uploadAreas !== null;
 
@@ -115,6 +172,10 @@ export default function FicheirosPage() {
     setVisibilidade("publico");
     setTurmaId(minhasTurmas[0]?.id ?? "");
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
+    setDisponivelDe("");
+    setDisponivelAte("");
+    setGruposUpload([]);
+    setSitePublico(false);
     setIsModalOpen(true);
   }
 
@@ -182,7 +243,7 @@ export default function FicheirosPage() {
 
   async function fetchFiles() {
     try {
-      const res = await fetch("/api/db/arquivos?orderBy=created_at&ascending=false");
+      const res = await fetch("/api/arquivos/lista");
       const json = await res.json();
       const rows = json?.data ?? json;
       setFiles(Array.isArray(rows) ? rows : []);
@@ -201,6 +262,8 @@ export default function FicheirosPage() {
 
   useEffect(() => {
     fetchFiles();
+    fetch("/api/admin/disciplinas").then(r => r.json()).then(j => setDisciplinas(j.disciplinas?.filter((d: any) => d.activo) ?? []));
+    fetch("/api/admin/grupos-formacao").then(r => r.json()).then(j => setGruposFormacao(j.grupos?.filter((g: any) => g.activo) ?? []));
     if (user?.role === "formador") {
       fetch("/api/turmas").then(r => r.json()).then(json => {
         const todas = json.data ?? [];
@@ -220,18 +283,31 @@ export default function FicheirosPage() {
       if (!isAdmin && !isOwner) {
         if (f.visibilidade === "privado") return false;
         if (f.visibilidade === "formadores" && !isFormador) return false;
+        // Ocultar ficheiros fora do intervalo de disponibilidade
+        const status = getDisponibilidadeStatus(f.disponivel_de, f.disponivel_ate);
+        if (status === "agendado" || status === "expirado") return false;
       }
 
       // Categoria
       if (!visibleCategories.includes(f.area)) return false;
       if (activeCategory !== "Geral" && f.area !== activeCategory) return false;
 
+      // Grupo de formação (suporta múltiplos)
+      if (activeGrupo !== "todos") {
+        const gs: string[] = Array.isArray(f.grupos) ? f.grupos : [];
+        if (activeGrupo === "sem-grupo") {
+          if (gs.length > 0) return false;
+        } else {
+          if (!gs.includes(activeGrupo)) return false;
+        }
+      }
+
       // Pesquisa
       if (search && !f.label?.toLowerCase().includes(search.toLowerCase())) return false;
 
       return true;
     });
-  }, [files, search, activeCategory, visibleCategories, user]);
+  }, [files, search, activeCategory, activeGrupo, visibleCategories, user]);
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
@@ -262,9 +338,25 @@ export default function FicheirosPage() {
           tipo: uploadFile.type.includes("video") ? "video" : "pdf",
           visibilidade,
           ...(visibilidade === "turma" && turmaId ? { turma_id: turmaId } : {}),
+          ...(disponivel_de ? { disponivel_de } : {}),
+          ...(disponivel_ate ? { disponivel_ate } : {}),
+          ...(gruposUpload[0] ? { grupo_formacao_id: gruposUpload[0] } : {}),
+          site_publico: sitePublico && visibilidade === "publico",
         }),
       });
       if (!dbRes.ok) throw new Error("Erro ao registar o ficheiro.");
+
+      // Associar múltiplos grupos
+      if (gruposUpload.length > 0) {
+        const newFile = (await dbRes.json())?.data?.[0];
+        if (newFile?.id) {
+          await fetch("/api/arquivos/editar", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: newFile.id, grupos: gruposUpload }),
+          });
+        }
+      }
 
       setIsModalOpen(false);
       setThumbnailPreview(null);
@@ -290,6 +382,48 @@ export default function FicheirosPage() {
     }
   }
 
+  function openEditModal(f: any) {
+    setEditingFile(f);
+    setEditTitle(f.label ?? "");
+    setEditArea(f.area ?? "Geral");
+    setEditVisibilidade(f.visibilidade ?? "publico");
+    setEditTurmaId(f.turma_id ?? "");
+    setEditDisponivelDe(f.disponivel_de ? f.disponivel_de.slice(0, 10) : "");
+    setEditDisponivelAte(f.disponivel_ate ? f.disponivel_ate.slice(0, 10) : "");
+    setEditGrupos(Array.isArray(f.grupos) ? f.grupos : []);
+    setEditSitePublico(f.site_publico ?? false);
+  }
+
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingFile) return;
+    setIsSavingEdit(true);
+    try {
+      const res = await fetch("/api/arquivos/editar", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingFile.id,
+          label: editTitle,
+          area: editArea,
+          visibilidade: editVisibilidade,
+          turma_id: editTurmaId || null,
+          disponivel_de: editDisponivelDe || null,
+          disponivel_ate: editDisponivelAte || null,
+          grupos: editGrupos,
+          site_publico: editSitePublico && editVisibilidade === "publico",
+        }),
+      });
+      if (!res.ok) throw new Error("Erro ao guardar alterações.");
+      setEditingFile(null);
+      fetchFiles();
+    } catch (err: any) {
+      alert(err.message ?? "Erro desconhecido.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }
+
   async function handleVisibilidadeChange(id: string, newVis: string) {
     setUpdatingId(id);
     try {
@@ -304,7 +438,7 @@ export default function FicheirosPage() {
     }
   }
 
-  const uploadCategoryOptions = uploadAreas ?? CATEGORIES;
+  const uploadCategoryOptions = uploadAreas ?? allCatNames;
   const uploadAreaLocked = uploadAreas?.length === 1;
 
   return (
@@ -313,8 +447,8 @@ export default function FicheirosPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-lg font-semibold text-white">Ficheiros</h2>
-          <p className="text-sm text-white/40 mt-0.5">
+          <h2 className="text-lg font-semibold c-tx">Ficheiros</h2>
+          <p className="text-sm c-tx3 mt-0.5">
             {filtered.length} ficheiro{filtered.length !== 1 ? "s" : ""}
             {isRestricted && (
               <span className="ml-2 inline-flex items-center gap-1 text-[10px] text-amber-400/70">
@@ -325,27 +459,27 @@ export default function FicheirosPage() {
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Pesquisar..."
-              className="pl-9 pr-4 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 w-48 transition-colors"
+              className="pl-9 pr-4 py-2 rounded-lg c-s1 border c-br text-sm c-tx placeholder:c-tx4 outline-none focus:border-blue-500/50 w-48 transition-colors"
             />
           </div>
-          <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-lg p-1">
+          <div className="flex items-center gap-1 c-s1 border c-br rounded-lg p-1">
             <button onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-white/[0.08] text-white" : "text-white/30 hover:text-white/60"}`}>
+              className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "c-s3 c-tx" : "c-tx4 hc-tx2"}`}>
               <LayoutGrid size={14} />
             </button>
             <button onClick={() => setViewMode("list")}
-              className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-white/[0.08] text-white" : "text-white/30 hover:text-white/60"}`}>
+              className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "c-s3 c-tx" : "c-tx4 hc-tx2"}`}>
               <List size={14} />
             </button>
           </div>
           {canUpload && (
             <button onClick={openUploadModal}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors">
               <Plus size={14} /> Upload
             </button>
           )}
@@ -359,12 +493,29 @@ export default function FicheirosPage() {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               activeCategory === cat
                 ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
-                : "bg-white/[0.03] text-white/40 border border-white/[0.06] hover:text-white/70"
+                : "c-s1 c-tx3 border c-br hover:c-tx2"
             }`}>
             {cat}
           </button>
         ))}
       </div>
+
+      {/* Filtros de grupo de formação */}
+      {gruposFormacao.length > 0 && (
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-[10px] font-bold uppercase tracking-widest c-tx5 mr-1">Grupo</span>
+          {[{ id: "todos", nome: "Todos" }, ...gruposFormacao, { id: "sem-grupo", nome: "Sem grupo" }].map((g) => (
+            <button key={g.id} onClick={() => setActiveGrupo(g.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeGrupo === g.id
+                  ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30"
+                  : "c-s1 c-tx3 border c-br hover:c-tx2"
+              }`}>
+              {g.nome}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Conteúdo */}
       {loading ? (
@@ -372,13 +523,13 @@ export default function FicheirosPage() {
           <Loader2 size={22} className="animate-spin text-blue-500" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl flex flex-col items-center justify-center py-20 gap-4 text-center">
+        <div className="c-bg2 border c-br rounded-xl flex flex-col items-center justify-center py-20 gap-4 text-center">
           <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
             <FolderOpen size={22} className="text-blue-400" />
           </div>
           <div>
-            <p className="text-sm font-medium text-white">Sem ficheiros</p>
-            <p className="text-xs text-white/30 mt-1">
+            <p className="text-sm font-medium c-tx">Sem ficheiros</p>
+            <p className="text-xs c-tx4 mt-1">
               {canUpload ? "Clica em \"Upload\" para adicionar o primeiro ficheiro." : "Ainda não há ficheiros nesta categoria."}
             </p>
           </div>
@@ -395,7 +546,7 @@ export default function FicheirosPage() {
               ? `/storage/v1/object/public/materiais/${encodeURIComponent(f.nome_arquivo)}`
               : "#";
             return (
-              <div key={f.id} className="group bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/[0.12] transition-all flex flex-col">
+              <div key={f.id} className="group c-bg2 border c-br rounded-xl overflow-hidden hover:border-white/[0.12] transition-all flex flex-col">
                 {/* Miniatura */}
                 <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="block">
                   <div className={`flex items-center justify-center h-28 relative overflow-hidden ${f.thumbnail_url ? "" : bg}`}>
@@ -410,23 +561,24 @@ export default function FicheirosPage() {
                       {label}
                     </span>
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                      <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ExternalLink size={18} className="c-tx opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
                 </a>
                 {/* Info */}
                 <div className="px-3 py-2.5 flex flex-col gap-1.5 flex-1">
-                  <p className="text-xs text-white/80 font-medium leading-tight line-clamp-2">{f.label}</p>
-                  <p className="text-[10px] text-white/30">{f.area} · {f.tamanho ?? "—"} · {formatDate(f.created_at)}</p>
+                  <p className="text-xs c-tx2 font-medium leading-tight line-clamp-2">{f.label}</p>
+                  <p className="text-[10px] c-tx4">{f.area} · {f.tamanho ?? "—"} · {formatDate(f.created_at)}</p>
+                  <DisponibilidadeBadge disponivel_de={f.disponivel_de} disponivel_ate={f.disponivel_ate} />
                   {canChangeVis ? (
                     <select
                       value={f.visibilidade ?? "publico"}
                       onChange={(e) => handleVisibilidadeChange(f.id, e.target.value)}
                       disabled={updatingId === f.id}
-                      className="mt-auto bg-transparent border border-white/[0.06] rounded px-1.5 py-1 text-[10px] text-white/40 outline-none cursor-pointer hover:border-white/20 transition-colors w-full"
+                      className="mt-auto bg-transparent border c-br rounded px-1.5 py-1 text-[10px] c-tx3 outline-none cursor-pointer hc-br transition-colors w-full"
                     >
                       {VISIBILIDADE_OPTIONS.map(o => (
-                        <option key={o.value} value={o.value} className="bg-[#0d0d14]">{o.label}</option>
+                        <option key={o.value} value={o.value} className="c-bg">{o.label}</option>
                       ))}
                     </select>
                   ) : (
@@ -435,12 +587,20 @@ export default function FicheirosPage() {
                     </div>
                   )}
                   {(isOwner || isAdmin) && (
-                    <button
-                      onClick={() => handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro")}
-                      className="mt-1 w-full flex items-center justify-center gap-1 py-1 rounded text-[10px] text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                    >
-                      <Trash2 size={10} /> Eliminar
-                    </button>
+                    <div className="mt-1 flex gap-1">
+                      <button
+                        onClick={() => openEditModal(f)}
+                        className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-[10px] c-tx5 hover:c-tx3 hc-s2 transition-colors"
+                      >
+                        <Pencil size={10} /> Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro")}
+                        className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-[10px] text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                      >
+                        <Trash2 size={10} /> Eliminar
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -449,16 +609,16 @@ export default function FicheirosPage() {
         </div>
       ) : (
         /* ── LISTA ── */
-        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden">
+        <div className="c-bg2 border c-br rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[500px]">
               <thead>
-                <tr className="border-b border-white/[0.06]">
-                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3">Nome</th>
-                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3 hidden sm:table-cell">Área</th>
-                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3 hidden md:table-cell">Tamanho</th>
-                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3 hidden lg:table-cell">Data</th>
-                  <th className="text-left text-xs text-white/30 font-medium px-5 py-3">Visibilidade</th>
+                <tr className="border-b c-br">
+                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3">Nome</th>
+                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3 hidden sm:table-cell">Área</th>
+                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3 hidden md:table-cell">Tamanho</th>
+                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3 hidden lg:table-cell">Data</th>
+                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3">Visibilidade</th>
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
@@ -473,29 +633,34 @@ export default function FicheirosPage() {
                     ? `/storage/v1/object/public/materiais/${encodeURIComponent(f.nome_arquivo)}`
                     : "#";
                   return (
-                    <tr key={f.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                    <tr key={f.id} className="border-b c-br hover:bg-white/[0.02] transition-colors">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${bg} ${text}`}>
                             <Icon size={14} />
                           </div>
                           <div>
-                            <p className="text-white/80 font-medium truncate max-w-[180px]">{f.label}</p>
-                            <p className="text-[10px] text-white/30 font-mono">{ext}</p>
+                            <p className="c-tx2 font-medium truncate max-w-[180px]">{f.label}</p>
+                            <p className="text-[10px] c-tx4 font-mono">{ext}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-white/40 hidden sm:table-cell">{f.area}</td>
-                      <td className="px-5 py-3 text-white/40 hidden md:table-cell">{f.tamanho ?? "—"}</td>
-                      <td className="px-5 py-3 text-white/40 hidden lg:table-cell">{formatDate(f.created_at)}</td>
+                      <td className="px-5 py-3 c-tx3 hidden sm:table-cell">{f.area}</td>
+                      <td className="px-5 py-3 c-tx3 hidden md:table-cell">{f.tamanho ?? "—"}</td>
+                      <td className="px-5 py-3 c-tx3 hidden lg:table-cell">
+                        <div className="flex flex-col gap-1">
+                          <span>{formatDate(f.created_at)}</span>
+                          <DisponibilidadeBadge disponivel_de={f.disponivel_de} disponivel_ate={f.disponivel_ate} />
+                        </div>
+                      </td>
                       <td className="px-5 py-3">
                         {canChangeVis ? (
                           <select value={f.visibilidade ?? "publico"}
                             onChange={(e) => handleVisibilidadeChange(f.id, e.target.value)}
                             disabled={updatingId === f.id}
-                            className="bg-transparent border border-white/[0.08] rounded-lg px-2 py-1 text-[11px] text-white/60 outline-none cursor-pointer hover:border-white/20 transition-colors disabled:opacity-40">
+                            className="bg-transparent border c-br rounded-lg px-2 py-1 text-[11px] c-tx2 outline-none cursor-pointer hc-br transition-colors disabled:opacity-40">
                             {VISIBILIDADE_OPTIONS.map(o => (
-                              <option key={o.value} value={o.value} className="bg-[#0d0d14]">{o.label}</option>
+                              <option key={o.value} value={o.value} className="c-bg">{o.label}</option>
                             ))}
                           </select>
                         ) : (
@@ -505,16 +670,23 @@ export default function FicheirosPage() {
                       <td className="px-5 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors">
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs c-tx3 hc-tx hc-s2 transition-colors">
                             <Download size={13} /> Abrir
                           </a>
                           {(isOwner || isAdmin) && (
-                            <button
-                              onClick={() => handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro")}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                            >
-                              <Trash2 size={13} />
-                            </button>
+                            <>
+                              <button onClick={() => openEditModal(f)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs c-tx4 hover:c-tx hc-s2 transition-colors"
+                                title="Editar">
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro")}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -529,48 +701,82 @@ export default function FicheirosPage() {
 
       {/* Modal de upload */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-[#0d0d14] border border-white/[0.08] text-white max-w-md rounded-xl p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
-            <DialogTitle className="text-base font-semibold flex items-center gap-2">
-              <Plus size={16} className="text-blue-400" /> Registar novo ficheiro
+        <DialogContent className="c-bg border c-br c-tx max-w-2xl rounded-xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-5 pb-4 border-b c-br">
+            <DialogTitle className="text-sm font-semibold flex items-center gap-2">
+              <Plus size={15} className="text-blue-400" /> Registar novo ficheiro
             </DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleUpload} className="px-6 py-5 space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-xs text-white/40">Título</label>
-              <input required value={title} onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Guia Pedagógico III"
-                className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/50 transition-colors" />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs text-white/40 flex items-center justify-between">
-                <span>Área</span>
-                {isRestricted && (
-                  <span className="text-[10px] text-amber-400/70 flex items-center gap-1">
-                    <Lock size={9} /> limitado pela especialização
-                  </span>
+          <form id="upload-form" onSubmit={handleUpload} className="px-6 py-5">
+            {/* Linha 1: título + ficheiro lado a lado */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Título *</label>
+                <input required value={title} onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Ex: Guia Pedagógico III"
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx c-ph outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Ficheiro *</label>
+                <label className="relative flex items-center gap-3 border border-dashed c-br rounded-lg px-3 py-2 cursor-pointer hover:border-blue-500/40 transition-colors">
+                  <input type="file" required onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <Download size={15} className="c-tx5 shrink-0" />
+                  <p className="text-sm c-tx3 truncate">
+                    {uploadFile ? uploadFile.name : "Clique para seleccionar"}
+                  </p>
+                </label>
+                {thumbnailPreview && (
+                  <embed src={thumbnailPreview} type="application/pdf" className="w-full h-20 rounded pointer-events-none mt-1" />
                 )}
-              </label>
-              {uploadAreaLocked ? (
-                <div className="w-full bg-white/[0.02] border border-white/[0.04] rounded-lg px-3 py-2.5 text-sm text-white/50 flex items-center justify-between cursor-not-allowed">
-                  <span>{uploadAreas![0]}</span><Lock size={12} className="text-white/20" />
-                </div>
-              ) : (
-                <select value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value)}
-                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50 transition-colors">
-                  {uploadCategoryOptions.map((c) => (
-                    <option key={c} value={c} className="bg-[#0d0d14]">{c}</option>
-                  ))}
-                </select>
-              )}
+              </div>
             </div>
 
-            {/* Visibilidade */}
-            <div className="space-y-2">
-              <label className="text-xs text-white/40">Visibilidade</label>
-              <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-4" : "grid-cols-3"}`}>
+            {/* Linha 2: disciplina + grupo de formação */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3 flex items-center justify-between">
+                  <span>Disciplina</span>
+                  {isRestricted && <span className="text-[10px] text-amber-400/70 flex items-center gap-1"><Lock size={9} /> restrito</span>}
+                </label>
+                {uploadAreaLocked ? (
+                  <div className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx3 flex items-center justify-between cursor-not-allowed">
+                    <span>{uploadAreas![0]}</span><Lock size={12} className="c-tx5" />
+                  </div>
+                ) : (
+                  <select value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value)}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                    {uploadCategoryOptions.map((c) => (
+                      <option key={c} value={c} className="c-bg">{c}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Grupos de Formação</label>
+                {gruposFormacao.length === 0 ? (
+                  <p className="text-xs c-tx5 italic">Nenhum grupo criado</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {gruposFormacao.map(g => {
+                      const sel = gruposUpload.includes(g.id);
+                      return (
+                        <button key={g.id} type="button"
+                          onClick={() => setGruposUpload(prev => sel ? prev.filter(x => x !== g.id) : [...prev, g.id])}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${sel ? "bg-emerald-600/20 text-emerald-400 border-emerald-500/30" : "c-s1 c-tx3 c-br hc-s2"}`}>
+                          {g.nome}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Linha 3: visibilidade */}
+            <div className="space-y-2 mb-4">
+              <label className="text-xs c-tx3">Visibilidade</label>
+              <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
                 {VISIBILIDADE_OPTIONS.filter(opt => {
                   if (opt.value === "turma" || opt.value === "formadores_turma")
                     return user?.role === "formador" && minhasTurmas.length > 0;
@@ -578,66 +784,188 @@ export default function FicheirosPage() {
                 }).map((opt) => {
                   const Icon = opt.icon;
                   return (
-                    <button key={opt.value} type="button"
-                      onClick={() => setVisibilidade(opt.value)}
-                      className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border text-center transition-all ${
-                        visibilidade === opt.value
-                          ? "border-blue-500/50 bg-blue-500/10"
-                          : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]"
+                    <button key={opt.value} type="button" onClick={() => setVisibilidade(opt.value)}
+                      className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-center transition-all ${
+                        visibilidade === opt.value ? "border-blue-500/50 bg-blue-500/10" : "c-br c-s1 hc-s2"
                       }`}>
-                      <Icon size={16} className={visibilidade === opt.value ? "text-blue-400" : "text-white/30"} />
-                      <span className={`text-[10px] font-medium ${visibilidade === opt.value ? "text-blue-300" : "text-white/40"}`}>
-                        {opt.label}
-                      </span>
+                      <Icon size={14} className={visibilidade === opt.value ? "text-blue-400" : "c-tx4"} />
+                      <span className={`text-[10px] font-medium ${visibilidade === opt.value ? "text-blue-300" : "c-tx3"}`}>{opt.label}</span>
                     </button>
                   );
                 })}
               </div>
-              <p className="text-[10px] text-white/25 leading-relaxed">
-                {visibilidade === "privado" && "Só você tem acesso a este documento."}
-                {visibilidade === "turma" && "Apenas os formandos da turma seleccionada têm acesso."}
-                {visibilidade === "formadores" && "Você e todos os formadores podem ver este documento."}
-                {visibilidade === "formadores_turma" && "Formadores e os formandos da turma seleccionada podem ver este documento."}
-                {visibilidade === "publico" && "Todos os utilizadores da plataforma podem ver este documento."}
-              </p>
               {(visibilidade === "turma" || visibilidade === "formadores_turma") && minhasTurmas.length > 0 && (
                 <select value={turmaId} onChange={e => setTurmaId(e.target.value)}
-                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500/50">
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50">
                   {minhasTurmas.map(t => (
-                    <option key={t.id} value={t.id} className="bg-[#0d0d14]">{t.nome} ({t.area})</option>
+                    <option key={t.id} value={t.id} className="c-bg">{t.nome} ({t.area})</option>
                   ))}
                 </select>
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs text-white/40">Ficheiro</label>
-              <label className="relative flex flex-col items-center justify-center gap-2 border border-dashed border-white/[0.10] rounded-lg p-6 cursor-pointer hover:border-blue-500/40 transition-colors overflow-hidden">
-                <input type="file" required onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} className="absolute inset-0 opacity-0 cursor-pointer" />
-                {thumbnailPreview ? (
-                  <>
-                    <embed src={thumbnailPreview} type="application/pdf" className="w-full h-32 rounded pointer-events-none" />
-                    <p className="text-[10px] text-white/40 truncate max-w-full mt-1">{uploadFile?.name}</p>
-                  </>
-                ) : (
-                  <>
-                    <Download size={20} className="text-white/20" />
-                    <p className="text-xs text-white/40 text-center">
-                      {uploadFile ? uploadFile.name : "Arraste ou clique para seleccionar"}
-                    </p>
-                  </>
-                )}
-              </label>
+            {/* Linha 4: disponibilidade */}
+            <div className="space-y-2 mb-5">
+              <label className="text-xs c-tx3 flex items-center gap-1.5"><CalendarClock size={11} /> Disponibilidade (opcional)</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <span className="text-[10px] c-tx4">Disponível a partir de</span>
+                  <input type="date" value={disponivel_de} onChange={e => setDisponivelDe(e.target.value)}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] c-tx4">Expira em</span>
+                  <input type="date" value={disponivel_ate} onChange={e => setDisponivelAte(e.target.value)}
+                    min={disponivel_de || undefined}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                </div>
+              </div>
             </div>
 
-            <div className="flex gap-3 pt-1">
+            {/* Toggle site público */}
+            {visibilidade === "publico" && (
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border c-br hc-s1 transition-colors mb-1">
+                <div className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${sitePublico ? "bg-emerald-500" : "bg-white/10"}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${sitePublico ? "translate-x-4" : "translate-x-0.5"}`} />
+                </div>
+                <input type="checkbox" className="sr-only" checked={sitePublico} onChange={e => setSitePublico(e.target.checked)} />
+                <div>
+                  <p className="text-xs font-medium c-tx">Partilhar no site público</p>
+                  <p className="text-[10px] c-tx4">Visível em sabermais.edu.ao/recursos (só leitura)</p>
+                </div>
+              </label>
+            )}
+
+            <div className="flex gap-3">
               <button type="button" onClick={() => setIsModalOpen(false)}
-                className="flex-1 py-2.5 rounded-lg border border-white/[0.06] text-sm text-white/50 hover:text-white hover:bg-white/[0.04] transition-colors">
+                className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx hc-s1 transition-colors">
                 Cancelar
               </button>
               <button type="submit" disabled={isUploading}
-                className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                 {isUploading ? <><Loader2 size={14} className="animate-spin" /> A enviar...</> : "Guardar"}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de edição */}
+      <Dialog open={!!editingFile} onOpenChange={(o) => { if (!o) setEditingFile(null); }}>
+        <DialogContent className="c-bg border c-br c-tx max-w-2xl rounded-xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-5 pb-4 border-b c-br">
+            <DialogTitle className="text-sm font-semibold flex items-center gap-2">
+              <Pencil size={15} className="text-blue-400" /> Editar ficheiro
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveEdit} className="px-6 py-5">
+            {/* Linha 1: título */}
+            <div className="space-y-1.5 mb-4">
+              <label className="text-xs c-tx3">Título *</label>
+              <input required value={editTitle} onChange={e => setEditTitle(e.target.value)}
+                className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx c-ph outline-none focus:border-blue-500/50 transition-colors" />
+            </div>
+
+            {/* Linha 2: disciplina + grupos */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Disciplina</label>
+                <select value={editArea} onChange={e => setEditArea(e.target.value)}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                  {allCatNames.map(c => <option key={c} value={c} className="c-bg">{c}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Grupos de Formação</label>
+                {gruposFormacao.length === 0 ? (
+                  <p className="text-xs c-tx5 italic">Nenhum grupo criado</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {gruposFormacao.map(g => {
+                      const sel = editGrupos.includes(g.id);
+                      return (
+                        <button key={g.id} type="button"
+                          onClick={() => setEditGrupos(prev => sel ? prev.filter(x => x !== g.id) : [...prev, g.id])}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${sel ? "bg-emerald-600/20 text-emerald-400 border-emerald-500/30" : "c-s1 c-tx3 c-br hc-s2"}`}>
+                          {g.nome}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Linha 3: visibilidade */}
+            <div className="space-y-2 mb-4">
+              <label className="text-xs c-tx3">Visibilidade</label>
+              <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
+                {VISIBILIDADE_OPTIONS.filter(opt => {
+                  if (opt.value === "turma" || opt.value === "formadores_turma")
+                    return user?.role === "formador" && minhasTurmas.length > 0;
+                  return true;
+                }).map((opt) => {
+                  const Icon = opt.icon;
+                  return (
+                    <button key={opt.value} type="button" onClick={() => setEditVisibilidade(opt.value)}
+                      className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-center transition-all ${
+                        editVisibilidade === opt.value ? "border-blue-500/50 bg-blue-500/10" : "c-br c-s1 hc-s2"
+                      }`}>
+                      <Icon size={14} className={editVisibilidade === opt.value ? "text-blue-400" : "c-tx4"} />
+                      <span className={`text-[10px] font-medium ${editVisibilidade === opt.value ? "text-blue-300" : "c-tx3"}`}>{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {(editVisibilidade === "turma" || editVisibilidade === "formadores_turma") && minhasTurmas.length > 0 && (
+                <select value={editTurmaId} onChange={e => setEditTurmaId(e.target.value)}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50">
+                  {minhasTurmas.map(t => <option key={t.id} value={t.id} className="c-bg">{t.nome} ({t.area})</option>)}
+                </select>
+              )}
+            </div>
+
+            {/* Linha 4: disponibilidade */}
+            <div className="space-y-2 mb-5">
+              <label className="text-xs c-tx3 flex items-center gap-1.5"><CalendarClock size={11} /> Disponibilidade (opcional)</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <span className="text-[10px] c-tx4">Disponível a partir de</span>
+                  <input type="date" value={editDisponivelDe} onChange={e => setEditDisponivelDe(e.target.value)}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] c-tx4">Expira em</span>
+                  <input type="date" value={editDisponivelAte} onChange={e => setEditDisponivelAte(e.target.value)}
+                    min={editDisponivelDe || undefined}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                </div>
+              </div>
+            </div>
+
+            {/* Toggle site público */}
+            {editVisibilidade === "publico" && (
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border c-br hc-s1 transition-colors mb-1">
+                <div className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${editSitePublico ? "bg-emerald-500" : "bg-white/10"}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${editSitePublico ? "translate-x-4" : "translate-x-0.5"}`} />
+                </div>
+                <input type="checkbox" className="sr-only" checked={editSitePublico} onChange={e => setEditSitePublico(e.target.checked)} />
+                <div>
+                  <p className="text-xs font-medium c-tx">Partilhar no site público</p>
+                  <p className="text-[10px] c-tx4">Visível em sabermais.edu.ao/recursos (só leitura)</p>
+                </div>
+              </label>
+            )}
+
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setEditingFile(null)}
+                className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx hc-s1 transition-colors">
+                Cancelar
+              </button>
+              <button type="submit" disabled={isSavingEdit}
+                className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                {isSavingEdit ? <><Loader2 size={14} className="animate-spin" /> A guardar...</> : "Guardar alterações"}
               </button>
             </div>
           </form>

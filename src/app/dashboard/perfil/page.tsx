@@ -163,22 +163,22 @@ export default function PerfilPage() {
       </AnimatePresence>
 
       {/* ── Cabeçalho do perfil ── */}
-      <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-6">
+      <div className="c-bg2 border c-br rounded-xl p-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
 
           {/* Avatar */}
           <div className="relative group cursor-pointer shrink-0" onClick={() => fileInputRef.current?.click()}>
-            <div className={`w-24 h-24 rounded-full border-2 border-white/10 bg-white/[0.04] flex items-center justify-center overflow-hidden transition-all group-hover:border-blue-500/50 ${isUploadingAvatar ? "opacity-50" : ""}`}>
+            <div className={`w-24 h-24 rounded-full border-2 c-br2 c-s1 flex items-center justify-center overflow-hidden transition-all group-hover:border-blue-500/50 ${isUploadingAvatar ? "opacity-50" : ""}`}>
               {localProfile.avatar_url
                 ? <img src={localProfile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                : <span className="text-3xl font-bold text-white/20">{initial}</span>
+                : <span className="text-3xl font-bold c-tx5">{initial}</span>
               }
               <div className="absolute inset-0 bg-blue-600/80 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 {isUploadingAvatar
-                  ? <Loader2 className="animate-spin text-white" size={20} />
-                  : <Camera className="text-white" size={20} />
+                  ? <Loader2 className="animate-spin c-tx" size={20} />
+                  : <Camera className="c-tx" size={20} />
                 }
-                <span className="text-[9px] text-white font-bold mt-1">Alterar</span>
+                <span className="text-[9px] c-tx font-bold mt-1">Alterar</span>
               </div>
             </div>
             <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} accept="image/*" className="hidden" />
@@ -186,11 +186,11 @@ export default function PerfilPage() {
 
           {/* Info */}
           <div className="flex-1 text-center sm:text-left">
-            <h2 className="text-2xl font-semibold text-white">
-              {localProfile.first_name} <span className="text-white/40">{localProfile.last_name}</span>
+            <h2 className="text-2xl font-semibold c-tx">
+              {localProfile.first_name} <span className="c-tx3">{localProfile.last_name}</span>
             </h2>
-            <p className="text-sm text-white/30 mt-0.5">{localProfile.email}</p>
-            <p className="text-[10px] text-white/20 tracking-widest uppercase mt-1">Saber Mais Angola // III Ciclo</p>
+            <p className="text-sm c-tx4 mt-0.5">{localProfile.email}</p>
+            <p className="text-[10px] c-tx5 tracking-widest uppercase mt-1">Saber Mais Angola // III Ciclo</p>
 
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3">
               <span className="text-xs px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
@@ -208,63 +208,63 @@ export default function PerfilPage() {
 
           {/* Progresso */}
           <div className="hidden lg:block shrink-0 w-48 space-y-2">
-            <div className="flex justify-between text-xs text-white/30">
+            <div className="flex justify-between text-xs c-tx4">
               <span className="flex items-center gap-1"><Award size={11} /> Capacitação</span>
-              <span className="text-white/60">85%</span>
+              <span className="c-tx2">85%</span>
             </div>
-            <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+            <div className="h-1.5 c-s2 rounded-full overflow-hidden">
               <div className="h-full bg-blue-500 rounded-full shadow-[0_0_8px_#3b82f6]" style={{ width: "85%" }} />
             </div>
-            <p className="text-[10px] text-white/20">Guia Pedagógico III</p>
+            <p className="text-[10px] c-tx5">Guia Pedagógico III</p>
           </div>
         </div>
       </div>
 
       {/* ── Dados de identidade ── */}
-      <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-6 space-y-5">
-        <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+      <div className="c-bg2 border c-br rounded-xl p-6 space-y-5">
+        <h3 className="text-sm font-semibold c-tx flex items-center gap-2">
           <FileText size={15} className="text-blue-400" /> Dados de identidade
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs text-white/40">Nome próprio</label>
+            <label className="text-xs c-tx3">Nome próprio</label>
             <input
               value={localProfile.first_name || ""}
               onChange={e => setLocalProfile({ ...localProfile, first_name: e.target.value })}
-              className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50 transition-colors"
+              className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs text-white/40">Apelido</label>
+            <label className="text-xs c-tx3">Apelido</label>
             <input
               value={localProfile.last_name || ""}
               onChange={e => setLocalProfile({ ...localProfile, last_name: e.target.value })}
-              className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50 transition-colors"
+              className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs text-white/40">E-mail (imutável)</label>
-            <div className="px-3 py-2.5 bg-white/[0.02] border border-white/[0.04] rounded-lg text-sm text-white/30 cursor-not-allowed font-mono">
+            <label className="text-xs c-tx3">E-mail (imutável)</label>
+            <div className="px-3 py-2.5 bg-white/[0.02] border c-br rounded-lg text-sm c-tx4 cursor-not-allowed font-mono">
               {localProfile.email}
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs text-white/40">Província</label>
+            <label className="text-xs c-tx3">Província</label>
             <select
               value={localProfile.province || ""}
               onChange={e => setLocalProfile({ ...localProfile, province: e.target.value })}
-              className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50 transition-colors"
+              className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
             >
-              <option value="" className="bg-[#0d0d14]">Seleccionar...</option>
-              <option value="Luanda" className="bg-[#0d0d14]">Luanda</option>
-              <option value="Bié" className="bg-[#0d0d14]">Bié</option>
+              <option value="" className="c-bg">Seleccionar...</option>
+              <option value="Luanda" className="c-bg">Luanda</option>
+              <option value="Bié" className="c-bg">Bié</option>
             </select>
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <label className="text-xs text-white/40 flex items-center justify-between">
+            <label className="text-xs c-tx3 flex items-center justify-between">
               <span>Especializações</span>
-              <span className="text-white/20 text-[10px]">determina o acesso aos ficheiros · clica para seleccionar</span>
+              <span className="c-tx5 text-[10px]">determina o acesso aos ficheiros · clica para seleccionar</span>
             </label>
             {/* Guardado como JSON array em profiles.specialization — controla acesso em ficheiros/page.tsx */}
             {(() => {
@@ -288,7 +288,7 @@ export default function PerfilPage() {
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                           active
                             ? "bg-blue-600/20 text-blue-400 border-blue-500/40"
-                            : "bg-white/[0.03] text-white/30 border-white/[0.06] hover:text-white/60 hover:border-white/10"
+                            : "c-s1 c-tx4 c-br hc-tx2 hover:c-br2"
                         }`}
                       >
                         {area}
@@ -296,14 +296,14 @@ export default function PerfilPage() {
                     );
                   })}
                   {selected.length === 0 && (
-                    <p className="text-[10px] text-white/20 self-center ml-1">Nenhuma seleccionada — acesso a todas as áreas</p>
+                    <p className="text-[10px] c-tx5 self-center ml-1">Nenhuma seleccionada — acesso a todas as áreas</p>
                   )}
                 </div>
               );
             })()}
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <label className="text-xs text-white/40 flex items-center justify-between">
+            <label className="text-xs c-tx3 flex items-center justify-between">
               <span>Biografia profissional</span>
               {localProfile.role === "formador" && (
                 <span className="text-amber-400 text-[10px]">* Obrigatório para formadores</span>
@@ -314,10 +314,10 @@ export default function PerfilPage() {
               onChange={e => setLocalProfile({ ...localProfile, biografia: e.target.value })}
               rows={4}
               placeholder="Partilhe um breve resumo da sua jornada..."
-              className={`w-full bg-white/[0.04] border rounded-lg px-3 py-2.5 text-sm text-white/80 placeholder:text-white/20 outline-none transition-colors resize-y min-h-[100px] ${
+              className={`w-full c-s1 border rounded-lg px-3 py-2.5 text-sm c-tx2 placeholder:c-tx5 outline-none transition-colors resize-y min-h-[100px] ${
                 localProfile.role === "formador" && !localProfile.biografia?.trim()
                   ? "border-amber-500/40 focus:border-amber-400"
-                  : "border-white/[0.06] focus:border-blue-500/50"
+                  : "c-br focus:border-blue-500/50"
               }`}
             />
           </div>
@@ -327,7 +327,7 @@ export default function PerfilPage() {
           <button
             onClick={handleSaveProfile}
             disabled={isSaving}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50"
           >
             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Guardar
           </button>
@@ -335,22 +335,22 @@ export default function PerfilPage() {
       </div>
 
       {/* ── Segurança ── */}
-      <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-6 space-y-4">
-        <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+      <div className="c-bg2 border c-br rounded-xl p-6 space-y-4">
+        <h3 className="text-sm font-semibold c-tx flex items-center gap-2">
           <ShieldCheck size={15} className="text-emerald-400" /> Segurança
         </h3>
-        <p className="text-xs text-white/30">Actualiza a tua palavra-passe de acesso ao backoffice.</p>
+        <p className="text-xs c-tx4">Actualiza a tua palavra-passe de acesso ao backoffice.</p>
         <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
           <div className="flex-1 space-y-1.5">
-            <label className="text-xs text-white/40">Nova palavra-passe</label>
+            <label className="text-xs c-tx3">Nova palavra-passe</label>
             <div className="relative">
-              <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" />
+              <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx5" />
               <input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Mínimo 6 caracteres"
-                className="w-full pl-9 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.06] rounded-lg text-sm text-white placeholder:text-white/20 outline-none focus:border-emerald-500/40 transition-colors"
+                className="w-full pl-9 pr-4 py-2.5 c-s1 border c-br rounded-lg text-sm c-tx placeholder:c-tx5 outline-none focus:border-emerald-500/40 transition-colors"
               />
             </div>
           </div>
@@ -367,36 +367,36 @@ export default function PerfilPage() {
 
       {/* ── Secção de Formadores (só formandos) ── */}
       {localProfile.role === "formando" && (
-        <div className="bg-[#13131f] border border-white/[0.06] rounded-xl p-6 space-y-5">
+        <div className="c-bg2 border c-br rounded-xl p-6 space-y-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <GraduationCap size={16} className="text-blue-400" />
-              <h3 className="text-sm font-semibold text-white">Os meus formadores</h3>
+              <h3 className="text-sm font-semibold c-tx">Os meus formadores</h3>
             </div>
             <select
               value={anoLetivo}
               onChange={e => setAnoLetivo(e.target.value)}
-              className="text-xs bg-white/[0.04] border border-white/[0.06] rounded-lg px-2 py-1.5 text-white/60 outline-none"
+              className="text-xs c-s1 border c-br rounded-lg px-2 py-1.5 c-tx2 outline-none"
             >
               {getAnosLetivos().map(a => (
-                <option key={a} value={a} className="bg-[#0d0d14]">{a}</option>
+                <option key={a} value={a} className="c-bg">{a}</option>
               ))}
             </select>
           </div>
 
           {/* Lista de associações */}
           {associacoes.length === 0 ? (
-            <p className="text-xs text-white/30 text-center py-4">Sem formadores associados neste ano letivo.</p>
+            <p className="text-xs c-tx4 text-center py-4">Sem formadores associados neste ano letivo.</p>
           ) : (
             <div className="space-y-2">
               {associacoes.map(a => (
-                <div key={a.id} className="flex items-center gap-3 px-4 py-3 bg-black/20 rounded-xl border border-white/[0.04]">
+                <div key={a.id} className="flex items-center gap-3 px-4 py-3 bg-black/20 rounded-xl border c-br">
                   <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0">
                     {(a.first_name?.[0] || "?").toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white font-medium">{a.first_name} {a.last_name}</p>
-                    {a.especialidade && <p className="text-xs text-white/40">{a.especialidade}</p>}
+                    <p className="text-sm c-tx font-medium">{a.first_name} {a.last_name}</p>
+                    {a.especialidade && <p className="text-xs c-tx3">{a.especialidade}</p>}
                   </div>
                   <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                     a.status === 'aceite' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
@@ -407,7 +407,7 @@ export default function PerfilPage() {
                   </span>
                   <button
                     onClick={() => handleRemoveFormador(a.formador_id)}
-                    className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="p-1.5 rounded-lg c-tx5 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                     title="Remover formador"
                   >
                     <X size={13} />
@@ -419,8 +419,8 @@ export default function PerfilPage() {
 
           {/* Adicionar formador */}
           {formadoresDisp.filter(f => !associacoes.some(a => a.formador_id === f.id)).length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-white/[0.04]">
-              <p className="text-xs text-white/30 font-medium">Adicionar formador</p>
+            <div className="space-y-2 pt-2 border-t c-br">
+              <p className="text-xs c-tx4 font-medium">Adicionar formador</p>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {formadoresDisp
                   .filter(f => !associacoes.some(a => a.formador_id === f.id))
@@ -429,11 +429,11 @@ export default function PerfilPage() {
                       key={f.id}
                       onClick={() => handleAddFormador(f.id)}
                       disabled={addingFormador}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:border-blue-500/30 hover:bg-blue-500/5 transition-all text-left disabled:opacity-50"
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.02] border c-br hover:border-blue-500/30 hover:bg-blue-500/5 transition-all text-left disabled:opacity-50"
                     >
                       <Plus size={12} className="text-blue-400 shrink-0" />
-                      <span className="text-xs text-white/70">{f.first_name} {f.last_name}</span>
-                      {f.especialidade && <span className="text-[10px] text-white/30 ml-auto">{f.especialidade}</span>}
+                      <span className="text-xs c-tx2">{f.first_name} {f.last_name}</span>
+                      {f.especialidade && <span className="text-[10px] c-tx4 ml-auto">{f.especialidade}</span>}
                     </button>
                   ))}
               </div>

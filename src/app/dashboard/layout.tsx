@@ -34,25 +34,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {warning && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative bg-[#0d0d14] border border-white/[0.08] rounded-2xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl">
+          <div className="relative c-bg border c-br rounded-2xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl">
             <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
               <ShieldAlert size={24} className="text-amber-400" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-white mb-1">Sessão prestes a expirar</h3>
-              <p className="text-sm text-white/50">Por inactividade, a sessão será encerrada em</p>
+              <h3 className="text-base font-semibold c-tx mb-1">Sessão prestes a expirar</h3>
+              <p className="text-sm c-tx3">Por inactividade, a sessão será encerrada em</p>
               <p className="text-3xl font-bold text-amber-400 mt-3 tabular-nums">{mm}:{ss}</p>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => { fetch("/api/auth/logout", { method: "POST" }).then(() => { window.location.href = "/"; }); }}
-                className="flex-1 py-2.5 rounded-xl border border-white/[0.06] text-sm text-white/50 hover:text-white transition-colors"
+                className="flex-1 py-2.5 rounded-xl border c-br text-sm c-tx3 hc-tx transition-colors"
               >
                 Sair agora
               </button>
               <button
                 onClick={stayLoggedIn}
-                className="flex-1 py-2.5 rounded-xl bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors"
               >
                 Continuar sessão
               </button>
@@ -61,9 +61,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       )}
 
-      <div className="fixed inset-0 bg-[#0d0d14] flex overflow-hidden"
-        style={{ backgroundImage: "url('/dashboard-bg.png')", backgroundSize: "cover", backgroundPosition: "center" }}>
-        <div className="absolute inset-0 bg-[#0d0d14]/88 pointer-events-none" />
+      <div className="fixed inset-0 bg-[#0d0d14] flex overflow-hidden dashboard-root"
+        style={{ backgroundImage: "var(--dash-bg-image)", backgroundSize: "cover", backgroundPosition: "center" }}>
+        <div className="absolute inset-0 bg-[#0d0d14]/88 pointer-events-none dashboard-overlay" />
         {mobileOpen && (
           <div
             className="fixed inset-0 bg-black/60 z-40 md:hidden"

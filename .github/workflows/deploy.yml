@@ -172,23 +172,111 @@ jobs:
               UPDATE profiles SET status = 'activo' WHERE role IN ('admin', 'super-admin');
               UPDATE arquivos SET visibilidade = 'publico';
 
+              -- Disponibilidade agendada nos ficheiros
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS disponivel_de  TIMESTAMPTZ;
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS disponivel_ate TIMESTAMPTZ;
+
+              -- Username para login sem email
+              ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS username TEXT UNIQUE;
+              ALTER TABLE profiles   ALTER COLUMN email DROP NOT NULL;
+
+              -- Tarefas
+              CREATE TABLE IF NOT EXISTS tarefas (
+                id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+                titulo      TEXT        NOT NULL,
+                descricao   TEXT,
+                prazo       TIMESTAMPTZ,
+                criador_id  UUID        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_tarefas_criador ON tarefas(criador_id, created_at DESC);
+
+              CREATE TABLE IF NOT EXISTS tarefa_destinatarios (
+                tarefa_id   UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE,
+                formando_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                estado      TEXT NOT NULL DEFAULT 'pendente',
+                entregue_at TIMESTAMPTZ,
+                PRIMARY KEY (tarefa_id, formando_id)
+              );
+              CREATE INDEX IF NOT EXISTS idx_td_formando ON tarefa_destinatarios(formando_id, estado);
+
+              -- Disciplinas e grupos de formação
+              CREATE TABLE IF NOT EXISTS disciplinas (
+                id       UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+                nome     TEXT    NOT NULL UNIQUE,
+                activo   BOOLEAN NOT NULL DEFAULT true,
+                ordem    INT     NOT NULL DEFAULT 0
+              );
+              INSERT INTO disciplinas (nome, ordem) VALUES
+                ('Educação Especial',    1),
+                ('Educação Pré-Escolar', 2),
+                ('Expressão Plástica',   3),
+                ('Expressão Motora',     4),
+                ('Língua Portuguesa',    5),
+                ('Matemática',           6)
+              ON CONFLICT (nome) DO NOTHING;
+
+              CREATE TABLE IF NOT EXISTS grupos_formacao (
+                id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+                nome       TEXT        NOT NULL,
+                activo     BOOLEAN     NOT NULL DEFAULT true,
+                criado_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS grupo_formacao_id UUID REFERENCES grupos_formacao(id) ON DELETE SET NULL;
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS disciplina_id UUID REFERENCES disciplinas(id) ON DELETE SET NULL;
+
+              CREATE TABLE IF NOT EXISTS arquivo_grupos (
+                arquivo_id UUID NOT NULL REFERENCES arquivos(id) ON DELETE CASCADE,
+                grupo_id   UUID NOT NULL REFERENCES grupos_formacao(id) ON DELETE CASCADE,
+                PRIMARY KEY (arquivo_id, grupo_id)
+              );
+              -- Migrar dados existentes da coluna simples para a tabela de junção
+              INSERT INTO arquivo_grupos (arquivo_id, grupo_id)
+                SELECT id, grupo_formacao_id FROM arquivos
+                WHERE grupo_formacao_id IS NOT NULL
+              ON CONFLICT DO NOTHING;
+
+              -- Partilha no site público
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS site_publico BOOLEAN NOT NULL DEFAULT false;
+
+              -- Audit log (rastreio de todas as acções dos utilizadores)
+              CREATE TABLE IF NOT EXISTS audit_logs (
+                id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+                action     TEXT        NOT NULL,
+                actor_id   UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+                target_id  UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+                ip         TEXT,
+                details    JSONB,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_audit_actor     ON audit_logs(actor_id, created_at DESC);
+              CREATE INDEX IF NOT EXISTS idx_audit_action    ON audit_logs(action, created_at DESC);
+              CREATE INDEX IF NOT EXISTS idx_audit_created   ON audit_logs(created_at DESC);
+
               -- Limpar sessoes expiradas
               DELETE FROM user_sessions WHERE expires_at < NOW();
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             echo "==> A construir e reiniciar o container web..."
             docker compose --env-file .env.production -f docker-compose.prod.yml build web
+            # Parar primeiro, esperar que o daemon conclua a remoção, depois forçar limpeza
             docker compose --env-file .env.production -f docker-compose.prod.yml stop web 2>/dev/null || true
+            sleep 2
             docker compose --env-file .env.production -f docker-compose.prod.yml rm -f web 2>/dev/null || true
+            sleep 2
+            # Garantir que não fica nenhum container com este nome (idempotente)
             docker rm -f sabermais-next 2>/dev/null || true
-            sleep 3
+            sleep 2
             docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-deps web
 
             echo "==> A recarregar o nginx (config + volumes)..."
             docker compose --env-file .env.production -f docker-compose.prod.yml stop nginx 2>/dev/null || true
+            sleep 2
             docker compose --env-file .env.production -f docker-compose.prod.yml rm -f nginx 2>/dev/null || true
+            sleep 2
             docker rm -f sabermais-nginx 2>/dev/null || true
-            sleep 3
+            sleep 2
             docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-deps nginx
 
             echo "==> A limpar imagens e cache antigas..."

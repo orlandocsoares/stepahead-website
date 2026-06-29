@@ -447,24 +447,6 @@ export default function HeroSection() {
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-<<<<<<< HEAD
-              {telemetry.media_radar && (
-                <div className="flex items-center gap-4 mt-4 w-fit">
-                  <div className="relative w-16 h-16 flex items-center justify-center">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/20" />
-                      <motion.circle 
-                        cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="transparent" 
-                        strokeDasharray="175" strokeDashoffset={175 - (175 * telemetry.media_radar) / 100} 
-                        className="text-blue-500" transition={{ duration: 2 }} 
-                      />
-                    </svg>
-                    <span className="absolute text-base font-bold text-white">{telemetry.media_radar}%</span>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-blue-300 font-bold">Média Nacional</p>
-                    <p className="text-base text-white font-bold">Radar de Integração</p>
-=======
               <div className="flex flex-wrap gap-3 mt-2">
                 {[
                   { icon: MapPin,     value: "2",        label: "Províncias" },
@@ -498,7 +480,6 @@ export default function HeroSection() {
                   <div>
                     <p className="text-sm font-bold text-white leading-none">{telemetry.sessoes_realizadas || 0}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-0.5">Sessões realizadas</p>
->>>>>>> 2c98e5ea17faa206f79da7188f627b0dd8df5fd1
                   </div>
                 </div>
                 <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
@@ -584,7 +565,11 @@ export default function HeroSection() {
           "Geral":             { bg: "bg-white/10",       text: "text-white/80",   border: "border-white/20",      dot: "bg-white/50" },
         };
         const defaultAreaColor = { bg: "bg-white/10", text: "text-white/80", border: "border-white/20", dot: "bg-white/50" };
-        const areas: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
+        // Usar áreas dos recursos públicos reais; fallback para telemetria
+        const areasPublicas: { area: string; total: number }[] = telemetry.areas_publicas ?? [];
+        const areasFallback: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
+        const areas = areasPublicas.length > 0 ? areasPublicas : areasFallback;
+        const totalPublicos: number = telemetry.total_recursos_publicos ?? 0;
 
         return {
           ...base,
@@ -592,11 +577,11 @@ export default function HeroSection() {
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
 
-              {/* Contador principal */}
+              {/* Contador principal — mostra recursos públicos se existirem */}
               <div className="flex items-end gap-3">
                 <div className="relative">
                   <span className="text-[52px] font-black text-white leading-none tracking-tighter tabular-nums drop-shadow-lg">
-                    {telemetry.total_materials ?? 0}
+                    {totalPublicos > 0 ? totalPublicos : (telemetry.total_materials ?? 0)}
                   </span>
                   <span className="absolute -top-1 -right-3 text-amber-400 text-lg font-bold">+</span>
                 </div>
@@ -606,38 +591,39 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              {/* Pills por área */}
+              {/* Pills por área — clicáveis, filtram /recursos por disciplina */}
               {areas.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {areas.map(({ area, total }) => {
                     const c = areaColors[area] ?? defaultAreaColor;
                     return (
-                      <motion.span
+                      <motion.a
                         key={area}
+                        href={`/recursos?area=${encodeURIComponent(area)}`}
                         initial={{ opacity: 0, scale: 0.85 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3 }}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-semibold backdrop-blur-sm drop-shadow-md ${c.bg} ${c.text} ${c.border}`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-semibold backdrop-blur-sm drop-shadow-md pointer-events-auto cursor-pointer hover:scale-105 transition-transform ${c.bg} ${c.text} ${c.border}`}
                       >
                         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.dot}`} />
                         {area}
                         <span className="opacity-60 font-normal">({total})</span>
-                      </motion.span>
+                      </motion.a>
                     );
                   })}
                 </div>
               )}
 
-              {/* CTA */}
+              {/* CTA apenas para autenticados */}
               {profile && (
                 <motion.a
                   href="/dashboard/ficheiros"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-amber-400 transition-colors pointer-events-auto group"
+                  className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-white/70 transition-colors pointer-events-auto group"
                 >
-                  Aceder ao repositório
+                  Aceder ao repositório completo
                   <span className="group-hover:translate-x-1 transition-transform">→</span>
                 </motion.a>
               )}
@@ -721,8 +707,7 @@ export default function HeroSection() {
   return (
     <div ref={containerRef} className="relative h-[100dvh] w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
 
-      {/* O CommandCenter (avatar à esquerda) só aparece para utilizadores com sessão iniciada */}
-      {!isDashboardView && !isVIPWelcomeOpen && profile && <CommandCenter isHero />}
+      {/* CommandCenter removido da hero — navegação feita pelo topo direito */}
 
       <motion.div className="fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[100] mix-blend-difference hidden md:block" style={{ x: mouseX, y: mouseY, translateX: "-50%", translateY: "-50%" }} animate={{ scale: isHovering ? 3.5 : 1, opacity: 0.8 }} transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.2 }} />
 
@@ -914,19 +899,51 @@ export default function HeroSection() {
             <HelpGuide open={helpOpen} setOpen={setHelpOpen} />
 
             <div className="fixed top-0 right-4 sm:right-6 md:right-16 lg:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-5 sm:py-10 pointer-events-none">
-              {/* TOPO: Botões de Ação (Login e Ajuda) */}
+              {/* TOPO: Botões de Ação */}
               <div className="pointer-events-auto shrink-0 flex items-center gap-2">
-                {!profile && !profileLoading && (
+                {!profileLoading && !profile && (
                   <motion.button
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, delay: 1.3, ease: "easeOut" }}
                     onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
-                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white/70 transition-colors hover:border-blue-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(59,130,246,0.18)] focus:outline-none focus:ring-2 focus:ring-blue-400/50 group"
-                    title="Entrar"
+                    className="inline-flex items-center gap-2 px-4 h-10 sm:h-11 rounded-full border border-white/20 bg-slate-950/80 text-white/80 text-[11px] font-bold uppercase tracking-[0.25em] transition-all hover:border-blue-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(59,130,246,0.18)] focus:outline-none focus:ring-2 focus:ring-blue-400/50"
                   >
-                    <LogIn size={18} />
+                    <LogIn size={14} />
+                    <span>Entrar</span>
                   </motion.button>
+                )}
+                {!profileLoading && profile && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="flex items-center gap-2"
+                  >
+                    {/* Avatar */}
+                    <button
+                      onClick={() => router.push("/dashboard/perfil")}
+                      className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-white/20 bg-slate-950/80 overflow-hidden hover:border-white/50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.08)]"
+                      title={profile.first_name || "Perfil"}
+                    >
+                      {profile.avatar_url ? (
+                        <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="w-full h-full flex items-center justify-center text-[11px] font-bold text-white/80 uppercase">
+                          {(profile.first_name?.[0] ?? "") + (profile.last_name?.[0] ?? "")}
+                        </span>
+                      )}
+                      <span className="absolute bottom-0.5 right-0.5 w-2 h-2 bg-green-500 rounded-full border border-black" />
+                    </button>
+                    {/* Botão Dashboard */}
+                    <button
+                      onClick={() => router.push("/dashboard")}
+                      className="inline-flex items-center gap-2 px-4 h-10 sm:h-11 rounded-full border border-white/20 bg-slate-950/80 text-white/80 text-[11px] font-bold uppercase tracking-[0.25em] transition-all hover:border-blue-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(59,130,246,0.18)]"
+                    >
+                      <LayoutDashboard size={14} />
+                      <span>Dashboard</span>
+                    </button>
+                  </motion.div>
                 )}
                 <button onClick={() => setHelpOpen(true)} className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white transition hover:border-sky-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-400/50">
                   <span className="text-lg font-black">?</span>
@@ -990,12 +1007,7 @@ export default function HeroSection() {
                         </div>
                         <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-[8px] uppercase tracking-widest text-white/30 hover:text-red-400 flex items-center gap-1"><LogOut size={10} /> Terminar Sessão</button>
                       </motion.div>
-                    ) : (
-                      <motion.button initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} onClick={(e) => { e.stopPropagation(); setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }} className="absolute -top-16 group flex flex-col items-center gap-2 transition-all z-50 pointer-events-auto">
-                        <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/70 group-hover:text-white drop-shadow-md">Aceder ao Terminal</span>
-                        <div className="w-8 h-[1px] bg-white/20 group-hover:w-16 group-hover:bg-blue-500 transition-all duration-700" />
-                      </motion.button>
-                    )
+                    ) : null
                   )}
 
                   {isLogoHovered && EDUCATIONAL_ELEMENTS.map((item, i) => {
@@ -1045,15 +1057,6 @@ export default function HeroSection() {
                       {PROGRAM_PHASES[activePhaseIndex]?.name}
                     </motion.span>
                   </AnimatePresence>
-                  {!profile && (
-                    <button
-                      onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
-                      className="mt-1.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[9px] font-bold uppercase tracking-[0.25em] text-white/80 hover:bg-white/20 transition-colors"
-                    >
-                      <LogIn size={10} />
-                      Entrar
-                    </button>
-                  )}
                   {profile && (
                     <a
                       href="/dashboard"

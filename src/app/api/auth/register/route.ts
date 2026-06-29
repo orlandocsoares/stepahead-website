@@ -1,9 +1,105 @@
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 import { dbQuery } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { setSession } from "@/lib/server-auth";
+import { rateLimiter, getClientIp } from "@/lib/rate-limit";
+import { auditLog } from "@/lib/audit";
+import { randomBytes } from "crypto";
+
+// Máx. 5 registos por IP por hora
+const REGISTER_LIMIT = { max: 5, windowMs: 60 * 60 * 1000 };
+
+/**
+ * Valida complexidade de password:
+ * - Mínimo 8 caracteres
+ * - Pelo menos 1 letra maiúscula
+ * - Pelo menos 1 dígito
+ * Evita passwords obviamente fracas sem ser demasiado restritivo.
+ */
+function validatePassword(pwd: string): string | null {
+  if (pwd.length < 8) return "A password deve ter pelo menos 8 caracteres.";
+  if (!/[A-Z]/.test(pwd)) return "A password deve conter pelo menos uma letra maiúscula.";
+  if (!/[0-9]/.test(pwd)) return "A password deve conter pelo menos um número.";
+  return null; // válida
+}
+
+const BASE = process.env.APP_URL || "https://sabermais.edu.ao";
+
+async function sendConfirmEmail(email: string, userId: string, firstName: string) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const token = randomBytes(32).toString("hex");
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+
+  await dbQuery(
+    `INSERT INTO email_confirm_tokens (token, user_id, expires_at)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (user_id) DO UPDATE SET token = $1, expires_at = $3`,
+    [token, userId, expires.toISOString()]
+  );
+
+  const confirmUrl = `${BASE}/api/auth/confirm-email?token=${token}`;
+
+  await resend.emails.send({
+    from: "SaberMais <notificacoes@sabermais.edu.ao>",
+    to: email,
+    subject: "Confirme o seu email — SaberMais",
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d0d14;color:#fff;border-radius:16px;">
+        <img src="${BASE}/logo-sabermais.png" alt="SaberMais" style="height:48px;margin-bottom:24px;" />
+        <h2 style="font-size:18px;font-weight:600;margin-bottom:8px;">Bem-vindo ao SaberMais${firstName ? `, ${firstName}` : ""}!</h2>
+        <p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.6;margin-bottom:24px;">
+          Para activar a sua conta, clique no botão abaixo para confirmar o seu endereço de email. O link é válido durante <strong style="color:#fff;">24 horas</strong>.
+        </p>
+        <a href="${confirmUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">
+          Confirmar email
+        </a>
+        <p style="color:rgba(255,255,255,0.3);font-size:12px;margin-top:24px;">
+          Se não criou esta conta, pode ignorar este email.
+        </p>
+      </div>
+    `,
+  });
+}
+
+async function notifyAdminNewFormador(firstName: string, lastName: string, email: string) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const admins = await dbQuery<{ email: string }>(
+    `SELECT email FROM profiles WHERE role IN ('admin', 'super-admin') AND status = 'activo'`
+  );
+  for (const admin of admins.rows) {
+    await resend.emails.send({
+      from: "SaberMais <notificacoes@sabermais.edu.ao>",
+      to: admin.email,
+      subject: "Novo formador aguarda aprovação — SaberMais",
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d0d14;color:#fff;border-radius:16px;">
+          <img src="${BASE}/logo-sabermais.png" alt="SaberMais" style="height:48px;margin-bottom:24px;" />
+          <h2 style="font-size:18px;font-weight:600;margin-bottom:8px;">Novo formador aguarda aprovação</h2>
+          <p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.6;margin-bottom:24px;">
+            <strong style="color:#fff;">${firstName} ${lastName}</strong> (${email}) confirmou o email e está a aguardar aprovação para aceder ao portal.
+          </p>
+          <a href="${BASE}/dashboard/admin" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">
+            Ir para o painel de administração
+          </a>
+        </div>
+      `,
+    });
+  }
+}
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+
+  // --- Rate limiting por IP ---
+  const rl = rateLimiter.check("register", ip, REGISTER_LIMIT);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: { message: `Demasiados registos. Tente novamente em ${rl.retryAfterSecs}s.` } },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSecs) } }
+    );
+  }
+
   try {
     const body = await request.json();
     const email = String(body.email ?? "").trim().toLowerCase();
@@ -14,8 +110,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: { message: "Email e password sao obrigatorios." } }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: { message: "A password deve ter pelo menos 6 caracteres." } }, { status: 400 });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email) || email.length > 254) {
+      return NextResponse.json({ error: { message: "Email inválido." } }, { status: 400 });
+    }
+
+    const pwdError = validatePassword(password);
+    if (pwdError) {
+      return NextResponse.json({ error: { message: pwdError } }, { status: 400 });
     }
 
     const exists = await dbQuery<{ id: string }>("SELECT id FROM auth_users WHERE email = $1 LIMIT 1", [email]);
@@ -30,17 +132,27 @@ export async function POST(request: Request) {
 
     const userId = created.rows[0].id;
     const firstName = String(metadata.first_name ?? "").trim();
+    const lastName = String(metadata.last_name ?? "").trim();
     const role = String(metadata.role ?? "formando");
 
     await dbQuery(
-      `INSERT INTO profiles (id, email, first_name, role, status)
-       VALUES ($1, $2, $3, $4, 'pendente')`,
-      [userId, email, firstName || null, role]
+      `INSERT INTO profiles (id, email, first_name, last_name, role, status)
+       VALUES ($1, $2, $3, $4, $5, 'pendente')`,
+      [userId, email, firstName || null, lastName || null, role]
     );
 
-    await setSession(userId);
+    await auditLog("register", { actorId: userId, ip, details: { role, email } });
 
-    return NextResponse.json({ data: { user: { id: userId, email } } });
+    // Ambos os roles: envia email de confirmação — sem sessão imediata
+    await sendConfirmEmail(email, userId, firstName).catch(e =>
+      console.error("[register] sendConfirmEmail error:", e.message)
+    );
+
+    const mensagem = role === "formador"
+      ? "Verifique o seu email para confirmar a conta. Após confirmação, a sua conta será analisada pelo administrador."
+      : "Verifique o seu email para confirmar a conta.";
+
+    return NextResponse.json({ data: { user: { id: userId, email } }, pendente: true, mensagem });
   } catch {
     return NextResponse.json({ error: { message: "Falha ao criar conta." } }, { status: 500 });
   }

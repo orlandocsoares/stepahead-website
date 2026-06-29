@@ -2,6 +2,151 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Theme tokens ───────────────────────────────────────────────────────── */
+:root {
+  /* DARK (default) */
+  --dash-bg-image: url('/dashboard-bg.png');
+  --c-bg:   #0d0d14;
+  --c-bg2:  #13131f;
+  --c-s1:   rgba(255,255,255,0.025);
+  --c-s2:   rgba(255,255,255,0.05);
+  --c-s3:   rgba(255,255,255,0.08);
+  --c-tx:   #ffffff;
+  --c-tx2:  rgba(255,255,255,0.82);
+  --c-tx3:  rgba(255,255,255,0.58);
+  --c-tx4:  rgba(255,255,255,0.38);
+  --c-tx5:  rgba(255,255,255,0.20);
+  --c-br:   rgba(255,255,255,0.08);
+  --c-br2:  rgba(255,255,255,0.15);
+  --c-ov:   rgba(13,13,20,0.88);
+}
+/* MEIO ESCURO — lua crescente, azul profundo */
+html.meio-escuro {
+  --c-bg:   #0a0f1e;
+  --c-bg2:  #0f1829;
+  --c-s1:   rgba(255,255,255,0.04);
+  --c-s2:   rgba(255,255,255,0.07);
+  --c-s3:   rgba(255,255,255,0.10);
+  --c-tx:   #e8f0ff;
+  --c-tx2:  rgba(232,240,255,0.82);
+  --c-tx3:  rgba(232,240,255,0.58);
+  --c-tx4:  rgba(232,240,255,0.38);
+  --c-tx5:  rgba(232,240,255,0.20);
+  --c-br:   rgba(100,160,255,0.12);
+  --c-br2:  rgba(100,160,255,0.22);
+  --c-ov:   rgba(10,15,30,0.88);
+}
+
+/* MEIO CLARO — pôr do sol laranja/dourado */
+html.meio-claro {
+  --c-bg:   #1a1008;
+  --c-bg2:  #251808;
+  --c-s1:   rgba(255,240,200,0.06);
+  --c-s2:   rgba(255,240,200,0.10);
+  --c-s3:   rgba(255,240,200,0.14);
+  --c-tx:   #fff8ec;
+  --c-tx2:  rgba(255,248,236,0.82);
+  --c-tx3:  rgba(255,248,236,0.58);
+  --c-tx4:  rgba(255,248,236,0.38);
+  --c-tx5:  rgba(255,248,236,0.20);
+  --c-br:   rgba(255,180,60,0.15);
+  --c-br2:  rgba(255,180,60,0.28);
+  --c-ov:   rgba(26,16,8,0.85);
+}
+
+/* CLARO — dia, céu azul */
+html.light {
+  --dash-bg-image: none;
+  --c-bg:   #eef2f7;
+  --c-bg2:  #ffffff;
+  --c-s1:   #ffffff;
+  --c-s2:   #ffffff;
+  --c-s3:   #f8fafc;
+  --c-tx:   #0f172a;
+  --c-tx2:  #334155;
+  --c-tx3:  #64748b;
+  --c-tx4:  #94a3b8;
+  --c-tx5:  #cbd5e1;
+  --c-br:   #e2e8f0;
+  --c-br2:  #cbd5e1;
+  --c-ov:   transparent;
+}
+
+/* ─── Utility classes ────────────────────────────────────────────────────── */
+/* Backgrounds */
+.c-bg  { background-color: var(--c-bg)  !important; }
+.c-bg2 { background-color: var(--c-bg2) !important; }
+.c-s1  { background-color: var(--c-s1)  !important; }
+.c-s2  { background-color: var(--c-s2)  !important; }
+.c-s3  { background-color: var(--c-s3)  !important; }
+.c-ov  { background-color: var(--c-ov)  !important; }
+/* Hover backgrounds */
+.hc-s1:hover { background-color: var(--c-s1) !important; }
+.hc-s2:hover { background-color: var(--c-s2) !important; }
+.hc-s3:hover { background-color: var(--c-s3) !important; }
+/* Text */
+.c-tx  { color: var(--c-tx)  !important; }
+.c-tx2 { color: var(--c-tx2) !important; }
+.c-tx3 { color: var(--c-tx3) !important; }
+.c-tx4 { color: var(--c-tx4) !important; }
+.c-tx5 { color: var(--c-tx5) !important; }
+/* Hover text */
+.hc-tx:hover  { color: var(--c-tx)  !important; }
+.hc-tx2:hover { color: var(--c-tx2) !important; }
+.hc-tx3:hover { color: var(--c-tx3) !important; }
+/* Borders */
+.c-br  { border-color: var(--c-br)  !important; }
+.c-br2 { border-color: var(--c-br2) !important; }
+/* Hover borders */
+.hc-br:hover  { border-color: var(--c-br)  !important; }
+.hc-br2:hover { border-color: var(--c-br2) !important; }
+/* Placeholder */
+.c-ph::placeholder { color: var(--c-tx5) !important; }
+
+/* Logo: inverte no escuro, natural no claro */
+html:not(.light) .theme-logo { filter: brightness(0) invert(1); }
+html.light .theme-logo       { filter: none; }
+
+/* Modo claro: substituir fundo escuro e overlay */
+html.light .dashboard-root {
+  background-color: #eef2f7 !important;
+  background-image: none !important;
+}
+html.light .dashboard-overlay {
+  display: none !important;
+}
+
+/* Meio Escuro: sidebar/topbar azul-noite */
+html.meio-escuro .dashboard-root aside  { background: rgba(10,15,30,0.75) !important; backdrop-filter: blur(16px); }
+html.meio-escuro .dashboard-root header { background: rgba(10,15,30,0.70) !important; backdrop-filter: blur(16px); }
+
+/* Meio Claro: sidebar/topbar âmbar escuro */
+html.meio-claro .dashboard-root aside  { background: rgba(26,16,8,0.75) !important; backdrop-filter: blur(16px); }
+html.meio-claro .dashboard-root header { background: rgba(26,16,8,0.70) !important; backdrop-filter: blur(16px); }
+
+/* Modo Claro: sidebar e topbar brancos com sombra */
+html.light .dashboard-root aside {
+  background: #ffffff !important;
+  box-shadow: 1px 0 0 #e2e8f0, 4px 0 16px rgba(15,23,42,0.04);
+}
+html.light .dashboard-root header {
+  background: #ffffff !important;
+  box-shadow: 0 1px 0 #e2e8f0, 0 2px 8px rgba(15,23,42,0.04);
+}
+
+/* Cards com sombra sólida */
+html.light .c-s1,
+html.light .c-s2 {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+  backdrop-filter: none !important;
+}
+html.light .c-s3 {
+  background-color: #f8fafc !important;
+  backdrop-filter: none !important;
+}
+
+
 @layer base {
   :root {
     --background: 0 0% 95%; /* Mantive os teus originais */
@@ -130,3 +275,4 @@ input:focus {
 .h-screen-safe {
   height: 100vh;
 }
+

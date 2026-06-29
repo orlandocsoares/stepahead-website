@@ -2,8 +2,21 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { dbQuery } from "@/lib/db";
 import { randomBytes } from "crypto";
+import { rateLimiter, getClientIp } from "@/lib/rate-limit";
+import { auditLog } from "@/lib/audit";
+
+// Máx. 3 pedidos de reset por IP em 1 hora — limita enumeração de emails
+const FORGOT_LIMIT = { max: 3, windowMs: 60 * 60 * 1000 };
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+
+  const rl = rateLimiter.check("forgot-password", ip, FORGOT_LIMIT);
+  if (!rl.allowed) {
+    // Responder sempre 200 para não revelar informação (mesmo bloqueado)
+    return NextResponse.json({ ok: true });
+  }
+
   const resend = new Resend(process.env.RESEND_API_KEY);
   try {
     const { email } = await request.json();
@@ -32,6 +45,8 @@ export async function POST(request: Request) {
        ON CONFLICT (user_id) DO UPDATE SET token = $1, expires_at = $3`,
       [token, user.id, expires.toISOString()]
     );
+
+    await auditLog("password_reset_request", { actorId: user.id, ip, details: { email: clean } });
 
     const resetUrl = `${process.env.APP_URL || "https://sabermais.edu.ao"}/reset-password?token=${token}`;
 

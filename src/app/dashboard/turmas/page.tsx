@@ -153,7 +153,7 @@ export default function TurmasPage() {
   }
 
   if (!isAdmin && !isFormador) return (
-    <div className="flex items-center justify-center py-20 text-white/30 text-sm">Acesso restrito.</div>
+    <div className="flex items-center justify-center py-20 c-tx4 text-sm">Acesso restrito.</div>
   );
 
   return (
@@ -172,8 +172,8 @@ export default function TurmasPage() {
             {pendentes.map(f => (
               <div key={f.id} className="flex items-center justify-between gap-4 px-5 py-3">
                 <div>
-                  <p className="text-sm text-white font-medium">{f.first_name} {f.last_name}</p>
-                  <p className="text-xs text-white/40">{f.email}{f.escola ? ` · ${f.escola}` : ""}{f.provincia ? ` · ${f.provincia}` : ""}</p>
+                  <p className="text-sm c-tx font-medium">{f.first_name} {f.last_name}</p>
+                  <p className="text-xs c-tx3">{f.email}{f.escola ? ` · ${f.escola}` : ""}{f.provincia ? ` · ${f.provincia}` : ""}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
@@ -211,18 +211,18 @@ export default function TurmasPage() {
             {semTurma.map(f => (
               <div key={f.id} className="flex items-center justify-between gap-4 px-5 py-3 flex-wrap">
                 <div>
-                  <p className="text-sm text-white font-medium">{f.first_name} {f.last_name}</p>
-                  <p className="text-xs text-white/40">{f.email}{f.provincia ? ` · ${f.provincia}` : ""}</p>
+                  <p className="text-sm c-tx font-medium">{f.first_name} {f.last_name}</p>
+                  <p className="text-xs c-tx3">{f.email}{f.provincia ? ` · ${f.provincia}` : ""}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <select
                     value={assignTurmaId}
                     onChange={e => setAssignTurmaId(e.target.value)}
-                    className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-blue-500/50"
+                    className="c-s1 border c-br rounded-lg px-3 py-1.5 text-xs c-tx outline-none focus:border-blue-500/50"
                   >
-                    <option value="" className="bg-[#0d0d14]">Escolher turma...</option>
+                    <option value="" className="c-bg">Escolher turma...</option>
                     {turmas.map(t => (
-                      <option key={t.id} value={t.id} className="bg-[#0d0d14]">{t.nome}</option>
+                      <option key={t.id} value={t.id} className="c-bg">{t.nome}</option>
                     ))}
                   </select>
                   <button
@@ -243,12 +243,12 @@ export default function TurmasPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-lg font-semibold text-white">Turmas</h2>
-          <p className="text-sm text-white/40 mt-0.5">{turmas.length} turma{turmas.length !== 1 ? "s" : ""}</p>
+          <h2 className="text-lg font-semibold c-tx">Turmas</h2>
+          <p className="text-sm c-tx3 mt-0.5">{turmas.length} turma{turmas.length !== 1 ? "s" : ""}</p>
         </div>
         {(isAdmin || isFormador) && (
         <button onClick={() => { setForm(f => ({ ...f, formador_id: isFormador ? (user?.id ?? "") : "" })); setShowCreate(true); }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors">
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors">
           <Plus size={14} /> Nova turma
         </button>
         )}
@@ -258,42 +258,42 @@ export default function TurmasPage() {
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setShowCreate(false)} />
-          <div className="relative w-full max-w-sm bg-[#0d0d14] border border-white/[0.08] rounded-xl p-6 space-y-5">
+          <div className="relative w-full max-w-sm c-bg border c-br rounded-xl p-6 space-y-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white">Nova turma</h3>
-              <button onClick={() => setShowCreate(false)}><X size={16} className="text-white/40" /></button>
+              <h3 className="text-sm font-semibold c-tx">Nova turma</h3>
+              <button onClick={() => setShowCreate(false)}><X size={16} className="c-tx3" /></button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs text-white/40">Nome da turma</label>
+                <label className="text-xs c-tx3">Nome da turma</label>
                 <input required value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
                   placeholder="Ex: Matemática 2026 — Turma A"
-                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50" />
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs text-white/40">Área</label>
+                <label className="text-xs c-tx3">Área</label>
                 <select value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))}
-                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50">
-                  {AREAS.filter(a => a !== "Geral").map(a => <option key={a} value={a} className="bg-[#0d0d14]">{a}</option>)}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50">
+                  {AREAS.filter(a => a !== "Geral").map(a => <option key={a} value={a} className="c-bg">{a}</option>)}
                 </select>
               </div>
               {isAdmin && (
               <div className="space-y-1.5">
-                <label className="text-xs text-white/40">Formador</label>
+                <label className="text-xs c-tx3">Formador</label>
                 <select required value={form.formador_id} onChange={e => setForm(f => ({ ...f, formador_id: e.target.value }))}
-                  className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/50">
-                  <option value="" className="bg-[#0d0d14]">Seleccionar formador...</option>
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50">
+                  <option value="" className="c-bg">Seleccionar formador...</option>
                   {formadores.map(f => (
-                    <option key={f.id} value={f.id} className="bg-[#0d0d14]">{f.first_name} {f.last_name}</option>
+                    <option key={f.id} value={f.id} className="c-bg">{f.first_name} {f.last_name}</option>
                   ))}
                 </select>
               </div>
               )}
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setShowCreate(false)}
-                  className="flex-1 py-2.5 rounded-lg border border-white/[0.06] text-sm text-white/50 hover:text-white transition-colors">Cancelar</button>
+                  className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx transition-colors">Cancelar</button>
                 <button type="submit" disabled={creating}
-                  className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                   {creating ? <Loader2 size={13} className="animate-spin" /> : null} Criar
                 </button>
               </div>
@@ -306,9 +306,9 @@ export default function TurmasPage() {
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 size={22} className="animate-spin text-blue-500" /></div>
       ) : turmas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3 text-center bg-[#13131f] border border-white/[0.06] rounded-xl">
-          <Users size={28} className="text-white/20" />
-          <p className="text-sm text-white/40">Ainda não há turmas. Cria a primeira.</p>
+        <div className="flex flex-col items-center justify-center py-20 gap-3 text-center c-bg2 border c-br rounded-xl">
+          <Users size={28} className="c-tx5" />
+          <p className="text-sm c-tx3">Ainda não há turmas. Cria a primeira.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -316,7 +316,7 @@ export default function TurmasPage() {
             const isOpen = expanded === turma.id;
             const disponíveis = getMembrosDisponiveis(turma.id);
             return (
-              <div key={turma.id} className="bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden">
+              <div key={turma.id} className="c-bg2 border c-br rounded-xl overflow-hidden">
                 {/* Cabeçalho da turma */}
                 <div className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-white/[0.02] transition-colors"
                   onClick={() => toggleExpand(turma.id)}>
@@ -325,33 +325,33 @@ export default function TurmasPage() {
                       <Users size={14} className="text-blue-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-white">{turma.nome}</p>
-                      <p className="text-[11px] text-white/40">{turma.area} · {turma.formador_nome?.trim()}</p>
+                      <p className="text-sm font-medium c-tx">{turma.nome}</p>
+                      <p className="text-[11px] c-tx3">{turma.area} · {turma.formador_nome?.trim()}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-xs text-white/30">{turma.total_membros} formando{turma.total_membros !== 1 ? "s" : ""}</span>
+                    <span className="text-xs c-tx4">{turma.total_membros} formando{turma.total_membros !== 1 ? "s" : ""}</span>
                     <button onClick={e => { e.stopPropagation(); handleDelete(turma.id); }}
-                      className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                      className="p-1.5 rounded-lg c-tx5 hover:text-red-400 hover:bg-red-500/10 transition-colors">
                       <Trash2 size={13} />
                     </button>
-                    {isOpen ? <ChevronUp size={14} className="text-white/30" /> : <ChevronDown size={14} className="text-white/30" />}
+                    {isOpen ? <ChevronUp size={14} className="c-tx4" /> : <ChevronDown size={14} className="c-tx4" />}
                   </div>
                 </div>
 
                 {/* Membros expandidos */}
                 {isOpen && (
-                  <div className="border-t border-white/[0.06] px-5 py-4 space-y-4">
+                  <div className="border-t c-br px-5 py-4 space-y-4">
                     {/* Membros actuais */}
                     {(membros[turma.id] ?? []).length > 0 ? (
                       <div className="space-y-2">
-                        <p className="text-[10px] uppercase tracking-wider text-white/30">Formandos</p>
+                        <p className="text-[10px] uppercase tracking-wider c-tx4">Formandos</p>
                         <div className="space-y-1">
                           {(membros[turma.id] ?? []).map(m => (
                             <div key={m.id} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-white/[0.02] group">
-                              <span className="text-sm text-white/70">{m.first_name} {m.last_name}</span>
+                              <span className="text-sm c-tx2">{m.first_name} {m.last_name}</span>
                               <button onClick={() => handleRemoveMembro(turma.id, m.id)}
-                                className="opacity-0 group-hover:opacity-100 text-white/30 hover:text-red-400 transition-all">
+                                className="opacity-0 group-hover:opacity-100 c-tx4 hover:text-red-400 transition-all">
                                 <X size={13} />
                               </button>
                             </div>
@@ -359,16 +359,16 @@ export default function TurmasPage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xs text-white/30 italic">Sem formandos nesta turma.</p>
+                      <p className="text-xs c-tx4 italic">Sem formandos nesta turma.</p>
                     )}
 
                     {/* Adicionar formandos */}
                     {disponíveis.length > 0 && (
                       <div className="space-y-2 pt-1">
-                        <p className="text-[10px] uppercase tracking-wider text-white/30">Adicionar formandos</p>
+                        <p className="text-[10px] uppercase tracking-wider c-tx4">Adicionar formandos</p>
                         <div className="max-h-40 overflow-y-auto space-y-1">
                           {disponíveis.map(f => (
-                            <label key={f.id} className="flex items-center gap-2.5 py-1.5 px-3 rounded-lg hover:bg-white/[0.03] cursor-pointer">
+                            <label key={f.id} className="flex items-center gap-2.5 py-1.5 px-3 rounded-lg hc-s1 cursor-pointer">
                               <input type="checkbox"
                                 checked={selectedFormandos.includes(f.id)}
                                 onChange={e => setSelectedFormandos(prev =>
@@ -376,14 +376,14 @@ export default function TurmasPage() {
                                 )}
                                 className="accent-blue-500"
                               />
-                              <span className="text-sm text-white/60">{f.first_name} {f.last_name}</span>
-                              <span className="text-[10px] text-white/25 ml-auto">{f.email}</span>
+                              <span className="text-sm c-tx2">{f.first_name} {f.last_name}</span>
+                              <span className="text-[10px] c-tx4 ml-auto">{f.email}</span>
                             </label>
                           ))}
                         </div>
                         {selectedFormandos.length > 0 && (
                           <button onClick={() => handleAddMembros(turma.id)} disabled={addingMembros}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600/80 text-xs text-white hover:bg-blue-600 transition-colors disabled:opacity-50">
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600/80 text-xs c-tx hover:bg-blue-600 transition-colors disabled:opacity-50">
                             {addingMembros ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
                             Adicionar {selectedFormandos.length} formando{selectedFormandos.length !== 1 ? "s" : ""}
                           </button>

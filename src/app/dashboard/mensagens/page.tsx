@@ -3,7 +3,8 @@
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Send, Search, Loader2, MessageSquare, ArrowLeft, Smile, Trash2 } from "lucide-react";
+import { Send, Search, Loader2, MessageSquare, ArrowLeft, Smile, Trash2, PenSquare, Users, GraduationCap, UserCheck, ChevronDown } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Conversation = {
   other_id: string;
@@ -67,6 +68,13 @@ function MensagensInner() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [showEmojis, setShowEmojis] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
+  const [composeTarget, setComposeTarget] = useState<"formandos" | "formadores" | "todos" | "ids">("formandos");
+  const [composeText, setComposeText] = useState("");
+  const [composeIds, setComposeIds] = useState<string[]>([]);
+  const [composeSearch, setComposeSearch] = useState("");
+  const [composeSending, setComposeSending] = useState(false);
+  const [composeSent, setComposeSent] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
@@ -137,6 +145,37 @@ function MensagensInner() {
     }
   }
 
+  async function handleBroadcast(e: React.FormEvent) {
+    e.preventDefault();
+    if (!composeText.trim()) return;
+    if (composeTarget === "ids" && composeIds.length === 0) return;
+    setComposeSending(true);
+    setComposeSent(null);
+    try {
+      const res = await fetch("/api/mensagens/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          destinatario: composeTarget,
+          ids: composeTarget === "ids" ? composeIds : undefined,
+          content: composeText.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro ao enviar.");
+      setComposeSent(json.sent);
+      setComposeText("");
+      setComposeIds([]);
+      setComposeSearch("");
+      fetchConversations();
+      setTimeout(() => { setIsComposing(false); setComposeSent(null); }, 2000);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setComposeSending(false);
+    }
+  }
+
   const filteredUsers = allUsers.filter(u => {
     if (u.id === user?.id) return false;
     const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.toLowerCase();
@@ -164,18 +203,25 @@ function MensagensInner() {
     <div className="w-full h-full flex gap-4 min-h-0">
 
       {/* Coluna esquerda — conversas */}
-      <div className={`flex flex-col bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden
+      <div className={`flex flex-col c-bg2 border c-br rounded-xl overflow-hidden
         ${activeId ? "hidden md:flex" : "flex"} w-full md:w-72 lg:w-80 shrink-0`}>
 
-        <div className="p-4 border-b border-white/[0.06]">
-          <h2 className="text-sm font-semibold text-white mb-3">Mensagens</h2>
+        <div className="p-4 border-b c-br">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold c-tx">Mensagens</h2>
+            <button onClick={() => { setIsComposing(true); setComposeTarget("formandos"); setComposeText(""); setComposeIds([]); setComposeSearch(""); setComposeSent(null); }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-600/15 text-blue-400 hover:bg-blue-600/25 transition-colors text-xs font-medium"
+              title="Nova mensagem em grupo">
+              <PenSquare size={13} /> Enviar
+            </button>
+          </div>
           <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Pesquisar utilizador..."
-              className="w-full pl-8 pr-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded-lg text-xs text-white placeholder:text-white/25 outline-none focus:border-blue-500/40"
+              className="w-full pl-8 pr-3 py-2 c-s1 border c-br rounded-lg text-xs c-tx placeholder:c-tx4 outline-none focus:border-blue-500/40"
             />
           </div>
         </div>
@@ -189,25 +235,25 @@ function MensagensInner() {
             <button
               key={conv.other_id}
               onClick={() => router.push(`/dashboard/mensagens?with=${conv.other_id}`)}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.04] transition-colors border-b border-white/[0.03]
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left hc-s1 transition-colors border-b border-white/[0.03]
                 ${activeId === conv.other_id ? "bg-blue-600/10 border-l-2 border-l-blue-500" : ""}`}
             >
               <div className="relative">
                 <Avatar name={`${conv.first_name} ${conv.last_name}`} url={conv.avatar_url} size={9} />
                 {conv.unread_count > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-[9px] text-white flex items-center justify-center font-bold">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-[9px] c-tx flex items-center justify-center font-bold">
                     {conv.unread_count}
                   </span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline">
-                  <p className={`text-xs font-semibold truncate ${conv.unread_count > 0 ? "text-white" : "text-white/70"}`}>
+                  <p className={`text-xs font-semibold truncate ${conv.unread_count > 0 ? "c-tx" : "c-tx2"}`}>
                     {conv.first_name} {conv.last_name}
                   </p>
-                  <span className="text-[10px] text-white/25 shrink-0 ml-2">{formatTime(conv.created_at)}</span>
+                  <span className="text-[10px] c-tx4 shrink-0 ml-2">{formatTime(conv.created_at)}</span>
                 </div>
-                <p className={`text-[11px] truncate mt-0.5 ${conv.unread_count > 0 ? "text-white/60" : "text-white/30"}`}>
+                <p className={`text-[11px] truncate mt-0.5 ${conv.unread_count > 0 ? "c-tx2" : "c-tx4"}`}>
                   {conv.from_user_id === user?.id ? "Tu: " : ""}{conv.last_message}
                 </p>
               </div>
@@ -217,18 +263,18 @@ function MensagensInner() {
           {/* Utilizadores sem conversa ainda */}
           {newUsers.length > 0 && (
             <>
-              <p className="px-4 pt-3 pb-1 text-[10px] uppercase tracking-widest text-white/20">Nova conversa</p>
+              <p className="px-4 pt-3 pb-1 text-[10px] uppercase tracking-widest c-tx5">Nova conversa</p>
               {newUsers.map(u => (
                 <button
                   key={u.id}
                   onClick={() => router.push(`/dashboard/mensagens?with=${u.id}`)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.04] transition-colors border-b border-white/[0.03]
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left hc-s1 transition-colors border-b border-white/[0.03]
                     ${activeId === u.id ? "bg-blue-600/10 border-l-2 border-l-blue-500" : ""}`}
                 >
                   <Avatar name={`${u.first_name} ${u.last_name}`} url={u.avatar_url} size={9} />
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-white/70 truncate">{u.first_name} {u.last_name}</p>
-                    <p className="text-[10px] text-white/25">{ROLE_LABEL[u.role] ?? u.role}</p>
+                    <p className="text-xs font-semibold c-tx2 truncate">{u.first_name} {u.last_name}</p>
+                    <p className="text-[10px] c-tx4">{ROLE_LABEL[u.role] ?? u.role}</p>
                   </div>
                 </button>
               ))}
@@ -237,35 +283,35 @@ function MensagensInner() {
 
           {conversations.length === 0 && newUsers.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 gap-2">
-              <MessageSquare size={24} className="text-white/10" strokeWidth={1} />
-              <p className="text-xs text-white/20">Sem utilizadores disponíveis</p>
+              <MessageSquare size={24} className="c-tx5" strokeWidth={1} />
+              <p className="text-xs c-tx5">Sem utilizadores disponíveis</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Área de chat */}
-      <div className={`flex-1 flex flex-col bg-[#13131f] border border-white/[0.06] rounded-xl overflow-hidden min-w-0
+      <div className={`flex-1 flex flex-col c-bg2 border c-br rounded-xl overflow-hidden min-w-0
         ${!activeId ? "hidden md:flex" : "flex"}`}>
 
         {!activeId ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-8">
-            <MessageSquare size={32} className="text-white/10" strokeWidth={1} />
-            <p className="text-sm text-white/20">Selecciona uma conversa para começar</p>
+            <MessageSquare size={32} className="c-tx5" strokeWidth={1} />
+            <p className="text-sm c-tx5">Selecciona uma conversa para começar</p>
           </div>
         ) : (
           <>
             {/* Header da conversa */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06] shrink-0">
-              <button onClick={() => router.push("/dashboard/mensagens")} className="md:hidden text-white/40 hover:text-white mr-1">
+            <div className="flex items-center gap-3 px-4 py-3 border-b c-br shrink-0">
+              <button onClick={() => router.push("/dashboard/mensagens")} className="md:hidden c-tx3 hc-tx mr-1">
                 <ArrowLeft size={18} />
               </button>
               {activeProfile && (
                 <>
                   <Avatar name={`${activeProfile.first_name} ${activeProfile.last_name}`} url={activeProfile.avatar_url} size={8} />
                   <div>
-                    <p className="text-sm font-semibold text-white">{activeProfile.first_name} {activeProfile.last_name}</p>
-                    <p className="text-[10px] text-white/30">{ROLE_LABEL[activeProfile.role] ?? activeProfile.role}</p>
+                    <p className="text-sm font-semibold c-tx">{activeProfile.first_name} {activeProfile.last_name}</p>
+                    <p className="text-[10px] c-tx4">{ROLE_LABEL[activeProfile.role] ?? activeProfile.role}</p>
                   </div>
                 </>
               )}
@@ -277,7 +323,7 @@ function MensagensInner() {
                 <div className="flex justify-center pt-8"><Loader2 size={20} className="animate-spin text-blue-500" /></div>
               ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
-                  <p className="text-xs text-white/20">Sem mensagens ainda. Envia a primeira!</p>
+                  <p className="text-xs c-tx5">Sem mensagens ainda. Envia a primeira!</p>
                 </div>
               ) : (
                 messages.map((msg) => {
@@ -287,17 +333,17 @@ function MensagensInner() {
                       {!isMe && <Avatar name={`${msg.first_name} ${msg.last_name}`} size={7} />}
                       <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 relative ${
                         isMe
-                          ? "bg-blue-600 text-white rounded-tr-sm"
-                          : "bg-white/[0.06] text-white/80 rounded-tl-sm"
+                          ? "bg-blue-600 c-tx rounded-tr-sm"
+                          : "c-s2 c-tx2 rounded-tl-sm"
                       }`}>
                         <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
-                        <p className={`text-[10px] mt-1 ${isMe ? "text-blue-200/60" : "text-white/25"}`}>
+                        <p className={`text-[10px] mt-1 ${isMe ? "text-blue-200/60" : "c-tx4"}`}>
                           {formatTime(msg.created_at)}
                         </p>
                         {isMe && (
                           <button
                             onClick={() => handleDeleteMsg(msg.id)}
-                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#0d0d14] border border-white/10 text-white/30 hover:text-red-400 hover:border-red-500/30 flex items-center justify-center opacity-0 group-hover/msg:opacity-100 transition-all"
+                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full c-bg border c-br2 c-tx4 hover:text-red-400 hover:border-red-500/30 flex items-center justify-center opacity-0 group-hover/msg:opacity-100 transition-all"
                             title="Eliminar mensagem"
                           >
                             <Trash2 size={10} />
@@ -320,7 +366,7 @@ function MensagensInner() {
 
             {/* Picker de emojis */}
             {showEmojis && (
-              <div className="mx-4 mb-2 p-3 bg-[#0d0d14] border border-white/[0.08] rounded-xl grid grid-cols-10 gap-1">
+              <div className="mx-4 mb-2 p-3 c-bg border c-br rounded-xl grid grid-cols-10 gap-1">
                 {EMOJIS.map(emoji => (
                   <button
                     key={emoji}
@@ -336,7 +382,7 @@ function MensagensInner() {
                       setTimeout(() => { ta.focus(); ta.setSelectionRange(start + emoji.length, start + emoji.length); }, 0);
                       setShowEmojis(false);
                     }}
-                    className="text-lg hover:bg-white/[0.08] rounded-lg p-1 transition-colors leading-none"
+                    className="text-lg hc-s3 rounded-lg p-1 transition-colors leading-none"
                   >
                     {emoji}
                   </button>
@@ -345,11 +391,11 @@ function MensagensInner() {
             )}
 
             {/* Input */}
-            <form onSubmit={handleSend} className="flex items-end gap-3 p-4 border-t border-white/[0.06] shrink-0">
+            <form onSubmit={handleSend} className="flex items-end gap-3 p-4 border-t c-br shrink-0">
               <button
                 type="button"
                 onClick={() => setShowEmojis(s => !s)}
-                className={`p-2.5 rounded-xl transition-colors shrink-0 ${showEmojis ? "bg-blue-600/20 text-blue-400" : "text-white/30 hover:text-white hover:bg-white/[0.06]"}`}
+                className={`p-2.5 rounded-xl transition-colors shrink-0 ${showEmojis ? "bg-blue-600/20 text-blue-400" : "c-tx4 hc-tx hc-s2"}`}
               >
                 <Smile size={18} />
               </button>
@@ -360,13 +406,13 @@ function MensagensInner() {
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(e); } }}
                 placeholder="Escreve uma mensagem... (Enter para enviar)"
                 rows={1}
-                className="flex-1 bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-blue-500/40 resize-none max-h-32 transition-colors"
+                className="flex-1 c-s1 border c-br rounded-xl px-4 py-2.5 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/40 resize-none max-h-32 transition-colors"
                 style={{ minHeight: "42px" }}
               />
               <button
                 type="submit"
                 disabled={!text.trim() || sending}
-                className="p-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition-colors disabled:opacity-40 shrink-0"
+                className="p-2.5 rounded-xl bg-blue-600 c-tx hover:bg-blue-500 transition-colors disabled:opacity-40 shrink-0"
               >
                 {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               </button>
@@ -374,6 +420,113 @@ function MensagensInner() {
           </>
         )}
       </div>
+
+      {/* Modal de envio em grupo */}
+      <Dialog open={isComposing} onOpenChange={setIsComposing}>
+        <DialogContent className="c-bg border c-br c-tx max-w-lg rounded-xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-5 pb-4 border-b c-br">
+            <DialogTitle className="text-sm font-semibold flex items-center gap-2">
+              <PenSquare size={15} className="text-blue-400" /> Enviar mensagem em grupo
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleBroadcast} className="px-6 py-5 space-y-4">
+            {/* Selector de destinatários */}
+            <div className="space-y-2">
+              <label className="text-xs c-tx3">Destinatários</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: "formandos",  label: "Todos os formandos",  icon: GraduationCap },
+                  { value: "formadores", label: "Todos os formadores",  icon: UserCheck },
+                  { value: "todos",      label: "Todos os utilizadores", icon: Users },
+                  { value: "ids",        label: "Selecção manual",      icon: ChevronDown },
+                ].map(opt => {
+                  const Icon = opt.icon;
+                  const sel = composeTarget === opt.value;
+                  return (
+                    <button key={opt.value} type="button" onClick={() => setComposeTarget(opt.value as any)}
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                        sel ? "border-blue-500/50 bg-blue-500/10 text-blue-300" : "c-br c-s1 c-tx3 hc-s2"
+                      }`}>
+                      <Icon size={14} className={sel ? "text-blue-400" : "c-tx4"} />
+                      <span className="text-xs font-medium">{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Selecção manual */}
+            {composeTarget === "ids" && (
+              <div className="space-y-2">
+                <label className="text-xs c-tx3">Pesquisar e seleccionar</label>
+                <div className="relative">
+                  <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
+                  <input value={composeSearch} onChange={e => setComposeSearch(e.target.value)}
+                    placeholder="Nome do utilizador..."
+                    className="w-full pl-8 pr-3 py-2 c-s1 border c-br rounded-lg text-xs c-tx c-ph outline-none focus:border-blue-500/40" />
+                </div>
+                {composeIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {composeIds.map(id => {
+                      const u = allUsers.find(u => u.id === id);
+                      return u ? (
+                        <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600/20 text-blue-300 text-[11px] border border-blue-500/30">
+                          {u.first_name} {u.last_name}
+                          <button type="button" onClick={() => setComposeIds(prev => prev.filter(x => x !== id))} className="ml-0.5 hover:text-white">×</button>
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+                <div className="max-h-36 overflow-y-auto c-s1 border c-br rounded-lg">
+                  {allUsers.filter(u => {
+                    if (u.id === user?.id || composeIds.includes(u.id)) return false;
+                    const name = `${u.first_name} ${u.last_name}`.toLowerCase();
+                    return composeSearch ? name.includes(composeSearch.toLowerCase()) : true;
+                  }).slice(0, 20).map(u => (
+                    <button key={u.id} type="button"
+                      onClick={() => { setComposeIds(prev => [...prev, u.id]); setComposeSearch(""); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left hc-s2 transition-colors border-b border-white/[0.03] last:border-0">
+                      <Avatar name={`${u.first_name} ${u.last_name}`} url={u.avatar_url} size={7} />
+                      <div>
+                        <p className="text-xs c-tx2 font-medium">{u.first_name} {u.last_name}</p>
+                        <p className="text-[10px] c-tx4">{ROLE_LABEL[u.role] ?? u.role}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Mensagem */}
+            <div className="space-y-1.5">
+              <label className="text-xs c-tx3">Mensagem *</label>
+              <textarea required value={composeText} onChange={e => setComposeText(e.target.value)}
+                placeholder="Escreve a tua mensagem..."
+                rows={4}
+                className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx c-ph outline-none focus:border-blue-500/40 resize-none transition-colors" />
+            </div>
+
+            {composeSent !== null && (
+              <p className="text-xs text-emerald-400 text-center">
+                ✓ Mensagem enviada para {composeSent} {composeSent === 1 ? "utilizador" : "utilizadores"}
+              </p>
+            )}
+
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setIsComposing(false)}
+                className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx hc-s1 transition-colors">
+                Cancelar
+              </button>
+              <button type="submit" disabled={composeSending || !composeText.trim() || (composeTarget === "ids" && composeIds.length === 0)}
+                className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
+                {composeSending ? <><Loader2 size={14} className="animate-spin" /> A enviar...</> : <><Send size={14} /> Enviar</>}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

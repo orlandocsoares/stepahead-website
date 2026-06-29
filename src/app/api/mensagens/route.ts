@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
+import { auditLog } from "@/lib/audit";
 
 // GET /api/mensagens?with=<userId>   → conversa entre o user actual e <userId>
 // GET /api/mensagens?unread=1        → contagem de não lidas (para badge)
@@ -94,6 +95,7 @@ export async function DELETE(request: Request) {
       [id, session.id]
     );
     if (result.rowCount === 0) return NextResponse.json({ error: "Mensagem não encontrada ou sem permissão" }, { status: 404 });
+    await auditLog("mensagem_delete", { actorId: session.id, targetId: id });
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido";
@@ -119,6 +121,7 @@ export async function POST(request: Request) {
       `INSERT INTO mensagens (from_user_id, to_user_id, content) VALUES ($1, $2, $3) RETURNING *`,
       [session.id, to_user_id, content.trim()]
     );
+    await auditLog("mensagem_send", { actorId: session.id, targetId: to_user_id, details: { preview: content.trim().slice(0, 80) } });
     return NextResponse.json({ data: result.rows[0] }, { status: 201 });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido";

@@ -1,6 +1,32 @@
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 import { dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
+import { auditLog } from "@/lib/audit";
+import { getClientIp } from "@/lib/rate-limit";
+
+const BASE = process.env.APP_URL || "https://sabermais.edu.ao";
+
+async function sendApprovalEmail(to: string, firstName: string) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  await resend.emails.send({
+    from: "SaberMais <notificacoes@sabermais.edu.ao>",
+    to,
+    subject: "Conta aprovada — SaberMais",
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d0d14;color:#fff;border-radius:16px;">
+        <img src="${BASE}/logo-sabermais.png" alt="SaberMais" style="height:48px;margin-bottom:24px;" />
+        <h2 style="font-size:18px;font-weight:600;margin-bottom:8px;">Conta aprovada${firstName ? `, ${firstName}` : ""}!</h2>
+        <p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.6;margin-bottom:24px;">
+          O seu formador aprovou o acesso ao portal SaberMais. Já pode iniciar sessão e aceder a todos os conteúdos.
+        </p>
+        <a href="${BASE}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">
+          Entrar no portal
+        </a>
+      </div>
+    `,
+  }).catch(e => console.error("[formandos-pendentes] sendApprovalEmail error:", e.message));
+}
 
 // GET — formador vê os seus formandos pendentes; admin vê todos
 export async function GET() {
@@ -36,7 +62,8 @@ export async function GET() {
 }
 
 // POST — aprovar ou rejeitar a associação formando↔formador
-export async function POST(request: Request) {
+export async function POST(request: Request, ) {
+  const ip = getClientIp(request);
   const session = await getSessionUser();
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
@@ -76,13 +103,15 @@ export async function POST(request: Request) {
         "UPDATE profiles SET status = 'activo' WHERE id = $1 AND status = 'email_confirmado'",
         [formando_id]
       );
-      // Notificar o formando que ganhou acesso
+      // Notificação in-app + email ao formando
       await dbQuery(
         `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
-         VALUES ($1, 'aprovacao', 'Acesso aprovado!',
+         VALUES ($1, 'aprovacao', 'Conta aprovada!',
            'O seu formador aprovou o acesso ao portal SaberMais. Pode agora iniciar sessão.', '/')`,
         [formando_id]
       );
+      await sendApprovalEmail(ff.email, ff.first_name);
+      await auditLog("approve_formando", { actorId: session.id, targetId: formando_id, ip });
     } else {
       // Já tinha acesso — notificar que ganhou acesso a nova disciplina
       const formadorProfile = await dbQuery(
@@ -117,6 +146,7 @@ export async function POST(request: Request) {
        WHERE formando_id = $1 AND formador_id = $2`,
       [formando_id, formadorId]
     );
+    await auditLog("reject_formando", { actorId: session.id, targetId: formando_id, ip });
   } else if (acao === "remover") {
     // Formador remove formando já aceite → notifica formando
     await dbQuery(

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { assertIdentifier, dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
+import { auditLog } from "@/lib/audit";
 
 const ALLOWED_TABLES = new Set([
   "profiles",
@@ -18,6 +19,36 @@ const ALLOWED_TABLES = new Set([
   "comunidade_gostos",
   "ticket_mensagens",
 ]);
+
+/**
+ * Colunas permitidas por tabela no GET genérico.
+ * Protege contra leitura de campos internos (password_hash, tokens, etc.).
+ * `null` = sem restrição (tabelas sem dados sensíveis).
+ */
+const ALLOWED_COLUMNS: Record<string, Set<string> | null> = {
+  profiles: new Set([
+    "id", "email", "first_name", "last_name", "role", "status",
+    "avatar_url", "provincia", "escola", "especialidade", "biografia",
+    "specialization", "genero", "bi_number", "cv_summary", "created_at", "updated_at",
+  ]),
+  // Tabelas sem dados sensíveis — sem restrição de colunas
+  hero_telemetria:      null,
+  dashboard_stats:      null,
+  agenda_atividades:    null,
+  inscricoes_agenda:    null,
+  comunidade_posts:     null,
+  tickets:              null,
+  arquivos:             null,
+  documents:            null,
+  turmas:               null,
+  turma_membros:        null,
+  comunidade_comentarios: null,
+  comunidade_gostos:    null,
+  ticket_mensagens:     null,
+};
+
+/** Regex de UUID v4 para validar parâmetros de ID nas queries */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function parseTable(params: { table: string }) {
   const table = params.table;
@@ -134,6 +165,10 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
     for (const [key, value] of url.searchParams.entries()) {
       if (key.startsWith("eq.")) {
         const column = key.slice(3);
+        // Validar UUID quando a coluna termina em '_id' ou se chama 'id'
+        if ((column === "id" || column.endsWith("_id")) && !UUID_RE.test(value)) {
+          return NextResponse.json({ data: null, error: { message: "ID inválido." } }, { status: 400 });
+        }
         filters.push(`${tableSql}.${assertIdentifier(column)} = $${valueIndex++}`);
         values.push(value);
       }
@@ -149,10 +184,17 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
       }
     }
 
+
     const whereSql = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
     let fromSql = `FROM ${tableSql}`;
-    let selectSql = `${tableSql}.*`;
+
+    // Para tabelas com whitelist, expandir explicitamente as colunas permitidas
+    // em vez de usar `*` — evita expor campos adicionados à BD no futuro.
+    const allowedCols = ALLOWED_COLUMNS[table];
+    let selectSql = allowedCols
+      ? [...allowedCols].map(c => `${tableSql}.${assertIdentifier(c)}`).join(", ")
+      : `${tableSql}.*`;
 
     const selectRequested = url.searchParams.get("select") ?? "*";
     if (table === "tickets" && selectRequested.includes("profiles(")) {
@@ -194,7 +236,8 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
     const rows = mapJoinedRows(table, result.rows);
     return NextResponse.json({ data: single ? (rows[0] ?? null) : rows, error: null });
   } catch (error: any) {
-    return NextResponse.json({ data: null, error: { message: error.message || "Erro na consulta." } }, { status: 400 });
+    console.error("[db-route GET]", error.message);
+    return NextResponse.json({ data: null, error: { message: "Erro ao processar consulta." } }, { status: 400 });
   }
 }
 
@@ -235,11 +278,40 @@ export async function POST(request: Request, context: { params: Promise<{ table:
       insertedRows.push(result.rows[0]);
     }
 
+    // Audit log para tabelas relevantes
+    const AUDIT_MAP: Record<string, any> = {
+      arquivos: "ficheiro_upload",
+      agenda_atividades: "evento_create",
+      comunidade_posts: "post_create",
+      comunidade_comentarios: "comentario_create",
+    };
+    if (AUDIT_MAP[table]) {
+      const first = insertedRows[0];
+      await auditLog(AUDIT_MAP[table], {
+        actorId: sessionUser.id,
+        targetId: first?.id,
+        details: table === "arquivos" ? { label: first?.label, area: first?.area } :
+                 table === "agenda_atividades" ? { titulo: first?.titulo } :
+                 table === "comunidade_posts" ? { content: String(first?.content ?? "").slice(0, 100) } : undefined,
+      });
+    }
+
     return NextResponse.json({ data: insertedRows, error: null });
   } catch (error: any) {
-    return NextResponse.json({ data: null, error: { message: error.message || "Erro ao inserir registo." } }, { status: 400 });
+    console.error("[db-route POST]", error.message);
+    return NextResponse.json({ data: null, error: { message: "Erro ao inserir registo." } }, { status: 400 });
   }
 }
+
+// Campos que nunca podem ser alterados por utilizadores não-admin
+const PROTECTED_FIELDS = new Set(["role", "status", "id", "email"]);
+
+// Tabelas onde o utilizador só pode editar os seus próprios registos
+const OWNED_TABLES: Record<string, string> = {
+  profiles: "id",
+  tickets: "user_id",
+  comunidade_posts: "user_id",
+};
 
 export async function PATCH(request: Request, context: { params: Promise<{ table: string }> }) {
   const sessionUser = await getSessionUser();
@@ -255,6 +327,30 @@ export async function PATCH(request: Request, context: { params: Promise<{ table
 
     const updates = body.updates ?? {};
     const eq = body.eq ?? {};
+
+    // Verificar role do utilizador
+    const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
+    const userRole = profileRes.rows[0]?.role ?? "formando";
+    const isAdminUser = userRole === "admin" || userRole === "super-admin";
+
+    // Bloquear edição de campos protegidos para não-admins
+    if (!isAdminUser) {
+      for (const field of Object.keys(updates)) {
+        if (PROTECTED_FIELDS.has(field)) {
+          return NextResponse.json({ data: null, error: { message: `Campo '${field}' não pode ser alterado.` } }, { status: 403 });
+        }
+      }
+    }
+
+    // Validar ownership para tabelas próprias
+    const ownerField = OWNED_TABLES[table];
+    if (ownerField && !isAdminUser) {
+      // Verificar que o eq aponta para um registo do próprio utilizador
+      const ownerValue = table === "profiles" ? eq.id : eq[ownerField];
+      if (!ownerValue || ownerValue !== sessionUser.id) {
+        return NextResponse.json({ data: null, error: { message: "Sem permissão para editar este registo." } }, { status: 403 });
+      }
+    }
 
     const updateEntries = Object.entries(updates);
     if (!updateEntries.length) {
@@ -283,7 +379,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ table
 
     return NextResponse.json({ data: result.rows, error: null });
   } catch (error: any) {
-    return NextResponse.json({ data: null, error: { message: error.message || "Erro ao atualizar registo." } }, { status: 400 });
+    console.error("[db-route PATCH]", error.message);
+    return NextResponse.json({ data: null, error: { message: "Erro ao atualizar registo." } }, { status: 400 });
   }
 }
 
@@ -300,6 +397,20 @@ export async function DELETE(request: Request, context: { params: Promise<{ tabl
     const body = await request.json();
     const eq = body.eq ?? {};
 
+    // Verificar role do utilizador
+    const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
+    const userRole = profileRes.rows[0]?.role ?? "formando";
+    const isAdminUser = userRole === "admin" || userRole === "super-admin";
+
+    // Validar ownership para tabelas próprias
+    const ownerField = OWNED_TABLES[table];
+    if (ownerField && !isAdminUser) {
+      const ownerValue = table === "profiles" ? eq.id : eq[ownerField];
+      if (!ownerValue || ownerValue !== sessionUser.id) {
+        return NextResponse.json({ data: null, error: { message: "Sem permissão para eliminar este registo." } }, { status: 403 });
+      }
+    }
+
     const values: unknown[] = [];
     let idx = 1;
     const filterParts = Object.entries(eq).map(([key, value]) => {
@@ -310,8 +421,26 @@ export async function DELETE(request: Request, context: { params: Promise<{ tabl
     const whereSql = filterParts.length ? `WHERE ${filterParts.join(" AND ")}` : "";
 
     const result = await dbQuery(`DELETE FROM ${tableSql} ${whereSql} RETURNING *`, values);
+
+    // Audit log para eliminações relevantes
+    const AUDIT_DELETE_MAP: Record<string, any> = {
+      arquivos: "ficheiro_delete",
+      agenda_atividades: "evento_delete",
+      comunidade_posts: "post_delete",
+      comunidade_comentarios: "comentario_delete",
+    };
+    if (AUDIT_DELETE_MAP[table] && result.rows.length > 0) {
+      const first = result.rows[0];
+      await auditLog(AUDIT_DELETE_MAP[table], {
+        actorId: sessionUser.id,
+        targetId: first?.id,
+        details: table === "arquivos" ? { label: first?.label, area: first?.area } : undefined,
+      });
+    }
+
     return NextResponse.json({ data: result.rows, error: null });
   } catch (error: any) {
-    return NextResponse.json({ data: null, error: { message: error.message || "Erro ao eliminar registo." } }, { status: 400 });
+    console.error("[db-route DELETE]", error.message);
+    return NextResponse.json({ data: null, error: { message: "Erro ao eliminar registo." } }, { status: 400 });
   }
 }
