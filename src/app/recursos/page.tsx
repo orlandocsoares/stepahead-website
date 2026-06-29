@@ -82,8 +82,8 @@ function RecursosContent() {
           <a href="/" className="flex items-center gap-3">
             <Image
               src="/storage/v1/object/public/logo-sabermais/logo.png"
-              alt="SaberMais" width={110} height={30}
-              className="brightness-0 invert"
+              alt="SaberMais" width={120} height={32}
+              className="brightness-0 invert drop-shadow-[0_0_8px_rgba(99,179,237,0.85)] drop-shadow-[0_0_20px_rgba(59,130,246,0.5)]"
             />
           </a>
           <a href="/login"
