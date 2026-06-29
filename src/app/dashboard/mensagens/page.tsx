@@ -3,7 +3,8 @@
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Send, Search, Loader2, MessageSquare, ArrowLeft, Smile, Trash2 } from "lucide-react";
+import { Send, Search, Loader2, MessageSquare, ArrowLeft, Smile, Trash2, PenSquare, Users, GraduationCap, UserCheck, ChevronDown } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Conversation = {
   other_id: string;
@@ -67,6 +68,13 @@ function MensagensInner() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [showEmojis, setShowEmojis] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
+  const [composeTarget, setComposeTarget] = useState<"formandos" | "formadores" | "todos" | "ids">("formandos");
+  const [composeText, setComposeText] = useState("");
+  const [composeIds, setComposeIds] = useState<string[]>([]);
+  const [composeSearch, setComposeSearch] = useState("");
+  const [composeSending, setComposeSending] = useState(false);
+  const [composeSent, setComposeSent] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
@@ -137,6 +145,37 @@ function MensagensInner() {
     }
   }
 
+  async function handleBroadcast(e: React.FormEvent) {
+    e.preventDefault();
+    if (!composeText.trim()) return;
+    if (composeTarget === "ids" && composeIds.length === 0) return;
+    setComposeSending(true);
+    setComposeSent(null);
+    try {
+      const res = await fetch("/api/mensagens/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          destinatario: composeTarget,
+          ids: composeTarget === "ids" ? composeIds : undefined,
+          content: composeText.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro ao enviar.");
+      setComposeSent(json.sent);
+      setComposeText("");
+      setComposeIds([]);
+      setComposeSearch("");
+      fetchConversations();
+      setTimeout(() => { setIsComposing(false); setComposeSent(null); }, 2000);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setComposeSending(false);
+    }
+  }
+
   const filteredUsers = allUsers.filter(u => {
     if (u.id === user?.id) return false;
     const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.toLowerCase();
@@ -168,7 +207,14 @@ function MensagensInner() {
         ${activeId ? "hidden md:flex" : "flex"} w-full md:w-72 lg:w-80 shrink-0`}>
 
         <div className="p-4 border-b c-br">
-          <h2 className="text-sm font-semibold c-tx mb-3">Mensagens</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold c-tx">Mensagens</h2>
+            <button onClick={() => { setIsComposing(true); setComposeTarget("formandos"); setComposeText(""); setComposeIds([]); setComposeSearch(""); setComposeSent(null); }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-600/15 text-blue-400 hover:bg-blue-600/25 transition-colors text-xs font-medium"
+              title="Nova mensagem em grupo">
+              <PenSquare size={13} /> Enviar
+            </button>
+          </div>
           <div className="relative">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
             <input
@@ -374,6 +420,113 @@ function MensagensInner() {
           </>
         )}
       </div>
+
+      {/* Modal de envio em grupo */}
+      <Dialog open={isComposing} onOpenChange={setIsComposing}>
+        <DialogContent className="c-bg border c-br c-tx max-w-lg rounded-xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-5 pb-4 border-b c-br">
+            <DialogTitle className="text-sm font-semibold flex items-center gap-2">
+              <PenSquare size={15} className="text-blue-400" /> Enviar mensagem em grupo
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleBroadcast} className="px-6 py-5 space-y-4">
+            {/* Selector de destinatários */}
+            <div className="space-y-2">
+              <label className="text-xs c-tx3">Destinatários</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: "formandos",  label: "Todos os formandos",  icon: GraduationCap },
+                  { value: "formadores", label: "Todos os formadores",  icon: UserCheck },
+                  { value: "todos",      label: "Todos os utilizadores", icon: Users },
+                  { value: "ids",        label: "Selecção manual",      icon: ChevronDown },
+                ].map(opt => {
+                  const Icon = opt.icon;
+                  const sel = composeTarget === opt.value;
+                  return (
+                    <button key={opt.value} type="button" onClick={() => setComposeTarget(opt.value as any)}
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                        sel ? "border-blue-500/50 bg-blue-500/10 text-blue-300" : "c-br c-s1 c-tx3 hc-s2"
+                      }`}>
+                      <Icon size={14} className={sel ? "text-blue-400" : "c-tx4"} />
+                      <span className="text-xs font-medium">{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Selecção manual */}
+            {composeTarget === "ids" && (
+              <div className="space-y-2">
+                <label className="text-xs c-tx3">Pesquisar e seleccionar</label>
+                <div className="relative">
+                  <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
+                  <input value={composeSearch} onChange={e => setComposeSearch(e.target.value)}
+                    placeholder="Nome do utilizador..."
+                    className="w-full pl-8 pr-3 py-2 c-s1 border c-br rounded-lg text-xs c-tx c-ph outline-none focus:border-blue-500/40" />
+                </div>
+                {composeIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {composeIds.map(id => {
+                      const u = allUsers.find(u => u.id === id);
+                      return u ? (
+                        <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600/20 text-blue-300 text-[11px] border border-blue-500/30">
+                          {u.first_name} {u.last_name}
+                          <button type="button" onClick={() => setComposeIds(prev => prev.filter(x => x !== id))} className="ml-0.5 hover:text-white">×</button>
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+                <div className="max-h-36 overflow-y-auto c-s1 border c-br rounded-lg">
+                  {allUsers.filter(u => {
+                    if (u.id === user?.id || composeIds.includes(u.id)) return false;
+                    const name = `${u.first_name} ${u.last_name}`.toLowerCase();
+                    return composeSearch ? name.includes(composeSearch.toLowerCase()) : true;
+                  }).slice(0, 20).map(u => (
+                    <button key={u.id} type="button"
+                      onClick={() => { setComposeIds(prev => [...prev, u.id]); setComposeSearch(""); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left hc-s2 transition-colors border-b border-white/[0.03] last:border-0">
+                      <Avatar name={`${u.first_name} ${u.last_name}`} url={u.avatar_url} size={7} />
+                      <div>
+                        <p className="text-xs c-tx2 font-medium">{u.first_name} {u.last_name}</p>
+                        <p className="text-[10px] c-tx4">{ROLE_LABEL[u.role] ?? u.role}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Mensagem */}
+            <div className="space-y-1.5">
+              <label className="text-xs c-tx3">Mensagem *</label>
+              <textarea required value={composeText} onChange={e => setComposeText(e.target.value)}
+                placeholder="Escreve a tua mensagem..."
+                rows={4}
+                className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx c-ph outline-none focus:border-blue-500/40 resize-none transition-colors" />
+            </div>
+
+            {composeSent !== null && (
+              <p className="text-xs text-emerald-400 text-center">
+                ✓ Mensagem enviada para {composeSent} {composeSent === 1 ? "utilizador" : "utilizadores"}
+              </p>
+            )}
+
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setIsComposing(false)}
+                className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx hc-s1 transition-colors">
+                Cancelar
+              </button>
+              <button type="submit" disabled={composeSending || !composeText.trim() || (composeTarget === "ids" && composeIds.length === 0)}
+                className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
+                {composeSending ? <><Loader2 size={14} className="animate-spin" /> A enviar...</> : <><Send size={14} /> Enviar</>}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
