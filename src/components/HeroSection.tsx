@@ -77,9 +77,11 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
   const especialidade = sanitizeEspecialidade(f.especialidade);
   const bio = f.biografia?.trim() || "";
 
+  const initials = `${f.first_name?.[0] ?? ""}${f.last_name?.[0] ?? ""}`.toUpperCase();
+
   return (
-    <div className="flex items-center gap-6 bg-black/60 backdrop-blur-xl border border-white/10 p-6 rounded-3xl mt-6 shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative overflow-hidden w-fit max-w-[520px]">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
+    <div className="flex items-start gap-6 bg-black/60 backdrop-blur-xl border border-white/10 p-6 rounded-3xl mt-6 shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative w-fit max-w-[520px]">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none rounded-3xl" />
       <AnimatePresence mode="wait">
         <motion.div
           key={idx}
@@ -87,10 +89,16 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.6, ease: "easeInOut" }}
-          className="flex items-center gap-6 w-full"
+          className="flex items-start gap-6 w-full"
         >
           <div className="relative shrink-0">
-            <img src={avatar} className="w-20 h-20 rounded-full border-2 border-blue-400/50 object-cover shadow-[0_0_20px_rgba(59,130,246,0.4)]" alt="Formador" />
+            {f.avatar_url ? (
+              <img src={f.avatar_url} className="w-20 h-20 rounded-full border-2 border-blue-400/50 object-cover shadow-[0_0_20px_rgba(59,130,246,0.4)]" alt={f.first_name} />
+            ) : (
+              <div className="w-20 h-20 rounded-full border-2 border-blue-400/50 bg-blue-600/30 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.4)]">
+                <span className="text-2xl font-bold text-blue-300">{initials}</span>
+              </div>
+            )}
             <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1.5 border-2 border-black">
               <UserCheck size={14} className="text-white" />
             </div>
