@@ -617,48 +617,74 @@ export default function FicheirosPage() {
 
       {/* Modal de upload */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="c-bg border c-br c-tx max-w-md rounded-xl p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b c-br">
-            <DialogTitle className="text-base font-semibold flex items-center gap-2">
-              <Plus size={16} className="text-blue-400" /> Registar novo ficheiro
+        <DialogContent className="c-bg border c-br c-tx max-w-2xl rounded-xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-5 pb-4 border-b c-br">
+            <DialogTitle className="text-sm font-semibold flex items-center gap-2">
+              <Plus size={15} className="text-blue-400" /> Registar novo ficheiro
             </DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleUpload} className="px-6 py-5 space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-xs c-tx3">Título</label>
-              <input required value={title} onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Guia Pedagógico III"
-                className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors" />
+          <form id="upload-form" onSubmit={handleUpload} className="px-6 py-5">
+            {/* Linha 1: título + ficheiro lado a lado */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Título *</label>
+                <input required value={title} onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Ex: Guia Pedagógico III"
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx c-ph outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Ficheiro *</label>
+                <label className="relative flex items-center gap-3 border border-dashed c-br rounded-lg px-3 py-2 cursor-pointer hover:border-blue-500/40 transition-colors">
+                  <input type="file" required onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <Download size={15} className="c-tx5 shrink-0" />
+                  <p className="text-sm c-tx3 truncate">
+                    {uploadFile ? uploadFile.name : "Clique para seleccionar"}
+                  </p>
+                </label>
+                {thumbnailPreview && (
+                  <embed src={thumbnailPreview} type="application/pdf" className="w-full h-20 rounded pointer-events-none mt-1" />
+                )}
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs c-tx3 flex items-center justify-between">
-                <span>Área</span>
-                {isRestricted && (
-                  <span className="text-[10px] text-amber-400/70 flex items-center gap-1">
-                    <Lock size={9} /> limitado pela especialização
-                  </span>
+            {/* Linha 2: disciplina + grupo de formação */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3 flex items-center justify-between">
+                  <span>Disciplina</span>
+                  {isRestricted && <span className="text-[10px] text-amber-400/70 flex items-center gap-1"><Lock size={9} /> restrito</span>}
+                </label>
+                {uploadAreaLocked ? (
+                  <div className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx3 flex items-center justify-between cursor-not-allowed">
+                    <span>{uploadAreas![0]}</span><Lock size={12} className="c-tx5" />
+                  </div>
+                ) : (
+                  <select value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value)}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                    {uploadCategoryOptions.map((c) => (
+                      <option key={c} value={c} className="c-bg">{c}</option>
+                    ))}
+                  </select>
                 )}
-              </label>
-              {uploadAreaLocked ? (
-                <div className="w-full bg-white/[0.02] border c-br rounded-lg px-3 py-2.5 text-sm c-tx3 flex items-center justify-between cursor-not-allowed">
-                  <span>{uploadAreas![0]}</span><Lock size={12} className="c-tx5" />
-                </div>
-              ) : (
-                <select value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value)}
-                  className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
-                  {uploadCategoryOptions.map((c) => (
-                    <option key={c} value={c} className="c-bg">{c}</option>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Grupo de Formação</label>
+                <select value={grupoFormacaoId} onChange={e => setGrupoFormacaoId(e.target.value)}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
+                  disabled={gruposFormacao.length === 0}>
+                  <option value="">— Nenhum —</option>
+                  {gruposFormacao.map(g => (
+                    <option key={g.id} value={g.id} className="c-bg">{g.nome}</option>
                   ))}
                 </select>
-              )}
+              </div>
             </div>
 
-            {/* Visibilidade */}
-            <div className="space-y-2">
+            {/* Linha 3: visibilidade */}
+            <div className="space-y-2 mb-4">
               <label className="text-xs c-tx3">Visibilidade</label>
-              <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-4" : "grid-cols-3"}`}>
+              <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
                 {VISIBILIDADE_OPTIONS.filter(opt => {
                   if (opt.value === "turma" || opt.value === "formadores_turma")
                     return user?.role === "formador" && minhasTurmas.length > 0;
@@ -666,28 +692,16 @@ export default function FicheirosPage() {
                 }).map((opt) => {
                   const Icon = opt.icon;
                   return (
-                    <button key={opt.value} type="button"
-                      onClick={() => setVisibilidade(opt.value)}
-                      className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border text-center transition-all ${
-                        visibilidade === opt.value
-                          ? "border-blue-500/50 bg-blue-500/10"
-                          : "c-br bg-white/[0.02] hc-s2"
+                    <button key={opt.value} type="button" onClick={() => setVisibilidade(opt.value)}
+                      className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-center transition-all ${
+                        visibilidade === opt.value ? "border-blue-500/50 bg-blue-500/10" : "c-br c-s1 hc-s2"
                       }`}>
-                      <Icon size={16} className={visibilidade === opt.value ? "text-blue-400" : "c-tx4"} />
-                      <span className={`text-[10px] font-medium ${visibilidade === opt.value ? "text-blue-300" : "c-tx3"}`}>
-                        {opt.label}
-                      </span>
+                      <Icon size={14} className={visibilidade === opt.value ? "text-blue-400" : "c-tx4"} />
+                      <span className={`text-[10px] font-medium ${visibilidade === opt.value ? "text-blue-300" : "c-tx3"}`}>{opt.label}</span>
                     </button>
                   );
                 })}
               </div>
-              <p className="text-[10px] c-tx4 leading-relaxed">
-                {visibilidade === "privado" && "Só você tem acesso a este documento."}
-                {visibilidade === "turma" && "Apenas os formandos da turma seleccionada têm acesso."}
-                {visibilidade === "formadores" && "Você e todos os formadores podem ver este documento."}
-                {visibilidade === "formadores_turma" && "Formadores e os formandos da turma seleccionada podem ver este documento."}
-                {visibilidade === "publico" && "Todos os utilizadores da plataforma podem ver este documento."}
-              </p>
               {(visibilidade === "turma" || visibilidade === "formadores_turma") && minhasTurmas.length > 0 && (
                 <select value={turmaId} onChange={e => setTurmaId(e.target.value)}
                   className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50">
@@ -698,12 +712,10 @@ export default function FicheirosPage() {
               )}
             </div>
 
-            {/* Período de disponibilidade */}
-            <div className="space-y-2">
-              <label className="text-xs c-tx3 flex items-center gap-1.5">
-                <CalendarClock size={11} /> Disponibilidade (opcional)
-              </label>
-              <div className="grid grid-cols-2 gap-2">
+            {/* Linha 4: disponibilidade */}
+            <div className="space-y-2 mb-5">
+              <label className="text-xs c-tx3 flex items-center gap-1.5"><CalendarClock size={11} /> Disponibilidade (opcional)</label>
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <span className="text-[10px] c-tx4">Disponível a partir de</span>
                   <input type="date" value={disponivel_de} onChange={e => setDisponivelDe(e.target.value)}
@@ -716,49 +728,9 @@ export default function FicheirosPage() {
                     className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
                 </div>
               </div>
-              {(disponivel_de || disponivel_ate) && (
-                <p className="text-[10px] text-blue-400/70">
-                  {disponivel_de && !disponivel_ate && `Visível a partir de ${formatDate(disponivel_de)}`}
-                  {!disponivel_de && disponivel_ate && `Expira em ${formatDate(disponivel_ate)}`}
-                  {disponivel_de && disponivel_ate && `Visível de ${formatDate(disponivel_de)} até ${formatDate(disponivel_ate)}`}
-                </p>
-              )}
             </div>
 
-            {gruposFormacao.length > 0 && (
-              <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Grupo de Formação (opcional)</label>
-                <select value={grupoFormacaoId} onChange={e => setGrupoFormacaoId(e.target.value)}
-                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
-                  <option value="">— Nenhum —</option>
-                  {gruposFormacao.map(g => (
-                    <option key={g.id} value={g.id} className="c-bg">{g.nome}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <label className="text-xs c-tx3">Ficheiro</label>
-              <label className="relative flex flex-col items-center justify-center gap-2 border border-dashed border-white/[0.10] rounded-lg p-6 cursor-pointer hover:border-blue-500/40 transition-colors overflow-hidden">
-                <input type="file" required onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} className="absolute inset-0 opacity-0 cursor-pointer" />
-                {thumbnailPreview ? (
-                  <>
-                    <embed src={thumbnailPreview} type="application/pdf" className="w-full h-32 rounded pointer-events-none" />
-                    <p className="text-[10px] c-tx3 truncate max-w-full mt-1">{uploadFile?.name}</p>
-                  </>
-                ) : (
-                  <>
-                    <Download size={20} className="c-tx5" />
-                    <p className="text-xs c-tx3 text-center">
-                      {uploadFile ? uploadFile.name : "Arraste ou clique para seleccionar"}
-                    </p>
-                  </>
-                )}
-              </label>
-            </div>
-
-            <div className="flex gap-3 pt-1">
+            <div className="flex gap-3">
               <button type="button" onClick={() => setIsModalOpen(false)}
                 className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx hc-s1 transition-colors">
                 Cancelar
