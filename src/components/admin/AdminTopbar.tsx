@@ -2,9 +2,9 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut, ShieldCheck, Megaphone, ClipboardList, Sun, Moon } from "lucide-react";
+import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut, ShieldCheck, Megaphone, ClipboardList } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
-import { useTheme } from "next-themes";
+import { ModeSelector } from "@/components/ModeSelector";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard":               "Dashboard",
@@ -103,7 +103,6 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
     return `${Math.floor(h / 24)}d`;
   }
 
-  const { theme, setTheme } = useTheme();
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
   const pendingFormandos = notifs.filter(n => n.tipo === "novo_formando" && !n.lida);
   const pendingFormadores = notifs.filter(n => n.tipo === "novo_formador" && !n.lida);
@@ -142,13 +141,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
       <h1 className="flex-1 text-sm md:text-base font-semibold c-tx text-center md:text-left">{title}</h1>
 
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
-        <button
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="p-2 rounded-lg c-tx4 hc-tx hc-s2 transition-colors"
-          title={theme === "dark" ? "Modo claro" : "Modo escuro"}
-        >
-          {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-        </button>
+        <ModeSelector />
 
         <a href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border c-br c-tx4 hc-tx hc-br2 hc-s2 transition-all text-[10px] font-bold uppercase tracking-[0.2em]" title="Ver site público">
           <Globe size={12} />

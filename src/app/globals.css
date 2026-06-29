@@ -20,6 +20,41 @@
   --c-br2:  rgba(255,255,255,0.15);
   --c-ov:   rgba(13,13,20,0.88);
 }
+/* MEIO ESCURO — lua crescente, azul profundo */
+html.meio-escuro {
+  --c-bg:   #0a0f1e;
+  --c-bg2:  #0f1829;
+  --c-s1:   rgba(255,255,255,0.04);
+  --c-s2:   rgba(255,255,255,0.07);
+  --c-s3:   rgba(255,255,255,0.10);
+  --c-tx:   #e8f0ff;
+  --c-tx2:  rgba(232,240,255,0.82);
+  --c-tx3:  rgba(232,240,255,0.58);
+  --c-tx4:  rgba(232,240,255,0.38);
+  --c-tx5:  rgba(232,240,255,0.20);
+  --c-br:   rgba(100,160,255,0.12);
+  --c-br2:  rgba(100,160,255,0.22);
+  --c-ov:   rgba(10,15,30,0.88);
+}
+
+/* MEIO CLARO — pôr do sol laranja/dourado */
+html.meio-claro {
+  --c-bg:   #1a1008;
+  --c-bg2:  #251808;
+  --c-s1:   rgba(255,240,200,0.06);
+  --c-s2:   rgba(255,240,200,0.10);
+  --c-s3:   rgba(255,240,200,0.14);
+  --c-tx:   #fff8ec;
+  --c-tx2:  rgba(255,248,236,0.82);
+  --c-tx3:  rgba(255,248,236,0.58);
+  --c-tx4:  rgba(255,248,236,0.38);
+  --c-tx5:  rgba(255,248,236,0.20);
+  --c-br:   rgba(255,180,60,0.15);
+  --c-br2:  rgba(255,180,60,0.28);
+  --c-ov:   rgba(26,16,8,0.85);
+}
+
+/* CLARO — dia, céu azul */
 html.light {
   --dash-bg-image: none;
   --c-bg:   #eef2f7;
@@ -81,7 +116,15 @@ html.light .dashboard-overlay {
   display: none !important;
 }
 
-/* Modo claro: sidebar e topbar brancos com sombra */
+/* Meio Escuro: sidebar/topbar azul-noite */
+html.meio-escuro .dashboard-root aside  { background: rgba(10,15,30,0.75) !important; backdrop-filter: blur(16px); }
+html.meio-escuro .dashboard-root header { background: rgba(10,15,30,0.70) !important; backdrop-filter: blur(16px); }
+
+/* Meio Claro: sidebar/topbar âmbar escuro */
+html.meio-claro .dashboard-root aside  { background: rgba(26,16,8,0.75) !important; backdrop-filter: blur(16px); }
+html.meio-claro .dashboard-root header { background: rgba(26,16,8,0.70) !important; backdrop-filter: blur(16px); }
+
+/* Modo Claro: sidebar e topbar brancos com sombra */
 html.light .dashboard-root aside {
   background: #ffffff !important;
   box-shadow: 1px 0 0 #e2e8f0, 4px 0 16px rgba(15,23,42,0.04);
