@@ -72,6 +72,11 @@ html.light {
 html:not(.light) .theme-logo { filter: brightness(0) invert(1); }
 html.light .theme-logo       { filter: none; }
 
+/* Modo claro: fundo do dashboard */
+html.light .dashboard-root {
+  background-color: #eef2f7 !important;
+}
+
 /* Modo claro: sidebar e topbar brancos com sombra */
 html.light .dashboard-root aside {
   background: #ffffff !important;

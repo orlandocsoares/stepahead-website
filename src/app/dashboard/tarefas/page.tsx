@@ -73,6 +73,7 @@ export default function TarefasPage() {
   const [form, setForm] = useState({ titulo: "", descricao: "", prazo: "", destinatarios: "meus" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turmas, setTurmas] = useState<{ id: string; nome: string; total: number }[]>([]);
 
   async function fetchTarefas() {
     setLoading(true);
@@ -85,7 +86,12 @@ export default function TarefasPage() {
     }
   }
 
-  useEffect(() => { fetchTarefas(); }, []);
+  useEffect(() => {
+    fetchTarefas();
+    if (isStaff) {
+      fetch("/api/turmas").then(r => r.json()).then(j => setTurmas(j.data ?? []));
+    }
+  }, [isStaff]);
 
   async function toggleExpand(id: string) {
     if (expandedId === id) { setExpandedId(null); return; }
@@ -340,6 +346,13 @@ export default function TarefasPage() {
                   <select value={form.destinatarios} onChange={e => setForm(f => ({ ...f, destinatarios: e.target.value }))}
                     className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
                     <option value="meus">Os meus formandos</option>
+                    {turmas.length > 0 && (
+                      <optgroup label="Por turma">
+                        {turmas.map(t => (
+                          <option key={t.id} value={`turma:${t.id}`}>{t.nome} ({t.total})</option>
+                        ))}
+                      </optgroup>
+                    )}
                     {(user?.role === "admin" || user?.role === "super-admin") && (
                       <option value="todos">Todos os formandos</option>
                     )}

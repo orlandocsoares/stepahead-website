@@ -66,6 +66,15 @@ export async function POST(request: Request) {
   } else if (destinatarios === "todos") {
     const res = await dbQuery(`SELECT id FROM profiles WHERE role = 'formando' AND status = 'activo'`, []);
     formandoIds = res.rows.map((r: any) => r.id);
+  } else if (typeof destinatarios === "string" && destinatarios.startsWith("turma:")) {
+    const turmaId = destinatarios.slice(6);
+    const res = await dbQuery(
+      `SELECT tm.formando_id AS id FROM turma_membros tm
+       JOIN profiles p ON p.id = tm.formando_id
+       WHERE tm.turma_id = $1 AND p.status = 'activo'`,
+      [turmaId]
+    );
+    formandoIds = res.rows.map((r: any) => r.id);
   } else {
     // "meus" — formandos deste formador
     const res = await dbQuery(`SELECT id FROM profiles WHERE formador_id = $1 AND status = 'activo'`, [sessionUser.id]);
