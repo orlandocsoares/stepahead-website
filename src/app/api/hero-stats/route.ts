@@ -42,7 +42,31 @@ export async function GET() {
   const stats = statsRes.rows[0] ?? {};
   const areas = areasRes.rows.map((r: any) => ({ area: r.area, total: Number(r.total) }));
   const evento = eventoRes.rows[0] ?? null;
-  const formadores = formadoresRes.rows;
+
+  // Limpar especialidade server-side: remover emails e desserializar arrays JSON
+  function cleanEspecialidade(raw: any): string {
+    if (!raw) return "";
+    let val: any = raw;
+    if (typeof val === "string" && val.trim().startsWith("[")) {
+      try { val = JSON.parse(val); } catch { val = raw; }
+    }
+    if (Array.isArray(val)) {
+      const parts = val
+        .map((s: any) => String(s).trim())
+        .filter(s => s.length > 0 && !s.includes("@"));
+      return parts.join(" · ");
+    }
+    return String(val)
+      .replace(/\S+@\S+\.\S+/g, "")
+      .replace(/[\[\]"]/g, "")
+      .replace(/,\s*/g, " · ")
+      .trim();
+  }
+
+  const formadores = formadoresRes.rows.map((f: any) => ({
+    ...f,
+    especialidade: cleanEspecialidade(f.especialidade),
+  }));
 
   return NextResponse.json({
     total_formadores:    Number(stats.total_formadores ?? 0),

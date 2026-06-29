@@ -291,11 +291,13 @@ const getDynamicPhaseContent = (index: number) => {
     case 3: // Par Pedagógico
       return {
         ...base,
+        rawDescription: true,
         description: (
-          <div className="space-y-6">
-            <p className={defaultTextClass}>
-              A promoção da supervisão apoia-se em <strong className="text-blue-400 font-bold">{telemetry.total_formadores || 0} formadores</strong> de excelência, orientando <strong className="text-blue-400 font-bold">{telemetry.total_formandos || 0} formandos</strong> numa rede institucionalizada activa.
-            </p>
+          <div className="space-y-4 pointer-events-auto">
+            <div className="max-w-3xl rounded-[2rem] bg-black/20 px-6 py-5 text-[15px] md:text-[16px] leading-8 text-white/95 tracking-normal shadow-[0_0_35px_rgba(0,0,0,0.2)] backdrop-blur-sm">
+              <p className="text-xs uppercase tracking-[0.2em] text-emerald-400 font-semibold mb-1">Equipa de Formadores</p>
+              A promoção da supervisão apoia-se em <strong className="text-blue-400 font-bold">{telemetry.total_formadores || 0} formadores</strong> de excelência.
+            </div>
             {telemetry.formadores_lista && <FormadoresLoop formadores={telemetry.formadores_lista} />}
           </div>
         )
@@ -458,9 +460,13 @@ return (
 
         {/* DESCRIÇÃO DA FASE APRIMORADA */}
         <div className="w-full">
-          <p className="max-w-3xl rounded-[2rem] bg-black/20 px-6 py-5 text-[15px] md:text-[16px] leading-8 text-white/95 tracking-normal shadow-[0_0_35px_rgba(0,0,0,0.2)] backdrop-blur-sm">
-            {activeData.description}
-          </p>
+          {(activeData as any).rawDescription ? (
+            <div>{activeData.description}</div>
+          ) : (
+            <p className="max-w-3xl rounded-[2rem] bg-black/20 px-6 py-5 text-[15px] md:text-[16px] leading-8 text-white/95 tracking-normal shadow-[0_0_35px_rgba(0,0,0,0.2)] backdrop-blur-sm">
+              {activeData.description}
+            </p>
+          )}
 </div>
 
 <button onClick={() => window.open(DASHBOARD_URL, "_blank")} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-6 pt-8 cursor-none w-fit"><span className="text-[13px] font-medium uppercase tracking-[0.4em] text-white/95 group-hover:text-white transition-colors drop-shadow-md">Saber Mais</span><div className="relative w-16 h-[1px] bg-white/30 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div></button>
