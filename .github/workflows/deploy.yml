@@ -226,6 +226,17 @@ jobs:
               ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS grupo_formacao_id UUID REFERENCES grupos_formacao(id) ON DELETE SET NULL;
               ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS disciplina_id UUID REFERENCES disciplinas(id) ON DELETE SET NULL;
 
+              CREATE TABLE IF NOT EXISTS arquivo_grupos (
+                arquivo_id UUID NOT NULL REFERENCES arquivos(id) ON DELETE CASCADE,
+                grupo_id   UUID NOT NULL REFERENCES grupos_formacao(id) ON DELETE CASCADE,
+                PRIMARY KEY (arquivo_id, grupo_id)
+              );
+              -- Migrar dados existentes da coluna simples para a tabela de junção
+              INSERT INTO arquivo_grupos (arquivo_id, grupo_id)
+                SELECT id, grupo_formacao_id FROM arquivos
+                WHERE grupo_formacao_id IS NOT NULL
+              ON CONFLICT DO NOTHING;
+
               -- Limpar sessoes expiradas
               DELETE FROM user_sessions WHERE expires_at < NOW();
             " || echo "Aviso: migração já aplicada ou erro ignorado"

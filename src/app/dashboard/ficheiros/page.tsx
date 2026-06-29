@@ -5,7 +5,7 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   FileText, Video, Search, Download, Loader2, Plus, FolderOpen, Lock,
   Globe, Users, GraduationCap, LayoutGrid, List, ExternalLink,
-  FileImage, FileVideo, FileArchive, File, Trash2, ImagePlus,
+  FileImage, FileVideo, FileArchive, File, Trash2, ImagePlus, Pencil,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CalendarClock } from "lucide-react";
@@ -134,8 +134,18 @@ export default function FicheirosPage() {
   const [disponivel_ate, setDisponivelAte] = useState("");
   const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
   const [gruposFormacao, setGruposFormacao] = useState<{ id: string; nome: string }[]>([]);
-  const [grupoFormacaoId, setGrupoFormacaoId] = useState("");
+  const [gruposUpload, setGruposUpload] = useState<string[]>([]);
   const [activeGrupo, setActiveGrupo] = useState<string>("todos");
+  // Edit modal
+  const [editingFile, setEditingFile] = useState<any>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editArea, setEditArea] = useState("Geral");
+  const [editVisibilidade, setEditVisibilidade] = useState("publico");
+  const [editTurmaId, setEditTurmaId] = useState("");
+  const [editDisponivelDe, setEditDisponivelDe] = useState("");
+  const [editDisponivelAte, setEditDisponivelAte] = useState("");
+  const [editGrupos, setEditGrupos] = useState<string[]>([]);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
 
@@ -162,7 +172,7 @@ export default function FicheirosPage() {
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
     setDisponivelDe("");
     setDisponivelAte("");
-    setGrupoFormacaoId("");
+    setGruposUpload([]);
     setIsModalOpen(true);
   }
 
@@ -230,7 +240,7 @@ export default function FicheirosPage() {
 
   async function fetchFiles() {
     try {
-      const res = await fetch("/api/db/arquivos?orderBy=created_at&ascending=false");
+      const res = await fetch("/api/arquivos/lista");
       const json = await res.json();
       const rows = json?.data ?? json;
       setFiles(Array.isArray(rows) ? rows : []);
@@ -279,12 +289,13 @@ export default function FicheirosPage() {
       if (!visibleCategories.includes(f.area)) return false;
       if (activeCategory !== "Geral" && f.area !== activeCategory) return false;
 
-      // Grupo de formação
+      // Grupo de formação (suporta múltiplos)
       if (activeGrupo !== "todos") {
+        const gs: string[] = Array.isArray(f.grupos) ? f.grupos : [];
         if (activeGrupo === "sem-grupo") {
-          if (f.grupo_formacao_id) return false;
+          if (gs.length > 0) return false;
         } else {
-          if (f.grupo_formacao_id !== activeGrupo) return false;
+          if (!gs.includes(activeGrupo)) return false;
         }
       }
 
@@ -326,10 +337,22 @@ export default function FicheirosPage() {
           ...(visibilidade === "turma" && turmaId ? { turma_id: turmaId } : {}),
           ...(disponivel_de ? { disponivel_de } : {}),
           ...(disponivel_ate ? { disponivel_ate } : {}),
-          ...(grupoFormacaoId ? { grupo_formacao_id: grupoFormacaoId } : {}),
+          ...(gruposUpload[0] ? { grupo_formacao_id: gruposUpload[0] } : {}),
         }),
       });
       if (!dbRes.ok) throw new Error("Erro ao registar o ficheiro.");
+
+      // Associar múltiplos grupos
+      if (gruposUpload.length > 0) {
+        const newFile = (await dbRes.json())?.data?.[0];
+        if (newFile?.id) {
+          await fetch("/api/arquivos/editar", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: newFile.id, grupos: gruposUpload }),
+          });
+        }
+      }
 
       setIsModalOpen(false);
       setThumbnailPreview(null);
@@ -352,6 +375,46 @@ export default function FicheirosPage() {
       setFiles(prev => prev.filter(f => f.id !== id));
     } catch {
       alert("Erro ao eliminar o ficheiro.");
+    }
+  }
+
+  function openEditModal(f: any) {
+    setEditingFile(f);
+    setEditTitle(f.label ?? "");
+    setEditArea(f.area ?? "Geral");
+    setEditVisibilidade(f.visibilidade ?? "publico");
+    setEditTurmaId(f.turma_id ?? "");
+    setEditDisponivelDe(f.disponivel_de ? f.disponivel_de.slice(0, 10) : "");
+    setEditDisponivelAte(f.disponivel_ate ? f.disponivel_ate.slice(0, 10) : "");
+    setEditGrupos(Array.isArray(f.grupos) ? f.grupos : []);
+  }
+
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingFile) return;
+    setIsSavingEdit(true);
+    try {
+      const res = await fetch("/api/arquivos/editar", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingFile.id,
+          label: editTitle,
+          area: editArea,
+          visibilidade: editVisibilidade,
+          turma_id: editTurmaId || null,
+          disponivel_de: editDisponivelDe || null,
+          disponivel_ate: editDisponivelAte || null,
+          grupos: editGrupos,
+        }),
+      });
+      if (!res.ok) throw new Error("Erro ao guardar alterações.");
+      setEditingFile(null);
+      fetchFiles();
+    } catch (err: any) {
+      alert(err.message ?? "Erro desconhecido.");
+    } finally {
+      setIsSavingEdit(false);
     }
   }
 
@@ -518,12 +581,20 @@ export default function FicheirosPage() {
                     </div>
                   )}
                   {(isOwner || isAdmin) && (
-                    <button
-                      onClick={() => handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro")}
-                      className="mt-1 w-full flex items-center justify-center gap-1 py-1 rounded text-[10px] text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                    >
-                      <Trash2 size={10} /> Eliminar
-                    </button>
+                    <div className="mt-1 flex gap-1">
+                      <button
+                        onClick={() => openEditModal(f)}
+                        className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-[10px] c-tx5 hover:c-tx3 hc-s2 transition-colors"
+                      >
+                        <Pencil size={10} /> Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro")}
+                        className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-[10px] text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                      >
+                        <Trash2 size={10} /> Eliminar
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -597,12 +668,19 @@ export default function FicheirosPage() {
                             <Download size={13} /> Abrir
                           </a>
                           {(isOwner || isAdmin) && (
-                            <button
-                              onClick={() => handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro")}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                            >
-                              <Trash2 size={13} />
-                            </button>
+                            <>
+                              <button onClick={() => openEditModal(f)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs c-tx4 hover:c-tx hc-s2 transition-colors"
+                                title="Editar">
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro")}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -669,15 +747,23 @@ export default function FicheirosPage() {
                 )}
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Grupo de Formação</label>
-                <select value={grupoFormacaoId} onChange={e => setGrupoFormacaoId(e.target.value)}
-                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
-                  disabled={gruposFormacao.length === 0}>
-                  <option value="">— Nenhum —</option>
-                  {gruposFormacao.map(g => (
-                    <option key={g.id} value={g.id} className="c-bg">{g.nome}</option>
-                  ))}
-                </select>
+                <label className="text-xs c-tx3">Grupos de Formação</label>
+                {gruposFormacao.length === 0 ? (
+                  <p className="text-xs c-tx5 italic">Nenhum grupo criado</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {gruposFormacao.map(g => {
+                      const sel = gruposUpload.includes(g.id);
+                      return (
+                        <button key={g.id} type="button"
+                          onClick={() => setGruposUpload(prev => sel ? prev.filter(x => x !== g.id) : [...prev, g.id])}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${sel ? "bg-emerald-600/20 text-emerald-400 border-emerald-500/30" : "c-s1 c-tx3 c-br hc-s2"}`}>
+                          {g.nome}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -738,6 +824,114 @@ export default function FicheirosPage() {
               <button type="submit" disabled={isUploading}
                 className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                 {isUploading ? <><Loader2 size={14} className="animate-spin" /> A enviar...</> : "Guardar"}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de edição */}
+      <Dialog open={!!editingFile} onOpenChange={(o) => { if (!o) setEditingFile(null); }}>
+        <DialogContent className="c-bg border c-br c-tx max-w-2xl rounded-xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-5 pb-4 border-b c-br">
+            <DialogTitle className="text-sm font-semibold flex items-center gap-2">
+              <Pencil size={15} className="text-blue-400" /> Editar ficheiro
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveEdit} className="px-6 py-5">
+            {/* Linha 1: título */}
+            <div className="space-y-1.5 mb-4">
+              <label className="text-xs c-tx3">Título *</label>
+              <input required value={editTitle} onChange={e => setEditTitle(e.target.value)}
+                className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx c-ph outline-none focus:border-blue-500/50 transition-colors" />
+            </div>
+
+            {/* Linha 2: disciplina + grupos */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Disciplina</label>
+                <select value={editArea} onChange={e => setEditArea(e.target.value)}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                  {allCatNames.map(c => <option key={c} value={c} className="c-bg">{c}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Grupos de Formação</label>
+                {gruposFormacao.length === 0 ? (
+                  <p className="text-xs c-tx5 italic">Nenhum grupo criado</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {gruposFormacao.map(g => {
+                      const sel = editGrupos.includes(g.id);
+                      return (
+                        <button key={g.id} type="button"
+                          onClick={() => setEditGrupos(prev => sel ? prev.filter(x => x !== g.id) : [...prev, g.id])}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${sel ? "bg-emerald-600/20 text-emerald-400 border-emerald-500/30" : "c-s1 c-tx3 c-br hc-s2"}`}>
+                          {g.nome}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Linha 3: visibilidade */}
+            <div className="space-y-2 mb-4">
+              <label className="text-xs c-tx3">Visibilidade</label>
+              <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
+                {VISIBILIDADE_OPTIONS.filter(opt => {
+                  if (opt.value === "turma" || opt.value === "formadores_turma")
+                    return user?.role === "formador" && minhasTurmas.length > 0;
+                  return true;
+                }).map((opt) => {
+                  const Icon = opt.icon;
+                  return (
+                    <button key={opt.value} type="button" onClick={() => setEditVisibilidade(opt.value)}
+                      className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-center transition-all ${
+                        editVisibilidade === opt.value ? "border-blue-500/50 bg-blue-500/10" : "c-br c-s1 hc-s2"
+                      }`}>
+                      <Icon size={14} className={editVisibilidade === opt.value ? "text-blue-400" : "c-tx4"} />
+                      <span className={`text-[10px] font-medium ${editVisibilidade === opt.value ? "text-blue-300" : "c-tx3"}`}>{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {(editVisibilidade === "turma" || editVisibilidade === "formadores_turma") && minhasTurmas.length > 0 && (
+                <select value={editTurmaId} onChange={e => setEditTurmaId(e.target.value)}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50">
+                  {minhasTurmas.map(t => <option key={t.id} value={t.id} className="c-bg">{t.nome} ({t.area})</option>)}
+                </select>
+              )}
+            </div>
+
+            {/* Linha 4: disponibilidade */}
+            <div className="space-y-2 mb-5">
+              <label className="text-xs c-tx3 flex items-center gap-1.5"><CalendarClock size={11} /> Disponibilidade (opcional)</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <span className="text-[10px] c-tx4">Disponível a partir de</span>
+                  <input type="date" value={editDisponivelDe} onChange={e => setEditDisponivelDe(e.target.value)}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] c-tx4">Expira em</span>
+                  <input type="date" value={editDisponivelAte} onChange={e => setEditDisponivelAte(e.target.value)}
+                    min={editDisponivelDe || undefined}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setEditingFile(null)}
+                className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx hc-s1 transition-colors">
+                Cancelar
+              </button>
+              <button type="submit" disabled={isSavingEdit}
+                className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                {isSavingEdit ? <><Loader2 size={14} className="animate-spin" /> A guardar...</> : "Guardar alterações"}
               </button>
             </div>
           </form>
