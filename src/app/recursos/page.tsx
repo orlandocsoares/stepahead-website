@@ -154,33 +154,39 @@ function RecursosContent() {
                     <div className="flex-1 h-px bg-white/[0.05]" />
                   </div>
 
-                  {/* Lista de ficheiros */}
-                  <div className="space-y-2">
+                  {/* Grelha de ficheiros com miniatura */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {items.map(r => (
                       <button
                         key={r.id}
                         onClick={() => setViewing(r)}
-                        className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.05] hover:border-white/[0.12] transition-all text-left group"
+                        className="flex flex-col rounded-xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.05] hover:border-white/[0.12] transition-all text-left group overflow-hidden"
                       >
-                        {/* Ícone PDF */}
-                        <div className="w-9 h-9 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
-                          <FileText size={16} className="text-red-400" />
+                        {/* Miniatura */}
+                        <div className="w-full aspect-[4/3] bg-white/[0.03] flex items-center justify-center relative overflow-hidden">
+                          {r.thumbnail_url ? (
+                            <img src={r.thumbnail_url} alt={r.label} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="flex flex-col items-center gap-2 opacity-30">
+                              <FileText size={32} strokeWidth={1} className="text-red-400" />
+                              <span className="text-[10px] text-white/50 uppercase tracking-widest">PDF</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <div className="bg-white/10 backdrop-blur rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs text-white font-medium">
+                              <ExternalLink size={12} /> Abrir
+                            </div>
+                          </div>
                         </div>
 
                         {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white/90 truncate group-hover:text-white transition-colors">
+                        <div className="px-3 py-2.5">
+                          <p className="text-sm font-medium text-white/90 line-clamp-2 group-hover:text-white transition-colors leading-snug">
                             {r.label}
                           </p>
-                          <p className="text-[11px] text-white/30 mt-0.5">
+                          <p className="text-[11px] text-white/30 mt-1">
                             {formatDate(r.created_at)}{r.tamanho ? ` · ${r.tamanho}` : ""}
                           </p>
-                        </div>
-
-                        {/* CTA */}
-                        <div className="shrink-0 flex items-center gap-1 text-[11px] text-white/25 group-hover:text-blue-400 transition-colors">
-                          <ExternalLink size={13} />
-                          <span className="hidden sm:inline">Abrir</span>
                         </div>
                       </button>
                     ))}
