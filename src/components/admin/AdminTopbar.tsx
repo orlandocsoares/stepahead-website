@@ -137,8 +137,9 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
       <h1 className="flex-1 text-sm md:text-base font-semibold text-white text-center md:text-left">{title}</h1>
 
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
-        <a href="/" className="p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors" title="Ver site público">
-          <Globe size={18} />
+        <a href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-white/50 hover:text-white hover:border-white/30 hover:bg-white/[0.06] transition-all text-[10px] font-bold uppercase tracking-[0.2em]" title="Ver site público">
+          <Globe size={12} />
+          <span className="hidden sm:inline">Site</span>
         </a>
 
         <button onClick={() => router.push("/dashboard/mensagens")} className="relative p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors">
