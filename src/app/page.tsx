@@ -591,23 +591,24 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              {/* Pills por área */}
+              {/* Pills por área — clicáveis, abrem /recursos */}
               {areas.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {areas.map(({ area, total }) => {
                     const c = areaColors[area] ?? defaultAreaColor;
                     return (
-                      <motion.span
+                      <motion.a
                         key={area}
+                        href={`/recursos`}
                         initial={{ opacity: 0, scale: 0.85 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3 }}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-semibold backdrop-blur-sm drop-shadow-md ${c.bg} ${c.text} ${c.border}`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-semibold backdrop-blur-sm drop-shadow-md pointer-events-auto cursor-pointer hover:scale-105 transition-transform ${c.bg} ${c.text} ${c.border}`}
                       >
                         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.dot}`} />
                         {area}
                         <span className="opacity-60 font-normal">({total})</span>
-                      </motion.span>
+                      </motion.a>
                     );
                   })}
                 </div>
@@ -615,7 +616,8 @@ export default function HeroSection() {
 
               {/* CTAs */}
               <div className="flex flex-col gap-2">
-                {totalPublicos > 0 && (
+                {/* Mostrar sempre que há áreas (não depender do contador público) */}
+                {areas.length > 0 && (
                   <motion.a
                     href="/recursos"
                     initial={{ opacity: 0 }}
