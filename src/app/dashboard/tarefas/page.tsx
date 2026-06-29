@@ -70,10 +70,15 @@ export default function TarefasPage() {
 
   // Modal criar tarefa
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState({ titulo: "", descricao: "", prazo: "", destinatarios: "meus" });
+  const [form, setForm] = useState({ titulo: "", descricao: "", prazo: "" });
+  const [destMode, setDestMode] = useState<"meus" | "turma" | "individual" | "todos">("meus");
+  const [destTurma, setDestTurma] = useState("");
+  const [destIds, setDestIds] = useState<string[]>([]);
+  const [formandoSearch, setFormandoSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [turmas, setTurmas] = useState<{ id: string; nome: string; total: number }[]>([]);
+  const [turmas, setTurmas] = useState<{ id: string; nome: string; area: string; total_membros: number }[]>([]);
+  const [todosFormandos, setTodosFormandos] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
 
   async function fetchTarefas() {
     setLoading(true);
@@ -90,6 +95,9 @@ export default function TarefasPage() {
     fetchTarefas();
     if (isStaff) {
       fetch("/api/turmas").then(r => r.json()).then(j => setTurmas(j.data ?? []));
+      fetch("/api/db/profiles?orderBy=first_name&ascending=true")
+        .then(r => r.json())
+        .then(j => setTodosFormandos((j.data ?? []).filter((u: any) => u.role === "formando")));
     }
   }, [isStaff]);
 
@@ -140,20 +148,39 @@ export default function TarefasPage() {
     setTarefas(prev => prev.filter(t => t.id !== id));
   }
 
+  function openModal() {
+    setForm({ titulo: "", descricao: "", prazo: "" });
+    setDestMode("meus");
+    setDestTurma(turmas[0]?.id ?? "");
+    setDestIds([]);
+    setFormandoSearch("");
+    setError(null);
+    setModalOpen(true);
+  }
+
+  function destinatariosPayload() {
+    if (destMode === "individual") return destIds;
+    if (destMode === "turma") return destTurma ? `turma:${destTurma}` : "meus";
+    return destMode;
+  }
+
   async function criarTarefa(e: React.FormEvent) {
     e.preventDefault();
+    if (destMode === "individual" && destIds.length === 0) {
+      setError("Selecciona pelo menos um formando.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
       const res = await fetch("/api/tarefas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, prazo: form.prazo || null }),
+        body: JSON.stringify({ ...form, prazo: form.prazo || null, destinatarios: destinatariosPayload() }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Erro ao criar tarefa.");
       setModalOpen(false);
-      setForm({ titulo: "", descricao: "", prazo: "", destinatarios: "meus" });
       fetchTarefas();
     } catch (err: any) {
       setError(err.message);
@@ -175,7 +202,7 @@ export default function TarefasPage() {
           {!loading && <span className="text-xs c-tx4 ml-1">({tarefas.length})</span>}
         </div>
         {isStaff && (
-          <button onClick={() => { setModalOpen(true); setError(null); }}
+          <button onClick={openModal}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors">
             <Plus size={14} /> Nova tarefa
           </button>
@@ -311,7 +338,7 @@ export default function TarefasPage() {
       {modalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
-          <div className="relative c-bg border c-br rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+          <div className="relative c-bg border c-br rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b c-br">
               <div className="flex items-center gap-2">
                 <ClipboardList size={15} className="text-blue-400" />
@@ -321,43 +348,113 @@ export default function TarefasPage() {
             </div>
 
             <form onSubmit={criarTarefa} className="px-6 py-5 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Título *</label>
-                <input required value={form.titulo} onChange={e => setForm(f => ({ ...f, titulo: e.target.value }))}
-                  placeholder="ex: Resumo da aula de hoje"
-                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors" />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Descrição (opcional)</label>
-                <textarea value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
-                  rows={3} placeholder="Instruções detalhadas..."
-                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors resize-none" />
-              </div>
-
+              {/* Título + Prazo na mesma linha */}
               <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Título *</label>
+                  <input required value={form.titulo} onChange={e => setForm(f => ({ ...f, titulo: e.target.value }))}
+                    placeholder="ex: Resumo da aula de hoje"
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors" />
+                </div>
                 <div className="space-y-1.5">
                   <label className="text-xs c-tx3">Prazo (opcional)</label>
                   <input type="datetime-local" value={form.prazo} onChange={e => setForm(f => ({ ...f, prazo: e.target.value }))}
                     className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs c-tx3">Destinatários</label>
-                  <select value={form.destinatarios} onChange={e => setForm(f => ({ ...f, destinatarios: e.target.value }))}
-                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
-                    <option value="meus">Os meus formandos</option>
-                    {turmas.length > 0 && (
-                      <optgroup label="Por turma">
-                        {turmas.map(t => (
-                          <option key={t.id} value={`turma:${t.id}`}>{t.nome} ({t.total})</option>
-                        ))}
-                      </optgroup>
-                    )}
-                    {(user?.role === "admin" || user?.role === "super-admin") && (
-                      <option value="todos">Todos os formandos</option>
-                    )}
-                  </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Descrição (opcional)</label>
+                <textarea value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
+                  rows={2} placeholder="Instruções detalhadas..."
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors resize-none" />
+              </div>
+
+              {/* Destinatários — modo */}
+              <div className="space-y-2">
+                <label className="text-xs c-tx3">Destinatários</label>
+                <div className={`grid gap-2 ${(user?.role === "admin" || user?.role === "super-admin") ? "grid-cols-4" : "grid-cols-3"}`}>
+                  {[
+                    { value: "meus",       label: "Meus formandos", icon: Users },
+                    { value: "turma",      label: "Por turma",      icon: ChevronDown },
+                    { value: "individual", label: "Individual",      icon: User },
+                    ...((user?.role === "admin" || user?.role === "super-admin")
+                      ? [{ value: "todos", label: "Todos", icon: Users }]
+                      : []),
+                  ].map(opt => {
+                    const Icon = opt.icon;
+                    const sel = destMode === opt.value;
+                    return (
+                      <button key={opt.value} type="button" onClick={() => setDestMode(opt.value as any)}
+                        className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-center transition-all ${
+                          sel ? "border-blue-500/50 bg-blue-500/10" : "c-br c-s1 hc-s2"
+                        }`}>
+                        <Icon size={14} className={sel ? "text-blue-400" : "c-tx4"} />
+                        <span className={`text-[10px] font-medium ${sel ? "text-blue-300" : "c-tx3"}`}>{opt.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
+
+                {/* Sub-selector: turma */}
+                {destMode === "turma" && (
+                  <select value={destTurma} onChange={e => setDestTurma(e.target.value)}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                    {turmas.length === 0
+                      ? <option value="">Sem turmas criadas</option>
+                      : turmas.map(t => <option key={t.id} value={t.id} className="c-bg">{t.nome} ({t.total_membros} membros)</option>)
+                    }
+                  </select>
+                )}
+
+                {/* Sub-selector: individual */}
+                {destMode === "individual" && (
+                  <div className="space-y-2">
+                    {/* Tags dos seleccionados */}
+                    {destIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {destIds.map(id => {
+                          const f = todosFormandos.find(u => u.id === id);
+                          return f ? (
+                            <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600/20 text-blue-300 text-[11px] border border-blue-500/30">
+                              {f.first_name} {f.last_name}
+                              <button type="button" onClick={() => setDestIds(prev => prev.filter(x => x !== id))} className="ml-0.5 hover:text-white">×</button>
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                    {/* Pesquisa */}
+                    <div className="relative">
+                      <User size={12} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
+                      <input value={formandoSearch} onChange={e => setFormandoSearch(e.target.value)}
+                        placeholder="Pesquisar formando..."
+                        className="w-full pl-8 pr-3 py-2 c-s1 border c-br rounded-lg text-xs c-tx placeholder:c-tx5 outline-none focus:border-blue-500/40" />
+                    </div>
+                    <div className="max-h-32 overflow-y-auto c-s1 border c-br rounded-lg">
+                      {todosFormandos
+                        .filter(u => {
+                          if (destIds.includes(u.id)) return false;
+                          const name = `${u.first_name} ${u.last_name}`.toLowerCase();
+                          return formandoSearch ? name.includes(formandoSearch.toLowerCase()) : true;
+                        })
+                        .slice(0, 15)
+                        .map(u => (
+                          <button key={u.id} type="button"
+                            onClick={() => { setDestIds(prev => [...prev, u.id]); setFormandoSearch(""); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left hc-s2 transition-colors border-b border-white/[0.03] last:border-0">
+                            <div className="w-6 h-6 rounded-full bg-blue-600/20 border border-blue-500/20 flex items-center justify-center text-[10px] text-blue-400 font-bold shrink-0">
+                              {u.first_name[0]}
+                            </div>
+                            <span className="text-xs c-tx2">{u.first_name} {u.last_name}</span>
+                          </button>
+                        ))}
+                      {todosFormandos.filter(u => !destIds.includes(u.id) && (formandoSearch ? `${u.first_name} ${u.last_name}`.toLowerCase().includes(formandoSearch.toLowerCase()) : true)).length === 0 && (
+                        <p className="text-xs c-tx5 text-center py-3">Nenhum formando encontrado.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {error && (
