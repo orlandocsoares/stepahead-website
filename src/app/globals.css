@@ -112,8 +112,7 @@ html.light .dashboard-root {
   background-color: #eef2f7;
 }
 html.light .dashboard-overlay {
-  background: rgba(238, 242, 247, 0.72) !important;
-  backdrop-filter: blur(2px);
+  background: rgba(220, 228, 240, 0.45) !important;
 }
 
 /* Overlay do dashboard por modo — controla quanto a imagem de fundo aparece */
@@ -138,17 +137,17 @@ html.light .dashboard-root header {
   box-shadow: 0 1px 0 #e2e8f0, 0 2px 8px rgba(15,23,42,0.04);
 }
 
-/* Cards translúcidos sobre a imagem de fundo */
+/* Cards modo claro — sólidos, sem blur */
 html.light .c-s1,
 html.light .c-s2 {
-  background-color: rgba(240, 244, 250, 0.93) !important;
-  backdrop-filter: blur(6px) !important;
-  box-shadow: 0 2px 12px rgba(15,23,42,0.10), 0 1px 3px rgba(15,23,42,0.06);
-  border-color: rgba(200,212,230,0.8) !important;
+  background-color: rgba(245, 248, 252, 0.96) !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.09), 0 1px 2px rgba(15,23,42,0.05);
+  border-color: rgba(210,220,235,0.9) !important;
 }
 html.light .c-s3 {
-  background-color: rgba(232, 238, 246, 0.90) !important;
-  backdrop-filter: blur(4px) !important;
+  background-color: rgba(236, 241, 248, 0.95) !important;
+  backdrop-filter: none !important;
 }
 
 
