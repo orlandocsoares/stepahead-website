@@ -57,7 +57,9 @@ export default function SuperAdminPage() {
 
   // Criar formando sem email
   const [isNoEmailModalOpen, setIsNoEmailModalOpen] = useState(false);
-  const [noEmailForm, setNoEmailForm] = useState({ firstName: "", lastName: "", password: "" });
+  const [noEmailForm, setNoEmailForm] = useState({ firstName: "", lastName: "", username: "", password: "" });
+  const [noEmailUsernameEdited, setNoEmailUsernameEdited] = useState(false);
+  const [noEmailUsernameError, setNoEmailUsernameError] = useState<string | null>(null);
   const [showNoEmailPwd, setShowNoEmailPwd] = useState(false);
   const [noEmailSubmitting, setNoEmailSubmitting] = useState(false);
   const [noEmailResult, setNoEmailResult] = useState<{ username: string } | null>(null);
@@ -136,8 +138,15 @@ export default function SuperAdminPage() {
     return [] as const;
   }, [profile]);
 
+  function generateNoEmailUsername(first: string, last: string) {
+    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+    if (!first && !last) return "";
+    return `${norm(first)}${last ? "." + norm(last) : ""}`;
+  }
+
   async function handleCriarFormandoSemEmail(e: React.FormEvent) {
     e.preventDefault();
+    setNoEmailUsernameError(null);
     setNoEmailSubmitting(true);
     setNoEmailResult(null);
     try {
@@ -147,13 +156,21 @@ export default function SuperAdminPage() {
         body: JSON.stringify({
           first_name: noEmailForm.firstName,
           last_name: noEmailForm.lastName,
+          username: noEmailForm.username || undefined,
           password: noEmailForm.password,
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Erro ao criar utilizador.");
+      if (!res.ok) {
+        if (json.code === "USERNAME_TAKEN") {
+          setNoEmailUsernameError("Este nome de utilizador já existe. Escolhe outro.");
+          return;
+        }
+        throw new Error(json.error ?? "Erro ao criar utilizador.");
+      }
       setNoEmailResult({ username: json.username });
-      setNoEmailForm({ firstName: "", lastName: "", password: "" });
+      setNoEmailForm({ firstName: "", lastName: "", username: "", password: "" });
+      setNoEmailUsernameEdited(false);
       fetchData();
     } catch (err: any) {
       setToast({ type: "error", text: err.message });
@@ -1332,20 +1349,48 @@ export default function SuperAdminPage() {
               </div>
             ) : (
               <form onSubmit={handleCriarFormandoSemEmail} className="px-6 py-5 space-y-4">
-                <p className="text-xs c-tx3">O formando fará login com um <strong className="c-tx2">nome de utilizador</strong> gerado automaticamente a partir do nome.</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-xs c-tx3">Nome</label>
-                    <input required value={noEmailForm.firstName} onChange={e => setNoEmailForm(f => ({ ...f, firstName: e.target.value }))}
+                    <input required value={noEmailForm.firstName} onChange={e => {
+                      const v = e.target.value;
+                      setNoEmailForm(f => ({
+                        ...f, firstName: v,
+                        username: noEmailUsernameEdited ? f.username : generateNoEmailUsername(v, f.lastName),
+                      }));
+                      setNoEmailUsernameError(null);
+                    }}
                       placeholder="João"
-                      className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors" />
+                      className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx c-ph outline-none focus:border-blue-500/50 transition-colors" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs c-tx3">Apelido</label>
-                    <input required value={noEmailForm.lastName} onChange={e => setNoEmailForm(f => ({ ...f, lastName: e.target.value }))}
+                    <input required value={noEmailForm.lastName} onChange={e => {
+                      const v = e.target.value;
+                      setNoEmailForm(f => ({
+                        ...f, lastName: v,
+                        username: noEmailUsernameEdited ? f.username : generateNoEmailUsername(f.firstName, v),
+                      }));
+                      setNoEmailUsernameError(null);
+                    }}
                       placeholder="Silva"
-                      className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors" />
+                      className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx c-ph outline-none focus:border-blue-500/50 transition-colors" />
                   </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Nome de utilizador (login)</label>
+                  <input required value={noEmailForm.username}
+                    onChange={e => {
+                      setNoEmailUsernameEdited(true);
+                      setNoEmailUsernameError(null);
+                      setNoEmailForm(f => ({ ...f, username: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") }));
+                    }}
+                    placeholder="joao.silva"
+                    className={`w-full c-s2 border rounded-lg px-3 py-2 text-sm font-mono c-tx c-ph outline-none transition-colors ${noEmailUsernameError ? "border-red-500/60 focus:border-red-500" : "c-br focus:border-blue-500/50"}`} />
+                  {noEmailUsernameError
+                    ? <p className="text-[11px] text-red-400">{noEmailUsernameError}</p>
+                    : <p className="text-[10px] c-tx5">Gerado automaticamente · pode editar</p>
+                  }
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs c-tx3">Password temporária</label>

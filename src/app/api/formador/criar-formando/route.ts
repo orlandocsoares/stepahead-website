@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
   }
 
-  const { first_name, last_name, email, password } = await request.json();
+  const { first_name, last_name, email, password, username: customUsername } = await request.json();
 
   if (!first_name?.trim() || !last_name?.trim()) {
     return NextResponse.json({ error: "Nome e apelido são obrigatórios." }, { status: 400 });
@@ -35,7 +35,6 @@ export async function POST(request: Request) {
 
   const emailClean = email?.trim().toLowerCase() || null;
 
-  // Verificar duplicado de email (se fornecido)
   if (emailClean) {
     const existing = await dbQuery(`SELECT id FROM auth_users WHERE email = $1 LIMIT 1`, [emailClean]);
     if (existing.rows.length) {
@@ -43,14 +42,24 @@ export async function POST(request: Request) {
     }
   }
 
-  // Gerar username único
-  let baseUsername = generateUsername(first_name.trim(), last_name.trim());
-  let username = baseUsername;
-  let suffix = 1;
-  while (true) {
-    const exists = await dbQuery(`SELECT id FROM auth_users WHERE username = $1 LIMIT 1`, [username]);
-    if (!exists.rows.length) break;
-    username = `${baseUsername}${suffix++}`;
+  // Se o admin forneceu um username personalizado, verificar se já existe (sem auto-incremento)
+  let username: string;
+  if (customUsername?.trim()) {
+    const taken = await dbQuery(`SELECT id FROM auth_users WHERE username = $1 LIMIT 1`, [customUsername.trim()]);
+    if (taken.rows.length) {
+      return NextResponse.json({ error: "Nome de utilizador já existe.", code: "USERNAME_TAKEN" }, { status: 409 });
+    }
+    username = customUsername.trim();
+  } else {
+    // Auto-gerar e garantir unicidade com sufixo numérico
+    let base = generateUsername(first_name.trim(), last_name.trim());
+    username = base;
+    let suffix = 1;
+    while (true) {
+      const exists = await dbQuery(`SELECT id FROM auth_users WHERE username = $1 LIMIT 1`, [username]);
+      if (!exists.rows.length) break;
+      username = `${base}${suffix++}`;
+    }
   }
 
   const passwordHash = hashPassword(password);
