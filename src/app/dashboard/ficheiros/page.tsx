@@ -135,6 +135,7 @@ export default function FicheirosPage() {
   const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
   const [gruposFormacao, setGruposFormacao] = useState<{ id: string; nome: string }[]>([]);
   const [grupoFormacaoId, setGrupoFormacaoId] = useState("");
+  const [activeGrupo, setActiveGrupo] = useState<string>("todos");
 
   const canUpload = user?.role === "admin" || user?.role === "formador";
 
@@ -278,12 +279,21 @@ export default function FicheirosPage() {
       if (!visibleCategories.includes(f.area)) return false;
       if (activeCategory !== "Geral" && f.area !== activeCategory) return false;
 
+      // Grupo de formação
+      if (activeGrupo !== "todos") {
+        if (activeGrupo === "sem-grupo") {
+          if (f.grupo_formacao_id) return false;
+        } else {
+          if (f.grupo_formacao_id !== activeGrupo) return false;
+        }
+      }
+
       // Pesquisa
       if (search && !f.label?.toLowerCase().includes(search.toLowerCase())) return false;
 
       return true;
     });
-  }, [files, search, activeCategory, visibleCategories, user]);
+  }, [files, search, activeCategory, activeGrupo, visibleCategories, user]);
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
@@ -420,6 +430,23 @@ export default function FicheirosPage() {
           </button>
         ))}
       </div>
+
+      {/* Filtros de grupo de formação */}
+      {gruposFormacao.length > 0 && (
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-[10px] font-bold uppercase tracking-widest c-tx5 mr-1">Grupo</span>
+          {[{ id: "todos", nome: "Todos" }, ...gruposFormacao, { id: "sem-grupo", nome: "Sem grupo" }].map((g) => (
+            <button key={g.id} onClick={() => setActiveGrupo(g.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeGrupo === g.id
+                  ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30"
+                  : "c-s1 c-tx3 border c-br hover:c-tx2"
+              }`}>
+              {g.nome}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Conteúdo */}
       {loading ? (
