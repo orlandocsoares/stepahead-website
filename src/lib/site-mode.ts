@@ -4,7 +4,7 @@ export const MODES: { id: SiteMode; label: string; thumb: string; overlay: strin
   {
     id: "escuro",
     label: "Escuro",
-    thumb: "/storage/v1/object/public/Nuvem%20LooP/frame_086_delay-0.033s.webp",
+    thumb: "/modos/escuro.webp",
     overlay: "bg-black/35",
     blur: "backdrop-blur-[8px]",
   },
