@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut, ShieldCheck, Megaphone, ClipboardList, User } from "lucide-react";
+import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut, ShieldCheck, Megaphone, ClipboardList, User, Trash2 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { BrightnessSlider } from "@/components/BrightnessSlider";
@@ -37,14 +37,19 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [msgUnread, setMsgUnread] = useState(0);
   const [firstSenderId, setFirstSenderId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [msgOpen, setMsgOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HTMLDivElement>(null);
+  const msgRef = useRef<HTMLDivElement>(null);
   const bellDropdownRef = useRef<HTMLDivElement>(null);
   const avatarDropdownRef = useRef<HTMLDivElement>(null);
+  const msgDropdownRef = useRef<HTMLDivElement>(null);
   const [bellPos, setBellPos] = useState({ top: 0, right: 0 });
   const [avatarPos, setAvatarPos] = useState({ top: 0, right: 0 });
+  const [msgPos, setMsgPos] = useState({ top: 0, right: 0 });
 
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
   const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.email?.split("@")[0] || "";
@@ -74,6 +79,28 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
     if (link) { setNotifOpen(false); router.push(link); }
   }
 
+  async function clearNotifs() {
+    if (!confirm("Limpar todas as notificações?")) return;
+    await fetch("/api/notificacoes", { method: "DELETE" });
+    setNotifs([]);
+    setUnread(0);
+  }
+
+  async function fetchConversations() {
+    try {
+      const res = await fetch("/api/mensagens?conversations=1");
+      if (!res.ok) return;
+      const { data } = await res.json();
+      setConversations(data ?? []);
+    } catch {}
+  }
+
+  async function clearMensagensLista() {
+    await fetch("/api/mensagens", { method: "PATCH" });
+    setConversations(prev => prev.map(c => ({ ...c, unread_count: 0 })));
+    setMsgUnread(0);
+  }
+
   useEffect(() => {
     if (!user) return;
     fetchNotifs();
@@ -97,6 +124,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
       const t = e.target as Node;
       if (bellRef.current && !bellRef.current.contains(t) && !bellDropdownRef.current?.contains(t)) setNotifOpen(false);
       if (avatarRef.current && !avatarRef.current.contains(t) && !avatarDropdownRef.current?.contains(t)) setAvatarOpen(false);
+      if (msgRef.current && !msgRef.current.contains(t) && !msgDropdownRef.current?.contains(t)) setMsgOpen(false);
     }
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
@@ -157,14 +185,75 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           <span className="hidden sm:inline">Site</span>
         </a>
 
-        <button onClick={() => router.push(firstSenderId ? `/dashboard/mensagens?with=${firstSenderId}` : "/dashboard/mensagens")} className="relative p-2 rounded-lg c-tx4 hc-tx hc-s2 transition-colors">
-          <MessageSquare size={18} />
-          {msgUnread > 0 && (
-            <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-blue-500 text-[9px] c-tx flex items-center justify-center font-bold">
-              {msgUnread > 9 ? "9+" : msgUnread}
-            </span>
-          )}
-        </button>
+        {/* Mensagens */}
+        <div ref={msgRef} className="relative">
+          <button
+            onClick={() => {
+              if (!msgOpen && msgRef.current) {
+                const r = msgRef.current.getBoundingClientRect();
+                setMsgPos({ top: r.bottom + 8, right: window.innerWidth - r.right });
+              }
+              setMsgOpen(o => !o);
+              if (!msgOpen) fetchConversations();
+            }}
+            className="relative p-2 rounded-lg c-tx4 hc-tx hc-s2 transition-colors"
+          >
+            <MessageSquare size={18} />
+            {msgUnread > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-blue-500 text-[9px] c-tx flex items-center justify-center font-bold">
+                {msgUnread > 9 ? "9+" : msgUnread}
+              </span>
+            )}
+          </button>
+
+          {msgOpen && typeof document !== "undefined" && createPortal(
+            <div ref={msgDropdownRef} className="fixed w-80 c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: msgPos.top, right: msgPos.right }}>
+              <div className="flex items-center justify-between px-4 py-3 border-b c-br">
+                <span className="text-xs font-semibold c-tx">Mensagens</span>
+                {msgUnread > 0 && (
+                  <button onClick={clearMensagensLista} className="flex items-center gap-1 text-[10px] c-tx4 hc-tx transition-colors">
+                    <CheckCheck size={12} /> Marcar todas como lidas
+                  </button>
+                )}
+              </div>
+
+              <div className="max-h-80 overflow-y-auto">
+                {conversations.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <MessageSquare size={24} className="mx-auto c-tx5 mb-2" />
+                    <p className="text-xs c-tx4">Sem conversas</p>
+                  </div>
+                ) : conversations.map(c => {
+                  const unreadC = Number(c.unread_count ?? 0);
+                  const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "Utilizador";
+                  return (
+                    <div
+                      key={c.other_id}
+                      onClick={() => { setMsgOpen(false); router.push(`/dashboard/mensagens?with=${c.other_id}`); }}
+                      className={`w-full text-left px-4 py-3 border-b c-br hc-s2 transition-colors cursor-pointer flex gap-3 ${unreadC > 0 ? "bg-blue-500/5 border-l-2 border-l-blue-500" : ""}`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/20 flex items-center justify-center text-xs text-blue-400 font-bold uppercase shrink-0">
+                        {name[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={`text-xs leading-tight truncate ${unreadC > 0 ? "font-semibold c-tx" : "font-medium c-tx3"}`}>{name}</p>
+                          <span className={`text-[10px] shrink-0 ${unreadC > 0 ? "text-blue-400" : "c-tx5"}`}>{timeAgo(c.created_at)}</span>
+                        </div>
+                        <p className={`text-[11px] mt-0.5 truncate ${unreadC > 0 ? "c-tx3" : "c-tx5"}`}>{c.last_message}</p>
+                      </div>
+                      {unreadC > 0 && (
+                        <span className="w-4 h-4 rounded-full bg-blue-500 text-[9px] c-tx flex items-center justify-center font-bold shrink-0 self-center">
+                          {unreadC > 9 ? "9+" : unreadC}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          , document.body)}
+        </div>
 
         {/* Notificações */}
         <div ref={bellRef} className="relative">
@@ -191,11 +280,18 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
             <div ref={bellDropdownRef} className="fixed w-80 c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: bellPos.top, right: bellPos.right }}>
               <div className="flex items-center justify-between px-4 py-3 border-b c-br">
                 <span className="text-xs font-semibold c-tx">Notificações</span>
-                {unread > 0 && (
-                  <button onClick={markAllRead} className="flex items-center gap-1 text-[10px] c-tx4 hc-tx transition-colors">
-                    <CheckCheck size={12} /> Marcar todas como lidas
-                  </button>
-                )}
+                <div className="flex items-center gap-3">
+                  {unread > 0 && (
+                    <button onClick={markAllRead} className="flex items-center gap-1 text-[10px] c-tx4 hc-tx transition-colors">
+                      <CheckCheck size={12} /> Marcar lidas
+                    </button>
+                  )}
+                  {notifs.length > 0 && (
+                    <button onClick={clearNotifs} className="flex items-center gap-1 text-[10px] c-tx5 hover:text-red-400 transition-colors">
+                      <Trash2 size={12} /> Limpar
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="max-h-80 overflow-y-auto">

@@ -84,6 +84,20 @@ export async function GET(request: Request) {
   }
 }
 
+// PATCH /api/mensagens  — marcar todas as mensagens recebidas como lidas
+export async function PATCH() {
+  try {
+    const session = await getSessionUser();
+    if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+    await db.query(`UPDATE mensagens SET read = TRUE WHERE to_user_id = $1 AND read = FALSE`, [session.id]);
+    return NextResponse.json({ ok: true });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  }
+}
+
 // DELETE /api/mensagens?id=<msgId>  — só o remetente pode eliminar
 export async function DELETE(request: Request) {
   try {

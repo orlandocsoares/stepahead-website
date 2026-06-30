@@ -35,3 +35,12 @@ export async function PATCH(request: Request) {
   }
   return NextResponse.json({ ok: true });
 }
+
+// DELETE /api/notificacoes — limpar todas as notificações do utilizador
+export async function DELETE() {
+  const session = await getSessionUser();
+  if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+
+  await dbQuery("DELETE FROM notificacoes WHERE user_id = $1", [session.id]);
+  return NextResponse.json({ ok: true });
+}
