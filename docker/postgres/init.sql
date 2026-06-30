@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS profiles (
   avatar_url TEXT,
   temporary_power TEXT,
   power_expires_at TIMESTAMPTZ,
+  formador_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  criado_por UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  escola TEXT,
+  provincia TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

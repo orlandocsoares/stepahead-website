@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck, Trash2, Calendar, FileText,
-  BarChart3, Loader2, Key, Plus, Clock, X, MapPin, Target,
+  BarChart3, Loader2, Key, KeyRound, Plus, Clock, X, MapPin, Target,
   Users, Activity, Database, Search, User, Download, Pencil,
   Eye, EyeOff, CheckCircle2, AlertCircle, Upload, Trophy, LifeBuoy, MessageSquare, TrendingUp, Megaphone, Send
 } from "lucide-react";
@@ -809,7 +809,10 @@ export default function SuperAdminPage() {
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium c-tx">{name}</p>
-                                  <p className="text-xs c-tx4">{item.email}</p>
+                                  <p className="text-xs c-tx4">{item.email ?? <span className="italic opacity-50">sem email</span>}</p>
+                                  {item.criado_por_nome?.trim() && (
+                                    <p className="text-[10px] text-amber-400/70 mt-0.5">criado por {item.criado_por_nome.trim()}</p>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 flex-wrap">
@@ -901,6 +904,19 @@ export default function SuperAdminPage() {
                                     )}
                                     <button onClick={() => openPowerModal(item)} className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs transition-colors ${item.temporary_power ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "c-s1 c-tx4 hc-tx"}`}>
                                       <Clock size={11} /> {item.temporary_power ? "Poder activo" : "Poder"}
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        const nova = prompt(`Nova password para ${item.first_name} ${item.last_name}:\n(mínimo 6 caracteres)`);
+                                        if (!nova || nova.length < 6) return;
+                                        const r = await fetch("/api/admin/reset-password", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ user_id: item.id, new_password: nova }) });
+                                        if (r.ok) alert("Password alterada com sucesso.");
+                                        else { const e = await r.json(); alert("Erro: " + e.error); }
+                                      }}
+                                      className="p-1.5 rounded-lg c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                                      title="Resetar password"
+                                    >
+                                      <KeyRound size={13} />
                                     </button>
                                     <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg c-tx5 hover:text-red-400 hover:bg-red-500/10 transition-colors">
                                       <Trash2 size={13} />

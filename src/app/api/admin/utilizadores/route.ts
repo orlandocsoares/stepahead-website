@@ -21,11 +21,14 @@ export async function GET() {
   }
 
   if (isAdmin) {
-    // Admin vê todos os utilizadores
+    // Admin vê todos os utilizadores com nome do formador associado e do criador
     const result = await dbQuery(`
-      SELECT p.*, f.first_name || ' ' || COALESCE(f.last_name, '') AS formador_nome
+      SELECT p.*,
+        f.first_name || ' ' || COALESCE(f.last_name, '') AS formador_nome,
+        c.first_name || ' ' || COALESCE(c.last_name, '') AS criado_por_nome
       FROM profiles p
       LEFT JOIN profiles f ON f.id = p.formador_id
+      LEFT JOIN profiles c ON c.id = p.criado_por
       ORDER BY p.created_at DESC
     `);
     return NextResponse.json({ data: result.rows });
