@@ -260,24 +260,12 @@ jobs:
 
             echo "==> A construir e reiniciar o container web..."
             docker compose --env-file .env.production -f docker-compose.prod.yml build web
-            # Parar primeiro, esperar que o daemon conclua a remoção, depois forçar limpeza
-            docker compose --env-file .env.production -f docker-compose.prod.yml stop web 2>/dev/null || true
-            sleep 2
-            docker compose --env-file .env.production -f docker-compose.prod.yml rm -f web 2>/dev/null || true
-            sleep 2
-            # Garantir que não fica nenhum container com este nome (idempotente)
             docker rm -f sabermais-next 2>/dev/null || true
-            sleep 2
-            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-deps web
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --force-recreate --no-deps web
 
             echo "==> A recarregar o nginx (config + volumes)..."
-            docker compose --env-file .env.production -f docker-compose.prod.yml stop nginx 2>/dev/null || true
-            sleep 2
-            docker compose --env-file .env.production -f docker-compose.prod.yml rm -f nginx 2>/dev/null || true
-            sleep 2
             docker rm -f sabermais-nginx 2>/dev/null || true
-            sleep 2
-            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --no-deps nginx
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --force-recreate --no-deps nginx
 
             echo "==> A limpar imagens e cache antigas..."
             docker image prune -af
