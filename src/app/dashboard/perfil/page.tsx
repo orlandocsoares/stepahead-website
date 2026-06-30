@@ -263,12 +263,12 @@ export default function PerfilPage() {
           </div>
           <div className="space-y-2 sm:col-span-2">
             <label className="text-xs c-tx3 flex items-center justify-between">
-              <span>Especializações</span>
+              <span>Áreas</span>
               <span className="c-tx5 text-[10px]">determina o acesso aos ficheiros · clica para seleccionar</span>
             </label>
             {/* Guardado como JSON array em profiles.specialization — controla acesso em ficheiros/page.tsx */}
             {(() => {
-              const AREAS = ["Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
+              const AREAS = ["Educação Especial", "Educação Pré-Escolar", "Expressão Plástica", "Expressão Motora", "Geral", "Inglês", "Língua Portuguesa", "Matemática", "Pedagogia"];
               let selected: string[] = [];
               // Compatibilidade com formato antigo (string simples)
               try { selected = JSON.parse(localProfile.specialization || "[]"); } catch { selected = localProfile.specialization ? [localProfile.specialization] : []; }
@@ -287,8 +287,8 @@ export default function PerfilPage() {
                         onClick={() => toggle(area)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                           active
-                            ? "bg-blue-600/20 text-blue-400 border-blue-500/40"
-                            : "c-s1 c-tx4 c-br hc-tx2 hover:c-br2"
+                            ? "bg-blue-600 text-white border-blue-500"
+                            : "bg-black/30 text-white/70 border-white/15 hover:bg-black/50 hover:text-white backdrop-blur-sm"
                         }`}
                       >
                         {area}
