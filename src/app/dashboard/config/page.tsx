@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Settings, Plus, Pencil, Trash2, Check, X, Loader2, BookOpen, Users2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Settings, Plus, Pencil, Trash2, Check, X, Loader2, BookOpen, Users2, ToggleLeft, ToggleRight, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type Disciplina = { id: string; nome: string; activo: boolean; ordem: number };
@@ -36,12 +36,12 @@ export default function ConfigPage() {
   const router = useRouter();
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
 
-  const [tab, setTab] = useState<"disciplinas" | "grupos">("disciplinas");
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newNome, setNewNome] = useState("");
+  const [newGrupoNome, setNewGrupoNome] = useState("");
   const [adding, setAdding] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
 
@@ -117,22 +117,26 @@ export default function ConfigPage() {
     setGrupos(prev => prev.filter(g => g.id !== id));
   }
 
-  async function addGrupo() {
-    if (!newNome.trim()) return;
+  async function addGrupo(nome?: string) {
+    const val = nome ?? newGrupoNome;
+    if (!val.trim()) return;
     setAdding(true);
-    const res = await fetch("/api/admin/grupos-formacao", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: newNome }) });
+    const res = await fetch("/api/admin/grupos-formacao", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: val }) });
     const json = await res.json();
     setGrupos(prev => [...prev, json.grupo]);
-    setNewNome("");
+    setNewGrupoNome("");
     setAdding(false);
   }
 
   if (!isAdmin) return null;
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className="space-y-5 w-full">
       {/* Header */}
       <div className="flex items-center gap-3">
+        <a href="/dashboard/ficheiros" className="p-1.5 rounded-lg c-tx4 hover:c-tx hc-s2 transition-colors" title="Voltar ao Repositório">
+          <ArrowLeft size={16} />
+        </a>
         <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
           <Settings size={16} className="text-blue-400" />
         </div>
@@ -142,74 +146,39 @@ export default function ConfigPage() {
         </div>
       </div>
 
-      {/* Card principal */}
-      <div className="c-bg2 border c-br rounded-xl overflow-hidden">
-        {/* Tabs dentro do card */}
-        <div className="flex gap-1 px-4 pt-4 pb-0 border-b c-br">
-          {([
-            { key: "disciplinas", label: "Áreas", icon: BookOpen },
-            { key: "grupos",      label: "Grupos de Formação", icon: Users2 },
-          ] as const).map(({ key, label, icon: Icon }) => (
-            <button key={key} onClick={() => { setTab(key); setNewNome(""); setEditingId(null); }}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${tab === key ? "border-blue-500 text-blue-400" : "border-transparent c-tx3 hc-tx2"}`}>
-              <Icon size={14} /> {label}
-            </button>
-          ))}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={22} className="animate-spin text-blue-500" />
         </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        <div className="p-4">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 size={22} className="animate-spin text-blue-500" />
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {/* Table */}
-            <div className="c-s1 border c-br rounded-xl overflow-hidden">
+          {/* ── Áreas ── */}
+          <div className="c-bg2 border c-br rounded-xl overflow-hidden flex flex-col">
+            <div className="flex items-center gap-2 px-4 py-3 border-b c-br">
+              <BookOpen size={14} className="text-blue-400" />
+              <h2 className="text-xs font-semibold c-tx uppercase tracking-wider">Áreas</h2>
+              <span className="ml-auto text-[10px] c-tx5">{disciplinas.length} áreas</span>
+            </div>
+            <div className="flex-1 overflow-y-auto">
               <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b c-br">
-                    <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest c-tx4">Nome</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest c-tx4 text-center w-20">Activo</th>
-                    <th className="px-4 py-2.5 w-20" />
-                  </tr>
-                </thead>
                 <tbody className="divide-y" style={{ borderColor: "var(--c-br)" }}>
-                  {tab === "disciplinas" ? disciplinas.map(d => (
-                    <tr key={d.id} className={`transition-colors ${!d.activo ? "opacity-50" : ""}`}>
-                      <td className="px-4 py-3">
+                  {disciplinas.map(d => (
+                    <tr key={d.id} className={`transition-colors ${!d.activo ? "opacity-40" : ""}`}>
+                      <td className="px-4 py-2.5">
                         {editingId === d.id
                           ? <InlineEdit value={d.nome} onSave={v => renameDisciplina(d.id, v)} onCancel={() => setEditingId(null)} />
-                          : <span className="c-tx2 font-medium">{d.nome}</span>}
+                          : <span className="c-tx2 text-xs font-medium">{d.nome}</span>}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-3 py-2.5 text-center w-14">
                         {savingId === d.id
-                          ? <Loader2 size={14} className="animate-spin text-blue-400 mx-auto" />
+                          ? <Loader2 size={13} className="animate-spin text-blue-400 mx-auto" />
                           : <Toggle value={d.activo} onChange={v => toggleDisciplina(d.id, v)} />}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2 justify-end">
-                          <button onClick={() => setEditingId(editingId === d.id ? null : d.id)} className="c-tx4 hover:text-blue-400 transition-colors"><Pencil size={13} /></button>
-                          <button onClick={() => deleteDisciplina(d.id)} className="c-tx4 hover:text-red-400 transition-colors"><Trash2 size={13} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  )) : grupos.map(g => (
-                    <tr key={g.id} className={`transition-colors ${!g.activo ? "opacity-50" : ""}`}>
-                      <td className="px-4 py-3">
-                        {editingId === g.id
-                          ? <InlineEdit value={g.nome} onSave={v => renameGrupo(g.id, v)} onCancel={() => setEditingId(null)} />
-                          : <span className="c-tx2 font-medium">{g.nome}</span>}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {savingId === g.id
-                          ? <Loader2 size={14} className="animate-spin text-blue-400 mx-auto" />
-                          : <Toggle value={g.activo} onChange={v => toggleGrupo(g.id, v)} />}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2 justify-end">
-                          <button onClick={() => setEditingId(editingId === g.id ? null : g.id)} className="c-tx4 hover:text-blue-400 transition-colors"><Pencil size={13} /></button>
-                          <button onClick={() => deleteGrupo(g.id)} className="c-tx4 hover:text-red-400 transition-colors"><Trash2 size={13} /></button>
+                      <td className="px-3 py-2.5 w-16">
+                        <div className="flex items-center gap-1.5 justify-end">
+                          <button onClick={() => setEditingId(editingId === d.id ? null : d.id)} className="c-tx4 hover:text-blue-400 transition-colors"><Pencil size={12} /></button>
+                          <button onClick={() => deleteDisciplina(d.id)} className="c-tx4 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
                         </div>
                       </td>
                     </tr>
@@ -217,25 +186,65 @@ export default function ConfigPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Add row */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 p-3 border-t c-br">
               <input value={newNome} onChange={e => setNewNome(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && (tab === "disciplinas" ? addDisciplina() : addGrupo())}
-                placeholder={tab === "disciplinas" ? "Nova área..." : "Novo grupo (ex: Formação 1)..."}
-                className="flex-1 c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx c-ph outline-none focus:border-blue-500/50 transition-colors" />
-              <button
-                onClick={tab === "disciplinas" ? addDisciplina : addGrupo}
-                disabled={adding || !newNome.trim()}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 disabled:opacity-50 transition-colors">
-                {adding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                Adicionar
+                onKeyDown={e => e.key === "Enter" && addDisciplina()}
+                placeholder="Nova área..."
+                className="flex-1 c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx c-ph outline-none focus:border-blue-500/50 transition-colors" />
+              <button onClick={addDisciplina} disabled={adding || !newNome.trim()}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-xs text-white font-medium hover:bg-blue-500 disabled:opacity-50 transition-colors">
+                <Plus size={13} /> Adicionar
               </button>
             </div>
           </div>
-        )}
+
+          {/* ── Grupos de Formação ── */}
+          <div className="c-bg2 border c-br rounded-xl overflow-hidden flex flex-col">
+            <div className="flex items-center gap-2 px-4 py-3 border-b c-br">
+              <Users2 size={14} className="text-purple-400" />
+              <h2 className="text-xs font-semibold c-tx uppercase tracking-wider">Grupos de Formação</h2>
+              <span className="ml-auto text-[10px] c-tx5">{grupos.length} grupos</span>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <table className="w-full text-sm">
+                <tbody className="divide-y" style={{ borderColor: "var(--c-br)" }}>
+                  {grupos.map(g => (
+                    <tr key={g.id} className={`transition-colors ${!g.activo ? "opacity-40" : ""}`}>
+                      <td className="px-4 py-2.5">
+                        {editingId === g.id
+                          ? <InlineEdit value={g.nome} onSave={v => renameGrupo(g.id, v)} onCancel={() => setEditingId(null)} />
+                          : <span className="c-tx2 text-xs font-medium">{g.nome}</span>}
+                      </td>
+                      <td className="px-3 py-2.5 text-center w-14">
+                        {savingId === g.id
+                          ? <Loader2 size={13} className="animate-spin text-blue-400 mx-auto" />
+                          : <Toggle value={g.activo} onChange={v => toggleGrupo(g.id, v)} />}
+                      </td>
+                      <td className="px-3 py-2.5 w-16">
+                        <div className="flex items-center gap-1.5 justify-end">
+                          <button onClick={() => setEditingId(editingId === g.id ? null : g.id)} className="c-tx4 hover:text-blue-400 transition-colors"><Pencil size={12} /></button>
+                          <button onClick={() => deleteGrupo(g.id)} className="c-tx4 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex gap-2 p-3 border-t c-br">
+              <input value={newGrupoNome} onChange={e => setNewGrupoNome(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && addGrupo()}
+                placeholder="Novo grupo..."
+                className="flex-1 c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx c-ph outline-none focus:border-purple-500/50 transition-colors" />
+              <button onClick={() => addGrupo()} disabled={adding || !newGrupoNome.trim()}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-600 text-xs text-white font-medium hover:bg-purple-500 disabled:opacity-50 transition-colors">
+                <Plus size={13} /> Adicionar
+              </button>
+            </div>
+          </div>
+
         </div>
-      </div>
+      )}
     </div>
   );
 }
