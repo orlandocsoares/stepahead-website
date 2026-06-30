@@ -144,7 +144,7 @@ export default function SupportPage() {
         <div className="flex gap-2 flex-wrap shrink-0">
           {["Todos", "Pendente", "Em Processo", "Resolvido"].map((st) => (
             <button key={st} onClick={() => setFilterStatus(st)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterStatus === st ? "bg-blue-600/20 text-blue-400 border border-blue-500/30" : "c-s1 c-tx3 border c-br hover:c-tx2"}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterStatus === st ? "bg-blue-600 text-white border border-blue-500" : "bg-black/30 text-white/70 border border-white/15 hover:bg-black/50 hover:text-white backdrop-blur-sm"}`}
             >
               {st}
             </button>
@@ -228,7 +228,7 @@ export default function SupportPage() {
                   <span className="text-[10px] c-tx4 mr-1">Alterar estado:</span>
                   {["Pendente", "Em Processo", "Resolvido"].map(st => (
                     <button key={st} onClick={() => handleStatusChange(st)} disabled={statusUpdating || selectedTicket.status === st}
-                      className={`text-[10px] px-2.5 py-1 rounded-lg border font-medium transition-colors disabled:opacity-40 ${selectedTicket.status === st ? STATUS_STYLE[st] : "c-s1 c-tx4 c-br hc-tx hc-br"}`}
+                      className={`text-[10px] px-2.5 py-1 rounded-lg border font-medium transition-colors disabled:opacity-40 ${selectedTicket.status === st ? STATUS_STYLE[st] : "bg-black/30 text-white/60 border-white/15 hover:text-white hover:bg-black/50 backdrop-blur-sm"}`}
                     >
                       {statusUpdating && selectedTicket.status !== st ? <Loader2 size={10} className="animate-spin inline" /> : st}
                     </button>
