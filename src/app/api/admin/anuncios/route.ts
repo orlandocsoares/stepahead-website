@@ -21,29 +21,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Título e mensagem são obrigatórios." }, { status: 400 });
   }
 
-  // Determinar utilizadores destino
+  // Determinar utilizadores destino (incluindo o próprio admin)
   let whereRole = "";
   if (destinatarios === "formadores") whereRole = `AND role = 'formador'`;
   else if (destinatarios === "formandos") whereRole = `AND role = 'formando'`;
 
   const users = await dbQuery(
-    `SELECT id, email, first_name FROM profiles WHERE status = 'activo' AND id != $1 ${whereRole}`,
-    [sessionUser.id]
+    `SELECT id, email, first_name FROM profiles WHERE status = 'activo' ${whereRole}`,
+    []
   );
 
   if (!users.rows.length) {
     return NextResponse.json({ enviados: 0, emails: 0 });
   }
 
-  // Inserir notificações
-  const notifValues = users.rows.map((u: any) =>
-    `('${u.id}', 'anuncio', '${titulo.replace(/'/g, "''")}', '${mensagem.replace(/'/g, "''")}')`
-  ).join(", ");
-
-  await dbQuery(
-    `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem) VALUES ${notifValues}`,
-    []
-  );
+  // Inserir notificações com parâmetros separados para evitar injecção SQL
+  for (const u of users.rows as any[]) {
+    await dbQuery(
+      `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem) VALUES ($1, 'anuncio', $2, $3)`,
+      [u.id, titulo.trim(), mensagem.trim()]
+    );
+  }
 
   // Enviar emails se pedido
   let emailsEnviados = 0;
