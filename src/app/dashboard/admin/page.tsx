@@ -422,21 +422,19 @@ export default function SuperAdminPage() {
 
       <style dangerouslySetInnerHTML={{__html: `.hide-native-scroll::-webkit-scrollbar{width:2px}.hide-native-scroll::-webkit-scrollbar-track{background:transparent}.hide-native-scroll::-webkit-scrollbar-thumb{background:transparent}`}} />
 
-      <header className="mb-8 flex flex-col lg:flex-row justify-between items-end gap-4 shrink-0">
-        <div>
-          <h2 className="text-lg font-semibold c-tx">Centro de Controlo</h2>
-          <p className="text-sm c-tx3 mt-0.5">Administração do sistema.</p>
-        </div>
-        <div className="flex bg-black/30 backdrop-blur-sm border border-white/10 p-1 rounded-xl">
-          {visibleTabs.map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab as any)}
-              className={`px-5 py-2 rounded-lg text-xs font-medium transition-all ${activeTab === tab ? "bg-blue-600 c-tx shadow" : "c-tx3 hc-tx"}`}
-            >
-              {tab === "users" ? "Utilizadores" : tab === "agenda" ? "Agenda" : tab === "arquivos" ? "Ficheiros" : tab === "stats" ? "Estatísticas" : "Anúncios"}
-            </button>
-          ))}
-        </div>
-      </header>
+      {visibleTabs.length > 1 && (
+        <header className="mb-6 flex justify-end shrink-0">
+          <div className="flex bg-black/30 backdrop-blur-sm border border-white/10 p-1 rounded-xl">
+            {visibleTabs.map((tab) => (
+              <button key={tab} onClick={() => setActiveTab(tab as any)}
+                className={`px-5 py-2 rounded-lg text-xs font-medium transition-all ${activeTab === tab ? "bg-blue-600 c-tx shadow" : "c-tx3 hc-tx"}`}
+              >
+                {tab === "users" ? "Utilizadores" : tab === "agenda" ? "Agenda" : tab === "arquivos" ? "Ficheiros" : tab === "stats" ? "Estatísticas" : "Anúncios"}
+              </button>
+            ))}
+          </div>
+        </header>
+      )}
 
       {/* Toast */}
       {toast && (
