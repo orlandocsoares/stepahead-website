@@ -33,6 +33,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const [unread, setUnread] = useState(0);
   const [notifs, setNotifs] = useState<any[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [msgUnread, setMsgUnread] = useState(0);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
@@ -188,35 +189,43 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
                     <Bell size={24} className="mx-auto c-tx5 mb-2" />
                     <p className="text-xs c-tx4">Sem notificações</p>
                   </div>
-                ) : notifs.map(n => (
-                  <button
-                    key={n.id}
-                    onClick={() => markRead(n.id, n.link)}
-                    className={`w-full text-left px-4 py-3 border-b c-br hc-s2 transition-colors flex gap-3 ${!n.lida ? "bg-blue-500/5" : ""}`}
-                  >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                      n.tipo === "novo_formando" ? "bg-emerald-500/10" :
-                      n.tipo === "novo_formador" ? "bg-amber-500/10" :
-                      n.tipo === "anuncio"       ? "bg-purple-500/10" :
-                      n.tipo === "tarefa"        ? "bg-blue-500/10" :
-                      "bg-blue-500/10"
-                    }`}>
-                      {n.tipo === "novo_formando" ? <UserCheck    size={14} className="text-emerald-400" /> :
-                       n.tipo === "novo_formador" ? <ShieldCheck  size={14} className="text-amber-400"  /> :
-                       n.tipo === "anuncio"       ? <Megaphone    size={14} className="text-purple-400" /> :
-                       n.tipo === "tarefa"        ? <ClipboardList size={14} className="text-blue-400"  /> :
-                       <Bell size={14} className="text-blue-400" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={`text-xs font-medium leading-tight ${!n.lida ? "c-tx" : "c-tx3"}`}>{n.titulo}</p>
-                        <span className="text-[10px] c-tx5 shrink-0">{timeAgo(n.created_at)}</span>
+                ) : notifs.map(n => {
+                  const isExpanded = expandedId === n.id;
+                  const iconBg = n.tipo === "novo_formando" ? "bg-emerald-500/10" : n.tipo === "novo_formador" ? "bg-amber-500/10" : n.tipo === "anuncio" ? "bg-purple-500/10" : "bg-blue-500/10";
+                  const icon = n.tipo === "novo_formando" ? <UserCheck size={14} className="text-emerald-400" /> : n.tipo === "novo_formador" ? <ShieldCheck size={14} className="text-amber-400" /> : n.tipo === "anuncio" ? <Megaphone size={14} className="text-purple-400" /> : n.tipo === "tarefa" ? <ClipboardList size={14} className="text-blue-400" /> : <Bell size={14} className="text-blue-400" />;
+                  return (
+                    <div
+                      key={n.id}
+                      onClick={() => {
+                        markRead(n.id);
+                        if (n.link) { setNotifOpen(false); router.push(n.link); return; }
+                        setExpandedId(isExpanded ? null : n.id);
+                      }}
+                      className={`w-full text-left px-4 py-3 border-b c-br hc-s2 transition-colors cursor-pointer ${!n.lida ? "bg-blue-500/5" : ""}`}
+                    >
+                      <div className="flex gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${iconBg}`}>{icon}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className={`text-xs font-medium leading-tight ${!n.lida ? "c-tx" : "c-tx3"}`}>{n.titulo}</p>
+                            <span className="text-[10px] c-tx5 shrink-0">{timeAgo(n.created_at)}</span>
+                          </div>
+                          {n.mensagem && (
+                            <p className={`text-[11px] c-tx4 mt-0.5 leading-relaxed whitespace-pre-wrap ${isExpanded ? "" : "line-clamp-2"}`}>
+                              {n.mensagem}
+                            </p>
+                          )}
+                          {!n.lida && !isExpanded && <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mt-1" />}
+                          {n.mensagem && n.mensagem.length > 80 && (
+                            <span className="text-[10px] text-blue-400/60 mt-1 inline-block">
+                              {isExpanded ? "▲ Recolher" : "▼ Ver tudo"}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {n.mensagem && <p className="text-[11px] c-tx4 mt-0.5 leading-tight line-clamp-2">{n.mensagem}</p>}
-                      {!n.lida && <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mt-1" />}
                     </div>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
