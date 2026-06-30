@@ -265,7 +265,6 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            <p className="text-center text-[10px] c-tx4">{fmt(disk.used)} de {fmt(disk.total)}</p>
           </div>
         )}
 
