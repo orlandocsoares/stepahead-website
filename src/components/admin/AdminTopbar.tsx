@@ -173,7 +173,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 top-12 w-80 c-bg2 c-br border rounded-xl shadow-2xl z-50 overflow-hidden">
+            <div className="absolute right-0 top-12 w-80 c-bg2 c-br border rounded-xl shadow-2xl z-[200] overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b c-br">
                 <span className="text-xs font-semibold c-tx">Notificações</span>
                 {unread > 0 && (
@@ -241,7 +241,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           </button>
 
           {avatarOpen && (
-            <div className="absolute right-0 top-10 w-48 c-bg2 c-br border rounded-xl shadow-2xl z-50 overflow-hidden">
+            <div className="absolute right-0 top-10 w-48 c-bg2 c-br border rounded-xl shadow-2xl z-[200] overflow-hidden">
               <div className="px-4 py-3 border-b c-br">
                 <p className="text-xs font-semibold c-tx truncate">{displayName}</p>
                 <p className="text-[10px] c-tx4 capitalize">{user?.role ?? ""}</p>
