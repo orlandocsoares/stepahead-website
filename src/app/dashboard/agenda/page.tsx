@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Calendar as CalendarIcon, MapPin, Globe, Lock,
+  Calendar as CalendarIcon, MapPin,
   CheckCircle2, Loader2, Plus, X, Laptop, Search
 } from "lucide-react";
 
@@ -75,13 +75,34 @@ export default function AgendaPage() {
     setIsSubmitting(false);
   }
 
-  const filtered = useMemo(() => events.filter((e) => {
+  const [showArchive, setShowArchive] = useState(false);
+
+  const now = new Date(); now.setHours(0,0,0,0);
+
+  function getDaysUntil(dateStr: string) {
+    const d = new Date(dateStr); d.setHours(0,0,0,0);
+    return Math.ceil((d.getTime() - now.getTime()) / 86400000);
+  }
+
+  function getUrgency(days: number) {
+    if (days < 0) return "past";
+    if (days === 0) return "today";
+    if (days <= 3) return "urgent";
+    if (days <= 7) return "soon";
+    if (days <= 30) return "upcoming";
+    return "future";
+  }
+
+  const allFiltered = useMemo(() => events.filter((e) => {
     const isOnline = e.local === "Online";
     const matchSearch = e.titulo?.toLowerCase().includes(search.toLowerCase());
     const matchFormat = filterFormat === "Todos" || (filterFormat === "Online" && isOnline) || (filterFormat === "Presencial" && !isOnline);
     const matchScope = filterScope === "Todos" || e.tipo === filterScope;
     return matchSearch && matchFormat && matchScope;
   }), [events, search, filterFormat, filterScope]);
+
+  const filtered = allFiltered.filter(e => getDaysUntil(e.data_evento) >= 0);
+  const archived = allFiltered.filter(e => getDaysUntil(e.data_evento) < 0);
 
   if (loading) return <div className="flex items-center justify-center h-full"><Loader2 size={24} className="animate-spin text-blue-500" /></div>;
 
@@ -90,7 +111,7 @@ export default function AgendaPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-lg font-semibold c-tx">Agenda</h2>
-          <p className="text-sm c-tx3 mt-0.5">{filtered.length} actividade{filtered.length !== 1 ? "s" : ""}.</p>
+          <p className="text-sm c-tx3 mt-0.5">{filtered.length} actividade{filtered.length !== 1 ? "s" : ""} {archived.length > 0 ? `· ${archived.length} arquivada${archived.length !== 1 ? "s" : ""}` : ""}.</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative">
@@ -111,36 +132,103 @@ export default function AgendaPage() {
         </div>
       </div>
 
+      {filtered.length === 0 && archived.length === 0 && (
+        <div className="py-20 text-center text-sm c-tx5">Nenhuma actividade encontrada.</div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <AnimatePresence mode="popLayout">
           {filtered.map((item, index) => {
             const isRegistered = myInscriptions.includes(item.id);
             const isOnline = item.local === "Online";
+            const days = getDaysUntil(item.data_evento);
+            const urgency = getUrgency(days);
+
+            const accentBar =
+              urgency === "today"   ? "bg-emerald-500" :
+              urgency === "urgent"  ? "bg-red-500" :
+              urgency === "soon"    ? "bg-amber-500" :
+              urgency === "upcoming"? "bg-blue-500" : "bg-white/10";
+
+            const borderClass =
+              urgency === "today"  ? "border-emerald-500/40" :
+              urgency === "urgent" ? "border-red-500/30" :
+              urgency === "soon"   ? "border-amber-500/30" : "c-br";
+
+            const countdownBadge =
+              urgency === "today"  ? <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold animate-pulse uppercase tracking-widest">Hoje</span> :
+              urgency === "urgent" ? <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-semibold">em {days} dia{days !== 1 ? "s" : ""}</span> :
+              urgency === "soon"   ? <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-semibold">em {days} dias</span> :
+              urgency === "upcoming"? <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">em {days} dias</span> : null;
+
             return (
               <motion.div key={item.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: index * 0.04 }}
-                className="c-bg2 border c-br rounded-xl p-5 flex flex-col gap-4 hover:border-white/[0.12] transition-colors"
+                className={`c-bg2 border ${borderClass} rounded-xl overflow-hidden flex flex-col hover:border-white/[0.15] transition-colors`}
               >
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${item.tipo === "Restrito" ? "bg-amber-500/10 text-amber-400" : "bg-blue-500/10 text-blue-400"}`}>{item.tipo}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${isOnline ? "bg-purple-500/10 text-purple-400" : "bg-emerald-500/10 text-emerald-400"}`}>{isOnline ? "Online" : "Presencial"}</span>
+                {/* Barra de urgência no topo */}
+                <div className={`h-1 w-full ${accentBar}`} />
+                <div className="p-5 flex flex-col gap-4 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${item.tipo === "Restrito" ? "bg-amber-500/10 text-amber-400" : "bg-blue-500/10 text-blue-400"}`}>{item.tipo}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${isOnline ? "bg-purple-500/10 text-purple-400" : "bg-emerald-500/10 text-emerald-400"}`}>{isOnline ? "Online" : "Presencial"}</span>
+                    {countdownBadge}
+                  </div>
+                  <p className="text-sm font-semibold c-tx leading-snug">{item.titulo}</p>
+                  <div className="flex items-center gap-4 text-xs c-tx3">
+                    <span className="flex items-center gap-1.5"><CalendarIcon size={12} className="text-blue-400" />{new Date(item.data_evento).toLocaleDateString("pt-PT")}</span>
+                    <span className="flex items-center gap-1.5">{isOnline ? <Laptop size={12} className="text-purple-400" /> : <MapPin size={12} className="text-emerald-400" />}{item.local}</span>
+                  </div>
+                  <button onClick={() => handleInscription(item.id)}
+                    className={`mt-auto w-full py-2 rounded-lg text-xs font-medium transition-colors ${isRegistered ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30" : "c-s1 c-tx3 border c-br hc-s3"}`}
+                  >
+                    {isRegistered ? <span className="flex items-center justify-center gap-1.5"><CheckCircle2 size={13} /> Inscrito</span> : "Inscrever"}
+                  </button>
                 </div>
-                <p className="text-sm font-semibold c-tx leading-snug">{item.titulo}</p>
-                <div className="flex items-center gap-4 text-xs c-tx3">
-                  <span className="flex items-center gap-1.5"><CalendarIcon size={12} className="text-blue-400" />{new Date(item.data_evento).toLocaleDateString("pt-PT")}</span>
-                  <span className="flex items-center gap-1.5">{isOnline ? <Laptop size={12} className="text-purple-400" /> : <MapPin size={12} className="text-emerald-400" />}{item.local}</span>
-                </div>
-                <button onClick={() => handleInscription(item.id)}
-                  className={`mt-auto w-full py-2 rounded-lg text-xs font-medium transition-colors ${isRegistered ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30" : "c-s1 c-tx3 border c-br hc-s3"}`}
-                >
-                  {isRegistered ? <span className="flex items-center justify-center gap-1.5"><CheckCircle2 size={13} /> Inscrito</span> : "Inscrever"}
-                </button>
               </motion.div>
             );
           })}
         </AnimatePresence>
       </div>
 
-      {filtered.length === 0 && <div className="py-20 text-center text-sm c-tx5">Nenhuma actividade encontrada.</div>}
+      {/* Arquivo */}
+      {archived.length > 0 && (
+        <div className="space-y-3 pt-2">
+          <button onClick={() => setShowArchive(v => !v)} className="flex items-center gap-2 text-xs c-tx4 hover:c-tx transition-colors">
+            <span className={`transition-transform ${showArchive ? "rotate-90" : ""}`}>▶</span>
+            Arquivo ({archived.length} evento{archived.length !== 1 ? "s" : ""} passado{archived.length !== 1 ? "s" : ""})
+          </button>
+          <AnimatePresence>
+            {showArchive && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-50">
+                  {archived.map((item) => {
+                    const isOnline = item.local === "Online";
+                    const isRegistered = myInscriptions.includes(item.id);
+                    return (
+                      <div key={item.id} className="c-bg2 border c-br rounded-xl overflow-hidden flex flex-col">
+                        <div className="h-1 w-full bg-white/10" />
+                        <div className="p-5 flex flex-col gap-3 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] px-2 py-0.5 rounded font-medium bg-white/5 c-tx5">Concluído</span>
+                          </div>
+                          <p className="text-sm font-medium c-tx3 leading-snug line-through">{item.titulo}</p>
+                          <div className="flex items-center gap-4 text-xs c-tx5">
+                            <span className="flex items-center gap-1.5"><CalendarIcon size={12} />{new Date(item.data_evento).toLocaleDateString("pt-PT")}</span>
+                            <span className="flex items-center gap-1.5">{isOnline ? <Laptop size={12} /> : <MapPin size={12} />}{item.local}</span>
+                          </div>
+                          {isRegistered && (
+                            <span className="text-[10px] text-emerald-400/70 flex items-center gap-1"><CheckCircle2 size={11} /> Participei</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
