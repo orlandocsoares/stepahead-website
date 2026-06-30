@@ -159,7 +159,7 @@ export default function ComunidadePage() {
       <div className="flex gap-2 flex-wrap">
         {CATEGORIES.map((cat) => (
           <button key={cat} onClick={() => setActiveCategory(cat)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeCategory === cat ? "bg-blue-600/20 text-blue-400 border border-blue-500/30" : "c-s1 c-tx3 border c-br hover:c-tx2"}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeCategory === cat ? "bg-blue-600 text-white border border-blue-500" : "bg-black/30 text-white/70 border border-white/15 hover:bg-black/50 hover:text-white backdrop-blur-sm"}`}
           >
             {cat}
           </button>
