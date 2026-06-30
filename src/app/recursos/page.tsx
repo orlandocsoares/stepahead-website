@@ -89,10 +89,6 @@ function RecursosContent() {
               className="h-9 w-auto brightness-0 invert drop-shadow-[0_0_8px_rgba(99,179,237,0.85)] drop-shadow-[0_0_20px_rgba(59,130,246,0.5)]"
             />
           </a>
-          <a href="/login"
-            className="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
-            Entrar <ChevronRight size={14} />
-          </a>
         </div>
       </header>
 
