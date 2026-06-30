@@ -127,6 +127,8 @@ export default function FicheirosPage() {
   const [minhasTurmas, setMinhasTurmas] = useState<{ id: string; nome: string; area: string }[]>([]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortCol, setSortCol] = useState<"nome" | "area" | "tamanho" | "data" | "visibilidade">("data");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [generatingThumbs, setGeneratingThumbs] = useState(false);
   const [thumbProgress, setThumbProgress] = useState<{ done: number; total: number } | null>(null);
@@ -306,8 +308,21 @@ export default function FicheirosPage() {
       if (search && !f.label?.toLowerCase().includes(search.toLowerCase())) return false;
 
       return true;
+    }).sort((a, b) => {
+      let cmp = 0;
+      if (sortCol === "nome")        cmp = (a.label ?? "").localeCompare(b.label ?? "");
+      else if (sortCol === "area")   cmp = (a.area ?? "").localeCompare(b.area ?? "");
+      else if (sortCol === "tamanho") cmp = (a.tamanho ?? 0) - (b.tamanho ?? 0);
+      else if (sortCol === "data")   cmp = new Date(a.criado_em ?? 0).getTime() - new Date(b.criado_em ?? 0).getTime();
+      else if (sortCol === "visibilidade") cmp = (a.visibilidade ?? "").localeCompare(b.visibilidade ?? "");
+      return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [files, search, activeCategory, activeGrupo, visibleCategories, user]);
+  }, [files, search, activeCategory, activeGrupo, visibleCategories, user, sortCol, sortDir]);
+
+  function toggleSort(col: typeof sortCol) {
+    if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortCol(col); setSortDir("asc"); }
+  }
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
@@ -620,11 +635,17 @@ export default function FicheirosPage() {
             <table className="w-full text-sm min-w-[500px]">
               <thead>
                 <tr className="border-b c-br">
-                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3">Nome</th>
-                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3 hidden sm:table-cell">Área</th>
-                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3 hidden md:table-cell">Tamanho</th>
-                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3 hidden lg:table-cell">Data</th>
-                  <th className="text-left text-xs c-tx4 font-medium px-5 py-3">Visibilidade</th>
+                  {(["nome","area","tamanho","data","visibilidade"] as const).map((col, i) => (
+                    <th key={col} onClick={() => toggleSort(col)}
+                      className={`text-left text-xs font-medium px-5 py-3 cursor-pointer select-none group transition-colors hover:c-tx2 ${sortCol === col ? "c-tx2" : "c-tx4"} ${i === 1 ? "hidden sm:table-cell" : i === 2 ? "hidden md:table-cell" : i === 3 ? "hidden lg:table-cell" : ""}`}>
+                      <span className="flex items-center gap-1">
+                        {["Nome","Área","Tamanho","Data","Visibilidade"][i]}
+                        <span className="text-[10px] opacity-60">
+                          {sortCol === col ? (sortDir === "asc" ? "↑" : "↓") : "↕"}
+                        </span>
+                      </span>
+                    </th>
+                  ))}
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
