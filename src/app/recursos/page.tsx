@@ -91,7 +91,7 @@ function RecursosContent() {
           </a>
           <a href="/login"
             className="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
-            Área reservada <ChevronRight size={14} />
+            Entrar <ChevronRight size={14} />
           </a>
         </div>
       </header>
@@ -164,10 +164,10 @@ function RecursosContent() {
                       <button
                         key={r.id}
                         onClick={() => setViewing(r)}
-                        className="flex flex-col rounded-xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.05] hover:border-white/[0.12] transition-all text-left group overflow-hidden"
+                        className="flex flex-col rounded-xl bg-black/40 backdrop-blur-sm border border-white/10 hover:bg-black/55 hover:border-white/20 transition-all text-left group overflow-hidden"
                       >
                         {/* Miniatura */}
-                        <div className="w-full aspect-[4/3] bg-white/[0.03] flex items-center justify-center relative overflow-hidden">
+                        <div className="w-full aspect-[4/3] bg-black/20 flex items-center justify-center relative overflow-hidden">
                           {r.thumbnail_url ? (
                             <img src={r.thumbnail_url} alt={r.label} className="w-full h-full object-cover" />
                           ) : (
