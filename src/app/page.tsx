@@ -960,7 +960,7 @@ export default function HeroSection() {
                     </div>
                     <div className="flex-1 mt-4">{activeData.description}</div>
                     <div className="shrink-0 pt-2 mt-auto">
-                      <button onClick={() => window.open(DASHBOARD_URL, "_blank")} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-4 w-fit outline-none">
+                      <button onClick={() => profile ? window.open(DASHBOARD_URL, "_blank") : goToPhase(0)} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-4 w-fit outline-none">
                         <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white transition-colors" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Saber Mais</span>
                         <div className="relative w-12 h-[1px] bg-white/50 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div>
                       </button>
