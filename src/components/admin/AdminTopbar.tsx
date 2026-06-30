@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut, ShieldCheck, Megaphone, ClipboardList } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { BrightnessSlider } from "@/components/BrightnessSlider";
 
 const PAGE_TITLES: Record<string, string> = {
@@ -39,6 +40,8 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const [avatarOpen, setAvatarOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HTMLDivElement>(null);
+  const [bellPos, setBellPos] = useState({ top: 0, right: 0 });
+  const [avatarPos, setAvatarPos] = useState({ top: 0, right: 0 });
 
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
   const displayName = user?.first_name ?? user?.email?.split("@")[0] ?? "";
@@ -161,7 +164,14 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
         {/* Notificações */}
         <div ref={bellRef} className="relative">
           <button
-            onClick={() => { setNotifOpen(o => !o); if (!notifOpen) fetchNotifs(); }}
+            onClick={() => {
+              if (!notifOpen && bellRef.current) {
+                const r = bellRef.current.getBoundingClientRect();
+                setBellPos({ top: r.bottom + 8, right: window.innerWidth - r.right });
+              }
+              setNotifOpen(o => !o);
+              if (!notifOpen) fetchNotifs();
+            }}
             className="relative p-2 rounded-lg c-tx4 hc-tx hc-s2 transition-colors"
           >
             <Bell size={18} />
@@ -172,8 +182,8 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
             )}
           </button>
 
-          {notifOpen && (
-            <div className="absolute right-0 top-12 w-80 c-bg2 c-br border rounded-xl shadow-2xl z-[200] overflow-hidden">
+          {notifOpen && typeof document !== "undefined" && createPortal(
+            <div className="fixed w-80 c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: bellPos.top, right: bellPos.right }}>
               <div className="flex items-center justify-between px-4 py-3 border-b c-br">
                 <span className="text-xs font-semibold c-tx">Notificações</span>
                 {unread > 0 && (
@@ -228,20 +238,26 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
                 })}
               </div>
             </div>
-          )}
+          , document.body)}
         </div>
 
         {/* Avatar com dropdown de logout */}
         <div className="relative" ref={avatarRef}>
           <button
-            onClick={() => setAvatarOpen(o => !o)}
+            onClick={() => {
+              if (!avatarOpen && avatarRef.current) {
+                const r = avatarRef.current.getBoundingClientRect();
+                setAvatarPos({ top: r.bottom + 8, right: window.innerWidth - r.right });
+              }
+              setAvatarOpen(o => !o);
+            }}
             className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-400 uppercase shrink-0 hover:bg-blue-600/50 transition-colors"
           >
             {initial}
           </button>
 
-          {avatarOpen && (
-            <div className="absolute right-0 top-10 w-48 c-bg2 c-br border rounded-xl shadow-2xl z-[200] overflow-hidden">
+          {avatarOpen && typeof document !== "undefined" && createPortal(
+            <div className="fixed w-48 c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: avatarPos.top, right: avatarPos.right }}>
               <div className="px-4 py-3 border-b c-br">
                 <p className="text-xs font-semibold c-tx truncate">{displayName}</p>
                 <p className="text-[10px] c-tx4 capitalize">{user?.role ?? ""}</p>
@@ -254,7 +270,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
                 Terminar sessão
               </button>
             </div>
-          )}
+          , document.body)}
         </div>
       </div>
     </header>
