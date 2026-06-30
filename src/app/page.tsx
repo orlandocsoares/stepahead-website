@@ -574,40 +574,29 @@ export default function HeroSection() {
         return {
           ...base,
           description: (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <p className={defaultTextClass}>{base.description}</p>
 
-              {/* Contador principal — mostra recursos públicos se existirem */}
-              <div className="flex items-end gap-3">
-                <div className="relative">
-                  <span className="text-[52px] font-black text-white leading-none tracking-tighter tabular-nums drop-shadow-lg">
-                    {totalPublicos > 0 ? totalPublicos : (telemetry.total_materials ?? 0)}
-                  </span>
-                  <span className="absolute -top-1 -right-3 text-amber-400 text-lg font-bold">+</span>
-                </div>
-                <div className="pb-1.5">
-                  <p className="text-[9px] uppercase tracking-[0.3em] text-amber-400 font-bold leading-tight">Materiais</p>
-                  <p className="text-[9px] uppercase tracking-[0.3em] text-amber-400/60 font-bold leading-tight">pedagógicos</p>
-                </div>
-              </div>
-
-              {/* Pills por área — clicáveis, filtram /recursos por disciplina */}
+              {/* Cards por área — estilo Monitorização */}
               {areas.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {areas.map(({ area, total }) => {
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  {areas.slice(0, 4).map(({ area, total }, i) => {
                     const c = areaColors[area] ?? defaultAreaColor;
                     return (
                       <motion.a
                         key={area}
                         href={`/recursos?area=${encodeURIComponent(area)}`}
-                        initial={{ opacity: 0, scale: 0.85 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3 }}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-semibold backdrop-blur-sm drop-shadow-md pointer-events-auto cursor-pointer hover:scale-105 transition-transform ${c.bg} ${c.text} ${c.border}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: i * 0.08 }}
+                        className={`relative rounded-xl border ${c.border} bg-gradient-to-br ${c.bg} backdrop-blur-md p-3 overflow-hidden pointer-events-auto cursor-pointer hover:scale-[1.03] transition-transform`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.dot}`} />
-                        {area}
-                        <span className="opacity-60 font-normal">({total})</span>
+                        <div className={`absolute top-0 right-0 w-12 h-12 rounded-full blur-xl ${c.dot} opacity-30 -translate-y-1/2 translate-x-1/2`} />
+                        <div className={`w-7 h-7 rounded-lg bg-white/10 border ${c.border} flex items-center justify-center mb-2`}>
+                          <span className={`w-2 h-2 rounded-full ${c.dot}`} />
+                        </div>
+                        <p className={`text-xl font-bold tabular-nums leading-none ${c.text}`}>{total}</p>
+                        <p className="text-[9px] text-white/50 uppercase tracking-[0.15em] mt-0.5 font-medium leading-tight">{area}</p>
                       </motion.a>
                     );
                   })}
