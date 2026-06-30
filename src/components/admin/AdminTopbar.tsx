@@ -36,6 +36,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [msgUnread, setMsgUnread] = useState(0);
+  const [firstSenderId, setFirstSenderId] = useState<string | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
@@ -79,9 +80,9 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
 
   useEffect(() => {
     if (!user) return;
-    fetch("/api/mensagens?unread=1").then(r => r.json()).then(d => setMsgUnread(d.count ?? 0)).catch(() => {});
+    fetch("/api/mensagens?unread=1").then(r => r.json()).then(d => { setMsgUnread(d.count ?? 0); setFirstSenderId(d.first_sender_id ?? null); }).catch(() => {});
     const i = setInterval(() => {
-      fetch("/api/mensagens?unread=1").then(r => r.json()).then(d => setMsgUnread(d.count ?? 0)).catch(() => {});
+      fetch("/api/mensagens?unread=1").then(r => r.json()).then(d => { setMsgUnread(d.count ?? 0); setFirstSenderId(d.first_sender_id ?? null); }).catch(() => {});
     }, 15000);
     return () => clearInterval(i);
   }, [user]);
@@ -152,7 +153,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           <span className="hidden sm:inline">Site</span>
         </a>
 
-        <button onClick={() => router.push("/dashboard/mensagens")} className="relative p-2 rounded-lg c-tx4 hc-tx hc-s2 transition-colors">
+        <button onClick={() => router.push(firstSenderId ? `/dashboard/mensagens?with=${firstSenderId}` : "/dashboard/mensagens")} className="relative p-2 rounded-lg c-tx4 hc-tx hc-s2 transition-colors">
           <MessageSquare size={18} />
           {msgUnread > 0 && (
             <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-blue-500 text-[9px] c-tx flex items-center justify-center font-bold">

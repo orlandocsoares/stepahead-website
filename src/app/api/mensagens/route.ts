@@ -18,10 +18,14 @@ export async function GET(request: Request) {
 
     if (unread) {
       const result = await db.query(
-        `SELECT COUNT(*) AS count FROM mensagens WHERE to_user_id = $1 AND read = FALSE`,
+        `SELECT COUNT(*) AS count, MIN(from_user_id::text) AS first_sender_id
+         FROM mensagens WHERE to_user_id = $1 AND read = FALSE`,
         [session.id]
       );
-      return NextResponse.json({ count: parseInt(result.rows[0].count) });
+      return NextResponse.json({
+        count: parseInt(result.rows[0].count),
+        first_sender_id: result.rows[0].first_sender_id ?? null,
+      });
     }
 
     if (conversations) {
