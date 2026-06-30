@@ -48,6 +48,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
 
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
   const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.email?.split("@")[0] || "";
+  const roleLabel = user?.role === "super-admin" ? "Super Administrador" : user?.role === "admin" ? "Administrador" : user?.role === "formador" ? "Formador" : user?.role === "formando" ? "Formando" : user?.role ?? "";
   const initial = displayName?.[0]?.toUpperCase() ?? "?";
 
   async function fetchNotifs() {
@@ -273,7 +274,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
             <div ref={avatarDropdownRef} className="fixed w-52 c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: avatarPos.top, right: avatarPos.right }}>
               <div className="px-4 py-3 border-b c-br">
                 <p className="text-xs font-semibold c-tx truncate">{displayName}</p>
-                <p className="text-[10px] c-tx4 capitalize">{user?.role ?? ""}</p>
+                <p className="text-[10px] c-tx4">{roleLabel}</p>
               </div>
               <button
                 onClick={() => { setAvatarOpen(false); router.push("/dashboard/perfil"); }}
