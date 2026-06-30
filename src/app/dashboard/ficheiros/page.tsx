@@ -484,11 +484,11 @@ export default function FicheirosPage() {
           </div>
           <div className="flex items-center gap-1 c-s1 border c-br rounded-lg p-1">
             <button onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "c-s3 c-tx" : "c-tx4 hc-tx2"}`}>
+              className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-blue-600 text-white" : "c-tx4 hc-tx2"}`}>
               <LayoutGrid size={14} />
             </button>
             <button onClick={() => setViewMode("list")}
-              className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "c-s3 c-tx" : "c-tx4 hc-tx2"}`}>
+              className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-blue-600 text-white" : "c-tx4 hc-tx2"}`}>
               <List size={14} />
             </button>
           </div>
