@@ -73,7 +73,37 @@ export async function POST(request: Request, ) {
   const isFormador = role === "formador";
   if (!isFormador && !isAdmin) return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
 
-  const { formando_id, acao } = await request.json(); // acao: "aprovar" | "rejeitar"
+  const { formando_id, acao } = await request.json(); // acao: "associar" | "aprovar" | "rejeitar" | "remover"
+
+  // Formador associa-se a um formando sem associação prévia
+  if (acao === "associar") {
+    if (!isFormador && !isAdmin) return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    const formadorId = session.id;
+    await dbQuery(
+      `INSERT INTO formando_formadores (formando_id, formador_id, status, ano_letivo)
+       VALUES ($1, $2, 'aceite', (SELECT ano_letivo FROM anos_letivos WHERE activo = true LIMIT 1))
+       ON CONFLICT (formando_id, formador_id) DO UPDATE SET status = 'aceite', updated_at = NOW()`,
+      [formando_id, formadorId]
+    );
+    // Notificar o formando
+    const formadorProfile = await dbQuery(`SELECT first_name, last_name FROM profiles WHERE id = $1 LIMIT 1`, [formadorId]);
+    const fp = formadorProfile.rows[0];
+    await dbQuery(
+      `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
+       VALUES ($1, 'nova_disciplina', 'Novo formador associado', $2, '/dashboard/perfil')`,
+      [formando_id, `${fp?.first_name} ${fp?.last_name} associou-te como seu formando.`]
+    );
+    // Adicionar à turma do formador se existir
+    const turma = await dbQuery("SELECT id FROM turmas WHERE formador_id = $1 LIMIT 1", [formadorId]);
+    if (turma.rows[0]) {
+      await dbQuery(
+        `INSERT INTO turma_membros (turma_id, formando_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+        [turma.rows[0].id, formando_id]
+      );
+    }
+    await auditLog("associate_formando", { actorId: session.id, targetId: formando_id, ip });
+    return NextResponse.json({ ok: true });
+  }
 
   // Verificar que a associação existe para este formador
   const ffRes = await dbQuery(
