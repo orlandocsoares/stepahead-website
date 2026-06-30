@@ -30,21 +30,14 @@ export async function GET() {
     `);
     return NextResponse.json({ data: result.rows });
   } else {
-    // Formador vê os seus formandos agrupados por status de associação
+    // Formador vê todos os formandos activos da plataforma
     const result = await dbQuery(`
-      SELECT p.*, ff.status AS ff_status, ff.ano_letivo, ff.id AS ff_id
-      FROM formando_formadores ff
-      JOIN profiles p ON p.id = ff.formando_id
-      WHERE ff.formador_id = $1
-      ORDER BY
-        CASE ff.status
-          WHEN 'pendente' THEN 1
-          WHEN 'aceite' THEN 2
-          WHEN 'rejeitado' THEN 3
-          WHEN 'removido' THEN 4
-          ELSE 5
-        END,
-        ff.updated_at DESC
+      SELECT p.*,
+        ff.status AS ff_status, ff.ano_letivo, ff.id AS ff_id
+      FROM profiles p
+      LEFT JOIN formando_formadores ff ON ff.formando_id = p.id AND ff.formador_id = $1
+      WHERE p.role = 'formando' AND p.status = 'activo'
+      ORDER BY p.first_name ASC, p.last_name ASC
     `, [sessionUser.id]);
     return NextResponse.json({ data: result.rows });
   }
