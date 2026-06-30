@@ -225,95 +225,91 @@ export default function PerfilPage() {
         </div>
       </div>
 
-      {/* ── Segurança ── */}
-      <div className="c-bg2 border c-br rounded-xl p-6 space-y-4">
-        <h3 className="text-sm font-semibold c-tx flex items-center gap-2">
-          <ShieldCheck size={15} className="text-emerald-400" /> Segurança
-        </h3>
-        <p className="text-xs c-tx4">Actualiza a tua palavra-passe de acesso ao backoffice.</p>
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
-          <div className="flex-1 space-y-1.5">
-            <label className="text-xs c-tx3">Nova palavra-passe</label>
-            <div className="relative">
-              <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx5" />
+      {/* ── Segurança + Dados de identidade lado a lado ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        {/* Segurança */}
+        <div className="c-bg2 border c-br rounded-xl p-4 space-y-3">
+          <h3 className="text-xs font-semibold c-tx flex items-center gap-2 uppercase tracking-wider">
+            <ShieldCheck size={13} className="text-emerald-400" /> Segurança
+          </h3>
+          <div className="flex gap-2 items-center">
+            <div className="relative flex-1">
+              <Key size={13} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx5" />
               <input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                className="w-full pl-9 pr-4 py-2.5 c-s1 border c-br rounded-lg text-sm c-tx placeholder:c-tx5 outline-none focus:border-emerald-500/40 transition-colors"
+                placeholder="Nova palavra-passe (mín. 6)"
+                className="w-full pl-8 pr-3 py-2 c-s1 border c-br rounded-lg text-xs c-tx placeholder:c-tx5 outline-none focus:border-emerald-500/40 transition-colors"
               />
             </div>
+            <button
+              onClick={handleUpdatePassword}
+              disabled={isSavingPassword || !password}
+              className="px-3 py-2 rounded-lg border border-emerald-500/30 text-xs text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-30 flex items-center gap-1.5 shrink-0"
+            >
+              {isSavingPassword ? <Loader2 size={12} className="animate-spin" /> : null}
+              Actualizar
+            </button>
           </div>
-          <button
-            onClick={handleUpdatePassword}
-            disabled={isSavingPassword || !password}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-emerald-500/30 text-sm text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
-          >
-            {isSavingPassword ? <Loader2 size={14} className="animate-spin" /> : null}
-            Actualizar
-          </button>
         </div>
-      </div>
 
-      {/* ── Dados de identidade ── */}
-      <div className="c-bg2 border c-br rounded-xl p-6 space-y-5">
-        <h3 className="text-sm font-semibold c-tx flex items-center gap-2">
-          <FileText size={15} className="text-blue-400" /> Dados de identidade
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs c-tx3">Nome próprio</label>
+        {/* Dados de identidade */}
+        <div className="c-bg2 border c-br rounded-xl p-4 space-y-3">
+          <h3 className="text-xs font-semibold c-tx flex items-center gap-2 uppercase tracking-wider">
+            <FileText size={13} className="text-blue-400" /> Dados de identidade
+          </h3>
+          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <label className="text-[10px] c-tx3">Nome próprio</label>
             <input
               value={localProfile.first_name || ""}
               onChange={e => setLocalProfile({ ...localProfile, first_name: e.target.value })}
-              className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
+              className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs c-tx3">Apelido</label>
+          <div className="space-y-1">
+            <label className="text-[10px] c-tx3">Apelido</label>
             <input
               value={localProfile.last_name || ""}
               onChange={e => setLocalProfile({ ...localProfile, last_name: e.target.value })}
-              className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
+              className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs c-tx3">E-mail (imutável)</label>
-            <div className="px-3 py-2.5 bg-white/[0.02] border c-br rounded-lg text-sm c-tx4 cursor-not-allowed font-mono">
+          <div className="space-y-1">
+            <label className="text-[10px] c-tx3">E-mail</label>
+            <div className="px-3 py-2 bg-white/[0.02] border c-br rounded-lg text-xs c-tx4 cursor-not-allowed font-mono truncate">
               {localProfile.email}
             </div>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs c-tx3">Província</label>
+          <div className="space-y-1">
+            <label className="text-[10px] c-tx3">Província</label>
             <select
               value={localProfile.province || ""}
               onChange={e => setLocalProfile({ ...localProfile, province: e.target.value })}
-              className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
+              className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors"
             >
               <option value="" className="c-bg">Seleccionar...</option>
               <option value="Luanda" className="c-bg">Luanda</option>
               <option value="Bié" className="c-bg">Bié</option>
             </select>
           </div>
-          <div className="space-y-2 sm:col-span-2">
-            <label className="text-xs c-tx3 flex items-center justify-between">
+          <div className="space-y-1 col-span-2">
+            <label className="text-[10px] c-tx3 flex items-center justify-between">
               <span>Áreas</span>
-              <span className="c-tx5 text-[10px]">determina o acesso aos ficheiros · clica para seleccionar</span>
+              <span className="c-tx5 text-[10px]">clica para seleccionar</span>
             </label>
-            {/* Guardado como JSON array em profiles.specialization — controla acesso em ficheiros/page.tsx */}
             {(() => {
               const AREAS = areasDisponiveis;
               let selected: string[] = [];
-              // Compatibilidade com formato antigo (string simples)
               try { selected = JSON.parse(localProfile.specialization || "[]"); } catch { selected = localProfile.specialization ? [localProfile.specialization] : []; }
               const toggle = (area: string) => {
                 const next = selected.includes(area) ? selected.filter(a => a !== area) : [...selected, area];
                 setLocalProfile({ ...localProfile, specialization: JSON.stringify(next) });
               };
               return (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {AREAS.map(area => {
                     const active = selected.includes(area);
                     return (
@@ -321,7 +317,7 @@ export default function PerfilPage() {
                         key={area}
                         type="button"
                         onClick={() => toggle(area)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-colors ${
                           active
                             ? "bg-blue-600 text-white border-blue-500"
                             : "bg-black/30 text-white/70 border-white/15 hover:bg-black/50 hover:text-white backdrop-blur-sm"
@@ -338,37 +334,38 @@ export default function PerfilPage() {
               );
             })()}
           </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <label className="text-xs c-tx3 flex items-center justify-between">
+          <div className="space-y-1 col-span-2">
+            <label className="text-[10px] c-tx3 flex items-center justify-between">
               <span>Biografia profissional</span>
               {localProfile.role === "formador" && (
-                <span className="text-amber-400 text-[10px]">* Obrigatório para formadores</span>
+                <span className="text-amber-400 text-[10px]">* Obrigatório</span>
               )}
             </label>
             <textarea
               value={localProfile.biografia || ""}
               onChange={e => setLocalProfile({ ...localProfile, biografia: e.target.value })}
-              rows={4}
-              placeholder="Partilhe um breve resumo da sua jornada..."
-              className={`w-full c-s1 border rounded-lg px-3 py-2.5 text-sm c-tx2 placeholder:c-tx5 outline-none transition-colors resize-y min-h-[100px] ${
+              rows={2}
+              placeholder="Breve resumo da sua jornada..."
+              className={`w-full c-s1 border rounded-lg px-3 py-2 text-xs c-tx2 placeholder:c-tx5 outline-none transition-colors resize-none ${
                 localProfile.role === "formador" && !localProfile.biografia?.trim()
                   ? "border-amber-500/40 focus:border-amber-400"
                   : "c-br focus:border-blue-500/50"
               }`}
             />
           </div>
+          </div>
+          <div className="flex justify-end pt-1">
+            <button
+              onClick={handleSaveProfile}
+              disabled={isSaving}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-xs c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50"
+            >
+              {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} Guardar
+            </button>
+          </div>
         </div>
 
-        <div className="flex justify-end pt-1">
-          <button
-            onClick={handleSaveProfile}
-            disabled={isSaving}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50"
-          >
-            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Guardar
-          </button>
-        </div>
-      </div>
+      </div>{/* fim grid lg:grid-cols-2 */}
 
       {/* ── Secção de Formadores (só formandos) ── */}
       {localProfile.role === "formando" && (
