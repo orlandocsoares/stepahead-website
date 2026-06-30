@@ -967,11 +967,10 @@ export default function SuperAdminPage() {
                       value={anuncioMensagem}
                       onChange={e => setAnuncioMensagem(e.target.value)}
                       placeholder="Descreve a novidade ou aviso que queres partilhar..."
-                      rows={4}
-                      maxLength={500}
-                      className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx placeholder:c-tx5 outline-none focus:border-amber-500/50 transition-colors resize-none"
+                      rows={12}
+                      className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx placeholder:c-tx5 outline-none focus:border-amber-500/50 transition-colors resize-y"
                     />
-                    <p className="text-[10px] c-tx5 text-right">{anuncioMensagem.length}/500</p>
+                    <p className="text-[10px] c-tx5 text-right">{anuncioMensagem.length} caracteres</p>
                   </div>
 
                   {/* Toggle email */}
