@@ -3,24 +3,31 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, FileText, FolderOpen, Users, Calendar,
-  Shield, LogOut, ChevronLeft, ChevronRight, Globe, X, UserCircle, LifeBuoy, MessageSquare, Mail, GraduationCap, ClipboardList,
+  LayoutDashboard, FolderOpen, Users, Calendar,
+  Shield, LogOut, ChevronLeft, ChevronRight, Globe, X, UserCircle, LifeBuoy,
+  MessageSquare, Mail, GraduationCap, ClipboardList, BookOpen, ChevronDown,
 } from "lucide-react";
 import { useAdminUser } from "@/hooks/useAdminUser";
+import { useState } from "react";
 
-// roles: undefined = todos | "admin" = admin e super-admin | "staff" = admin + formador
-const NAV = [
+const NAV_TOP = [
   { label: "Dashboard",    icon: LayoutDashboard, path: "/dashboard" },
-  { label: "Ficheiros",    icon: FolderOpen,       path: "/dashboard/ficheiros" },
   { label: "Agenda",       icon: Calendar,         path: "/dashboard/agenda" },
   { label: "Comunidade",   icon: MessageSquare,    path: "/dashboard/comunidade" },
   { label: "Mensagens",    icon: Mail,             path: "/dashboard/mensagens" },
-  { label: "Tarefas",      icon: ClipboardList,    path: "/dashboard/tarefas" },
-  { label: "Turmas",       icon: GraduationCap,    path: "/dashboard/turmas",       staffOnly: true },
-  { label: "Utilizadores", icon: Users,            path: "/dashboard/admin",        staffOnly: true },
-  { label: "Suporte",      icon: LifeBuoy,         path: "/dashboard/suporte" },
-  { label: "Perfil",       icon: UserCircle,       path: "/dashboard/perfil" },
-  { label: "Audit Log",     icon: Shield,           path: "/dashboard/admin/audit",      adminOnly: true },
+];
+
+const NAV_ACADEMICA = [
+  { label: "Repositório",  icon: FolderOpen,    path: "/dashboard/ficheiros" },
+  { label: "Tarefas",      icon: ClipboardList, path: "/dashboard/tarefas" },
+  { label: "Turmas",       icon: GraduationCap, path: "/dashboard/turmas", staffOnly: true },
+];
+
+const NAV_BOTTOM = [
+  { label: "Utilizadores", icon: Users,       path: "/dashboard/admin",       staffOnly: true },
+  { label: "Suporte",      icon: LifeBuoy,    path: "/dashboard/suporte" },
+  { label: "Perfil",       icon: UserCircle,  path: "/dashboard/perfil" },
+  { label: "Audit Log",    icon: Shield,      path: "/dashboard/admin/audit", adminOnly: true },
 ];
 
 type Props = {
@@ -34,8 +41,18 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
   const pathname = usePathname();
   const { user, logout } = useAdminUser();
 
+  const academicaPaths = NAV_ACADEMICA.map(i => i.path);
+  const academicaActive = academicaPaths.some(p => pathname.startsWith(p));
+  const [academicaOpen, setAcademicaOpen] = useState(academicaActive);
+
   const isActive = (path: string) =>
     path === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(path);
+
+  const canSee = (item: any) => {
+    if (item.adminOnly) return user?.role === "admin" || user?.role === "super-admin";
+    if (item.staffOnly) return user?.role === "admin" || user?.role === "super-admin" || user?.role === "formador";
+    return true;
+  };
 
   const displayName = user?.first_name
     ? `${user.first_name}${user.last_name ? " " + user.last_name : ""}`
@@ -47,69 +64,68 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
     : user?.role === "formador" ? "Formador"
     : "Formando";
 
+  const NavLink = ({ label, icon: Icon, path }: { label: string; icon: any; path: string }) => {
+    const active = isActive(path);
+    return (
+      <Link href={path} title={collapsed ? label : undefined}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 relative
+          ${active ? "bg-blue-600/20 text-blue-400" : "c-tx3 hc-tx2 hc-s1"}
+          ${collapsed ? "md:justify-center" : ""}`}>
+        {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-blue-500 rounded-r-full" />}
+        <Icon size={18} strokeWidth={active ? 2 : 1.5} className="shrink-0" />
+        <span className={collapsed ? "md:hidden" : ""}>{label}</span>
+      </Link>
+    );
+  };
+
   return (
-    <aside
-      className={`
-        fixed left-0 top-0 h-screen z-50 flex flex-col
-        c-bg border-r c-br
-        transition-all duration-300 ease-in-out
-        /* Mobile: drawer oculto por defeito (-translate-x-full), abre via mobileOpen.
-           Desktop (md+): sempre visível; colapsa para 68px (só ícones) via collapsed.
-           Overlay + fecho automático ao navegar estão no layout.tsx. */
-        ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0
-        ${collapsed ? "md:w-[68px]" : "md:w-[220px]"}
-        w-[220px]
-      `}
-    >
+    <aside className={`
+      fixed left-0 top-0 h-screen z-50 flex flex-col c-bg border-r c-br
+      transition-all duration-300 ease-in-out
+      ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+      md:translate-x-0
+      ${collapsed ? "md:w-[68px]" : "md:w-[220px]"}
+      w-[220px]
+    `}>
       {/* Logo */}
       <div className={`flex items-center gap-3 px-4 h-16 border-b c-br shrink-0 ${collapsed ? "md:justify-center" : ""}`}>
-        <img
-          src="/logo.png"
-          alt="Saber Mais"
-          className={`theme-logo object-contain shrink-0 transition-all duration-300 ${collapsed ? "md:h-8 md:w-8" : "h-9 w-auto max-w-[140px]"}`}
-        />
-        {/* Botão de fechar em mobile */}
-        <button
-          onClick={onMobileClose}
-          className="ml-auto c-tx4 hc-tx md:hidden"
-          aria-label="Fechar menu"
-        >
+        <img src="/logo.png" alt="Saber Mais"
+          className={`theme-logo object-contain shrink-0 transition-all duration-300 ${collapsed ? "md:h-8 md:w-8" : "h-9 w-auto max-w-[140px]"}`} />
+        <button onClick={onMobileClose} className="ml-auto c-tx4 hc-tx md:hidden" aria-label="Fechar menu">
           <X size={18} />
         </button>
       </div>
 
       {/* Nav */}
       <nav className="dashboard-sidebar flex-1 overflow-y-auto py-4 px-2 space-y-1 min-h-0">
-        {NAV.filter(({ adminOnly, staffOnly }: any) => {
-          if (adminOnly) return user?.role === "admin" || user?.role === "super-admin";
-          if (staffOnly) return user?.role === "admin" || user?.role === "super-admin" || user?.role === "formador";
-          return true;
-        }).map(({ label, icon: Icon, path }) => {
-          const active = isActive(path);
-          return (
-            <Link
-              key={path}
-              href={path}
-              title={collapsed ? label : undefined}
-              className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-                transition-colors duration-150 relative
-                ${active
-                  ? "bg-blue-600/20 text-blue-400"
-                  : "c-tx3 hc-tx2 hc-s1"
-                }
-                ${collapsed ? "md:justify-center" : ""}
-              `}
-            >
-              {active && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-blue-500 rounded-r-full" />
-              )}
-              <Icon size={18} strokeWidth={active ? 2 : 1.5} className="shrink-0" />
-              <span className={collapsed ? "md:hidden" : ""}>{label}</span>
-            </Link>
-          );
-        })}
+
+        {/* Links de topo */}
+        {NAV_TOP.map(item => <NavLink key={item.path} {...item} />)}
+
+        {/* Grupo Área Académica */}
+        <div className="pt-1">
+          <button
+            onClick={() => setAcademicaOpen(o => !o)}
+            title={collapsed ? "Área Académica" : undefined}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors
+              ${academicaActive ? "text-blue-400" : "c-tx5 hc-tx3"}
+              ${collapsed ? "md:justify-center" : ""}`}>
+            <BookOpen size={15} strokeWidth={1.8} className="shrink-0" />
+            <span className={`flex-1 text-left ${collapsed ? "md:hidden" : ""}`}>Área Académica</span>
+            {!collapsed && <ChevronDown size={13} className={`transition-transform duration-200 ${academicaOpen ? "rotate-180" : ""}`} />}
+          </button>
+
+          {(academicaOpen || collapsed) && (
+            <div className={`mt-1 space-y-1 ${collapsed ? "" : "pl-3 border-l border-white/[0.06] ml-3"}`}>
+              {NAV_ACADEMICA.filter(canSee).map(item => <NavLink key={item.path} {...item} />)}
+            </div>
+          )}
+        </div>
+
+        {/* Links de fundo */}
+        <div className="pt-1 space-y-1">
+          {NAV_BOTTOM.filter(canSee).map(item => <NavLink key={item.path} {...item} />)}
+        </div>
       </nav>
 
       {/* User + actions */}
@@ -124,21 +140,14 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
           </div>
         </div>
 
-        <button
-          onClick={logout}
-          title={collapsed ? "Terminar sessão" : undefined}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm c-tx4 hover:text-red-400 hover:bg-red-500/[0.08] transition-colors duration-150 ${collapsed ? "md:justify-center" : ""}`}
-        >
+        <button onClick={logout} title={collapsed ? "Terminar sessão" : undefined}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm c-tx4 hover:text-red-400 hover:bg-red-500/[0.08] transition-colors duration-150 ${collapsed ? "md:justify-center" : ""}`}>
           <LogOut size={16} strokeWidth={1.5} className="shrink-0" />
           <span className={collapsed ? "md:hidden" : ""}>Terminar sessão</span>
         </button>
 
-        {/* Toggle collapse — apenas desktop */}
-        <button
-          onClick={onToggle}
-          title={collapsed ? "Expandir" : "Recolher"}
-          className={`hidden md:flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm c-tx5 hover:c-tx3 hc-s1 transition-colors duration-150 ${collapsed ? "justify-center" : ""}`}
-        >
+        <button onClick={onToggle} title={collapsed ? "Expandir" : "Recolher"}
+          className={`hidden md:flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm c-tx5 hover:c-tx3 hc-s1 transition-colors duration-150 ${collapsed ? "justify-center" : ""}`}>
           {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /><span className="text-xs">Recolher</span></>}
         </button>
       </div>
