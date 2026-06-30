@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
@@ -552,19 +552,20 @@ export default function HeroSection() {
         };
       }
       case 5: {
-        const areaColors: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-          "Matemática":        { bg: "bg-blue-900/60",    text: "text-blue-200",   border: "border-blue-400/40",   dot: "bg-blue-400" },
-          "Língua Portuguesa": { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400" },
-          "Português":         { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400" },
-          "Ciências":          { bg: "bg-cyan-900/60",    text: "text-cyan-200",   border: "border-cyan-400/40",   dot: "bg-cyan-400" },
-          "História":          { bg: "bg-amber-900/60",   text: "text-amber-200",  border: "border-amber-400/40",  dot: "bg-amber-400" },
-          "Geografia":         { bg: "bg-lime-900/60",    text: "text-lime-200",   border: "border-lime-400/40",   dot: "bg-lime-400" },
-          "Biologia":          { bg: "bg-green-900/60",   text: "text-green-200",  border: "border-green-400/40",  dot: "bg-green-400" },
-          "Física":            { bg: "bg-violet-900/60",  text: "text-violet-200", border: "border-violet-400/40", dot: "bg-violet-400" },
-          "Química":           { bg: "bg-pink-900/60",    text: "text-pink-200",   border: "border-pink-400/40",   dot: "bg-pink-400" },
-          "Geral":             { bg: "bg-white/10",       text: "text-white/80",   border: "border-white/20",      dot: "bg-white/50" },
+        const areaColors: Record<string, { bg: string; text: string; border: string; dot: string; icon: React.ElementType }> = {
+          "Matemática":        { bg: "bg-blue-900/60",    text: "text-blue-200",   border: "border-blue-400/40",   dot: "bg-blue-400",    icon: Calculator },
+          "Língua Portuguesa": { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400", icon: Languages },
+          "Português":         { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400", icon: Languages },
+          "Ciências":          { bg: "bg-cyan-900/60",    text: "text-cyan-200",   border: "border-cyan-400/40",   dot: "bg-cyan-400",    icon: FlaskConical },
+          "História":          { bg: "bg-amber-900/60",   text: "text-amber-200",  border: "border-amber-400/40",  dot: "bg-amber-400",   icon: Landmark },
+          "Geografia":         { bg: "bg-lime-900/60",    text: "text-lime-200",   border: "border-lime-400/40",   dot: "bg-lime-400",    icon: Globe },
+          "Biologia":          { bg: "bg-green-900/60",   text: "text-green-200",  border: "border-green-400/40",  dot: "bg-green-400",   icon: Leaf },
+          "Física":            { bg: "bg-violet-900/60",  text: "text-violet-200", border: "border-violet-400/40", dot: "bg-violet-400",  icon: Zap },
+          "Química":           { bg: "bg-pink-900/60",    text: "text-pink-200",   border: "border-pink-400/40",   dot: "bg-pink-400",    icon: TestTube },
+          "Pedagogia":         { bg: "bg-orange-900/60",  text: "text-orange-200", border: "border-orange-400/40", dot: "bg-orange-400",  icon: GraduationCap },
+          "Geral":             { bg: "bg-white/10",       text: "text-white/80",   border: "border-white/20",      dot: "bg-white/50",    icon: FolderOpen },
         };
-        const defaultAreaColor = { bg: "bg-white/10", text: "text-white/80", border: "border-white/20", dot: "bg-white/50" };
+        const defaultAreaColor = { bg: "bg-white/10", text: "text-white/80", border: "border-white/20", dot: "bg-white/50", icon: FolderOpen };
         // Usar áreas dos recursos públicos reais; fallback para telemetria
         const areasPublicas: { area: string; total: number }[] = telemetry.areas_publicas ?? [];
         const areasFallback: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
@@ -582,6 +583,7 @@ export default function HeroSection() {
                 <div className="grid grid-cols-2 gap-2 mt-3">
                   {areas.slice(0, 4).map(({ area, total }, i) => {
                     const c = areaColors[area] ?? defaultAreaColor;
+                    const Icon = c.icon;
                     return (
                       <motion.a
                         key={area}
@@ -593,7 +595,7 @@ export default function HeroSection() {
                       >
                         <div className={`absolute top-0 right-0 w-12 h-12 rounded-full blur-xl ${c.dot} opacity-30 -translate-y-1/2 translate-x-1/2`} />
                         <div className={`w-7 h-7 rounded-lg bg-white/10 border ${c.border} flex items-center justify-center mb-2`}>
-                          <span className={`w-2 h-2 rounded-full ${c.dot}`} />
+                          <Icon size={14} className={c.text} />
                         </div>
                         <p className={`text-xl font-bold tabular-nums leading-none ${c.text}`}>{total}</p>
                         <p className="text-[9px] text-white/50 uppercase tracking-[0.15em] mt-0.5 font-medium leading-tight">{area}</p>
