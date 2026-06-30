@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 
-// GET /api/recursos/pdf/[id] — redireciona para o URL público do ficheiro no storage
-// Só funciona para arquivos com site_publico=true
+// GET /api/recursos/pdf/[id] — proxy do PDF via NGINX storage (sem referência directa ao Supabase)
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
@@ -19,7 +18,24 @@ export async function GET(
   }
 
   const nomeArquivo = res.rows[0].nome_arquivo;
-  const publicUrl = `/storage/v1/object/public/materiais/${encodeURIComponent(nomeArquivo)}`;
+  const origin = new URL(request.url).origin;
+  const fileUrl = `${origin}/storage/v1/object/public/materiais/${encodeURIComponent(nomeArquivo)}`;
 
-  return NextResponse.redirect(new URL(publicUrl, _request.url));
+  try {
+    const upstream = await fetch(fileUrl);
+    if (!upstream.ok) {
+      return new NextResponse("Ficheiro não encontrado.", { status: 404 });
+    }
+    const buffer = await upstream.arrayBuffer();
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": "inline",
+        "Cache-Control": "public, max-age=3600",
+      },
+    });
+  } catch {
+    return new NextResponse("Erro ao carregar o ficheiro.", { status: 500 });
+  }
 }
