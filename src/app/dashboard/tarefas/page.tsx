@@ -189,8 +189,31 @@ export default function TarefasPage() {
     }
   }
 
-  const pendentes = useMemo(() => tarefas.filter(t => t.estado === "pendente" || (!t.estado && isStaff)), [tarefas, isStaff]);
-  const entregues = useMemo(() => tarefas.filter(t => t.estado && t.estado !== "pendente"), [tarefas]);
+  // Formando: kanban por estado pessoal
+  const colFormando = useMemo(() => ({
+    pendente:   tarefas.filter(t => t.estado === "pendente" || !t.estado),
+    entregue:   tarefas.filter(t => t.estado === "entregue"),
+    avaliado:   tarefas.filter(t => t.estado === "avaliado"),
+  }), [tarefas]);
+
+  // Formador: kanban por progresso de entrega
+  const colFormador = useMemo(() => ({
+    semEntregas: tarefas.filter(t => (t.entregues ?? 0) === 0),
+    emProgresso: tarefas.filter(t => (t.entregues ?? 0) > 0 && (t.entregues ?? 0) < (t.total ?? 1)),
+    completas:   tarefas.filter(t => (t.total ?? 0) > 0 && (t.entregues ?? 0) >= (t.total ?? 1)),
+  }), [tarefas]);
+
+  const COLS_FORMANDO = [
+    { key: "pendente",  label: "A fazer",   color: "text-amber-400",   bar: "bg-amber-500",   empty: "Nenhuma tarefa por fazer." },
+    { key: "entregue",  label: "Entregue",  color: "text-emerald-400", bar: "bg-emerald-500", empty: "Ainda não entregaste nada." },
+    { key: "avaliado",  label: "Avaliado",  color: "text-blue-400",    bar: "bg-blue-500",    empty: "Nenhuma tarefa avaliada." },
+  ] as const;
+
+  const COLS_FORMADOR = [
+    { key: "semEntregas", label: "Por entregar",  color: "text-amber-400",   bar: "bg-amber-500",   empty: "Nenhuma tarefa pendente." },
+    { key: "emProgresso", label: "Em progresso",  color: "text-blue-400",    bar: "bg-blue-500",    empty: "Nenhuma em progresso." },
+    { key: "completas",   label: "Concluídas",    color: "text-emerald-400", bar: "bg-emerald-500", empty: "Nenhuma concluída ainda." },
+  ] as const;
 
   return (
     <div className="flex flex-col h-full">
@@ -209,128 +232,148 @@ export default function TarefasPage() {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto hide-native-scroll px-6 py-5 space-y-6">
+      <div className="flex-1 overflow-hidden px-4 py-4">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
+          <div className="flex items-center justify-center h-full">
             <Loader2 size={24} className="animate-spin text-blue-500" />
           </div>
         ) : tarefas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-3">
+          <div className="flex flex-col items-center justify-center h-full gap-3">
             <ClipboardList size={40} className="c-tx5" />
-            <p className="text-sm c-tx4">
-              {isStaff ? "Ainda não criaste nenhuma tarefa." : "Não tens tarefas atribuídas."}
-            </p>
+            <p className="text-sm c-tx4">{isStaff ? "Ainda não criaste nenhuma tarefa." : "Não tens tarefas atribuídas."}</p>
           </div>
         ) : (
-          <>
-            {/* Formando: pendentes / entregues */}
-            {!isStaff && (
-              <>
-                {pendentes.length > 0 && (
-                  <section className="space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest c-tx4">Pendentes</p>
-                    {pendentes.map(t => (
-                      <TarefaCard key={t.id} tarefa={t} expanded={expandedId === t.id}
-                        onToggle={() => toggleExpand(t.id)}
-                        onMarcar={(estado) => marcarEntregue(t.id, estado)}
-                        updating={updatingId === t.id}
-                        isStaff={false} />
-                    ))}
-                  </section>
-                )}
-                {entregues.length > 0 && (
-                  <section className="space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest c-tx4">Entregues / Avaliadas</p>
-                    {entregues.map(t => (
-                      <TarefaCard key={t.id} tarefa={t} expanded={expandedId === t.id}
-                        onToggle={() => toggleExpand(t.id)}
-                        onMarcar={(estado) => marcarEntregue(t.id, estado)}
-                        updating={updatingId === t.id}
-                        isStaff={false} />
-                    ))}
-                  </section>
-                )}
-              </>
-            )}
+          /* ── KANBAN ── */
+          <div className="grid grid-cols-3 gap-3 h-full">
 
-            {/* Formador: todas as tarefas criadas */}
-            {isStaff && (
-              <section className="space-y-2">
-                {tarefas.map(t => (
-                  <div key={t.id} className="c-s1 border c-br rounded-xl overflow-hidden">
-                    <button onClick={() => toggleExpand(t.id)}
-                      className="w-full flex items-start gap-4 px-4 py-3.5 text-left hover:bg-white/[0.02] transition-colors">
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-medium c-tx">{t.titulo}</span>
-                          <PrazoBadge prazo={t.prazo} />
-                        </div>
-                        {t.descricao && <p className="text-xs c-tx3 line-clamp-1">{t.descricao}</p>}
-                        <div className="flex items-center gap-3 text-[11px] c-tx4">
-                          <span className="flex items-center gap-1"><Users size={10} /> {t.total ?? 0} formandos</span>
-                          <span className="flex items-center gap-1 text-emerald-400/70"><CheckCheck size={10} /> {t.entregues ?? 0} entregues</span>
-                        </div>
+            {/* ── FORMANDO ── */}
+            {!isStaff && COLS_FORMANDO.map(col => (
+              <div key={col.key} className="flex flex-col c-bg2 border c-br rounded-xl overflow-hidden">
+                {/* Coluna header */}
+                <div className={`h-1 ${col.bar}`} />
+                <div className="px-3 py-2.5 border-b c-br flex items-center gap-2">
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${col.color}`}>{col.label}</span>
+                  <span className="ml-auto text-[10px] c-tx5">{colFormando[col.key].length}</span>
+                </div>
+                {/* Cards */}
+                <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                  {colFormando[col.key].length === 0 ? (
+                    <p className="text-[11px] c-tx5 text-center py-6">{col.empty}</p>
+                  ) : colFormando[col.key].map(t => (
+                    <motion.div key={t.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                      className="c-s1 border c-br rounded-lg p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs font-medium c-tx leading-snug">{t.titulo}</p>
+                        <PrazoBadge prazo={t.prazo} />
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={(e) => { e.stopPropagation(); eliminarTarefa(t.id); }}
-                          className="p-1.5 rounded-lg c-tx5 hover:text-red-400 hover:bg-red-500/10 transition-colors">
-                          <Trash2 size={13} />
+                      {t.criador_nome && (
+                        <p className="text-[10px] c-tx4 flex items-center gap-1"><User size={9} /> {t.criador_nome} {t.criador_apelido}</p>
+                      )}
+                      {t.descricao && <p className="text-[10px] c-tx4 line-clamp-2">{t.descricao}</p>}
+                      {/* Botão de acção */}
+                      {col.key === "pendente" && (
+                        <button onClick={() => marcarEntregue(t.id, "entregue")} disabled={updatingId === t.id}
+                          className="w-full py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-medium hover:bg-emerald-500/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
+                          {updatingId === t.id ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={10} /> Marcar como entregue</>}
                         </button>
-                        {expandedId === t.id ? <ChevronUp size={15} className="c-tx4" /> : <ChevronDown size={15} className="c-tx4" />}
-                      </div>
-                    </button>
+                      )}
+                      {col.key === "entregue" && (
+                        <button onClick={() => marcarEntregue(t.id, "pendente")} disabled={updatingId === t.id}
+                          className="w-full py-1.5 rounded-lg c-s2 border c-br c-tx4 text-[10px] hover:c-tx3 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
+                          <RotateCcw size={10} /> Retirar entrega
+                        </button>
+                      )}
+                      {col.key === "avaliado" && (
+                        <span className="flex items-center gap-1 text-[10px] text-blue-400/70"><CheckCheck size={10} /> Avaliado</span>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            ))}
 
-                    <AnimatePresence>
-                      {expandedId === t.id && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
-                          className="border-t c-br overflow-hidden">
-                          <div className="px-4 py-3">
-                            {t.descricao && <p className="text-xs c-tx3 mb-3">{t.descricao}</p>}
+            {/* ── FORMADOR ── */}
+            {isStaff && COLS_FORMADOR.map(col => (
+              <div key={col.key} className="flex flex-col c-bg2 border c-br rounded-xl overflow-hidden">
+                <div className={`h-1 ${col.bar}`} />
+                <div className="px-3 py-2.5 border-b c-br flex items-center gap-2">
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${col.color}`}>{col.label}</span>
+                  <span className="ml-auto text-[10px] c-tx5">{colFormador[col.key].length}</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                  {colFormador[col.key].length === 0 ? (
+                    <p className="text-[11px] c-tx5 text-center py-6">{col.empty}</p>
+                  ) : colFormador[col.key].map(t => (
+                    <motion.div key={t.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                      className="c-s1 border c-br rounded-lg p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs font-medium c-tx leading-snug">{t.titulo}</p>
+                        <button onClick={(e) => { e.stopPropagation(); eliminarTarefa(t.id); }}
+                          className="p-1 rounded c-tx5 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0">
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                      {t.descricao && <p className="text-[10px] c-tx4 line-clamp-2">{t.descricao}</p>}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <PrazoBadge prazo={t.prazo} />
+                        <span className="text-[10px] c-tx4 flex items-center gap-1"><Users size={9} /> {t.total ?? 0}</span>
+                        <span className="text-[10px] text-emerald-400/70 flex items-center gap-1"><CheckCheck size={9} /> {t.entregues ?? 0}</span>
+                      </div>
+                      {/* Barra de progresso */}
+                      {(t.total ?? 0) > 0 && (
+                        <div className="h-1 w-full c-s2 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full transition-all"
+                            style={{ width: `${Math.round(((t.entregues ?? 0) / (t.total ?? 1)) * 100)}%` }} />
+                        </div>
+                      )}
+                      {/* Expand entregas */}
+                      <button onClick={() => toggleExpand(t.id)}
+                        className="w-full text-[10px] c-tx4 hover:c-tx3 transition-colors flex items-center justify-center gap-1 pt-1">
+                        {expandedId === t.id ? <><ChevronUp size={10} /> Recolher</> : <><ChevronDown size={10} /> Ver formandos</>}
+                      </button>
+                      <AnimatePresence>
+                        {expandedId === t.id && (
+                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t c-br pt-2">
                             {loadingEntregas === t.id ? (
-                              <div className="flex justify-center py-4"><Loader2 size={16} className="animate-spin c-tx4" /></div>
+                              <div className="flex justify-center py-2"><Loader2 size={13} className="animate-spin c-tx4" /></div>
                             ) : (entregas[t.id] ?? []).length === 0 ? (
-                              <p className="text-xs c-tx4 py-2 text-center">Sem formandos atribuídos.</p>
+                              <p className="text-[10px] c-tx5 text-center py-1">Sem formandos.</p>
                             ) : (
-                              <div className="space-y-1.5">
+                              <div className="space-y-1">
                                 {(entregas[t.id] ?? []).map(e => (
-                                  <div key={e.id} className="flex items-center gap-3 py-1.5">
-                                    <div className="w-6 h-6 rounded-full c-s2 flex items-center justify-center text-[10px] font-bold c-tx3 shrink-0">
+                                  <div key={e.id} className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-full c-s2 flex items-center justify-center text-[9px] font-bold c-tx3 shrink-0">
                                       {e.first_name[0]?.toUpperCase()}
                                     </div>
-                                    <span className="text-xs c-tx2 flex-1">{e.first_name} {e.last_name}</span>
-                                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${
-                                      e.estado === "avaliado"  ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-                                      e.estado === "entregue"  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                                      "c-s1 c-tx4 c-br"
-                                    }`}>
-                                      {e.estado === "avaliado" ? "avaliado" : e.estado === "entregue" ? "entregue" : "pendente"}
+                                    <span className="text-[10px] c-tx3 flex-1 truncate">{e.first_name} {e.last_name}</span>
+                                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full border ${
+                                      e.estado === "avaliado" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                                      e.estado === "entregue" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                                      "c-s1 c-tx5 c-br"}`}>
+                                      {e.estado === "avaliado" ? "✓ avaliado" : e.estado === "entregue" ? "entregue" : "pendente"}
                                     </span>
                                     {e.estado === "entregue" && (
                                       <button onClick={() => marcarFormandoEstado(t.id, e.id, "avaliado")}
-                                        className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors">
-                                        Avaliar
-                                      </button>
+                                        className="text-[9px] text-blue-400 hover:text-blue-300 transition-colors">Avaliar</button>
                                     )}
                                     {e.estado === "avaliado" && (
                                       <button onClick={() => marcarFormandoEstado(t.id, e.id, "entregue")}
-                                        className="text-[10px] c-tx4 hover:c-tx3 transition-colors">
-                                        <RotateCcw size={11} />
-                                      </button>
+                                        className="text-[9px] c-tx5 hover:c-tx4 transition-colors"><RotateCcw size={9} /></button>
                                     )}
                                   </div>
                                 ))}
                               </div>
                             )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ))}
-              </section>
-            )}
-          </>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
