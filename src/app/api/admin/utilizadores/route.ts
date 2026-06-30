@@ -21,7 +21,10 @@ export async function GET() {
   }
 
   if (isAdmin) {
-    // Admin vê todos os utilizadores com nome do formador associado e do criador
+    // Garantir que as colunas existem (migration segura)
+    await dbQuery(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS criado_por UUID REFERENCES profiles(id) ON DELETE SET NULL`).catch(() => {});
+    await dbQuery(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS formador_id UUID REFERENCES profiles(id) ON DELETE SET NULL`).catch(() => {});
+
     const result = await dbQuery(`
       SELECT p.*,
         f.first_name || ' ' || COALESCE(f.last_name, '') AS formador_nome,
