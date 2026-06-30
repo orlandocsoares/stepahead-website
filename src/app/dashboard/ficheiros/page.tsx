@@ -498,9 +498,7 @@ export default function FicheirosPage() {
                         {f.thumbnail_url ? (
                           <img src={f.thumbnail_url} alt={f.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         ) : label === "PDF" ? (
-                          <div className={`w-full h-full flex items-center justify-center ${bg}`}>
-                            <Icon size={44} className={`${text} opacity-40`} />
-                          </div>
+                          <embed src={fileUrl} type="application/pdf" className="w-full h-full pointer-events-none" />
                         ) : (
                           <div className={`w-full h-full flex items-center justify-center ${bg}`}>
                             <Icon size={44} className={`${text} opacity-40`} />
