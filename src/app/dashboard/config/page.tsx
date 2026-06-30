@@ -133,7 +133,7 @@ export default function ConfigPage() {
   return (
     <div className="space-y-5 w-full">
       {/* Voltar */}
-      <a href="/dashboard/ficheiros" className="inline-flex items-center gap-1.5 text-xs c-tx4 hover:c-tx transition-colors w-fit">
+      <a href="/dashboard/ficheiros" className="inline-flex items-center gap-2 px-3 py-2 rounded-lg c-bg2 border c-br text-xs font-medium c-tx3 hover:c-tx hc-s2 transition-colors w-fit">
         <ArrowLeft size={13} />
         Voltar ao Repositório
       </a>
