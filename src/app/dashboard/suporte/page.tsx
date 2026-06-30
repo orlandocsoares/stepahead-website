@@ -115,88 +115,101 @@ export default function SupportPage() {
     return matchSearch && matchStatus;
   }), [tickets, searchTerm, filterStatus]);
 
+  // Auto-selecciona o primeiro ticket ao carregar
+  useEffect(() => {
+    if (!loading && tickets.length > 0 && !selectedTicket) {
+      openTicket(tickets[0]);
+    }
+  }, [loading, tickets]);
+
   if (loading) return <div className="flex items-center justify-center h-full"><Loader2 size={24} className="animate-spin text-blue-500" /></div>;
 
   return (
-    <div className="flex gap-5 h-full w-full min-h-0">
+    <div className="flex gap-3 h-full w-full min-h-0">
 
-      {/* Lista de tickets */}
-      <div className={`flex flex-col gap-5 min-h-0 transition-all duration-300 ${selectedTicket ? "hidden lg:flex lg:w-[380px] shrink-0" : "flex-1"}`}>
+      {/* ── Coluna esquerda: lista de tickets ── */}
+      <div className={`flex flex-col gap-3 min-h-0 shrink-0 c-bg2 border c-br rounded-xl p-3 ${selectedTicket ? "hidden lg:flex w-72 xl:w-80" : "flex-1 lg:w-80 lg:flex-none"}`}>
         {/* Cabeçalho */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 shrink-0">
+        <div className="flex items-center justify-between gap-3 shrink-0">
           <div>
-            <h2 className="text-lg font-semibold c-tx">Suporte</h2>
-            <p className="text-sm c-tx3 mt-0.5">
-              {filteredTickets.length} ticket{filteredTickets.length !== 1 ? "s" : ""} · {tickets.filter(t => t.status === "Pendente").length} pendente{tickets.filter(t => t.status === "Pendente").length !== 1 ? "s" : ""}
-            </p>
+            <p className="text-xs font-semibold c-tx">Tickets</p>
+            <p className="text-[10px] c-tx5">{tickets.filter(t => t.status === "Pendente").length} pendente{tickets.filter(t => t.status === "Pendente").length !== 1 ? "s" : ""}</p>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
-              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Pesquisar ticket..." className="pl-9 pr-4 py-2 rounded-lg c-s1 border c-br text-sm c-tx placeholder:c-tx4 outline-none focus:border-blue-500/50 w-44 transition-colors" />
-            </div>
-            <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors">
-              <Plus size={14} /> Abrir ticket
-            </button>
-          </div>
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-600 text-[11px] c-tx font-medium hover:bg-blue-500 transition-colors whitespace-nowrap">
+            <Plus size={12} /> Novo
+          </button>
         </div>
 
-        <div className="flex gap-2 flex-wrap shrink-0">
+        {/* Pesquisa */}
+        <div className="relative shrink-0">
+          <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
+          <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Pesquisar..." className="pl-8 pr-3 py-2 rounded-lg c-s1 border c-br text-xs c-tx placeholder:c-tx4 outline-none focus:border-blue-500/50 w-full transition-colors" />
+        </div>
+
+        {/* Filtros */}
+        <div className="flex gap-1.5 flex-wrap shrink-0">
           {["Todos", "Pendente", "Em Processo", "Resolvido"].map((st) => (
             <button key={st} onClick={() => setFilterStatus(st)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterStatus === st ? "bg-blue-600 text-white border border-blue-500" : "bg-black/30 text-white/70 border border-white/15 hover:bg-black/50 hover:text-white backdrop-blur-sm"}`}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${filterStatus === st ? "bg-blue-600 text-white" : "c-s1 c-tx4 border c-br hc-s2 hc-tx"}`}
             >
               {st}
             </button>
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+        <div className="flex-1 overflow-y-auto space-y-1">
           <AnimatePresence mode="popLayout">
             {filteredTickets.map((ticket, index) => (
-              <motion.div key={ticket.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ delay: index * 0.03 }}
+              <motion.div key={ticket.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: index * 0.02 }}
                 onClick={() => openTicket(ticket)}
-                className={`c-bg2 border rounded-xl p-4 cursor-pointer transition-colors group ${selectedTicket?.id === ticket.id ? "border-blue-500/40 bg-blue-500/5" : "c-br hover:border-white/[0.14]"}`}
+                className={`px-3 py-3 rounded-xl cursor-pointer transition-all border-l-2 group ${
+                  selectedTicket?.id === ticket.id
+                    ? "c-s1 border-l-blue-500 bg-blue-500/5"
+                    : "border-l-transparent hc-s1"
+                }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1.5 flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-[10px] px-2 py-0.5 rounded border font-medium ${STATUS_STYLE[ticket.status] ?? "bg-white/5 c-tx4 c-br2"}`}>
+                <div className="flex items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1 mb-0.5">
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${STATUS_STYLE[ticket.status] ?? "bg-white/5 c-tx4"}`}>
                         {ticket.status}
                       </span>
-                      <span className="text-[10px] c-tx5">{ticket.category}</span>
+                      <span className="text-[9px] c-tx5 shrink-0">{new Date(ticket.created_at).toLocaleDateString("pt-PT", { day: "2-digit", month: "short" })}</span>
                     </div>
-                    <h3 className="text-sm font-semibold c-tx leading-snug truncate">{ticket.subject}</h3>
-                    <p className="text-xs c-tx4 line-clamp-1">{ticket.description}</p>
+                    <p className={`text-xs leading-snug truncate ${selectedTicket?.id === ticket.id ? "font-semibold c-tx" : "font-medium c-tx2"}`}>{ticket.subject}</p>
+                    <p className="text-[10px] c-tx5 truncate mt-0.5">{ticket.description}</p>
                     {isAdmin && ticket.profiles && (
-                      <p className="text-[10px] c-tx4">{ticket.profiles.first_name} {ticket.profiles.last_name}</p>
+                      <p className="text-[10px] c-tx5 mt-0.5">{ticket.profiles.first_name} {ticket.profiles.last_name}</p>
                     )}
-                  </div>
-                  <div className="flex flex-col items-end gap-2 shrink-0">
-                    <p className="text-[10px] c-tx4">{new Date(ticket.created_at).toLocaleDateString("pt-PT")}</p>
-                    <ChevronRight size={14} className="c-tx5 group-hover:c-tx3 transition-colors" />
                   </div>
                 </div>
               </motion.div>
             ))}
           </AnimatePresence>
           {filteredTickets.length === 0 && (
-            <div className="py-16 text-center">
-              <p className="text-[10px] uppercase tracking-[0.5em] c-tx/15 italic">Sem incidências registadas</p>
+            <div className="py-12 text-center">
+              <p className="text-xs c-tx5">Sem tickets</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Painel de conversa */}
-      <AnimatePresence>
-        {selectedTicket && (
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 30 }}
-            className="flex-1 flex flex-col min-h-0 c-bg2 border c-br rounded-xl overflow-hidden"
-          >
+      {/* ── Coluna direita: detalhe do ticket (sempre visível) ── */}
+      <div className="flex-1 flex flex-col min-h-0 c-bg2 border c-br rounded-xl overflow-hidden">
+        {!selectedTicket ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-8">
+            <div className="w-16 h-16 rounded-2xl c-s1 border c-br flex items-center justify-center">
+              <LifeBuoy size={28} className="c-tx5" strokeWidth={1} />
+            </div>
+            <div>
+              <p className="text-sm font-medium c-tx3">Selecciona um ticket</p>
+              <p className="text-xs c-tx5 mt-1">Ou abre um novo para pedir ajuda</p>
+            </div>
+            <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors">
+              <Plus size={14} /> Abrir ticket
+            </button>
+          </div>
+        ) : (<>
             {/* Header do ticket */}
             <div className="px-5 py-4 border-b c-br shrink-0 space-y-2">
               <div className="flex items-start justify-between gap-3">
@@ -213,7 +226,7 @@ export default function SupportPage() {
                     <p className="text-xs c-tx4 mt-0.5">{selectedTicket.profiles.first_name} {selectedTicket.profiles.last_name}</p>
                   )}
                 </div>
-                <button onClick={closeTicket} className="c-tx4 hc-tx shrink-0"><X size={16} /></button>
+                <button onClick={closeTicket} className="lg:hidden c-tx4 hc-tx shrink-0"><X size={16} /></button>
               </div>
 
               {/* Descrição original */}
@@ -299,9 +312,8 @@ export default function SupportPage() {
                 )}
               </div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </>)}
+      </div>
 
       {/* Modal criar ticket */}
       {isModalOpen && (
