@@ -225,6 +225,37 @@ export default function PerfilPage() {
         </div>
       </div>
 
+      {/* ── Segurança ── */}
+      <div className="c-bg2 border c-br rounded-xl p-6 space-y-4">
+        <h3 className="text-sm font-semibold c-tx flex items-center gap-2">
+          <ShieldCheck size={15} className="text-emerald-400" /> Segurança
+        </h3>
+        <p className="text-xs c-tx4">Actualiza a tua palavra-passe de acesso ao backoffice.</p>
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+          <div className="flex-1 space-y-1.5">
+            <label className="text-xs c-tx3">Nova palavra-passe</label>
+            <div className="relative">
+              <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx5" />
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                className="w-full pl-9 pr-4 py-2.5 c-s1 border c-br rounded-lg text-sm c-tx placeholder:c-tx5 outline-none focus:border-emerald-500/40 transition-colors"
+              />
+            </div>
+          </div>
+          <button
+            onClick={handleUpdatePassword}
+            disabled={isSavingPassword || !password}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-emerald-500/30 text-sm text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
+          >
+            {isSavingPassword ? <Loader2 size={14} className="animate-spin" /> : null}
+            Actualizar
+          </button>
+        </div>
+      </div>
+
       {/* ── Dados de identidade ── */}
       <div className="c-bg2 border c-br rounded-xl p-6 space-y-5">
         <h3 className="text-sm font-semibold c-tx flex items-center gap-2">
@@ -335,37 +366,6 @@ export default function PerfilPage() {
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50"
           >
             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Guardar
-          </button>
-        </div>
-      </div>
-
-      {/* ── Segurança ── */}
-      <div className="c-bg2 border c-br rounded-xl p-6 space-y-4">
-        <h3 className="text-sm font-semibold c-tx flex items-center gap-2">
-          <ShieldCheck size={15} className="text-emerald-400" /> Segurança
-        </h3>
-        <p className="text-xs c-tx4">Actualiza a tua palavra-passe de acesso ao backoffice.</p>
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
-          <div className="flex-1 space-y-1.5">
-            <label className="text-xs c-tx3">Nova palavra-passe</label>
-            <div className="relative">
-              <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx5" />
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                className="w-full pl-9 pr-4 py-2.5 c-s1 border c-br rounded-lg text-sm c-tx placeholder:c-tx5 outline-none focus:border-emerald-500/40 transition-colors"
-              />
-            </div>
-          </div>
-          <button
-            onClick={handleUpdatePassword}
-            disabled={isSavingPassword || !password}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-emerald-500/30 text-sm text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
-          >
-            {isSavingPassword ? <Loader2 size={14} className="animate-spin" /> : null}
-            Actualizar
           </button>
         </div>
       </div>
