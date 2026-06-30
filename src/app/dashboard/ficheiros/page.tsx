@@ -5,7 +5,7 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   FileText, Video, Search, Download, Loader2, Plus, FolderOpen, Lock,
   Globe, Users, GraduationCap, LayoutGrid, List, ExternalLink,
-  FileImage, FileVideo, FileArchive, File, Trash2, ImagePlus, Pencil,
+  FileImage, FileVideo, FileArchive, File, Trash2, ImagePlus, Pencil, Settings,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CalendarClock } from "lucide-react";
@@ -483,6 +483,12 @@ export default function FicheirosPage() {
               <Plus size={14} /> Upload
             </button>
           )}
+          {user?.role === "admin" || user?.role === "super-admin" ? (
+            <a href="/dashboard/config" title="Configurações"
+              className="p-2 rounded-lg c-s1 border c-br c-tx4 hover:c-tx transition-colors">
+              <Settings size={16} />
+            </a>
+          ) : null}
         </div>
       </div>
 
