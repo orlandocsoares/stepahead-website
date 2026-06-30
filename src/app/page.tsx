@@ -375,12 +375,30 @@ export default function HeroSection() {
       e.preventDefault();
       if (isCooldown.current) return;
       scrollIntent.current += e.deltaY;
-      if (scrollIntent.current > 70) { goToPhase(activePhaseIndex + 1); scrollIntent.current = 0; } 
+      if (scrollIntent.current > 70) { goToPhase(activePhaseIndex + 1); scrollIntent.current = 0; }
       else if (scrollIntent.current < -70) { goToPhase(activePhaseIndex - 1); scrollIntent.current = 0; }
     };
     const el = containerRef.current;
     el?.addEventListener("wheel", handleWheel, { passive: false });
     return () => el?.removeEventListener("wheel", handleWheel);
+  }, [activePhaseIndex, goToPhase, isDashboardView]);
+
+  // Swipe vertical no mobile
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    let startY = 0;
+    const onTouchStart = (e: TouchEvent) => { startY = e.touches[0].clientY; };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (isDashboardView || isCooldown.current) return;
+      const delta = startY - e.changedTouches[0].clientY;
+      if (Math.abs(delta) < 40) return;
+      if (delta > 0) goToPhase(activePhaseIndex + 1);
+      else goToPhase(activePhaseIndex - 1);
+    };
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => { el.removeEventListener("touchstart", onTouchStart); el.removeEventListener("touchend", onTouchEnd); };
   }, [activePhaseIndex, goToPhase, isDashboardView]);
 
   useEffect(() => {
@@ -696,7 +714,7 @@ export default function HeroSection() {
   const activeData = getDynamicPhaseContent(activePhaseIndex);
 
   return (
-    <div ref={containerRef} className="relative h-[100dvh] w-full bg-black overflow-hidden touch-none font-sans md:cursor-none selection:bg-blue-500/30">
+    <div ref={containerRef} className="relative h-[100dvh] w-full bg-black overflow-hidden font-sans md:cursor-none selection:bg-blue-500/30">
 
       {/* CommandCenter removido da hero — navegação feita pelo topo direito */}
 
