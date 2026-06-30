@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
+import { readFile } from "fs/promises";
+import path from "path";
 
-// GET /api/recursos/pdf/[id] — fallback: resolve nome_arquivo e redireciona para o storage via NGINX
+// GET /api/recursos/pdf/[id] — lê o PDF directamente do disco e serve ao browser
 export async function GET(
-  request: Request,
+  _request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
@@ -17,7 +19,21 @@ export async function GET(
     return new NextResponse("Não encontrado.", { status: 404 });
   }
 
-  const nomeArquivo = res.rows[0].nome_arquivo;
-  const url = `/storage/v1/object/public/materiais/${encodeURIComponent(nomeArquivo)}`;
-  return NextResponse.redirect(new URL(url, request.url));
+  const nomeArquivo = res.rows[0].nome_arquivo as string;
+  const filePath = path.join(process.cwd(), "storage", "materiais", nomeArquivo);
+
+  try {
+    const buffer = await readFile(filePath);
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": "inline",
+        "Cache-Control": "public, max-age=3600",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch {
+    return new NextResponse("Ficheiro não encontrado no servidor.", { status: 404 });
+  }
 }

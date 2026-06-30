@@ -220,10 +220,7 @@ function RecursosContent() {
 
           {/* PDF */}
           <div className="flex-1 overflow-y-auto flex justify-center py-6 px-4">
-            <PdfViewer url={viewing.nome_arquivo
-              ? `/storage/v1/object/public/materiais/${encodeURIComponent(viewing.nome_arquivo)}`
-              : `/api/recursos/pdf/${viewing.id}`
-            } />
+            <PdfViewer url={`/api/recursos/pdf/${viewing.id}`} />
           </div>
         </div>
       )}
