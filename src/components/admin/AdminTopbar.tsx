@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut, ShieldCheck, Megaphone, ClipboardList } from "lucide-react";
+import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut, ShieldCheck, Megaphone, ClipboardList, User } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { BrightnessSlider } from "@/components/BrightnessSlider";
@@ -41,6 +41,8 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const [avatarOpen, setAvatarOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HTMLDivElement>(null);
+  const bellDropdownRef = useRef<HTMLDivElement>(null);
+  const avatarDropdownRef = useRef<HTMLDivElement>(null);
   const [bellPos, setBellPos] = useState({ top: 0, right: 0 });
   const [avatarPos, setAvatarPos] = useState({ top: 0, right: 0 });
 
@@ -91,8 +93,9 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
 
   useEffect(() => {
     function handle(e: MouseEvent) {
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setNotifOpen(false);
-      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) setAvatarOpen(false);
+      const t = e.target as Node;
+      if (bellRef.current && !bellRef.current.contains(t) && !bellDropdownRef.current?.contains(t)) setNotifOpen(false);
+      if (avatarRef.current && !avatarRef.current.contains(t) && !avatarDropdownRef.current?.contains(t)) setAvatarOpen(false);
     }
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
@@ -184,7 +187,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           </button>
 
           {notifOpen && typeof document !== "undefined" && createPortal(
-            <div className="fixed w-80 c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: bellPos.top, right: bellPos.right }}>
+            <div ref={bellDropdownRef} className="fixed w-80 c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: bellPos.top, right: bellPos.right }}>
               <div className="flex items-center justify-between px-4 py-3 border-b c-br">
                 <span className="text-xs font-semibold c-tx">Notificações</span>
                 {unread > 0 && (
@@ -267,14 +270,22 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           </button>
 
           {avatarOpen && typeof document !== "undefined" && createPortal(
-            <div className="fixed w-48 c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: avatarPos.top, right: avatarPos.right }}>
+            <div ref={avatarDropdownRef} className="fixed w-52 c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: avatarPos.top, right: avatarPos.right }}>
               <div className="px-4 py-3 border-b c-br">
                 <p className="text-xs font-semibold c-tx truncate">{displayName}</p>
                 <p className="text-[10px] c-tx4 capitalize">{user?.role ?? ""}</p>
               </div>
               <button
+                onClick={() => { setAvatarOpen(false); router.push("/dashboard/perfil"); }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-sm c-tx3 hover:c-tx hc-s2 transition-colors"
+              >
+                <User size={15} />
+                Ver perfil
+              </button>
+              {/* Logout só visível em mobile — em desktop está na sidebar */}
+              <button
                 onClick={() => { setAvatarOpen(false); logout(); }}
-                className="w-full flex items-center gap-2 px-4 py-3 text-sm c-tx3 hover:text-red-400 hover:bg-red-500/[0.08] transition-colors"
+                className="md:hidden w-full flex items-center gap-2 px-4 py-3 text-sm c-tx3 hover:text-red-400 hover:bg-red-500/[0.08] transition-colors border-t c-br"
               >
                 <LogOut size={15} />
                 Terminar sessão
