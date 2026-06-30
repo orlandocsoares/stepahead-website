@@ -132,11 +132,14 @@ export default function ConfigPage() {
 
   return (
     <div className="space-y-5 w-full">
+      {/* Voltar */}
+      <a href="/dashboard/ficheiros" className="inline-flex items-center gap-1.5 text-xs c-tx4 hover:c-tx transition-colors w-fit">
+        <ArrowLeft size={13} />
+        Voltar ao Repositório
+      </a>
+
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <a href="/dashboard/ficheiros" className="p-1.5 rounded-lg c-tx4 hover:c-tx hc-s2 transition-colors" title="Voltar ao Repositório">
-          <ArrowLeft size={16} />
-        </a>
+      <div className="c-bg2 border c-br rounded-xl px-4 py-3 flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
           <Settings size={16} className="text-blue-400" />
         </div>
