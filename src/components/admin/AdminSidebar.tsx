@@ -11,10 +11,13 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 import { useState } from "react";
 
 const NAV_TOP = [
-  { label: "Dashboard",    icon: LayoutDashboard, path: "/dashboard" },
-  { label: "Agenda",       icon: Calendar,         path: "/dashboard/agenda" },
-  { label: "Comunidade",   icon: MessageSquare,    path: "/dashboard/comunidade" },
-  { label: "Mensagens",    icon: Mail,             path: "/dashboard/mensagens" },
+  { label: "Dashboard",  icon: LayoutDashboard, path: "/dashboard" },
+];
+
+const NAV_GERAL = [
+  { label: "Agenda",     icon: Calendar,      path: "/dashboard/agenda" },
+  { label: "Comunidade", icon: MessageSquare, path: "/dashboard/comunidade" },
+  { label: "Mensagens",  icon: Mail,          path: "/dashboard/mensagens" },
 ];
 
 const NAV_ACADEMICA = [
@@ -99,7 +102,7 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
       {/* Nav */}
       <nav className="dashboard-sidebar flex-1 overflow-y-auto py-4 px-2 space-y-1 min-h-0">
 
-        {/* Links de topo */}
+        {/* Dashboard */}
         {NAV_TOP.map(item => <NavLink key={item.path} {...item} />)}
 
         {/* Grupo Área Académica */}
@@ -120,6 +123,11 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
               {NAV_ACADEMICA.filter(canSee).map(item => <NavLink key={item.path} {...item} />)}
             </div>
           )}
+        </div>
+
+        {/* Links gerais */}
+        <div className="pt-1 space-y-1">
+          {NAV_GERAL.map(item => <NavLink key={item.path} {...item} />)}
         </div>
 
         {/* Links de fundo */}
