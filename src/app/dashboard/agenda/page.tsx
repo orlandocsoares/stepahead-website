@@ -5,7 +5,8 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar as CalendarIcon, MapPin,
-  CheckCircle2, Loader2, Plus, X, Laptop, Search
+  CheckCircle2, Loader2, Plus, X, Laptop, Search,
+  Users, ChevronDown, ChevronUp, GraduationCap, BookOpen, ShieldCheck
 } from "lucide-react";
 
 const LOCAIS = ["Luanda", "Bié", "Online"];
@@ -23,6 +24,10 @@ export default function AgendaPage() {
   const [form, setForm] = useState({ titulo: "", formato: "Presencial", provincia: "Luanda", tipo: "Global", data_evento: "" });
 
   const canManage = user?.role === "admin" || user?.role === "formador";
+  const isStaff = user?.role === "admin" || user?.role === "super-admin" || user?.role === "formador";
+
+  // Inscritos por evento: { [eventoId]: { total, counts, inscritos?, expanded } }
+  const [inscritosMap, setInscritosMap] = useState<Record<string, { total: number; counts: Record<string, number>; inscritos?: any[]; loading?: boolean; expanded?: boolean }>>({});
 
   async function fetchData() {
     setLoading(true);
@@ -31,12 +36,49 @@ export default function AgendaPage() {
       user?.id ? fetch(`/api/db/inscricoes_agenda?eq.user_id=${user.id}`) : Promise.resolve(null),
     ]);
     const { data: evs } = await evRes.json();
-    setEvents(evs ?? []);
+    const evList: any[] = evs ?? [];
+    setEvents(evList);
     if (insRes) {
       const { data: ins } = await insRes.json();
       setMyInscriptions((ins ?? []).map((i: any) => i.evento_id));
     }
     setLoading(false);
+    // Carregar contagens para todos os eventos visíveis
+    evList.forEach(ev => fetchInscritos(ev.id, false));
+  }
+
+  async function fetchInscritos(eventoId: string, expand: boolean) {
+    setInscritosMap(prev => ({
+      ...prev,
+      [eventoId]: { ...prev[eventoId], loading: true, expanded: expand || prev[eventoId]?.expanded },
+    }));
+    try {
+      const res = await fetch(`/api/eventos/${eventoId}/inscritos`);
+      const json = await res.json();
+      setInscritosMap(prev => ({
+        ...prev,
+        [eventoId]: {
+          total: json.total ?? 0,
+          counts: json.counts ?? {},
+          inscritos: json.inscritos,
+          loading: false,
+          expanded: expand,
+        },
+      }));
+    } catch {
+      setInscritosMap(prev => ({ ...prev, [eventoId]: { ...prev[eventoId], loading: false } }));
+    }
+  }
+
+  async function toggleInscritos(eventoId: string) {
+    const cur = inscritosMap[eventoId];
+    if (!cur) { fetchInscritos(eventoId, true); return; }
+    if (cur.expanded) {
+      setInscritosMap(prev => ({ ...prev, [eventoId]: { ...prev[eventoId], expanded: false } }));
+    } else {
+      if (!cur.inscritos) { fetchInscritos(eventoId, true); }
+      else { setInscritosMap(prev => ({ ...prev, [eventoId]: { ...prev[eventoId], expanded: true } })); }
+    }
   }
 
   useEffect(() => { if (user) fetchData(); }, [user]);
@@ -50,6 +92,13 @@ export default function AgendaPage() {
         body: JSON.stringify({ eq: { user_id: user.id, evento_id: eventoId } }),
       });
       setMyInscriptions((p) => p.filter((id) => id !== eventoId));
+      setInscritosMap(prev => {
+        const cur = prev[eventoId];
+        if (!cur) return prev;
+        const myRole = user.role ?? "formando";
+        const newCounts = { ...cur.counts, [myRole]: Math.max(0, (cur.counts[myRole] ?? 0) - 1) };
+        return { ...prev, [eventoId]: { ...cur, total: Math.max(0, cur.total - 1), counts: newCounts, inscritos: cur.inscritos?.filter(i => i.id !== user.id) } };
+      });
     } else {
       await fetch("/api/db/inscricoes_agenda", {
         method: "POST",
@@ -57,6 +106,12 @@ export default function AgendaPage() {
         body: JSON.stringify({ user_id: user.id, evento_id: eventoId }),
       });
       setMyInscriptions((p) => [...p, eventoId]);
+      setInscritosMap(prev => {
+        const cur = prev[eventoId] ?? { total: 0, counts: {} };
+        const myRole = user.role ?? "formando";
+        const newCounts = { ...cur.counts, [myRole]: (cur.counts[myRole] ?? 0) + 1 };
+        return { ...prev, [eventoId]: { ...cur, total: cur.total + 1, counts: newCounts } };
+      });
     }
   }
 
@@ -178,6 +233,59 @@ export default function AgendaPage() {
                     <span className="flex items-center gap-1.5"><CalendarIcon size={12} className="text-blue-400" />{new Date(item.data_evento).toLocaleDateString("pt-PT")}</span>
                     <span className="flex items-center gap-1.5">{isOnline ? <Laptop size={12} className="text-purple-400" /> : <MapPin size={12} className="text-emerald-400" />}{item.local}</span>
                   </div>
+                  {/* Contador de inscritos */}
+                  {(() => {
+                    const info = inscritosMap[item.id];
+                    const total = info?.total ?? 0;
+                    const formandos = info?.counts?.formando ?? 0;
+                    const formadores = (info?.counts?.formador ?? 0) + (info?.counts?.admin ?? 0) + (info?.counts?.["super-admin"] ?? 0);
+                    return (
+                      <div>
+                        <button
+                          onClick={() => isStaff && toggleInscritos(item.id)}
+                          className={`w-full flex items-center gap-2 py-1.5 px-2 rounded-lg transition-colors ${isStaff ? "hc-s2 cursor-pointer" : "cursor-default"}`}
+                        >
+                          <Users size={12} className="c-tx5 shrink-0" />
+                          {total === 0
+                            ? <span className="text-[11px] c-tx5">Sem inscrições ainda</span>
+                            : <>
+                                <span className="text-[11px] c-tx3 font-medium">{total} inscrito{total !== 1 ? "s" : ""}</span>
+                                {formandos > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400">{formandos} formando{formandos !== 1 ? "s" : ""}</span>}
+                                {formadores > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400">{formadores} formador{formadores !== 1 ? "es" : ""}</span>}
+                              </>
+                          }
+                          {isStaff && total > 0 && (
+                            <span className="ml-auto c-tx5">
+                              {info?.expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            </span>
+                          )}
+                        </button>
+
+                        {/* Lista expandível — só staff */}
+                        <AnimatePresence>
+                          {isStaff && info?.expanded && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="border-t c-br mt-1 pt-2 space-y-1 max-h-40 overflow-y-auto">
+                                {info.loading && <div className="flex justify-center py-2"><Loader2 size={12} className="animate-spin c-tx4" /></div>}
+                                {(info.inscritos ?? []).map(p => (
+                                  <div key={p.id} className="flex items-center gap-2 px-1 py-0.5">
+                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${
+                                      p.role === "formando" ? "bg-blue-500/10 text-blue-400" : "bg-amber-500/10 text-amber-400"
+                                    }`}>
+                                      {p.first_name?.[0]?.toUpperCase()}
+                                    </div>
+                                    <span className="text-[11px] c-tx3 flex-1 truncate">{p.first_name} {p.last_name}</span>
+                                    {p.role !== "formando" && <span className="text-[9px] c-tx5">{p.role}</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })()}
+
                   <button onClick={() => handleInscription(item.id)}
                     className={`mt-auto w-full py-2 rounded-lg text-xs font-medium transition-colors ${isRegistered ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30" : "c-s1 c-tx3 border c-br hc-s3"}`}
                   >
