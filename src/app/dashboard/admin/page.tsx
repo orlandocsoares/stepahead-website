@@ -6,7 +6,8 @@ import {
   ShieldCheck, Trash2, Calendar, FileText,
   BarChart3, Loader2, Key, KeyRound, Plus, Clock, X, MapPin, Target,
   Users, Activity, Database, Search, User, Download, Pencil,
-  Eye, EyeOff, CheckCircle2, AlertCircle, Upload, Trophy, LifeBuoy, MessageSquare, TrendingUp, Megaphone, Send
+  Eye, EyeOff, CheckCircle2, AlertCircle, Upload, Trophy, LifeBuoy, MessageSquare, TrendingUp, Megaphone, Send,
+  LayoutGrid, List
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
@@ -64,6 +65,7 @@ export default function SuperAdminPage() {
   const [noEmailSubmitting, setNoEmailSubmitting] = useState(false);
   const [noEmailResult, setNoEmailResult] = useState<{ username: string } | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [userView, setUserView] = useState<"list" | "grid">("list");
 
   async function saveMediaRadar() {
     const val = parseInt(mediaRadar);
@@ -457,6 +459,18 @@ export default function SuperAdminPage() {
               className="w-full c-s1 border c-br rounded-lg pl-9 pr-4 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors"
             />
           </div>
+          {activeTab === "users" && (
+            <div className="flex items-center gap-1 c-s1 border c-br rounded-lg p-1 shrink-0">
+              <button onClick={() => setUserView("list")} title="Vista em lista"
+                className={`p-1.5 rounded transition-colors ${userView === "list" ? "bg-blue-600 text-white" : "c-tx4 hc-tx"}`}>
+                <List size={14} />
+              </button>
+              <button onClick={() => setUserView("grid")} title="Vista em grelha"
+                className={`p-1.5 rounded transition-colors ${userView === "grid" ? "bg-blue-600 text-white" : "c-tx4 hc-tx"}`}>
+                <LayoutGrid size={14} />
+              </button>
+            </div>
+          )}
           {activeTab === "users" && isAdminOrSuper(profile?.role) && (
             <>
               <button onClick={() => { resetNewUserForm(); setIsNewUserModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors">
@@ -796,9 +810,56 @@ export default function SuperAdminPage() {
                         <div className="h-px flex-1 c-s2" />
                         <span className="text-xs c-tx5">{group.data.length}</span>
                       </div>
-                      <div className="space-y-2">
+                      <div className={userView === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" : "space-y-2"}>
                         {group.data.map((item, index) => {
                           const name = `${item.first_name || ""} ${item.last_name || ""}`.trim() || "Sem nome";
+
+                          if (userView === "grid") {
+                            return (
+                              <motion.div key={item.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.02 }}
+                                className="c-bg2 border c-br rounded-xl p-4 flex flex-col items-center gap-2 text-center hover:border-white/[0.12] transition-colors"
+                              >
+                                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-lg font-bold shrink-0">
+                                  {(item.first_name?.[0] || "?").toUpperCase()}
+                                </div>
+                                <div className="w-full min-w-0">
+                                  <p className="text-xs font-semibold c-tx truncate">{name}</p>
+                                  <p className="text-[10px] c-tx5 truncate">{item.email ?? <span className="italic">sem email</span>}</p>
+                                  {item.criado_por_nome?.trim() && (
+                                    <p className="text-[9px] text-amber-400/70 mt-0.5 truncate">por {item.criado_por_nome.trim()}</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-wrap justify-center mt-1">
+                                  {item.status && (
+                                    <span className={`text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded-full border ${
+                                      item.status === "activo" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                                      item.status === "suspenso" ? "text-red-400 bg-red-500/10 border-red-500/20" :
+                                      "text-amber-400 bg-amber-500/10 border-amber-500/20"
+                                    }`}>{item.status === "email_confirmado" ? "confirmado" : item.status}</span>
+                                  )}
+                                  {isAdminOrSuper(profile?.role) && (
+                                    <div className="flex gap-1 mt-1">
+                                      <button
+                                        onClick={async () => {
+                                          const nova = prompt(`Nova password para ${name}:\n(mínimo 6 caracteres)`);
+                                          if (!nova || nova.length < 6) return;
+                                          const r = await fetch("/api/admin/reset-password", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ user_id: item.id, new_password: nova }) });
+                                          if (r.ok) alert("Password alterada com sucesso.");
+                                          else { const e = await r.json(); alert("Erro: " + e.error); }
+                                        }}
+                                        className="p-1 rounded c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors" title="Resetar password">
+                                        <KeyRound size={11} />
+                                      </button>
+                                      <button onClick={() => handleDelete(item.id)} className="p-1 rounded c-tx5 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                                        <Trash2 size={11} />
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            );
+                          }
+
                           return (
                             <motion.div key={item.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.03 }}
                               className="c-bg2 border c-br rounded-xl px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-white/[0.12] transition-colors"
