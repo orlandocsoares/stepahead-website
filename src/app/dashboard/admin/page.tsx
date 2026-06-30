@@ -742,7 +742,7 @@ export default function SuperAdminPage() {
 
                 {/* Formadores pendentes de aprovação */}
                 {isAdminOrSuper(profile?.role) && formadoresPendentes.length > 0 && (
-                  <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 space-y-3">
+                  <div className="bg-black/30 backdrop-blur-sm border border-amber-500/30 rounded-xl p-4 space-y-3">
                     <div className="flex items-center gap-2">
                       <AlertCircle size={14} className="text-amber-400 shrink-0" />
                       <span className="text-sm font-semibold text-amber-300">

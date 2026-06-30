@@ -94,6 +94,19 @@ html.light {
 /* Logo sempre branco — sidebar é escura em todos os modos */
 .theme-logo { filter: brightness(0) invert(1); }
 
+/* Inputs, selects e textareas no dashboard têm sempre fundo semi-opaco escuro */
+.dashboard-root input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.dashboard-root select,
+.dashboard-root textarea {
+  background-color: rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: blur(4px);
+}
+.dashboard-root input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+.dashboard-root select:focus,
+.dashboard-root textarea:focus {
+  background-color: rgba(0, 0, 0, 0.45) !important;
+}
+
 /* Sidebar/topbar com vidro tintado por modo — overlay geral removido */
 /* Escuro: vidro muito escuro */
 .dashboard-root aside  { background: rgba(8,8,20,0.82) !important; backdrop-filter: blur(16px); }

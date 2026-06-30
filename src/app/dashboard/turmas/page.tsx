@@ -200,7 +200,7 @@ export default function TurmasPage() {
 
       {/* Formandos sem turma */}
       {semTurma.length > 0 && (
-        <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl overflow-hidden">
+        <div className="bg-black/30 backdrop-blur-sm border border-blue-500/30 rounded-xl overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-500/10">
             <UserPlus size={15} className="text-blue-400" />
             <span className="text-sm font-semibold text-blue-400">
