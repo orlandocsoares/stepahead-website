@@ -22,9 +22,14 @@ export default function PerfilPage() {
   const [password, setPassword] = useState("");
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [areasDisponiveis, setAreasDisponiveis] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (user) setLocalProfile({ ...user }); }, [user]);
+
+  useEffect(() => {
+    fetch("/api/areas").then(r => r.json()).then(d => setAreasDisponiveis(d.areas ?? []));
+  }, []);
 
   useEffect(() => {
     if (user?.role === "formando") {
@@ -268,7 +273,7 @@ export default function PerfilPage() {
             </label>
             {/* Guardado como JSON array em profiles.specialization — controla acesso em ficheiros/page.tsx */}
             {(() => {
-              const AREAS = ["Educação Especial", "Educação Pré-Escolar", "Expressão Plástica", "Expressão Motora", "Geral", "Inglês", "Língua Portuguesa", "Matemática", "Pedagogia"];
+              const AREAS = areasDisponiveis;
               let selected: string[] = [];
               // Compatibilidade com formato antigo (string simples)
               try { selected = JSON.parse(localProfile.specialization || "[]"); } catch { selected = localProfile.specialization ? [localProfile.specialization] : []; }
