@@ -79,7 +79,7 @@ export default function ConfigPage() {
   }
 
   async function deleteDisciplina(id: string) {
-    if (!confirm("Eliminar esta disciplina? Os ficheiros associados perderão a disciplina.")) return;
+    if (!confirm("Eliminar esta área? Os ficheiros associados perderão a área.")) return;
     await fetch(`/api/admin/disciplinas?id=${id}`, { method: "DELETE" });
     setDisciplinas(prev => prev.filter(d => d.id !== id));
   }
@@ -138,7 +138,7 @@ export default function ConfigPage() {
         </div>
         <div>
           <h1 className="text-sm font-semibold c-tx">Configurações</h1>
-          <p className="text-[11px] c-tx4">Disciplinas e grupos de formação</p>
+          <p className="text-[11px] c-tx4">Áreas e grupos de formação</p>
         </div>
       </div>
 
@@ -147,7 +147,7 @@ export default function ConfigPage() {
         {/* Tabs dentro do card */}
         <div className="flex gap-1 px-4 pt-4 pb-0 border-b c-br">
           {([
-            { key: "disciplinas", label: "Disciplinas", icon: BookOpen },
+            { key: "disciplinas", label: "Áreas", icon: BookOpen },
             { key: "grupos",      label: "Grupos de Formação", icon: Users2 },
           ] as const).map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => { setTab(key); setNewNome(""); setEditingId(null); }}
@@ -222,7 +222,7 @@ export default function ConfigPage() {
             <div className="flex gap-2">
               <input value={newNome} onChange={e => setNewNome(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && (tab === "disciplinas" ? addDisciplina() : addGrupo())}
-                placeholder={tab === "disciplinas" ? "Nova disciplina..." : "Novo grupo (ex: Formação 1)..."}
+                placeholder={tab === "disciplinas" ? "Nova área..." : "Novo grupo (ex: Formação 1)..."}
                 className="flex-1 c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx c-ph outline-none focus:border-blue-500/50 transition-colors" />
               <button
                 onClick={tab === "disciplinas" ? addDisciplina : addGrupo}
