@@ -141,9 +141,10 @@ export default function PerfilPage() {
   );
 
   const roleLabel =
-    localProfile.role === "admin" ? "Administrador de Elite"
-    : localProfile.role === "formador" ? "Formador Credenciado"
-    : "Formando Activo";
+    localProfile.role === "super-admin" ? "Super Administrador"
+    : localProfile.role === "admin" ? "Administrador"
+    : localProfile.role === "formador" ? "Formador"
+    : "Formando";
 
   const initial = (localProfile.first_name?.[0] ?? "?").toUpperCase();
 
@@ -202,11 +203,18 @@ export default function PerfilPage() {
                 {roleLabel}
               </span>
               <span className={`text-xs px-3 py-1 rounded-full border font-medium flex items-center gap-1.5 ${
-                localProfile.status === "aprovado"
+                localProfile.status === "activo" || localProfile.status === "aprovado"
                   ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                  : localProfile.status === "suspenso"
+                  ? "bg-red-500/10 border-red-500/20 text-red-400"
                   : "bg-amber-500/10 border-amber-500/20 text-amber-400"
               }`}>
-                <Activity size={11} /> Estatuto: {localProfile.status || "pendente"}
+                <Activity size={11} /> {
+                  localProfile.status === "activo" || localProfile.status === "aprovado" ? "Activo"
+                  : localProfile.status === "suspenso" ? "Suspenso"
+                  : localProfile.status === "email_confirmado" ? "Email confirmado"
+                  : "Pendente"
+                }
               </span>
             </div>
           </div>

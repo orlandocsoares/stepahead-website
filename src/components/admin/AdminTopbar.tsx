@@ -45,7 +45,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const [avatarPos, setAvatarPos] = useState({ top: 0, right: 0 });
 
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
-  const displayName = user?.first_name ?? user?.email?.split("@")[0] ?? "";
+  const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.email?.split("@")[0] || "";
   const initial = displayName?.[0]?.toUpperCase() ?? "?";
 
   async function fetchNotifs() {
@@ -204,12 +204,17 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
                   const isExpanded = expandedId === n.id;
                   const iconBg = n.tipo === "novo_formando" ? "bg-emerald-500/10" : n.tipo === "novo_formador" ? "bg-amber-500/10" : n.tipo === "anuncio" ? "bg-purple-500/10" : "bg-blue-500/10";
                   const icon = n.tipo === "novo_formando" ? <UserCheck size={14} className="text-emerald-400" /> : n.tipo === "novo_formador" ? <ShieldCheck size={14} className="text-amber-400" /> : n.tipo === "anuncio" ? <Megaphone size={14} className="text-purple-400" /> : n.tipo === "tarefa" ? <ClipboardList size={14} className="text-blue-400" /> : <Bell size={14} className="text-blue-400" />;
+                  const destino = n.link ?? (
+                    n.tipo === "novo_formando" || n.tipo === "novo_formador" ? "/dashboard/admin" :
+                    n.tipo === "tarefa" ? "/dashboard/tarefas" :
+                    n.tipo === "anuncio" ? null : null
+                  );
                   return (
                     <div
                       key={n.id}
                       onClick={() => {
                         markRead(n.id);
-                        if (n.link) { setNotifOpen(false); router.push(n.link); return; }
+                        if (destino) { setNotifOpen(false); router.push(destino); return; }
                         setExpandedId(isExpanded ? null : n.id);
                       }}
                       className={`w-full text-left px-4 py-3 border-b c-br hc-s2 transition-colors cursor-pointer ${!n.lida ? "bg-blue-500/5" : ""}`}
@@ -227,7 +232,11 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
                             </p>
                           )}
                           {!n.lida && !isExpanded && <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mt-1" />}
-                          {n.mensagem && n.mensagem.length > 80 && (
+                          {destino ? (
+                            <span className="text-[10px] text-blue-400 mt-1 inline-block font-medium">
+                              Abrir →
+                            </span>
+                          ) : n.mensagem && n.mensagem.length > 80 && (
                             <span className="text-[10px] text-blue-400/60 mt-1 inline-block">
                               {isExpanded ? "▲ Recolher" : "▼ Ver tudo"}
                             </span>
