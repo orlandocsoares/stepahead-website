@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ClipboardList, Plus, X, Loader2, CheckCircle2, Clock,
   AlertCircle, ChevronDown, ChevronUp, Trash2, Users, User,
-  CalendarClock, CheckCheck, RotateCcw
+  CalendarClock, CheckCheck, RotateCcw, Paperclip, Upload,
+  FileText, ExternalLink
 } from "lucide-react";
 
 type Tarefa = {
@@ -15,11 +16,15 @@ type Tarefa = {
   descricao?: string;
   prazo?: string;
   created_at: string;
+  anexo_url?: string;
+  anexo_nome?: string;
   // formando view
   criador_nome?: string;
   criador_apelido?: string;
   estado?: string;
   entregue_at?: string;
+  resposta_url?: string;
+  resposta_nome?: string;
   // formador view
   total?: number;
   entregues?: number;
@@ -32,6 +37,8 @@ type Entrega = {
   email?: string;
   estado: string;
   entregue_at?: string;
+  resposta_url?: string;
+  resposta_nome?: string;
 };
 
 function prazoStatus(prazo?: string): "expirado" | "urgente" | "ok" | null {
@@ -57,6 +64,30 @@ function PrazoBadge({ prazo }: { prazo?: string }) {
   );
 }
 
+function AnexoLink({ url, nome }: { url?: string; nome?: string }) {
+  if (!url) return null;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 text-[10px] text-blue-400 hover:text-blue-300 transition-colors">
+      <FileText size={10} /> {nome ?? "Ficheiro anexo"} <ExternalLink size={9} />
+    </a>
+  );
+}
+
+async function uploadFicheiro(file: File, bucket: string, path: string): Promise<string> {
+  const fd = new FormData();
+  fd.append("bucket", bucket);
+  fd.append("path", path);
+  fd.append("upsert", "true");
+  fd.append("file", file);
+  const res = await fetch("/api/storage/upload", { method: "POST", body: fd });
+  if (!res.ok) {
+    const j = await res.json();
+    throw new Error(j.error?.message ?? "Erro no upload");
+  }
+  return `/storage/v1/object/public/${bucket}/${encodeURIComponent(path)}`;
+}
+
 export default function TarefasPage() {
   const { user } = useAdminUser();
   const isStaff = user?.role === "formador" || user?.role === "admin" || user?.role === "super-admin";
@@ -68,9 +99,15 @@ export default function TarefasPage() {
   const [loadingEntregas, setLoadingEntregas] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  // Upload de resposta por tarefa
+  const [respostaFiles, setRespostaFiles] = useState<Record<string, File | null>>({});
+  const respostaInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
   // Modal criar tarefa
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ titulo: "", descricao: "", prazo: "" });
+  const [anexoFile, setAnexoFile] = useState<File | null>(null);
+  const anexoInputRef = useRef<HTMLInputElement>(null);
   const [destMode, setDestMode] = useState<"meus" | "turma" | "individual" | "todos">("meus");
   const [destTurma, setDestTurma] = useState("");
   const [destIds, setDestIds] = useState<string[]>([]);
@@ -119,12 +156,23 @@ export default function TarefasPage() {
   async function marcarEntregue(tarefaId: string, estado: string) {
     setUpdatingId(tarefaId);
     try {
+      let resposta_url: string | undefined;
+      let resposta_nome: string | undefined;
+      const file = respostaFiles[tarefaId];
+      if (estado === "entregue" && file) {
+        const safeName = `${tarefaId}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        resposta_url = await uploadFicheiro(file, "tarefas", safeName);
+        resposta_nome = file.name;
+        setRespostaFiles(prev => ({ ...prev, [tarefaId]: null }));
+      }
       await fetch(`/api/tarefas/${tarefaId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado }),
+        body: JSON.stringify({ estado, resposta_url, resposta_nome }),
       });
-      setTarefas(prev => prev.map(t => t.id === tarefaId ? { ...t, estado, entregue_at: estado === "entregue" ? new Date().toISOString() : undefined } : t));
+      setTarefas(prev => prev.map(t => t.id === tarefaId
+        ? { ...t, estado, entregue_at: estado === "entregue" ? new Date().toISOString() : undefined, resposta_url, resposta_nome }
+        : t));
     } finally {
       setUpdatingId(null);
     }
@@ -150,6 +198,7 @@ export default function TarefasPage() {
 
   function openModal() {
     setForm({ titulo: "", descricao: "", prazo: "" });
+    setAnexoFile(null);
     setDestMode("meus");
     setDestTurma(turmas[0]?.id ?? "");
     setDestIds([]);
@@ -173,10 +222,23 @@ export default function TarefasPage() {
     setSubmitting(true);
     setError(null);
     try {
+      let anexo_url: string | undefined;
+      let anexo_nome: string | undefined;
+      if (anexoFile) {
+        const safeName = `anexo_${Date.now()}_${anexoFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        anexo_url = await uploadFicheiro(anexoFile, "tarefas", safeName);
+        anexo_nome = anexoFile.name;
+      }
       const res = await fetch("/api/tarefas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, prazo: form.prazo || null, destinatarios: destinatariosPayload() }),
+        body: JSON.stringify({
+          ...form,
+          prazo: form.prazo || null,
+          destinatarios: destinatariosPayload(),
+          anexo_url,
+          anexo_nome,
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Erro ao criar tarefa.");
@@ -249,13 +311,11 @@ export default function TarefasPage() {
             {/* ── FORMANDO ── */}
             {!isStaff && COLS_FORMANDO.map(col => (
               <div key={col.key} className="flex flex-col c-bg2 border c-br rounded-xl overflow-hidden">
-                {/* Coluna header */}
                 <div className={`h-1 ${col.bar}`} />
                 <div className="px-3 py-2.5 border-b c-br flex items-center gap-2">
                   <span className={`text-[10px] font-bold uppercase tracking-widest ${col.color}`}>{col.label}</span>
                   <span className="ml-auto text-[10px] c-tx5">{colFormando[col.key].length}</span>
                 </div>
-                {/* Cards */}
                 <div className="flex-1 overflow-y-auto p-2 space-y-2">
                   {colFormando[col.key].length === 0 ? (
                     <p className="text-[11px] c-tx5 text-center py-6">{col.empty}</p>
@@ -270,21 +330,48 @@ export default function TarefasPage() {
                         <p className="text-[10px] c-tx4 flex items-center gap-1"><User size={9} /> {t.criador_nome} {t.criador_apelido}</p>
                       )}
                       {t.descricao && <p className="text-[10px] c-tx4 line-clamp-2">{t.descricao}</p>}
-                      {/* Botão de acção */}
+                      {/* Anexo do formador */}
+                      {t.anexo_url && <AnexoLink url={t.anexo_url} nome={t.anexo_nome} />}
+                      {/* Upload resposta + acções */}
                       {col.key === "pendente" && (
-                        <button onClick={() => marcarEntregue(t.id, "entregue")} disabled={updatingId === t.id}
-                          className="w-full py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-medium hover:bg-emerald-500/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
-                          {updatingId === t.id ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={10} /> Marcar como entregue</>}
-                        </button>
+                        <div className="space-y-1.5 pt-1">
+                          {/* Input ficheiro oculto */}
+                          <input type="file" className="hidden"
+                            ref={el => { respostaInputRefs.current[t.id] = el; }}
+                            onChange={e => setRespostaFiles(prev => ({ ...prev, [t.id]: e.target.files?.[0] ?? null }))} />
+                          {respostaFiles[t.id] ? (
+                            <div className="flex items-center gap-1.5 text-[10px] c-tx3 c-s2 border c-br rounded px-2 py-1">
+                              <FileText size={10} className="shrink-0 text-blue-400" />
+                              <span className="truncate flex-1">{respostaFiles[t.id]!.name}</span>
+                              <button type="button" onClick={() => setRespostaFiles(prev => ({ ...prev, [t.id]: null }))}
+                                className="c-tx5 hover:text-red-400 transition-colors"><X size={10} /></button>
+                            </div>
+                          ) : (
+                            <button type="button" onClick={() => respostaInputRefs.current[t.id]?.click()}
+                              className="w-full py-1 rounded border border-dashed c-br c-tx5 text-[10px] hover:c-tx3 transition-colors flex items-center justify-center gap-1">
+                              <Paperclip size={9} /> Anexar resposta (opcional)
+                            </button>
+                          )}
+                          <button onClick={() => marcarEntregue(t.id, "entregue")} disabled={updatingId === t.id}
+                            className="w-full py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-medium hover:bg-emerald-500/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
+                            {updatingId === t.id ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={10} /> Marcar como entregue</>}
+                          </button>
+                        </div>
                       )}
                       {col.key === "entregue" && (
-                        <button onClick={() => marcarEntregue(t.id, "pendente")} disabled={updatingId === t.id}
-                          className="w-full py-1.5 rounded-lg c-s2 border c-br c-tx4 text-[10px] hover:c-tx3 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
-                          <RotateCcw size={10} /> Retirar entrega
-                        </button>
+                        <div className="space-y-1.5 pt-1">
+                          {t.resposta_url && <AnexoLink url={t.resposta_url} nome={t.resposta_nome} />}
+                          <button onClick={() => marcarEntregue(t.id, "pendente")} disabled={updatingId === t.id}
+                            className="w-full py-1.5 rounded-lg c-s2 border c-br c-tx4 text-[10px] hover:c-tx3 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
+                            <RotateCcw size={10} /> Retirar entrega
+                          </button>
+                        </div>
                       )}
                       {col.key === "avaliado" && (
-                        <span className="flex items-center gap-1 text-[10px] text-blue-400/70"><CheckCheck size={10} /> Avaliado</span>
+                        <div className="space-y-1">
+                          {t.resposta_url && <AnexoLink url={t.resposta_url} nome={t.resposta_nome} />}
+                          <span className="flex items-center gap-1 text-[10px] text-blue-400/70"><CheckCheck size={10} /> Avaliado</span>
+                        </div>
                       )}
                     </motion.div>
                   ))}
@@ -314,19 +401,18 @@ export default function TarefasPage() {
                         </button>
                       </div>
                       {t.descricao && <p className="text-[10px] c-tx4 line-clamp-2">{t.descricao}</p>}
+                      {t.anexo_url && <AnexoLink url={t.anexo_url} nome={t.anexo_nome} />}
                       <div className="flex items-center gap-2 flex-wrap">
                         <PrazoBadge prazo={t.prazo} />
                         <span className="text-[10px] c-tx4 flex items-center gap-1"><Users size={9} /> {t.total ?? 0}</span>
                         <span className="text-[10px] text-emerald-400/70 flex items-center gap-1"><CheckCheck size={9} /> {t.entregues ?? 0}</span>
                       </div>
-                      {/* Barra de progresso */}
                       {(t.total ?? 0) > 0 && (
                         <div className="h-1 w-full c-s2 rounded-full overflow-hidden">
                           <div className="h-full bg-emerald-500 rounded-full transition-all"
                             style={{ width: `${Math.round(((t.entregues ?? 0) / (t.total ?? 1)) * 100)}%` }} />
                         </div>
                       )}
-                      {/* Expand entregas */}
                       <button onClick={() => toggleExpand(t.id)}
                         className="w-full text-[10px] c-tx4 hover:c-tx3 transition-colors flex items-center justify-center gap-1 pt-1">
                         {expandedId === t.id ? <><ChevronUp size={10} /> Recolher</> : <><ChevronDown size={10} /> Ver formandos</>}
@@ -340,26 +426,34 @@ export default function TarefasPage() {
                             ) : (entregas[t.id] ?? []).length === 0 ? (
                               <p className="text-[10px] c-tx5 text-center py-1">Sem formandos.</p>
                             ) : (
-                              <div className="space-y-1">
+                              <div className="space-y-2">
                                 {(entregas[t.id] ?? []).map(e => (
-                                  <div key={e.id} className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-full c-s2 flex items-center justify-center text-[9px] font-bold c-tx3 shrink-0">
-                                      {e.first_name[0]?.toUpperCase()}
+                                  <div key={e.id} className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-5 h-5 rounded-full c-s2 flex items-center justify-center text-[9px] font-bold c-tx3 shrink-0">
+                                        {e.first_name[0]?.toUpperCase()}
+                                      </div>
+                                      <span className="text-[10px] c-tx3 flex-1 truncate">{e.first_name} {e.last_name}</span>
+                                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full border ${
+                                        e.estado === "avaliado" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                                        e.estado === "entregue" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                                        "c-s1 c-tx5 c-br"}`}>
+                                        {e.estado === "avaliado" ? "✓ avaliado" : e.estado === "entregue" ? "entregue" : "pendente"}
+                                      </span>
+                                      {e.estado === "entregue" && (
+                                        <button onClick={() => marcarFormandoEstado(t.id, e.id, "avaliado")}
+                                          className="text-[9px] text-blue-400 hover:text-blue-300 transition-colors">Avaliar</button>
+                                      )}
+                                      {e.estado === "avaliado" && (
+                                        <button onClick={() => marcarFormandoEstado(t.id, e.id, "entregue")}
+                                          className="text-[9px] c-tx5 hover:c-tx4 transition-colors"><RotateCcw size={9} /></button>
+                                      )}
                                     </div>
-                                    <span className="text-[10px] c-tx3 flex-1 truncate">{e.first_name} {e.last_name}</span>
-                                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full border ${
-                                      e.estado === "avaliado" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-                                      e.estado === "entregue" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                                      "c-s1 c-tx5 c-br"}`}>
-                                      {e.estado === "avaliado" ? "✓ avaliado" : e.estado === "entregue" ? "entregue" : "pendente"}
-                                    </span>
-                                    {e.estado === "entregue" && (
-                                      <button onClick={() => marcarFormandoEstado(t.id, e.id, "avaliado")}
-                                        className="text-[9px] text-blue-400 hover:text-blue-300 transition-colors">Avaliar</button>
-                                    )}
-                                    {e.estado === "avaliado" && (
-                                      <button onClick={() => marcarFormandoEstado(t.id, e.id, "entregue")}
-                                        className="text-[9px] c-tx5 hover:c-tx4 transition-colors"><RotateCcw size={9} /></button>
+                                    {/* Resposta do formando */}
+                                    {e.resposta_url && (
+                                      <div className="ml-7">
+                                        <AnexoLink url={e.resposta_url} nome={e.resposta_nome} />
+                                      </div>
                                     )}
                                   </div>
                                 ))}
@@ -391,7 +485,7 @@ export default function TarefasPage() {
             </div>
 
             <form onSubmit={criarTarefa} className="px-6 py-5 space-y-4">
-              {/* Título + Prazo na mesma linha */}
+              {/* Título + Prazo */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs c-tx3">Título *</label>
@@ -413,7 +507,26 @@ export default function TarefasPage() {
                   className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors resize-none" />
               </div>
 
-              {/* Destinatários — modo */}
+              {/* Anexo */}
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Ficheiro de apoio (opcional)</label>
+                <input type="file" className="hidden" ref={anexoInputRef}
+                  onChange={e => setAnexoFile(e.target.files?.[0] ?? null)} />
+                {anexoFile ? (
+                  <div className="flex items-center gap-2 c-s1 border c-br rounded-lg px-3 py-2">
+                    <FileText size={13} className="text-blue-400 shrink-0" />
+                    <span className="text-xs c-tx2 flex-1 truncate">{anexoFile.name}</span>
+                    <button type="button" onClick={() => setAnexoFile(null)} className="c-tx5 hover:text-red-400 transition-colors"><X size={13} /></button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => anexoInputRef.current?.click()}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed c-br rounded-lg text-xs c-tx4 hover:c-tx3 hover:border-blue-500/30 transition-colors">
+                    <Upload size={13} /> Carregar ficheiro
+                  </button>
+                )}
+              </div>
+
+              {/* Destinatários */}
               <div className="space-y-2">
                 <label className="text-xs c-tx3">Destinatários</label>
                 <div className={`grid gap-2 ${(user?.role === "admin" || user?.role === "super-admin") ? "grid-cols-4" : "grid-cols-3"}`}>
@@ -439,7 +552,6 @@ export default function TarefasPage() {
                   })}
                 </div>
 
-                {/* Sub-selector: turma */}
                 {destMode === "turma" && (
                   <select value={destTurma} onChange={e => setDestTurma(e.target.value)}
                     className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
@@ -450,10 +562,8 @@ export default function TarefasPage() {
                   </select>
                 )}
 
-                {/* Sub-selector: individual */}
                 {destMode === "individual" && (
                   <div className="space-y-2">
-                    {/* Tags dos seleccionados */}
                     {destIds.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {destIds.map(id => {
@@ -467,7 +577,6 @@ export default function TarefasPage() {
                         })}
                       </div>
                     )}
-                    {/* Pesquisa */}
                     <div className="relative">
                       <User size={12} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
                       <input value={formandoSearch} onChange={e => setFormandoSearch(e.target.value)}
@@ -522,82 +631,6 @@ export default function TarefasPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function TarefaCard({ tarefa, expanded, onToggle, onMarcar, updating, isStaff }: {
-  tarefa: Tarefa;
-  expanded: boolean;
-  onToggle: () => void;
-  onMarcar: (estado: string) => void;
-  updating: boolean;
-  isStaff: boolean;
-}) {
-  const entregue = tarefa.estado === "entregue" || tarefa.estado === "avaliado";
-  const avaliado = tarefa.estado === "avaliado";
-
-  return (
-    <div className={`c-s1 border rounded-xl overflow-hidden transition-colors ${
-      avaliado ? "border-blue-500/20" : entregue ? "border-emerald-500/20" : "c-br"
-    }`}>
-      <button onClick={onToggle} className="w-full flex items-start gap-3 px-4 py-3.5 text-left hover:bg-white/[0.02] transition-colors">
-        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-          avaliado ? "bg-blue-500 border-blue-500" : entregue ? "bg-emerald-500 border-emerald-500" : "c-br2"
-        }`}>
-          {(entregue || avaliado) && <CheckCircle2 size={12} className="c-tx" />}
-        </div>
-        <div className="flex-1 min-w-0 space-y-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-sm font-medium ${entregue ? "c-tx3 line-through" : "c-tx"}`}>{tarefa.titulo}</span>
-            <PrazoBadge prazo={tarefa.prazo} />
-            {avaliado && <span className="text-[10px] text-blue-400 font-medium">avaliado</span>}
-          </div>
-          {tarefa.criador_nome && (
-            <p className="text-[11px] c-tx4">{tarefa.criador_nome} {tarefa.criador_apelido}</p>
-          )}
-        </div>
-        {expanded ? <ChevronUp size={14} className="c-tx4 shrink-0 mt-1" /> : <ChevronDown size={14} className="c-tx4 shrink-0 mt-1" />}
-      </button>
-
-      <AnimatePresence>
-        {expanded && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }}
-            className="border-t c-br overflow-hidden">
-            <div className="px-4 py-3 space-y-3">
-              {tarefa.descricao && <p className="text-xs c-tx3">{tarefa.descricao}</p>}
-              {tarefa.prazo && (
-                <p className="text-[11px] c-tx4 flex items-center gap-1">
-                  <Clock size={10} /> Prazo: {new Date(tarefa.prazo).toLocaleString("pt-PT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                </p>
-              )}
-              {tarefa.entregue_at && (
-                <p className="text-[11px] text-emerald-400/70 flex items-center gap-1">
-                  <CheckCircle2 size={10} /> Entregue a {new Date(tarefa.entregue_at).toLocaleDateString("pt-PT")}
-                </p>
-              )}
-              {!isStaff && (
-                <div className="flex gap-2 pt-1">
-                  {!entregue ? (
-                    <button disabled={updating} onClick={() => onMarcar("entregue")}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors disabled:opacity-50">
-                      {updating ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
-                      Marcar como entregue
-                    </button>
-                  ) : !avaliado ? (
-                    <button disabled={updating} onClick={() => onMarcar("pendente")}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg c-s1 c-tx3 text-xs border c-br hc-s3 transition-colors disabled:opacity-50">
-                      {updating ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
-                      Cancelar entrega
-                    </button>
-                  ) : null}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

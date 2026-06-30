@@ -8,14 +8,21 @@ export async function GET() {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 
+  // Auto-migração segura
+  await dbQuery(`ALTER TABLE tarefas ADD COLUMN IF NOT EXISTS anexo_url TEXT`).catch(() => {});
+  await dbQuery(`ALTER TABLE tarefas ADD COLUMN IF NOT EXISTS anexo_nome TEXT`).catch(() => {});
+  await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS resposta_url TEXT`).catch(() => {});
+  await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS resposta_nome TEXT`).catch(() => {});
+
   const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
   const role = profileRes.rows[0]?.role;
 
   if (role === "formando") {
     const res = await dbQuery(
       `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
+              t.anexo_url, t.anexo_nome,
               p.first_name AS criador_nome, p.last_name AS criador_apelido,
-              td.estado, td.entregue_at
+              td.estado, td.entregue_at, td.resposta_url, td.resposta_nome
        FROM tarefa_destinatarios td
        JOIN tarefas t ON t.id = td.tarefa_id
        JOIN profiles p ON p.id = t.criador_id
@@ -27,6 +34,7 @@ export async function GET() {
   } else {
     const res = await dbQuery(
       `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
+              t.anexo_url, t.anexo_nome,
               COUNT(td.formando_id)                                         AS total,
               COUNT(td.formando_id) FILTER (WHERE td.estado != 'pendente') AS entregues
        FROM tarefas t
@@ -51,12 +59,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
   }
 
-  const { titulo, descricao, prazo, destinatarios } = await request.json();
+  const { titulo, descricao, prazo, destinatarios, anexo_url, anexo_nome } = await request.json();
   if (!titulo?.trim()) return NextResponse.json({ error: "Título obrigatório." }, { status: 400 });
 
   const tarefaRes = await dbQuery(
-    `INSERT INTO tarefas (titulo, descricao, prazo, criador_id) VALUES ($1, $2, $3, $4) RETURNING id`,
-    [titulo.trim(), descricao?.trim() || null, prazo || null, sessionUser.id]
+    `INSERT INTO tarefas (titulo, descricao, prazo, criador_id, anexo_url, anexo_nome) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+    [titulo.trim(), descricao?.trim() || null, prazo || null, sessionUser.id, anexo_url ?? null, anexo_nome ?? null]
   );
   const tarefaId = tarefaRes.rows[0].id;
 

@@ -17,8 +17,9 @@ export async function GET(_req: Request, { params }: Params) {
   if (role === "formando") {
     const res = await dbQuery(
       `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
+              t.anexo_url, t.anexo_nome,
               p.first_name AS criador_nome, p.last_name AS criador_apelido,
-              td.estado, td.entregue_at
+              td.estado, td.entregue_at, td.resposta_url, td.resposta_nome
        FROM tarefa_destinatarios td
        JOIN tarefas t ON t.id = td.tarefa_id
        JOIN profiles p ON p.id = t.criador_id
@@ -42,7 +43,8 @@ export async function GET(_req: Request, { params }: Params) {
   if (!tarefaRes.rows.length) return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
 
   const entregasRes = await dbQuery(
-    `SELECT p.id, p.first_name, p.last_name, p.email, td.estado, td.entregue_at
+    `SELECT p.id, p.first_name, p.last_name, p.email, td.estado, td.entregue_at,
+            td.resposta_url, td.resposta_nome
      FROM tarefa_destinatarios td
      JOIN profiles p ON p.id = td.formando_id
      WHERE td.tarefa_id = $1
@@ -64,14 +66,22 @@ export async function PATCH(request: Request, { params }: Params) {
   const body = await request.json();
 
   if (role === "formando") {
-    // Apenas pode marcar como entregue (ou cancelar entrega)
     const estado = body.estado === "pendente" ? "pendente" : "entregue";
+    const resposta_url = body.resposta_url ?? null;
+    const resposta_nome = body.resposta_nome ?? null;
     const res = await dbQuery(
       `UPDATE tarefa_destinatarios
-       SET estado = $1, entregue_at = $2
-       WHERE tarefa_id = $3 AND formando_id = $4
+       SET estado = $1, entregue_at = $2, resposta_url = $3, resposta_nome = $4
+       WHERE tarefa_id = $5 AND formando_id = $6
        RETURNING estado`,
-      [estado, estado === "entregue" ? new Date().toISOString() : null, id, sessionUser.id]
+      [
+        estado,
+        estado === "entregue" ? new Date().toISOString() : null,
+        estado === "entregue" ? resposta_url : null,
+        estado === "entregue" ? resposta_nome : null,
+        id,
+        sessionUser.id,
+      ]
     );
     if (!res.rows.length) return NextResponse.json({ error: "Tarefa não encontrada." }, { status: 404 });
     await auditLog("tarefa_status_change", { actorId: sessionUser.id, targetId: id, details: { estado } });
@@ -84,7 +94,6 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
   }
 
-  // Verificar que a tarefa pertence a este criador
   const owns = await dbQuery(`SELECT id FROM tarefas WHERE id = $1 AND criador_id = $2`, [id, sessionUser.id]);
   if (!owns.rows.length) return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
 
