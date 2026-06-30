@@ -259,10 +259,11 @@ export default function TarefasPage() {
   }), [tarefas]);
 
   // Formador: kanban por progresso de entrega
+  // COUNT() vem como string do driver pg — forçar Number()
   const colFormador = useMemo(() => ({
-    semEntregas: tarefas.filter(t => (t.entregues ?? 0) === 0),
-    emProgresso: tarefas.filter(t => (t.entregues ?? 0) > 0 && (t.entregues ?? 0) < (t.total ?? 1)),
-    completas:   tarefas.filter(t => (t.total ?? 0) > 0 && (t.entregues ?? 0) >= (t.total ?? 1)),
+    semEntregas: tarefas.filter(t => Number(t.entregues ?? 0) === 0),
+    emProgresso: tarefas.filter(t => Number(t.entregues ?? 0) > 0 && Number(t.entregues ?? 0) < Number(t.total ?? 1)),
+    completas:   tarefas.filter(t => Number(t.total ?? 0) > 0 && Number(t.entregues ?? 0) >= Number(t.total ?? 1)),
   }), [tarefas]);
 
   const COLS_FORMANDO = [
@@ -404,13 +405,13 @@ export default function TarefasPage() {
                       {t.anexo_url && <AnexoLink url={t.anexo_url} nome={t.anexo_nome} />}
                       <div className="flex items-center gap-2 flex-wrap">
                         <PrazoBadge prazo={t.prazo} />
-                        <span className="text-[10px] c-tx4 flex items-center gap-1"><Users size={9} /> {t.total ?? 0}</span>
-                        <span className="text-[10px] text-emerald-400/70 flex items-center gap-1"><CheckCheck size={9} /> {t.entregues ?? 0}</span>
+                        <span className="text-[10px] c-tx4 flex items-center gap-1"><Users size={9} /> {Number(t.total ?? 0)}</span>
+                        <span className="text-[10px] text-emerald-400/70 flex items-center gap-1"><CheckCheck size={9} /> {Number(t.entregues ?? 0)}</span>
                       </div>
-                      {(t.total ?? 0) > 0 && (
+                      {Number(t.total ?? 0) > 0 && (
                         <div className="h-1 w-full c-s2 rounded-full overflow-hidden">
                           <div className="h-full bg-emerald-500 rounded-full transition-all"
-                            style={{ width: `${Math.round(((t.entregues ?? 0) / (t.total ?? 1)) * 100)}%` }} />
+                            style={{ width: `${Math.round((Number(t.entregues ?? 0) / Number(t.total ?? 1)) * 100)}%` }} />
                         </div>
                       )}
                       <button onClick={() => toggleExpand(t.id)}
