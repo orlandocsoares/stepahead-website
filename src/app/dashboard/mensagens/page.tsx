@@ -235,26 +235,29 @@ function MensagensInner() {
             <button
               key={conv.other_id}
               onClick={() => router.push(`/dashboard/mensagens?with=${conv.other_id}`)}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left hc-s1 transition-colors border-b border-white/[0.03]
-                ${activeId === conv.other_id ? "bg-blue-600/10 border-l-2 border-l-blue-500" : ""}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-white/[0.03] relative
+                ${activeId === conv.other_id ? "bg-blue-600/10" : conv.unread_count > 0 ? "bg-white/[0.03] hc-s1" : "hc-s1"}
+                ${conv.unread_count > 0 && activeId !== conv.other_id ? "border-l-2 border-l-red-500" : activeId === conv.other_id ? "border-l-2 border-l-blue-500" : "border-l-2 border-l-transparent"}`}
             >
-              <div className="relative">
+              <div className="relative shrink-0">
                 <Avatar name={`${conv.first_name} ${conv.last_name}`} url={conv.avatar_url} size={9} />
                 {conv.unread_count > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-[9px] c-tx flex items-center justify-center font-bold">
-                    {conv.unread_count}
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-[9px] text-white flex items-center justify-center font-bold">
+                    {conv.unread_count > 9 ? "9+" : conv.unread_count}
                   </span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-baseline">
-                  <p className={`text-xs font-semibold truncate ${conv.unread_count > 0 ? "c-tx" : "c-tx2"}`}>
+                <div className="flex justify-between items-baseline gap-2">
+                  <p className={`text-xs truncate ${conv.unread_count > 0 ? "font-bold c-tx" : "font-semibold c-tx2"}`}>
                     {conv.first_name} {conv.last_name}
                   </p>
-                  <span className="text-[10px] c-tx4 shrink-0 ml-2">{formatTime(conv.created_at)}</span>
+                  <span className={`text-[10px] shrink-0 ${conv.unread_count > 0 ? "text-red-400 font-semibold" : "c-tx4"}`}>
+                    {formatTime(conv.created_at)}
+                  </span>
                 </div>
-                <p className={`text-[11px] truncate mt-0.5 ${conv.unread_count > 0 ? "c-tx2" : "c-tx4"}`}>
-                  {conv.from_user_id === user?.id ? "Tu: " : ""}{conv.last_message}
+                <p className={`text-[11px] truncate mt-0.5 ${conv.unread_count > 0 ? "c-tx font-medium" : "c-tx4"}`}>
+                  {conv.from_user_id === user?.id ? <span className="c-tx4">Tu: </span> : ""}{conv.last_message}
                 </p>
               </div>
             </button>
