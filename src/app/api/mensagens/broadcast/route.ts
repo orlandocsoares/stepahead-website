@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
     await auditLog("mensagem_broadcast", {
       actorId: session.id,
-      details: { destinatario, sent: recipientIds.length, preview: content.trim().slice(0, 80) },
+      details: { destinatario, sent: recipientIds.length },
     });
     return NextResponse.json({ ok: true, sent: recipientIds.length });
   } catch (error: unknown) {

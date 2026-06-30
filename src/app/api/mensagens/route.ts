@@ -125,7 +125,7 @@ export async function POST(request: Request) {
       `INSERT INTO mensagens (from_user_id, to_user_id, content) VALUES ($1, $2, $3) RETURNING *`,
       [session.id, to_user_id, content.trim()]
     );
-    await auditLog("mensagem_send", { actorId: session.id, targetId: to_user_id, details: { preview: content.trim().slice(0, 80) } });
+    // Mensagens privadas não são auditadas — conteúdo pessoal
     return NextResponse.json({ data: result.rows[0] }, { status: 201 });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido";
