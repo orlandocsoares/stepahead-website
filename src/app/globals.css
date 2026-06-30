@@ -91,8 +91,8 @@ html.light {
 .c-ph::placeholder { color: var(--c-tx5) !important; }
 
 /* Logo: inverte no escuro, natural no claro */
-html:not(.light) .theme-logo { filter: brightness(0) invert(1); }
-html.light .theme-logo       { filter: none; }
+/* Logo sempre branco — sidebar é escura em todos os modos */
+.theme-logo { filter: brightness(0) invert(1); }
 
 /* Sidebar/topbar com vidro tintado por modo — overlay geral removido */
 /* Escuro: vidro muito escuro */
