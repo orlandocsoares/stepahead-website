@@ -500,9 +500,9 @@ export default function FicheirosPage() {
           )}
           {user?.role === "admin" || user?.role === "super-admin" ? (
             <a href="/dashboard/config" title="Configurações"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg c-s1 border c-br c-tx3 hover:c-tx text-xs font-medium transition-colors">
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors">
               <Settings size={14} />
-              Config.
+              Configurações
             </a>
           ) : null}
         </div>
