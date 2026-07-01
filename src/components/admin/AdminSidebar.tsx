@@ -8,7 +8,7 @@ import {
   MessageSquare, Mail, GraduationCap, ClipboardList, BookOpen, ChevronDown,
 } from "lucide-react";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const NAV_TOP = [
   { label: "Dashboard",  icon: LayoutDashboard, path: "/dashboard" },
@@ -43,6 +43,15 @@ type Props = {
 export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Props) {
   const pathname = usePathname();
   const { user, logout } = useAdminUser();
+  const [isLight, setIsLight] = useState(false);
+
+  useEffect(() => {
+    const update = () => setIsLight(document.documentElement.classList.contains("light"));
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
 
   const academicaPaths = NAV_ACADEMICA.map(i => i.path);
   const academicaActive = academicaPaths.some(p => pathname.startsWith(p));
@@ -82,14 +91,17 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
   };
 
   return (
-    <aside className={`
-      fixed left-0 top-0 h-screen z-50 flex flex-col c-bg border-r c-br
-      transition-all duration-300 ease-in-out
-      ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
-      md:translate-x-0
-      ${collapsed ? "md:w-[68px]" : "md:w-[220px]"}
-      w-[220px]
-    `}>
+    <aside
+      className={`
+        fixed left-0 top-0 h-screen z-50 flex flex-col c-bg border-r c-br
+        transition-all duration-300 ease-in-out
+        ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+        md:translate-x-0
+        ${collapsed ? "md:w-[68px]" : "md:w-[220px]"}
+        w-[220px]
+      `}
+      style={isLight ? { background: "rgba(190,215,240,0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderColor: "rgba(140,185,230,0.45)" } : {}}
+    >
       {/* Logo */}
       <div className={`flex items-center gap-3 px-4 h-16 border-b c-br shrink-0 ${collapsed ? "md:justify-center" : ""}`}>
         <img src="/logo.png" alt="Saber Mais"

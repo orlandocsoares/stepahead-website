@@ -31,6 +31,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAdminUser();
+  const [isLight, setIsLight] = useState(false);
   const [unread, setUnread] = useState(0);
   const [notifs, setNotifs] = useState<any[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -102,6 +103,14 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   }
 
   useEffect(() => {
+    const update = () => setIsLight(document.documentElement.classList.contains("light"));
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
     fetchNotifs();
     const i = setInterval(fetchNotifs, 20000);
@@ -170,7 +179,10 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
         </button>
       </div>
     )}
-    <header className="h-14 md:h-16 border-b c-br flex items-center px-4 md:px-6 shrink-0 c-bg gap-3">
+    <header
+      className="h-14 md:h-16 border-b c-br flex items-center px-4 md:px-6 shrink-0 c-bg gap-3"
+      style={isLight ? { background: "rgba(200,222,244,0.82)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderColor: "rgba(140,185,230,0.40)" } : {}}
+    >
       <button onClick={onMobileMenuToggle} className="md:hidden p-2 -ml-1 rounded-lg c-tx4 hc-tx hc-s2 transition-colors shrink-0" aria-label="Abrir menu">
         <Menu size={20} />
       </button>
