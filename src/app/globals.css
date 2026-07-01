@@ -150,6 +150,26 @@ html.light .dashboard-root .text-white\/80 { color: rgba(15,31,61,0.88) !importa
 html.light .dashboard-root .text-white { color: #0f1f3d !important; }
 /* Bolha mensagem própria — bg-blue-600 fica muito escuro no claro */
 html.light .dashboard-root .bg-blue-600:not([class*="\/"]){ background-color: rgba(59,130,246,0.72) !important; }
+/* Cores vivas (amber/emerald/red) são invisíveis em fundo claro → escurecer */
+html.light .dashboard-root .text-amber-400  { color: #b45309 !important; }
+html.light .dashboard-root .text-amber-300  { color: #92400e !important; }
+html.light .dashboard-root .text-emerald-400{ color: #047857 !important; }
+html.light .dashboard-root .text-emerald-300{ color: #065f46 !important; }
+html.light .dashboard-root .text-red-400    { color: #b91c1c !important; }
+html.light .dashboard-root .text-red-300    { color: #991b1b !important; }
+html.light .dashboard-root .text-green-400  { color: #15803d !important; }
+html.light .dashboard-root .text-yellow-400 { color: #a16207 !important; }
+html.light .dashboard-root .text-purple-400 { color: #7e22ce !important; }
+html.light .dashboard-root .text-pink-400   { color: #be185d !important; }
+html.light .dashboard-root .text-orange-400 { color: #c2410c !important; }
+/* Fundos muito transparentes ficam invisíveis — dar mais opacidade no claro */
+html.light .dashboard-root .bg-amber-500\/10  { background-color: rgba(217,119,6,0.15) !important; }
+html.light .dashboard-root .bg-emerald-500\/10{ background-color: rgba(5,150,105,0.15) !important; }
+html.light .dashboard-root .bg-emerald-500\/20{ background-color: rgba(5,150,105,0.22) !important; }
+html.light .dashboard-root .bg-red-500\/10    { background-color: rgba(239,68,68,0.15) !important; }
+html.light .dashboard-root .border-amber-500\/20  { border-color: rgba(217,119,6,0.35) !important; }
+html.light .dashboard-root .border-emerald-500\/20{ border-color: rgba(5,150,105,0.35) !important; }
+html.light .dashboard-root .border-red-500\/20    { border-color: rgba(239,68,68,0.35) !important; }
 /* Inputs e áreas de texto no modo claro — fundo mais legível */
 html.light .dashboard-root input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 html.light .dashboard-root select,
