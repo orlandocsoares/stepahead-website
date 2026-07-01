@@ -14,9 +14,18 @@ export function Sidebar() {
   const [hasMission, setHasMission] = useState(false);
   const [missionInfo, setMissionInfo] = useState<any>(null);
   const [showToast, setShowToast] = useState(false);
-  
+  const [isLight, setIsLight] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    const update = () => setIsLight(document.documentElement.classList.contains("light"));
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
 
   // A lógica de "missão" é processada quando o perfil do utilizador é carregado.
   useEffect(() => {
@@ -82,7 +91,11 @@ export function Sidebar() {
       </AnimatePresence>
 
       {/* --- SIDEBAR DE LARGURA FIXA E SÓBRIA --- */}
-      <aside className="fixed left-6 top-6 bottom-6 z-[100] w-[80px] bg-black/[0.03] backdrop-blur-3xl border border-white/5 rounded-[3rem] flex flex-col py-10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+      <aside className={`fixed left-6 top-6 bottom-6 z-[100] w-[80px] backdrop-blur-3xl rounded-[3rem] flex flex-col py-10 transition-all duration-500 ${
+        isLight
+          ? "bg-[rgba(180,210,240,0.72)] border border-[rgba(140,185,230,0.55)] shadow-[0_0_30px_rgba(100,160,220,0.20)]"
+          : "bg-black/[0.03] border border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+      }`}>
         
         {/* INDICADOR DE STATUS */}
         <div className="flex justify-center mb-10 shrink-0">
@@ -97,7 +110,7 @@ export function Sidebar() {
             onClick={() => router.push("/")} 
             className="w-full h-14 relative flex items-center justify-center outline-none group"
           >
-            <Home size={20} strokeWidth={1.5} className="text-white/30 group-hover:text-blue-400 transition-colors duration-300" />
+            <Home size={20} strokeWidth={1.5} className={`transition-colors duration-300 ${isLight ? "text-blue-800/40 group-hover:text-blue-700" : "text-white/30 group-hover:text-blue-400"}`} />
             
             {/* Legenda Pura Flutuante */}
             <div className="absolute left-[70px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none flex items-center">
@@ -107,7 +120,7 @@ export function Sidebar() {
             </div>
           </button>
           {/* Divisória */}
-          <div className="w-6 h-[1px] bg-white/10 mt-6" />
+          <div className={`w-6 h-[1px] mt-6 ${isLight ? "bg-blue-800/20" : "bg-white/10"}`} />
         </div>
 
         {/* MENU PRINCIPAL */}
@@ -122,14 +135,18 @@ export function Sidebar() {
               >
                 {/* Indicador de Actividade */}
                 {isActive && (
-                  <motion.div layoutId="activeIndicator" className="absolute left-0 w-[3px] h-6 bg-white/40 rounded-r-full" />
+                  <motion.div layoutId="activeIndicator" className={`absolute left-0 w-[3px] h-6 rounded-r-full ${isLight ? "bg-blue-700/70" : "bg-white/40"}`} />
                 )}
-                
-                <item.icon size={20} strokeWidth={isActive ? 1.5 : 1} className={`transition-colors duration-300 ${isActive ? "text-white" : "text-white/30 group-hover:text-white/70"}`} />
+
+                <item.icon size={20} strokeWidth={isActive ? 1.5 : 1} className={`transition-colors duration-300 ${
+                  isLight
+                    ? isActive ? "text-blue-800" : "text-blue-800/35 group-hover:text-blue-700"
+                    : isActive ? "text-white" : "text-white/30 group-hover:text-white/70"
+                }`} />
                 
                 {/* Legenda Pura Flutuante */}
                 <div className="absolute left-[70px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none flex items-center">
-                  <span className="text-[10px] uppercase tracking-[0.4em] font-light text-white/60 drop-shadow-md whitespace-nowrap">
+                  <span className={`text-[10px] uppercase tracking-[0.4em] font-light drop-shadow-md whitespace-nowrap ${isLight ? "text-blue-800/70" : "text-white/60"}`}>
                     {item.name}
                   </span>
                 </div>
@@ -170,7 +187,7 @@ export function Sidebar() {
             onClick={handleLogout} 
             className="w-full h-14 relative flex items-center justify-center outline-none group"
           >
-            <LogOut size={20} strokeWidth={1} className="text-white/20 group-hover:text-red-400/80 transition-colors duration-300" />
+            <LogOut size={20} strokeWidth={1} className={`transition-colors duration-300 ${isLight ? "text-blue-800/25 group-hover:text-red-500/80" : "text-white/20 group-hover:text-red-400/80"}`} />
             
             <div className="absolute left-[70px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none flex items-center">
               <span className="text-[10px] uppercase tracking-[0.4em] font-black text-red-400/70 drop-shadow-md whitespace-nowrap">
