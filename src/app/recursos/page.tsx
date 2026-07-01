@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { FileText, X, BookOpen, Loader2, ExternalLink, Download } from "lucide-react";
+import { FileText, X, BookOpen, Loader2, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
 type Recurso = {
@@ -224,21 +224,15 @@ function RecursosContent() {
               <p className="text-sm font-semibold text-white truncate">{viewing.label}</p>
               <p className="text-[11px] text-white/35 mt-0.5">{viewing.area} · {formatDate(viewing.created_at)}</p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <a href={`/api/recursos/pdf/${viewing.id}`} download
-                className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.08] transition-colors flex items-center gap-1.5 text-xs">
-                <Download size={15} /> Descarregar
-              </a>
-              <button onClick={() => setViewing(null)}
-                className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.08] transition-colors flex items-center gap-1.5 text-xs">
-                <X size={16} /> Fechar
-              </button>
-            </div>
+            <button onClick={() => setViewing(null)}
+              className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.08] transition-colors flex items-center gap-1.5 text-xs shrink-0">
+              <X size={16} /> Fechar
+            </button>
           </div>
 
-          {/* PDF via iframe — mais compatível que react-pdf */}
+          {/* PDF via iframe — #toolbar=0 oculta barra de ferramentas do browser (download) */}
           <iframe
-            src={`/api/recursos/pdf/${viewing.id}`}
+            src={`/api/recursos/pdf/${viewing.id}#toolbar=0&navpanes=0&scrollbar=1`}
             className="flex-1 w-full border-0"
             title={viewing.label}
           />
