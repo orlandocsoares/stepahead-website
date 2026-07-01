@@ -195,9 +195,9 @@ html.meio-escuro .dashboard-root header { background: rgba(5,10,30,0.74) !import
 /* Pôr do Sol: tinte âmbar */
 html.meio-claro  .dashboard-root aside  { background: rgba(26,14,4,0.78) !important; backdrop-filter: blur(16px); }
 html.meio-claro  .dashboard-root header { background: rgba(26,14,4,0.74) !important; backdrop-filter: blur(16px); }
-/* Claro: vidro neutro escuro */
-html.light       .dashboard-root aside  { background: rgba(10,8,22,0.74) !important; backdrop-filter: blur(16px); }
-html.light       .dashboard-root header { background: rgba(10,8,22,0.70) !important; backdrop-filter: blur(16px); }
+/* Claro: vidro azul claro — igual aos cards */
+html.light       .dashboard-root aside  { background: rgba(190,215,240,0.82) !important; backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important; border-color: rgba(140,185,230,0.45) !important; }
+html.light       .dashboard-root header { background: rgba(200,222,244,0.80) !important; backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important; border-color: rgba(140,185,230,0.35) !important; }
 
 
 @layer base {
