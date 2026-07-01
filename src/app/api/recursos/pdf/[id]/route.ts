@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
-import { readFile } from "fs/promises";
-import path from "path";
 
-// GET /api/recursos/pdf/[id] — lê o PDF directamente do disco e serve ao browser
+// GET /api/recursos/pdf/[id] — proxy do PDF a partir do Supabase Storage
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> }
@@ -20,20 +18,29 @@ export async function GET(
   }
 
   const nomeArquivo = res.rows[0].nome_arquivo as string;
-  const filePath = path.join(process.cwd(), "storage", "materiais", nomeArquivo);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!supabaseUrl) {
+    return new NextResponse("Configuração em falta.", { status: 500 });
+  }
+
+  const fileUrl = `${supabaseUrl}/storage/v1/object/public/materiais/${encodeURIComponent(nomeArquivo)}`;
 
   try {
-    const buffer = await readFile(filePath);
+    const upstream = await fetch(fileUrl);
+    if (!upstream.ok) {
+      return new NextResponse("Ficheiro não encontrado.", { status: 404 });
+    }
+    const buffer = await upstream.arrayBuffer();
     return new NextResponse(buffer, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": "inline",
         "Cache-Control": "public, max-age=3600",
-        "Access-Control-Allow-Origin": "*",
       },
     });
   } catch {
-    return new NextResponse("Ficheiro não encontrado no servidor.", { status: 404 });
+    return new NextResponse("Erro ao carregar o documento.", { status: 500 });
   }
 }
