@@ -56,8 +56,23 @@ html.meio-claro {
 
 /* CLARO — dia, céu azul */
 html.light {
-  /* Modo claro: mantém tema escuro nos cards, só muda a imagem de fundo */
+  --c-bg:   #cdd8e8;
+  --c-bg2:  rgba(255,255,255,0.90);
+  --c-s1:   rgba(0,0,0,0.03);
+  --c-s2:   rgba(0,0,0,0.06);
+  --c-s3:   rgba(0,0,0,0.10);
+  --c-tx:   #0f172a;
+  --c-tx2:  #1e293b;
+  --c-tx3:  #475569;
+  --c-tx4:  #94a3b8;
+  --c-tx5:  #cbd5e1;
+  --c-br:   rgba(100,140,200,0.28);
+  --c-br2:  rgba(100,140,200,0.50);
+  --c-ov:   rgba(210,225,242,0.92);
 }
+
+/* No modo claro, os cards têm backdrop-blur leve para efeito glass nas bordas */
+html.light .c-bg2 { backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; }
 
 /* ─── Utility classes ────────────────────────────────────────────────────── */
 /* Backgrounds */
