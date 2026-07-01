@@ -31,14 +31,17 @@ export async function GET(_req: Request, { params }: Params) {
   }
 
   // Formador/admin — ver entregas
+  const isAdmin = role === "admin" || role === "super-admin";
   const tarefaRes = await dbQuery(
-    `SELECT t.*, COUNT(td.formando_id) AS total,
+    `SELECT t.*, p.first_name AS criador_nome, p.last_name AS criador_apelido,
+            COUNT(td.formando_id) AS total,
             COUNT(td.formando_id) FILTER (WHERE td.estado != 'pendente') AS entregues
      FROM tarefas t
+     JOIN profiles p ON p.id = t.criador_id
      LEFT JOIN tarefa_destinatarios td ON td.tarefa_id = t.id
-     WHERE t.id = $1 AND t.criador_id = $2
-     GROUP BY t.id`,
-    [id, sessionUser.id]
+     WHERE t.id = $1 AND ($2::boolean OR t.criador_id = $3)
+     GROUP BY t.id, p.first_name, p.last_name`,
+    [id, isAdmin, sessionUser.id]
   );
   if (!tarefaRes.rows.length) return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
 

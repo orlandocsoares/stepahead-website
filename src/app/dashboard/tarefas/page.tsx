@@ -429,6 +429,9 @@ export default function TarefasPage() {
                           <Trash2 size={11} />
                         </button>
                       </div>
+                      {t.criador_nome && (
+                        <p className="text-[10px] c-tx4 flex items-center gap-1"><User size={9} /> {t.criador_nome} {t.criador_apelido}</p>
+                      )}
                       {t.descricao && <p className="text-[10px] c-tx4 line-clamp-2">{t.descricao}</p>}
                       {t.anexo_url && <AnexoLink url={t.anexo_url} nome={t.anexo_nome} />}
                       <div className="flex items-center gap-2 flex-wrap">

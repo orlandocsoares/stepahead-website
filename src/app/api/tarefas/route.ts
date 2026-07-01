@@ -32,17 +32,20 @@ export async function GET() {
     );
     return NextResponse.json({ tarefas: res.rows });
   } else {
+    const isAdmin = role === "admin" || role === "super-admin";
     const res = await dbQuery(
       `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
               t.anexo_url, t.anexo_nome,
+              p.first_name AS criador_nome, p.last_name AS criador_apelido,
               COUNT(td.formando_id)                                         AS total,
               COUNT(td.formando_id) FILTER (WHERE td.estado != 'pendente') AS entregues
        FROM tarefas t
+       JOIN profiles p ON p.id = t.criador_id
        LEFT JOIN tarefa_destinatarios td ON td.tarefa_id = t.id
-       WHERE t.criador_id = $1
-       GROUP BY t.id
+       WHERE ($1::boolean OR t.criador_id = $2)
+       GROUP BY t.id, p.first_name, p.last_name
        ORDER BY t.created_at DESC`,
-      [sessionUser.id]
+      [isAdmin, sessionUser.id]
     );
     return NextResponse.json({ tarefas: res.rows });
   }
