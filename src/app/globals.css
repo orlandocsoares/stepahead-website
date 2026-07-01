@@ -74,6 +74,54 @@ html.light {
 /* No modo claro, os cards têm backdrop-blur leve para efeito glass nas bordas */
 html.light .c-bg2 { backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; }
 
+/* ── Sidebar no modo claro ─────────────────────────────────────────────────── */
+/* Fundo: azul-acinzentado claro, semi-opaco */
+html.light .dashboard-root aside {
+  background-color: rgba(186,210,235,0.82) !important;
+  border-color: rgba(147,191,230,0.55) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 0 30px rgba(100,160,220,0.15) !important;
+}
+/* Ícones e texto — escuro para contrastar com o fundo claro */
+html.light .dashboard-root aside svg {
+  color: rgba(30,58,138,0.45) !important;
+}
+html.light .dashboard-root aside button:hover svg,
+html.light .dashboard-root aside a:hover svg {
+  color: rgba(29,78,216,0.90) !important;
+}
+/* Ícone activo */
+html.light .dashboard-root aside .text-white {
+  color: #1d4ed8 !important;
+}
+/* Indicador activo (barra lateral) */
+html.light .dashboard-root aside [class*="bg-white/40"] {
+  background-color: rgba(29,78,216,0.6) !important;
+}
+/* Divisória */
+html.light .dashboard-root aside [class*="bg-white/10"] {
+  background-color: rgba(100,140,200,0.25) !important;
+}
+/* Labels flutuantes */
+html.light .dashboard-root aside span {
+  color: rgba(29,78,216,0.85) !important;
+}
+/* Ponto de status */
+html.light .dashboard-root aside .bg-green-500 { box-shadow: 0 0 8px rgba(34,197,94,0.5) !important; }
+html.light .dashboard-root aside .bg-blue-500  { box-shadow: 0 0 8px rgba(59,130,246,0.5) !important; }
+/* Rodapé do sidebar (nome do utilizador) */
+html.light .dashboard-root aside .text-white\/40,
+html.light .dashboard-root aside .text-white\/50,
+html.light .dashboard-root aside .text-white\/60 {
+  color: rgba(30,58,138,0.55) !important;
+}
+html.light .dashboard-root aside .text-white\/80,
+html.light .dashboard-root aside .text-white\/90,
+html.light .dashboard-root aside .text-white {
+  color: #1e3a8a !important;
+}
+
 /* ─── Utility classes ────────────────────────────────────────────────────── */
 /* Backgrounds */
 .c-bg  { background-color: var(--c-bg)  !important; }
