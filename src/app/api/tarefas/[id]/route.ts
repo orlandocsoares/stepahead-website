@@ -42,6 +42,10 @@ export async function GET(_req: Request, { params }: Params) {
   );
   if (!tarefaRes.rows.length) return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
 
+  // Garantir que as colunas nota/feedback existem (migração automática)
+  await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS nota VARCHAR(20)`, []);
+  await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS feedback TEXT`, []);
+
   const entregasRes = await dbQuery(
     `SELECT p.id, p.first_name, p.last_name, p.email, td.estado, td.entregue_at,
             td.resposta_url, td.resposta_nome, td.nota, td.feedback
