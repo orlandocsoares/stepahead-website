@@ -7,7 +7,7 @@ export async function GET() {
   const [
     formadores, proximoEvento, totalMateriais, telemetria,
     totalFormandos, provincias, turmas, areasMateriais,
-    sessoesRealizadas, provinciasStats,
+    sessoesRealizadas, provinciasStats, areasPublicas, totalPublicos,
   ] = await Promise.all([
     safe(dbQuery(`
       SELECT id, first_name, last_name, specialization AS especialidade, biografia, avatar_url, provincia
@@ -34,6 +34,15 @@ export async function GET() {
       GROUP BY area ORDER BY total DESC LIMIT 5
     `)),
     safe(dbQuery(`SELECT COUNT(*) AS total FROM agenda_atividades WHERE data_evento < NOW()`)),
+    safe(dbQuery(`
+      SELECT area, COUNT(*) AS total
+      FROM arquivos
+      WHERE site_publico = true AND visibilidade = 'publico' AND area IS NOT NULL AND area != ''
+        AND (disponivel_de IS NULL OR disponivel_de <= NOW())
+        AND (disponivel_ate IS NULL OR disponivel_ate >= NOW())
+      GROUP BY area ORDER BY total DESC LIMIT 6
+    `)),
+    safe(dbQuery(`SELECT COUNT(*) AS total FROM arquivos WHERE site_publico = true AND visibilidade = 'publico'`)),
     safe(dbQuery(`
       SELECT
         LOWER(provincia) AS prov,
@@ -63,6 +72,8 @@ export async function GET() {
     total_provincias: Number(provincias.rows[0]?.total ?? 0),
     total_turmas: Number(turmas.rows[0]?.total ?? 0),
     areas_materiais: areasMateriais.rows.map((r: any) => ({ area: r.area, total: Number(r.total) })),
+    areas_publicas: areasPublicas.rows.map((r: any) => ({ area: r.area, total: Number(r.total) })),
+    total_recursos_publicos: Number(totalPublicos.rows[0]?.total ?? 0),
     sessoes_realizadas: Number(sessoesRealizadas.rows[0]?.total ?? 0),
     provincias_stats: {
       luanda: provMap['luanda'] ?? { formadores: 0, formandos: 0 },
