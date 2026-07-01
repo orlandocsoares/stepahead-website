@@ -75,6 +75,20 @@ html.light {
 /* No modo claro, os cards têm backdrop-blur leve para efeito glass nas bordas */
 html.light .c-bg2 { backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; }
 
+/* Overlay do dashboard — remover gradiente escuro no modo claro */
+html.light .dashboard-overlay { background: none !important; }
+
+/* Fundo raiz do dashboard — transparente no modo claro (a imagem já basta) */
+html.light .dashboard-root { background-color: transparent !important; }
+
+/* Sidebar e topbar — usar backdrop-blur em vez de cor sólida escura */
+html.light .c-bg {
+  background-color: rgba(210,228,248,0.82) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+html.light .c-br { border-color: rgba(140,185,230,0.40) !important; }
+
 /* ── Sidebar no modo claro ─────────────────────────────────────────────────── */
 /* Fundo: azul-acinzentado claro, semi-opaco */
 html.light .dashboard-root aside {
