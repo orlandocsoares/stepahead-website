@@ -2,18 +2,8 @@
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import dynamic from "next/dynamic";
-import { FileText, X, ChevronRight, BookOpen, Loader2, ExternalLink } from "lucide-react";
+import { FileText, X, BookOpen, Loader2, ExternalLink, Download } from "lucide-react";
 import Image from "next/image";
-
-const PdfViewer = dynamic(() => import("@/components/PdfViewer").then(m => m.PdfViewer), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-64 gap-2 text-white/40 text-sm">
-      <Loader2 size={16} className="animate-spin" /> A carregar leitor...
-    </div>
-  ),
-});
 
 type Recurso = {
   id: string;
@@ -227,28 +217,31 @@ function RecursosContent() {
 
       {/* Modal viewer fullscreen */}
       {viewing && (
-        <div
-          className="fixed inset-0 z-50 flex flex-col bg-[#08080f]"
-          onContextMenu={e => e.preventDefault()}
-        >
+        <div className="fixed inset-0 z-50 flex flex-col bg-[#08080f]" onContextMenu={e => e.preventDefault()}>
           {/* Barra do viewer */}
           <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06] shrink-0 bg-[#0d0d14]">
             <div className="min-w-0 flex-1 mr-4">
               <p className="text-sm font-semibold text-white truncate">{viewing.label}</p>
               <p className="text-[11px] text-white/35 mt-0.5">{viewing.area} · {formatDate(viewing.created_at)}</p>
             </div>
-            <button
-              onClick={() => setViewing(null)}
-              className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.08] transition-colors shrink-0 flex items-center gap-1.5 text-xs"
-            >
-              <X size={16} /> Fechar
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <a href={`/api/recursos/pdf/${viewing.id}`} download
+                className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.08] transition-colors flex items-center gap-1.5 text-xs">
+                <Download size={15} /> Descarregar
+              </a>
+              <button onClick={() => setViewing(null)}
+                className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.08] transition-colors flex items-center gap-1.5 text-xs">
+                <X size={16} /> Fechar
+              </button>
+            </div>
           </div>
 
-          {/* PDF */}
-          <div className="flex-1 overflow-y-auto flex justify-center py-6 px-4">
-            <PdfViewer url={`/api/recursos/pdf/${viewing.id}`} />
-          </div>
+          {/* PDF via iframe — mais compatível que react-pdf */}
+          <iframe
+            src={`/api/recursos/pdf/${viewing.id}`}
+            className="flex-1 w-full border-0"
+            title={viewing.label}
+          />
         </div>
       )}
     </div>
