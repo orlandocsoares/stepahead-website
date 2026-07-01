@@ -8,7 +8,7 @@ import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BASE_FRAME_URL, DASHBOARD_URL } from "@/lib/program-config";
 import { PhasesSidebar } from "@/components/PhasesSidebar"; 
 import { Navigator } from "@/components/Navigator";
@@ -182,6 +182,7 @@ export default function HeroSection() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { profile, loading: profileLoading, refresh: refreshProfile } = useProfile();
 
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -229,6 +230,17 @@ export default function HeroSection() {
   useEffect(() => {
     setSessionId(Math.random().toString(36).substring(2, 11) + Date.now().toString(36));
   }, []);
+
+  // Navegar para fase via ?phase=N na URL
+  useEffect(() => {
+    const p = searchParams.get("phase");
+    if (p !== null) {
+      const idx = parseInt(p, 10);
+      if (!isNaN(idx) && idx >= 0 && idx < PROGRAM_PHASES.length) {
+        setTimeout(() => goToPhase(idx), 100);
+      }
+    }
+  }, [searchParams]);
 
   // Escuta do Telemóvel via SSE
   useEffect(() => {

@@ -281,7 +281,7 @@ function RecursosContent() {
             { name: "Capacitação",    href: "/" },
             { name: "Par Pedagógico", href: "/" },
             { name: "Luanda & Bié",   href: "/" },
-            { name: "Recursos",       href: "/recursos", active: true },
+            { name: "Recursos",       href: "/?phase=5", active: true },
             { name: "Monitorização",  href: "/" },
           ].map((item) => (
             <a
