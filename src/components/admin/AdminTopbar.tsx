@@ -238,9 +238,11 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
 
           {msgOpen && typeof document !== "undefined" && createPortal(
             <div ref={msgDropdownRef} className="fixed c-bg2 c-br border rounded-xl shadow-2xl z-[9999] flex flex-col overflow-hidden" style={{ top: msgPos.top, right: msgPos.right, width: dropdownWidth, height: dropdownHeight }}>
-              {/* Handle de arrasto — canto inferior esquerdo */}
-              <div onMouseDown={e => startResize(e, "msg")} className="absolute bottom-0 left-0 w-5 h-5 cursor-sw-resize z-50 flex items-end justify-start pl-1 pb-1 opacity-30 hover:opacity-80 transition-opacity" title="Redimensionar">
-                <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 10 L10 0" stroke="currentColor" strokeWidth="1.5"/><path d="M0 6 L6 0" stroke="currentColor" strokeWidth="1.5"/></svg>
+              {/* Handle de arrasto — barra no fundo à esquerda */}
+              <div onMouseDown={e => startResize(e, "msg")} className="absolute bottom-0 left-0 right-0 h-5 cursor-s-resize z-50 flex items-center justify-center gap-1 opacity-40 hover:opacity-100 transition-opacity group" title="Arrastar para redimensionar">
+                <div className="flex items-center gap-0.5">
+                  {[...Array(5)].map((_, i) => <div key={i} className="w-5 h-[3px] rounded-full bg-current c-tx4 group-hover:bg-blue-400 transition-colors" />)}
+                </div>
               </div>
               <div className="flex items-center justify-between px-5 py-3.5 border-b c-br">
                 <span className="text-sm font-semibold c-tx">Mensagens</span>
@@ -312,9 +314,11 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
 
           {notifOpen && typeof document !== "undefined" && createPortal(
             <div ref={bellDropdownRef} className="fixed c-bg2 c-br border rounded-xl shadow-2xl z-[9999] flex flex-col overflow-hidden" style={{ top: bellPos.top, right: bellPos.right, width: dropdownWidth, height: dropdownHeight }}>
-              {/* Handle de arrasto — canto inferior esquerdo */}
-              <div onMouseDown={e => startResize(e, "bell")} className="absolute bottom-0 left-0 w-5 h-5 cursor-sw-resize z-50 flex items-end justify-start pl-1 pb-1 opacity-30 hover:opacity-80 transition-opacity" title="Redimensionar">
-                <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 10 L10 0" stroke="currentColor" strokeWidth="1.5"/><path d="M0 6 L6 0" stroke="currentColor" strokeWidth="1.5"/></svg>
+              {/* Handle de arrasto — barra no fundo */}
+              <div onMouseDown={e => startResize(e, "bell")} className="absolute bottom-0 left-0 right-0 h-5 cursor-s-resize z-50 flex items-center justify-center gap-1 opacity-40 hover:opacity-100 transition-opacity group" title="Arrastar para redimensionar">
+                <div className="flex items-center gap-0.5">
+                  {[...Array(5)].map((_, i) => <div key={i} className="w-5 h-[3px] rounded-full bg-current c-tx4 group-hover:bg-blue-400 transition-colors" />)}
+                </div>
               </div>
               <div className="flex items-center justify-between px-5 py-3.5 border-b c-br">
                 <span className="text-sm font-semibold c-tx">Notificações</span>
