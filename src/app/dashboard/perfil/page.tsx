@@ -122,7 +122,7 @@ export default function PerfilPage() {
       form.append("file", file); form.append("upsert", "true");
       const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: form });
       if (!uploadRes.ok) throw new Error("Erro no upload.");
-      const avatarUrl = `/storage/avatars/${fileName}`;
+      const avatarUrl = `/storage/v1/object/public/avatars/${fileName}`;
       await fetch("/api/db/profiles", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

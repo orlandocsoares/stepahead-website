@@ -29,6 +29,16 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  async redirects() {
+    return [
+      // Redirecionar URLs antigas de avatares para o novo path
+      {
+        source: "/storage/avatars/:file",
+        destination: "/storage/v1/object/public/avatars/:file",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       // Regra geral — bloqueia iframes em todo o site

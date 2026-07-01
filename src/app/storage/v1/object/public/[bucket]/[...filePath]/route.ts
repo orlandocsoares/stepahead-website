@@ -13,7 +13,7 @@ const BUCKET_ALIAS_MAP: Record<string, string> = {
 };
 
 // Buckets acessíveis sem autenticação (assets públicos do site)
-const PUBLIC_BUCKETS = new Set(["logo-sabermais", "logo-institutos", "nuvem-loop"]);
+const PUBLIC_BUCKETS = new Set(["logo-sabermais", "logo-institutos", "nuvem-loop", "avatars"]);
 
 function inferContentType(fileName: string) {
   const lower = fileName.toLowerCase();
