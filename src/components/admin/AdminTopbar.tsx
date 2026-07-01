@@ -403,9 +403,11 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
               }
               setAvatarOpen(o => !o);
             }}
-            className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-400 uppercase shrink-0 hover:bg-blue-600/50 transition-colors"
+            className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-400 uppercase shrink-0 hover:bg-blue-600/50 transition-colors overflow-hidden"
           >
-            {initial}
+            {user?.avatar_url
+              ? <img src={user.avatar_url} alt={initial} className="w-full h-full object-cover" />
+              : initial}
           </button>
 
           {avatarOpen && typeof document !== "undefined" && createPortal(

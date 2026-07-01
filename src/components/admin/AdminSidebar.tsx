@@ -151,8 +151,10 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
       {/* User + actions */}
       <div className="border-t c-br p-3 space-y-1 shrink-0">
         <div className={`flex items-center gap-3 px-2 py-2 ${collapsed ? "md:hidden" : ""}`}>
-          <div className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/30 flex items-center justify-center shrink-0 text-xs font-bold text-blue-400 uppercase">
-            {displayName?.[0] ?? "?"}
+          <div className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/30 flex items-center justify-center shrink-0 text-xs font-bold text-blue-400 uppercase overflow-hidden">
+            {user?.avatar_url
+              ? <img src={user.avatar_url} alt={displayName?.[0] ?? "?"} className="w-full h-full object-cover" />
+              : (displayName?.[0] ?? "?")}
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold c-tx truncate">{displayName}</p>
