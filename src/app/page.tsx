@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { BASE_FRAME_URL, DASHBOARD_URL } from "@/lib/program-config";
 import { PhasesSidebar } from "@/components/PhasesSidebar"; 
 import { Navigator } from "@/components/Navigator";
@@ -176,13 +177,26 @@ function ForgotPasswordLink() {
   );
 }
 
+function PhaseNavigator({ goToPhase }: { goToPhase: (i: number) => void }) {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const p = searchParams.get("phase");
+    if (p !== null) {
+      const idx = parseInt(p, 10);
+      if (!isNaN(idx) && idx >= 0 && idx < PROGRAM_PHASES.length) {
+        setTimeout(() => goToPhase(idx), 150);
+      }
+    }
+  }, [searchParams, goToPhase]);
+  return null;
+}
+
 export default function HeroSection() {
   const isDashboardView = false;
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { profile, loading: profileLoading, refresh: refreshProfile } = useProfile();
 
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -231,16 +245,6 @@ export default function HeroSection() {
     setSessionId(Math.random().toString(36).substring(2, 11) + Date.now().toString(36));
   }, []);
 
-  // Navegar para fase via ?phase=N na URL
-  useEffect(() => {
-    const p = searchParams.get("phase");
-    if (p !== null) {
-      const idx = parseInt(p, 10);
-      if (!isNaN(idx) && idx >= 0 && idx < PROGRAM_PHASES.length) {
-        setTimeout(() => goToPhase(idx), 100);
-      }
-    }
-  }, [searchParams]);
 
   // Escuta do Telemóvel via SSE
   useEffect(() => {
@@ -1028,6 +1032,7 @@ export default function HeroSection() {
               </div>
 
               <div className="hidden md:flex flex-col items-end gap-4 md:gap-8 pointer-events-auto my-auto shrink-0 transform-gpu min-[1000px]:scale-100 scale-90 origin-right">
+                <Suspense fallback={null}><PhaseNavigator goToPhase={goToPhase} /></Suspense>
                 <PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} phases={PROGRAM_PHASES} setIsHovering={setIsHovering} />
                 <Navigator activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} setIsHovering={setIsHovering} />
               </div>
