@@ -219,21 +219,21 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           </button>
 
           {msgOpen && typeof document !== "undefined" && createPortal(
-            <div ref={msgDropdownRef} className="fixed w-80 c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: msgPos.top, right: msgPos.right }}>
-              <div className="flex items-center justify-between px-4 py-3 border-b c-br">
-                <span className="text-xs font-semibold c-tx">Mensagens</span>
+            <div ref={msgDropdownRef} className="fixed w-[420px] c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: msgPos.top, right: msgPos.right }}>
+              <div className="flex items-center justify-between px-5 py-3.5 border-b c-br">
+                <span className="text-sm font-semibold c-tx">Mensagens</span>
                 {msgUnread > 0 && (
-                  <button onClick={clearMensagensLista} className="flex items-center gap-1 text-[10px] c-tx4 hc-tx transition-colors">
-                    <CheckCheck size={12} /> Marcar todas como lidas
+                  <button onClick={clearMensagensLista} className="flex items-center gap-1 text-xs c-tx4 hc-tx transition-colors">
+                    <CheckCheck size={13} /> Marcar todas como lidas
                   </button>
                 )}
               </div>
 
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-[420px] overflow-y-auto">
                 {conversations.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <MessageSquare size={24} className="mx-auto c-tx5 mb-2" />
-                    <p className="text-xs c-tx4">Sem conversas</p>
+                  <div className="py-10 text-center">
+                    <MessageSquare size={28} className="mx-auto c-tx5 mb-2" />
+                    <p className="text-sm c-tx4">Sem conversas</p>
                   </div>
                 ) : conversations.map(c => {
                   const unreadC = Number(c.unread_count ?? 0);
@@ -242,20 +242,20 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
                     <div
                       key={c.other_id}
                       onClick={() => { setMsgOpen(false); router.push(`/dashboard/mensagens?with=${c.other_id}`); }}
-                      className={`w-full text-left px-4 py-3 border-b c-br hc-s2 transition-colors cursor-pointer flex gap-3 ${unreadC > 0 ? "bg-blue-500/5 border-l-2 border-l-blue-500" : ""}`}
+                      className={`w-full text-left px-5 py-3.5 border-b c-br hc-s2 transition-colors cursor-pointer flex gap-3.5 ${unreadC > 0 ? "bg-blue-500/5 border-l-2 border-l-blue-500" : ""}`}
                     >
-                      <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/20 flex items-center justify-center text-xs text-blue-400 font-bold uppercase shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-blue-600/20 border border-blue-500/20 flex items-center justify-center text-sm text-blue-400 font-bold uppercase shrink-0">
                         {name[0]}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className={`text-xs leading-tight truncate ${unreadC > 0 ? "font-semibold c-tx" : "font-medium c-tx3"}`}>{name}</p>
-                          <span className={`text-[10px] shrink-0 ${unreadC > 0 ? "text-blue-400" : "c-tx5"}`}>{timeAgo(c.created_at)}</span>
+                          <p className={`text-sm leading-tight truncate ${unreadC > 0 ? "font-semibold c-tx" : "font-medium c-tx3"}`}>{name}</p>
+                          <span className={`text-xs shrink-0 ${unreadC > 0 ? "text-blue-400" : "c-tx5"}`}>{timeAgo(c.created_at)}</span>
                         </div>
-                        <p className={`text-[11px] mt-0.5 truncate ${unreadC > 0 ? "c-tx3" : "c-tx5"}`}>{c.last_message}</p>
+                        <p className={`text-xs mt-1 truncate ${unreadC > 0 ? "c-tx3" : "c-tx5"}`}>{c.last_message}</p>
                       </div>
                       {unreadC > 0 && (
-                        <span className="w-4 h-4 rounded-full bg-blue-500 text-[9px] c-tx flex items-center justify-center font-bold shrink-0 self-center">
+                        <span className="w-5 h-5 rounded-full bg-blue-500 text-[10px] c-tx flex items-center justify-center font-bold shrink-0 self-center">
                           {unreadC > 9 ? "9+" : unreadC}
                         </span>
                       )}
@@ -289,33 +289,33 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           </button>
 
           {notifOpen && typeof document !== "undefined" && createPortal(
-            <div ref={bellDropdownRef} className="fixed w-80 c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: bellPos.top, right: bellPos.right }}>
-              <div className="flex items-center justify-between px-4 py-3 border-b c-br">
-                <span className="text-xs font-semibold c-tx">Notificações</span>
+            <div ref={bellDropdownRef} className="fixed w-[420px] c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: bellPos.top, right: bellPos.right }}>
+              <div className="flex items-center justify-between px-5 py-3.5 border-b c-br">
+                <span className="text-sm font-semibold c-tx">Notificações</span>
                 <div className="flex items-center gap-3">
                   {unread > 0 && (
-                    <button onClick={markAllRead} className="flex items-center gap-1 text-[10px] c-tx4 hc-tx transition-colors">
-                      <CheckCheck size={12} /> Marcar lidas
+                    <button onClick={markAllRead} className="flex items-center gap-1 text-xs c-tx4 hc-tx transition-colors">
+                      <CheckCheck size={13} /> Marcar lidas
                     </button>
                   )}
                   {notifs.length > 0 && (
-                    <button onClick={clearNotifs} className="flex items-center gap-1 text-[10px] c-tx5 hover:text-red-400 transition-colors">
-                      <Trash2 size={12} /> Limpar
+                    <button onClick={clearNotifs} className="flex items-center gap-1 text-xs c-tx5 hover:text-red-400 transition-colors">
+                      <Trash2 size={13} /> Limpar
                     </button>
                   )}
                 </div>
               </div>
 
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-[480px] overflow-y-auto">
                 {notifs.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <Bell size={24} className="mx-auto c-tx5 mb-2" />
-                    <p className="text-xs c-tx4">Sem notificações</p>
+                  <div className="py-10 text-center">
+                    <Bell size={28} className="mx-auto c-tx5 mb-2" />
+                    <p className="text-sm c-tx4">Sem notificações</p>
                   </div>
                 ) : notifs.map(n => {
                   const isExpanded = expandedId === n.id;
                   const iconBg = n.tipo === "novo_formando" ? "bg-emerald-500/10" : n.tipo === "novo_formador" ? "bg-amber-500/10" : n.tipo === "anuncio" ? "bg-purple-500/10" : "bg-blue-500/10";
-                  const icon = n.tipo === "novo_formando" ? <UserCheck size={14} className="text-emerald-400" /> : n.tipo === "novo_formador" ? <ShieldCheck size={14} className="text-amber-400" /> : n.tipo === "anuncio" ? <Megaphone size={14} className="text-purple-400" /> : n.tipo === "tarefa" ? <ClipboardList size={14} className="text-blue-400" /> : <Bell size={14} className="text-blue-400" />;
+                  const icon = n.tipo === "novo_formando" ? <UserCheck size={16} className="text-emerald-400" /> : n.tipo === "novo_formador" ? <ShieldCheck size={16} className="text-amber-400" /> : n.tipo === "anuncio" ? <Megaphone size={16} className="text-purple-400" /> : n.tipo === "tarefa" ? <ClipboardList size={16} className="text-blue-400" /> : <Bell size={16} className="text-blue-400" />;
                   const destino = n.link ?? (
                     n.tipo === "novo_formando" || n.tipo === "novo_formador" ? "/dashboard/admin" :
                     n.tipo === "tarefa" ? "/dashboard/tarefas" :
@@ -329,27 +329,27 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
                         if (destino) { setNotifOpen(false); router.push(destino); return; }
                         setExpandedId(isExpanded ? null : n.id);
                       }}
-                      className={`w-full text-left px-4 py-3 border-b c-br hc-s2 transition-colors cursor-pointer ${!n.lida ? "bg-blue-500/5" : ""}`}
+                      className={`w-full text-left px-5 py-4 border-b c-br hc-s2 transition-colors cursor-pointer ${!n.lida ? "bg-blue-500/5" : ""}`}
                     >
-                      <div className="flex gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${iconBg}`}>{icon}</div>
+                      <div className="flex gap-3.5">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${iconBg}`}>{icon}</div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <p className={`text-xs font-medium leading-tight ${!n.lida ? "c-tx" : "c-tx3"}`}>{n.titulo}</p>
-                            <span className="text-[10px] c-tx5 shrink-0">{timeAgo(n.created_at)}</span>
+                            <p className={`text-sm font-medium leading-tight ${!n.lida ? "c-tx" : "c-tx3"}`}>{n.titulo}</p>
+                            <span className="text-xs c-tx5 shrink-0">{timeAgo(n.created_at)}</span>
                           </div>
                           {n.mensagem && (
-                            <p className={`text-[11px] c-tx4 mt-0.5 leading-relaxed whitespace-pre-wrap ${isExpanded ? "" : "line-clamp-2"}`}>
+                            <p className={`text-xs c-tx4 mt-1 leading-relaxed whitespace-pre-wrap ${isExpanded ? "" : "line-clamp-3"}`}>
                               {n.mensagem}
                             </p>
                           )}
-                          {!n.lida && !isExpanded && <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mt-1" />}
+                          {!n.lida && !isExpanded && <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5" />}
                           {destino ? (
-                            <span className="text-[10px] text-blue-400 mt-1 inline-block font-medium">
+                            <span className="text-xs text-blue-400 mt-1.5 inline-block font-medium">
                               Abrir →
                             </span>
                           ) : n.mensagem && n.mensagem.length > 80 && (
-                            <span className="text-[10px] text-blue-400/60 mt-1 inline-block">
+                            <span className="text-xs text-blue-400/60 mt-1.5 inline-block">
                               {isExpanded ? "▲ Recolher" : "▼ Ver tudo"}
                             </span>
                           )}
