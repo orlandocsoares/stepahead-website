@@ -82,18 +82,38 @@ function RecursosContent() {
       <div className="fixed inset-0 bg-[#080c1a]/70 pointer-events-none z-0" />
       {/* Header */}
       <header className="border-b border-white/[0.06] bg-[#080c1a]/80 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3">
-            <Image
-              src="/logo.png"
-              alt="SaberMais" width={140} height={36}
-              className="h-9 w-auto brightness-0 invert drop-shadow-[0_0_8px_rgba(99,179,237,0.85)] drop-shadow-[0_0_20px_rgba(59,130,246,0.5)]"
-            />
+        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between gap-6">
+          {/* Logo */}
+          <a href="/" className="shrink-0">
+            <Image src="/logo.png" alt="SaberMais" width={120} height={32}
+              className="h-8 w-auto brightness-0 invert drop-shadow-[0_0_8px_rgba(99,179,237,0.85)]" />
           </a>
+
+          {/* Nav links */}
+          <nav className="hidden sm:flex items-center gap-1">
+            <a href="/" className="px-3 py-1.5 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors">
+              Início
+            </a>
+            <a href="/recursos" className="px-3 py-1.5 rounded-lg text-sm text-white hover:bg-white/[0.06] transition-colors font-medium">
+              Recursos
+            </a>
+          </nav>
+
+          {/* CTA */}
+          <div className="flex items-center gap-2 shrink-0">
+            <a href="/login"
+              className="px-4 py-1.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors hidden sm:block">
+              Entrar
+            </a>
+            <a href="/register"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors">
+              Área reservada
+            </a>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-12 relative z-10">
+      <main className="max-w-5xl mx-auto px-6 py-12 relative z-10">
         {/* Título */}
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-3">
