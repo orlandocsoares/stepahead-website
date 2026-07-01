@@ -76,6 +76,29 @@ function RecursosContent() {
   }, [recursosFiltrados]);
 
   return (
+    <>
+    <style>{`
+      @keyframes border-spin {
+        from { --angle: 0deg; }
+        to   { --angle: 360deg; }
+      }
+      @property --angle {
+        syntax: '<angle>';
+        initial-value: 0deg;
+        inherits: false;
+      }
+      .border-spin {
+        animation: border-spin 2.8s linear infinite;
+        background: conic-gradient(
+          from var(--angle),
+          transparent 70%,
+          rgba(255,255,255,0.9) 85%,
+          rgba(255,255,255,1) 90%,
+          rgba(255,255,255,0.9) 95%,
+          transparent 100%
+        );
+      }
+    `}</style>
     <div className="min-h-screen text-white overflow-y-auto relative"
       style={{ backgroundImage: "url('/modos/meio-escuro.webp')", backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
       {/* Overlay escuro para legibilidade */}
@@ -89,28 +112,13 @@ function RecursosContent() {
               className="h-8 w-auto brightness-0 invert drop-shadow-[0_0_8px_rgba(99,179,237,0.85)]" />
           </a>
 
-          {/* Nav links */}
-          <nav className="hidden md:flex items-center gap-0.5">
-            <a href="/" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
+          {/* Nav links — apenas Início no header; resto vai para o painel lateral */}
+          <nav className="hidden sm:flex items-center gap-1">
+            <a href="/" className="px-3 py-1.5 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors">
               Início
             </a>
-            <a href="/?s=saber-mais" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
-              Saber Mais
-            </a>
-            <a href="/?s=capacitacao" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
-              Capacitação
-            </a>
-            <a href="/?s=par-pedagogico" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
-              Par Pedagógico
-            </a>
-            <a href="/?s=luanda-bie" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
-              Luanda &amp; Bié
-            </a>
-            <a href="/recursos" className="px-3 py-1.5 rounded-lg text-xs text-white font-semibold hover:bg-white/[0.06] transition-colors tracking-wide">
+            <a href="/recursos" className="px-3 py-1.5 rounded-lg text-sm text-white font-medium hover:bg-white/[0.06] transition-colors">
               Recursos
-            </a>
-            <a href="/?s=monitorizacao" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
-              Monitorização
             </a>
           </nav>
 
@@ -250,6 +258,37 @@ function RecursosContent() {
         )}
       </main>
 
+      {/* Painel lateral direito — navegação por fases (igual à página principal) */}
+      <div className="fixed top-0 right-4 sm:right-6 md:right-10 bottom-0 z-30 hidden md:flex flex-col justify-center items-end py-10 pointer-events-none">
+        <div className="flex flex-col items-end gap-3 pointer-events-auto">
+          {[
+            { name: "Saber Mais",     href: "/" },
+            { name: "Capacitação",    href: "/" },
+            { name: "Par Pedagógico", href: "/" },
+            { name: "Luanda & Bié",   href: "/" },
+            { name: "Recursos",       href: "/recursos", active: true },
+            { name: "Monitorização",  href: "/" },
+          ].map((item) => (
+            <a
+              key={item.name}
+              href={item.href}
+              className={`group relative w-44 md:w-56 h-14 rounded-xl flex items-center justify-center transition-all duration-700 ${item.active ? "scale-[1.03]" : "scale-100 hover:scale-[1.02]"}`}
+            >
+              {item.active && (
+                <div className="absolute -inset-[1px] rounded-xl border-spin z-0 pointer-events-none" style={{ borderRadius: "0.75rem" }} />
+              )}
+              <div className={`absolute inset-[1px] rounded-[10px] backdrop-blur-xl transition-all duration-700 z-10 ${item.active ? "bg-slate-950/80" : "bg-white/[0.04] group-hover:bg-white/[0.10]"}`} />
+              {!item.active && (
+                <div className="absolute inset-0 rounded-xl border border-white/10 group-hover:border-white/25 transition-all duration-700 z-10 pointer-events-none" />
+              )}
+              <span className={`relative z-20 text-[11px] md:text-[12px] uppercase tracking-[0.55em] md:tracking-[0.6em] font-medium leading-none transition-all duration-700 truncate px-4 ${item.active ? "text-white font-bold" : "text-white/70 group-hover:text-white/95"}`}>
+                {item.name}
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+
       {/* Modal viewer fullscreen */}
       {viewing && (
         <div className="fixed inset-0 z-50 flex flex-col bg-[#08080f]" onContextMenu={e => e.preventDefault()}>
@@ -281,6 +320,7 @@ function RecursosContent() {
         </div>
       )}
     </div>
+    </>
   );
 }
 
