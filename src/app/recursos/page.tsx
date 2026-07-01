@@ -230,11 +230,11 @@ function RecursosContent() {
             </button>
           </div>
 
-          {/* PDF via iframe — #toolbar=0 oculta barra de ferramentas do browser (download) */}
-          <iframe
-            src={`/api/recursos/pdf/${viewing.id}#toolbar=0&navpanes=0&scrollbar=1`}
-            className="flex-1 w-full border-0"
-            title={viewing.label}
+          {/* PDF via embed — não sujeito ao X-Frame-Options, sem toolbar de download */}
+          <embed
+            src={`/api/recursos/pdf/${viewing.id}#toolbar=0&navpanes=0`}
+            type="application/pdf"
+            className="flex-1 w-full"
           />
         </div>
       )}
