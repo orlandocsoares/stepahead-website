@@ -3,7 +3,7 @@ export type SiteMode = "escuro" | "meio-escuro" | "meio-claro" | "claro";
 export const MODES: { id: SiteMode; label: string; thumb: string; overlay: string; blur: string }[] = [
   {
     id: "escuro",
-    label: "Escuro",
+    label: "Madrugada",
     thumb: "/modos/escuro.png",
     overlay: "bg-black/35",
     blur: "backdrop-blur-[8px]",
@@ -24,7 +24,7 @@ export const MODES: { id: SiteMode; label: string; thumb: string; overlay: strin
   },
   {
     id: "claro",
-    label: "Claro",
+    label: "Dia",
     thumb: "/modos/claro.webp",
     overlay: "bg-white/20",
     blur: "backdrop-blur-[10px]",
