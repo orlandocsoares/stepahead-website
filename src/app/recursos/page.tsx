@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { FileText, X, BookOpen, Loader2, ExternalLink } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { FileText, X, BookOpen, Loader2, ExternalLink, LayoutDashboard } from "lucide-react";
 import Image from "next/image";
+import { HeroBranding } from "@/components/HeroBranding";
 
 type Recurso = {
   id: string;
@@ -43,13 +44,21 @@ const AREA_ACCENT: Record<string, string> = {
 };
 const DEFAULT_COLOR = "bg-white/5 text-white/60 border-white/10";
 
+type Profile = { first_name?: string; last_name?: string; avatar_url?: string };
+
 function RecursosContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const areaFiltro = searchParams.get("area") ?? null;
 
   const [recursos, setRecursos] = useState<Recurso[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewing, setViewing] = useState<Recurso | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me").then(r => r.ok ? r.json() : null).then(d => setProfile(d ?? null)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/recursos")
@@ -124,14 +133,41 @@ function RecursosContent() {
 
           {/* CTA */}
           <div className="flex items-center gap-2 shrink-0">
-            <a href="/login"
-              className="px-4 py-1.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors hidden sm:block">
-              Entrar
-            </a>
-            <a href="/register"
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors">
-              Área reservada
-            </a>
+            {profile ? (
+              <>
+                <button
+                  onClick={() => router.push("/dashboard/perfil")}
+                  className="relative w-9 h-9 rounded-full border border-white/20 bg-slate-950/80 overflow-hidden hover:border-white/50 transition-all"
+                  title={profile.first_name || "Perfil"}
+                >
+                  {profile.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="w-full h-full flex items-center justify-center text-[11px] font-bold text-white/80 uppercase">
+                      {(profile.first_name?.[0] ?? "") + (profile.last_name?.[0] ?? "")}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="inline-flex items-center gap-2 px-4 h-9 rounded-full border border-white/20 bg-slate-950/80 text-white/80 text-[11px] font-bold uppercase tracking-[0.25em] transition-all hover:border-blue-400/60 hover:bg-slate-900/95 hover:text-white"
+                >
+                  <LayoutDashboard size={13} />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <a href="/login"
+                  className="px-4 py-1.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors hidden sm:block">
+                  Entrar
+                </a>
+                <a href="/register"
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors">
+                  Área reservada
+                </a>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -259,8 +295,9 @@ function RecursosContent() {
       </main>
 
       {/* Painel lateral direito — navegação por fases (igual à página principal) */}
-      <div className="fixed top-0 right-4 sm:right-6 md:right-10 bottom-0 z-30 hidden md:flex flex-col justify-center items-end py-10 pointer-events-none">
-        <div className="flex flex-col items-end gap-3 pointer-events-auto">
+      <div className="fixed top-0 right-4 sm:right-6 md:right-10 bottom-0 z-30 hidden md:flex flex-col justify-between items-end py-10 pointer-events-none">
+        <div className="shrink-0 h-16" />{/* espaço para o header */}
+        <div className="flex flex-col items-end gap-3 pointer-events-auto my-auto">
           {[
             { name: "Saber Mais",     href: "/" },
             { name: "Capacitação",    href: "/" },
@@ -286,6 +323,9 @@ function RecursosContent() {
               </span>
             </a>
           ))}
+        </div>
+        <div className="pointer-events-auto shrink-0">
+          <HeroBranding />
         </div>
       </div>
 
