@@ -14,7 +14,7 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 
 export default function SuperAdminPage() {
   const { user: profile, loading: profileLoading } = useAdminUser();
-  const [activeTab, setActiveTab] = useState<"users" | "agenda" | "arquivos" | "stats" | "anuncios">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "agenda" | "stats" | "anuncios">("users");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
@@ -135,7 +135,7 @@ export default function SuperAdminPage() {
   }, [profile]);
 
   const visibleTabs = useMemo(() => {
-    if (isAdminOrSuper(profile?.role)) return ["users", "agenda", "arquivos", "stats", "anuncios"] as const;
+    if (isAdminOrSuper(profile?.role)) return ["users", "agenda", "stats", "anuncios"] as const;
     if (profile?.role === "formador") return ["users"] as const;
     return [] as const;
   }, [profile]);
@@ -245,8 +245,7 @@ export default function SuperAdminPage() {
     setSearchTerm("");
 
     const url = activeTab === "users" ? "/api/admin/utilizadores" :
-                activeTab === "agenda" ? "/api/db/agenda_atividades" :
-                activeTab === "arquivos" ? "/api/db/arquivos" : "/api/db/dashboard_stats";
+                activeTab === "agenda" ? "/api/db/agenda_atividades" : "/api/db/dashboard_stats";
 
     try {
       const res = await fetch(url);
@@ -282,7 +281,6 @@ export default function SuperAdminPage() {
         return fullName.includes(s) || item.email?.toLowerCase().includes(s);
       }
       if (activeTab === "agenda") return item.titulo?.toLowerCase().includes(s) || item.local?.toLowerCase().includes(s);
-      if (activeTab === "arquivos") return item.label?.toLowerCase().includes(s) || item.area?.toLowerCase().includes(s);
       return true;
     });
   }, [data, searchTerm, activeTab]);
@@ -344,7 +342,7 @@ export default function SuperAdminPage() {
   };
 
   const handleUpdate = async (id: string, updates: any, closePowerModal = false) => {
-    const table = activeTab === "users" ? "profiles" : activeTab === "agenda" ? "agenda_atividades" : "arquivos";
+    const table = activeTab === "users" ? "profiles" : "agenda_atividades";
     const res = await fetch(`/api/db/${table}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -357,7 +355,7 @@ export default function SuperAdminPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Confirma a eliminação irreversível?")) return;
-    const table = activeTab === "users" ? "profiles" : activeTab === "agenda" ? "agenda_atividades" : "arquivos";
+    const table = activeTab === "users" ? "profiles" : "agenda_atividades";
     await fetch(`/api/db/${table}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -387,8 +385,6 @@ export default function SuperAdminPage() {
         data_evento: item.data_evento ? item.data_evento.split("T")[0] : "",
         tipo: item.tipo || "Global",
       });
-    } else if (activeTab === "arquivos") {
-      setEditForm({ label: item.label || "", area: item.area || "Geral" });
     }
   };
 
@@ -429,7 +425,7 @@ export default function SuperAdminPage() {
               <button key={tab} onClick={() => setActiveTab(tab as any)}
                 className={`px-5 py-2 rounded-lg text-xs font-medium transition-all ${activeTab === tab ? "bg-blue-600 c-tx shadow" : "c-tx3 hc-tx"}`}
               >
-                {tab === "users" ? "Utilizadores" : tab === "agenda" ? "Agenda" : tab === "arquivos" ? "Ficheiros" : tab === "stats" ? "Estatísticas" : "Anúncios"}
+                {tab === "users" ? "Utilizadores" : tab === "agenda" ? "Agenda" : tab === "stats" ? "Estatísticas" : "Anúncios"}
               </button>
             ))}
           </div>
@@ -1103,7 +1099,6 @@ export default function SuperAdminPage() {
                       <p className="text-sm font-medium c-tx truncate">{item.titulo || item.label || "Registo"}</p>
                       <p className="text-xs c-tx4">
                         {activeTab === "agenda" && `${item.local} · ${new Date(item.data_evento).toLocaleDateString("pt-PT")}`}
-                        {activeTab === "arquivos" && `${item.area} · ${item.tamanho || "—"}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
@@ -1136,7 +1131,7 @@ export default function SuperAdminPage() {
             <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b c-br">
               <h3 className="text-base font-semibold c-tx flex items-center gap-2">
                 <Pencil size={15} className="text-blue-400" />
-                {activeTab === "agenda" ? "Editar evento" : "Editar ficheiro"}
+                Editar evento
               </h3>
               <button onClick={() => setEditItem(null)} className="c-tx4 hc-tx"><X size={18} /></button>
             </div>
@@ -1168,24 +1163,6 @@ export default function SuperAdminPage() {
                       className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none">
                       <option value="Global" className="c-bg">Global</option>
                       <option value="Restrito" className="c-bg">Restrito</option>
-                    </select>
-                  </div>
-                </>
-              )}
-              {activeTab === "arquivos" && (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="text-xs c-tx3">Nome do ficheiro</label>
-                    <input required value={editForm.label} onChange={e => setEditForm({...editForm, label: e.target.value})}
-                      className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs c-tx3">Área</label>
-                    <select value={editForm.area} onChange={e => setEditForm({...editForm, area: e.target.value})}
-                      className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none">
-                      {["Geral","Matemática","Língua Portuguesa","Física","Química","Pedagogia"].map(a => (
-                        <option key={a} className="c-bg">{a}</option>
-                      ))}
                     </select>
                   </div>
                 </>
