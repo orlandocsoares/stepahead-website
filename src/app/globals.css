@@ -56,14 +56,15 @@ html.meio-claro {
 
 /* CLARO — dia, céu azul */
 html.light {
+  --dash-bg-image: url('/modos/claro.webp');
   --c-bg:   #b8cfe0;
-  --c-bg2:  rgba(180,210,240,0.65);
+  --c-bg2:  rgba(220,235,248,0.78);
   --c-s1:   rgba(0,0,0,0.03);
   --c-s2:   rgba(0,0,0,0.06);
   --c-s3:   rgba(0,0,0,0.10);
-  --c-tx:   #0f172a;
-  --c-tx2:  #1e293b;
-  --c-tx3:  #475569;
+  --c-tx:   #0f1f3d;
+  --c-tx2:  #1e3a5f;
+  --c-tx3:  #4a6a8a;
   --c-tx4:  #94a3b8;
   --c-tx5:  #cbd5e1;
   --c-br:   rgba(100,140,200,0.28);
