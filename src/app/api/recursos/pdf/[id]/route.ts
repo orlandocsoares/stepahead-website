@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
+import { readFile } from "fs/promises";
+import path from "path";
 
-// GET /api/recursos/pdf/[id] — proxy do PDF a partir do Supabase Storage
+const STORAGE_ROOT = path.join(process.cwd(), "storage");
+
+// GET /api/recursos/pdf/[id] — serve o PDF directamente do disco (sem autenticação)
+// Só disponível para ficheiros marcados como site_publico = true
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> }
@@ -18,29 +23,29 @@ export async function GET(
   }
 
   const nomeArquivo = res.rows[0].nome_arquivo as string;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const filePath = path.join(STORAGE_ROOT, "materiais", nomeArquivo);
 
-  if (!supabaseUrl) {
-    return new NextResponse("Configuração em falta.", { status: 500 });
+  // Protecção contra path traversal
+  if (!filePath.startsWith(path.join(STORAGE_ROOT, "materiais"))) {
+    return new NextResponse("Caminho inválido.", { status: 400 });
   }
 
-  const fileUrl = `${supabaseUrl}/storage/v1/object/public/materiais/${encodeURIComponent(nomeArquivo)}`;
-
   try {
-    const upstream = await fetch(fileUrl);
-    if (!upstream.ok) {
-      return new NextResponse("Ficheiro não encontrado.", { status: 404 });
-    }
-    const buffer = await upstream.arrayBuffer();
+    const buffer = await readFile(filePath);
+    const ext = nomeArquivo.toLowerCase().split(".").pop() ?? "";
+    const contentType = ext === "pdf" ? "application/pdf"
+      : ext === "mp4" ? "video/mp4"
+      : "application/octet-stream";
+
     return new NextResponse(buffer, {
       status: 200,
       headers: {
-        "Content-Type": "application/pdf",
+        "Content-Type": contentType,
         "Content-Disposition": "inline",
         "Cache-Control": "public, max-age=3600",
       },
     });
   } catch {
-    return new NextResponse("Erro ao carregar o documento.", { status: 500 });
+    return new NextResponse("Ficheiro não encontrado no servidor.", { status: 404 });
   }
 }
