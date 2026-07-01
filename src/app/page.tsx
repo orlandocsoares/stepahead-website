@@ -584,53 +584,108 @@ export default function HeroSection() {
           "Geral":             { bg: "bg-white/10",       text: "text-white/80",   border: "border-white/20",      dot: "bg-white/50",    icon: FolderOpen },
         };
         const defaultAreaColor = { bg: "bg-white/10", text: "text-white/80", border: "border-white/20", dot: "bg-white/50", icon: FolderOpen };
-        // Usar áreas dos recursos públicos reais; fallback para telemetria
+        const areasFormadores: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
         const areasPublicas: { area: string; total: number }[] = telemetry.areas_publicas ?? [];
-        const areasFallback: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
-        const areas = areasPublicas.length > 0 ? areasPublicas : areasFallback;
         const totalPublicos: number = telemetry.total_recursos_publicos ?? 0;
+        const totalFormadores: number = areasFormadores.reduce((s, a) => s + a.total, 0);
 
         return {
           ...base,
           description: (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
 
-              {/* Cards por área — estilo Monitorização */}
-              {areas.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  {areas.slice(0, 4).map(({ area, total }, i) => {
-                    const c = areaColors[area] ?? defaultAreaColor;
-                    const Icon = c.icon;
-                    return (
-                      <motion.a
-                        key={area}
-                        href={`/recursos?area=${encodeURIComponent(area)}`}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: i * 0.08 }}
-                        className={`relative rounded-xl border ${c.border} bg-gradient-to-br ${c.bg} backdrop-blur-md p-3 overflow-hidden pointer-events-auto cursor-pointer hover:scale-[1.03] transition-transform`}
-                      >
-                        <div className={`absolute top-0 right-0 w-12 h-12 rounded-full blur-xl ${c.dot} opacity-30 -translate-y-1/2 translate-x-1/2`} />
-                        <div className={`w-7 h-7 rounded-lg bg-white/10 border ${c.border} flex items-center justify-center mb-2`}>
-                          <Icon size={14} className={c.text} />
-                        </div>
-                        <p className={`text-xl font-bold tabular-nums leading-none ${c.text}`}>{total}</p>
-                        <p className="text-[9px] text-white/50 uppercase tracking-[0.15em] mt-0.5 font-medium leading-tight">{area}</p>
-                      </motion.a>
-                    );
-                  })}
+              {/* Bloco professores */}
+              {areasFormadores.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                    <span className="text-[9px] uppercase tracking-[0.2em] text-blue-300/80 font-semibold">Repositório de Professores</span>
+                    <span className="text-[9px] text-white/30 ml-auto">{totalFormadores} materiais</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {areasFormadores.slice(0, 4).map(({ area, total }, i) => {
+                      const c = areaColors[area] ?? defaultAreaColor;
+                      const Icon = c.icon;
+                      return (
+                        <motion.div
+                          key={area}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: i * 0.07 }}
+                          className={`relative rounded-xl border ${c.border} bg-gradient-to-br ${c.bg} backdrop-blur-md p-3 overflow-hidden`}
+                        >
+                          <div className={`absolute top-0 right-0 w-10 h-10 rounded-full blur-xl ${c.dot} opacity-25 -translate-y-1/2 translate-x-1/2`} />
+                          <div className={`w-6 h-6 rounded-lg bg-white/10 border ${c.border} flex items-center justify-center mb-1.5`}>
+                            <Icon size={12} className={c.text} />
+                          </div>
+                          <p className={`text-lg font-bold tabular-nums leading-none ${c.text}`}>{total}</p>
+                          <p className="text-[8px] text-white/50 uppercase tracking-[0.12em] mt-0.5 font-medium leading-tight">{area}</p>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
-              {/* CTA apenas para autenticados */}
+              {/* Divisor */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-px bg-white/[0.06]" />
+                <span className="text-[8px] uppercase tracking-[0.2em] text-white/20">público</span>
+                <div className="flex-1 h-px bg-white/[0.06]" />
+              </div>
+
+              {/* Bloco público */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span className="text-[9px] uppercase tracking-[0.2em] text-emerald-300/80 font-semibold">Disponível ao Público</span>
+                  <span className="text-[9px] text-white/30 ml-auto">{totalPublicos} materiais</span>
+                </div>
+                {areasPublicas.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {areasPublicas.slice(0, 4).map(({ area, total }, i) => {
+                      const c = areaColors[area] ?? defaultAreaColor;
+                      const Icon = c.icon;
+                      return (
+                        <motion.a
+                          key={area}
+                          href={`/recursos?area=${encodeURIComponent(area)}`}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.2 + i * 0.06 }}
+                          className="flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-900/20 px-2.5 py-2 pointer-events-auto hover:bg-emerald-900/40 hover:border-emerald-400/40 transition-all group"
+                        >
+                          <Icon size={11} className="text-emerald-400/70 shrink-0" />
+                          <span className="text-[9px] text-white/60 group-hover:text-white/90 uppercase tracking-[0.1em] font-medium truncate flex-1">{area}</span>
+                          <span className="text-[9px] font-bold text-emerald-400 tabular-nums shrink-0">{total}</span>
+                        </motion.a>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-white/25 italic">Nenhum material público disponível de momento.</p>
+                )}
+                <motion.a
+                  href="/recursos"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.25em] text-emerald-400/50 hover:text-emerald-400 transition-colors pointer-events-auto group"
+                >
+                  Ver todos os recursos públicos
+                  <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                </motion.a>
+              </div>
+
+              {/* CTA repositório completo — apenas para autenticados */}
               {profile && (
                 <motion.a
                   href="/dashboard/ficheiros"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-white/70 transition-colors pointer-events-auto group"
+                  transition={{ delay: 0.6 }}
+                  className="inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.25em] text-white/30 hover:text-white/60 transition-colors pointer-events-auto group"
                 >
                   Aceder ao repositório completo
                   <span className="group-hover:translate-x-1 transition-transform">→</span>
