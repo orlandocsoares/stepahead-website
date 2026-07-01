@@ -65,8 +65,8 @@ html.light {
   --c-tx:   #0f1f3d;
   --c-tx2:  #1e3a5f;
   --c-tx3:  #4a6a8a;
-  --c-tx4:  #94a3b8;
-  --c-tx5:  #cbd5e1;
+  --c-tx4:  #5272a0;
+  --c-tx5:  #7a98be;
   --c-br:   rgba(100,140,200,0.28);
   --c-br2:  rgba(100,140,200,0.50);
   --c-ov:   rgba(210,225,242,0.92);
@@ -135,6 +135,27 @@ html.light .dashboard-root aside .text-white\/80,
 html.light .dashboard-root aside .text-white\/90,
 html.light .dashboard-root aside .text-white {
   color: #1e3a8a !important;
+}
+
+/* ── Modo claro: correcções de cor para elementos com Tailwind hardcoded ─── */
+/* text-blue-300/400 são demasiado claros em fundo claro → escurecer */
+html.light .text-blue-300 { color: #1d4ed8 !important; }
+html.light .text-blue-400 { color: #1d4ed8 !important; }
+/* text-white/* quase invisível no dashboard claro */
+html.light .dashboard-root .text-white\/40 { color: rgba(15,31,61,0.50) !important; }
+html.light .dashboard-root .text-white\/50 { color: rgba(15,31,61,0.60) !important; }
+html.light .dashboard-root .text-white\/60 { color: rgba(15,31,61,0.70) !important; }
+html.light .dashboard-root .text-white\/70 { color: rgba(15,31,61,0.80) !important; }
+html.light .dashboard-root .text-white\/80 { color: rgba(15,31,61,0.88) !important; }
+html.light .dashboard-root .text-white { color: #0f1f3d !important; }
+/* Bolha mensagem própria — bg-blue-600 fica muito escuro no claro */
+html.light .dashboard-root .bg-blue-600:not([class*="\/"]){ background-color: rgba(59,130,246,0.72) !important; }
+/* Inputs e áreas de texto no modo claro — fundo mais legível */
+html.light .dashboard-root input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html.light .dashboard-root select,
+html.light .dashboard-root textarea {
+  background-color: rgba(210,228,248,0.60) !important;
+  color: #0f1f3d !important;
 }
 
 /* ─── Utility classes ────────────────────────────────────────────────────── */
