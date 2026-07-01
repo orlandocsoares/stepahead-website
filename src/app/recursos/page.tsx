@@ -90,12 +90,27 @@ function RecursosContent() {
           </a>
 
           {/* Nav links */}
-          <nav className="hidden sm:flex items-center gap-1">
-            <a href="/" className="px-3 py-1.5 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors">
+          <nav className="hidden md:flex items-center gap-0.5">
+            <a href="/" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
               Início
             </a>
-            <a href="/recursos" className="px-3 py-1.5 rounded-lg text-sm text-white hover:bg-white/[0.06] transition-colors font-medium">
+            <a href="/?s=saber-mais" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
+              Saber Mais
+            </a>
+            <a href="/?s=capacitacao" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
+              Capacitação
+            </a>
+            <a href="/?s=par-pedagogico" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
+              Par Pedagógico
+            </a>
+            <a href="/?s=luanda-bie" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
+              Luanda &amp; Bié
+            </a>
+            <a href="/recursos" className="px-3 py-1.5 rounded-lg text-xs text-white font-semibold hover:bg-white/[0.06] transition-colors tracking-wide">
               Recursos
+            </a>
+            <a href="/?s=monitorizacao" className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors tracking-wide">
+              Monitorização
             </a>
           </nav>
 
@@ -250,12 +265,19 @@ function RecursosContent() {
             </button>
           </div>
 
-          {/* PDF via embed — não sujeito ao X-Frame-Options, sem toolbar de download */}
-          <embed
-            src={`/api/recursos/pdf/${viewing.id}#toolbar=0&navpanes=0`}
-            type="application/pdf"
-            className="flex-1 w-full"
-          />
+          {/* PDF via embed — URL directo do storage, sem autenticação para ficheiros públicos */}
+          {viewing.nome_arquivo ? (
+            <embed
+              src={`/storage/v1/object/public/materiais/${encodeURIComponent(viewing.nome_arquivo)}#toolbar=0&navpanes=0`}
+              type="application/pdf"
+              className="flex-1 w-full"
+            />
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-white/20">
+              <FileText size={48} strokeWidth={1} />
+              <p className="text-sm">Ficheiro não disponível.</p>
+            </div>
+          )}
         </div>
       )}
     </div>

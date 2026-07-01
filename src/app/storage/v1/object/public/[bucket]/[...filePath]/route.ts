@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
 import { getSessionUser } from "@/lib/server-auth";
+import { dbQuery } from "@/lib/db";
 
 const STORAGE_ROOT = path.join(process.cwd(), "storage");
 
@@ -34,10 +35,19 @@ export async function GET(
     const normalizedBucket = String(bucket);
 
     // Buckets privados (ex: materiais) exigem sessão autenticada
+    // Excepção: ficheiros marcados como site_publico=true são acessíveis sem autenticação
     if (!PUBLIC_BUCKETS.has(normalizedBucket)) {
       const session = await getSessionUser();
       if (!session) {
-        return new NextResponse("Não autorizado.", { status: 401 });
+        // Verificar se o ficheiro é público via DB
+        const fileName = filePath.map((p) => decodeURIComponent(p)).join("/");
+        const check = await dbQuery(
+          `SELECT id FROM arquivos WHERE nome_arquivo = $1 AND site_publico = true AND visibilidade = 'publico' LIMIT 1`,
+          [fileName]
+        );
+        if (check.rows.length === 0) {
+          return new NextResponse("Não autorizado.", { status: 401 });
+        }
       }
     }
 
