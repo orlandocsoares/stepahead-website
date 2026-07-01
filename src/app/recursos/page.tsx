@@ -40,6 +40,17 @@ const AREA_COLORS: Record<string, string> = {
   "Química":           "bg-pink-500/10 text-pink-400 border-pink-500/20",
   "Geral":             "bg-white/5 text-white/60 border-white/10",
 };
+const AREA_ACCENT: Record<string, string> = {
+  "Língua Portuguesa": "#10b981",
+  "Matemática":        "#3b82f6",
+  "Pedagogia":         "#8b5cf6",
+  "Ciências":          "#06b6d4",
+  "História":          "#f59e0b",
+  "Geografia":         "#84cc16",
+  "Física":            "#a855f7",
+  "Química":           "#ec4899",
+  "Geral":             "#6b7280",
+};
 const DEFAULT_COLOR = "bg-white/5 text-white/60 border-white/10";
 
 function RecursosContent() {
@@ -156,40 +167,56 @@ function RecursosContent() {
 
                   {/* Grelha de ficheiros com miniatura */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {items.map(r => (
-                      <button
-                        key={r.id}
-                        onClick={() => setViewing(r)}
-                        className="flex flex-col rounded-xl bg-black/40 backdrop-blur-sm border border-white/10 hover:bg-black/55 hover:border-white/20 transition-all text-left group overflow-hidden"
-                      >
-                        {/* Miniatura */}
-                        <div className="w-full aspect-[4/3] bg-black/20 flex items-center justify-center relative overflow-hidden">
-                          {r.thumbnail_url ? (
-                            <img src={r.thumbnail_url} alt={r.label} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="flex flex-col items-center gap-2 opacity-30">
-                              <FileText size={32} strokeWidth={1} className="text-red-400" />
-                              <span className="text-[10px] text-white/50 uppercase tracking-widest">PDF</span>
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                            <div className="bg-white/10 backdrop-blur rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs text-white font-medium">
-                              <ExternalLink size={12} /> Abrir
+                    {items.map(r => {
+                      const accent = AREA_ACCENT[r.area] ?? "#6b7280";
+                      const fileUrl = r.nome_arquivo
+                        ? `/storage/v1/object/public/materiais/${encodeURIComponent(r.nome_arquivo)}`
+                        : null;
+                      return (
+                        <button
+                          key={r.id}
+                          onClick={() => setViewing(r)}
+                          className="flex flex-col rounded-2xl bg-black/40 backdrop-blur-sm border border-white/10 hover:border-white/25 hover:shadow-xl transition-all text-left group overflow-hidden"
+                        >
+                          {/* Barra de cor da disciplina */}
+                          <div className="h-0.5 w-full shrink-0" style={{ background: accent }} />
+
+                          {/* Miniatura */}
+                          <div className="w-full aspect-[4/3] bg-black/30 flex items-center justify-center relative overflow-hidden">
+                            {r.thumbnail_url ? (
+                              <img src={r.thumbnail_url} alt={r.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            ) : fileUrl ? (
+                              <embed src={fileUrl} type="application/pdf" className="w-full h-full pointer-events-none" />
+                            ) : (
+                              <div className="flex flex-col items-center gap-2 opacity-25">
+                                <FileText size={36} strokeWidth={1} className="text-red-400" />
+                                <span className="text-[10px] text-white/50 uppercase tracking-widest">PDF</span>
+                              </div>
+                            )}
+
+                            {/* Badge tipo */}
+                            <span className="absolute top-2 right-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-red-400">PDF</span>
+
+                            {/* Hover overlay */}
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                              <div className="bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 text-xs text-white font-medium border border-white/20">
+                                <ExternalLink size={13} /> Abrir documento
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Info */}
-                        <div className="px-3 py-2.5">
-                          <p className="text-sm font-medium text-white/90 line-clamp-2 group-hover:text-white transition-colors leading-snug">
-                            {r.label}
-                          </p>
-                          <p className="text-[11px] text-white/30 mt-1">
-                            {formatDate(r.created_at)}{r.tamanho ? ` · ${r.tamanho}` : ""}
-                          </p>
-                        </div>
-                      </button>
-                    ))}
+                          {/* Info */}
+                          <div className="px-3 py-3">
+                            <p className="text-sm font-medium text-white/90 line-clamp-2 group-hover:text-white transition-colors leading-snug">
+                              {r.label}
+                            </p>
+                            <p className="text-[11px] text-white/30 mt-1.5">
+                              {formatDate(r.created_at)}{r.tamanho ? ` · ${r.tamanho}` : ""}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </section>
               );
