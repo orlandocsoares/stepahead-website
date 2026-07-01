@@ -51,6 +51,24 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
   const [bellPos, setBellPos] = useState({ top: 0, right: 0 });
   const [avatarPos, setAvatarPos] = useState({ top: 0, right: 0 });
   const [msgPos, setMsgPos] = useState({ top: 0, right: 0 });
+  const [dropdownWidth, setDropdownWidth] = useState(420);
+  const [dropdownHeight, setDropdownHeight] = useState(420);
+  const dragRef = useRef<{ startX: number; startY: number; startW: number; startH: number; which: "bell" | "msg" } | null>(null);
+
+  const startResize = (e: React.MouseEvent, which: "bell" | "msg") => {
+    e.preventDefault();
+    dragRef.current = { startX: e.clientX, startY: e.clientY, startW: dropdownWidth, startH: dropdownHeight, which };
+    const onMove = (ev: MouseEvent) => {
+      if (!dragRef.current) return;
+      const dw = dragRef.current.startX - ev.clientX; // arrastar para esquerda aumenta largura
+      const dh = ev.clientY - dragRef.current.startY;
+      setDropdownWidth(Math.max(300, Math.min(780, dragRef.current.startW + dw)));
+      setDropdownHeight(Math.max(200, Math.min(window.innerHeight * 0.85, dragRef.current.startH + dh)));
+    };
+    const onUp = () => { dragRef.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
 
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
   const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.email?.split("@")[0] || "";
@@ -219,7 +237,11 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           </button>
 
           {msgOpen && typeof document !== "undefined" && createPortal(
-            <div ref={msgDropdownRef} className="fixed c-bg2 c-br border rounded-xl shadow-2xl z-[9999] flex flex-col" style={{ top: msgPos.top, right: msgPos.right, width: 420, minWidth: 300, maxWidth: 680, minHeight: 200, maxHeight: '80vh', resize: 'both', overflow: 'hidden' }}>
+            <div ref={msgDropdownRef} className="fixed c-bg2 c-br border rounded-xl shadow-2xl z-[9999] flex flex-col overflow-hidden" style={{ top: msgPos.top, right: msgPos.right, width: dropdownWidth, height: dropdownHeight }}>
+              {/* Handle de arrasto — canto inferior esquerdo */}
+              <div onMouseDown={e => startResize(e, "msg")} className="absolute bottom-0 left-0 w-5 h-5 cursor-sw-resize z-50 flex items-end justify-start pl-1 pb-1 opacity-30 hover:opacity-80 transition-opacity" title="Redimensionar">
+                <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 10 L10 0" stroke="currentColor" strokeWidth="1.5"/><path d="M0 6 L6 0" stroke="currentColor" strokeWidth="1.5"/></svg>
+              </div>
               <div className="flex items-center justify-between px-5 py-3.5 border-b c-br">
                 <span className="text-sm font-semibold c-tx">Mensagens</span>
                 {msgUnread > 0 && (
@@ -289,7 +311,11 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           </button>
 
           {notifOpen && typeof document !== "undefined" && createPortal(
-            <div ref={bellDropdownRef} className="fixed c-bg2 c-br border rounded-xl shadow-2xl z-[9999] flex flex-col" style={{ top: bellPos.top, right: bellPos.right, width: 420, minWidth: 300, maxWidth: 680, minHeight: 200, maxHeight: '80vh', resize: 'both', overflow: 'hidden' }}>
+            <div ref={bellDropdownRef} className="fixed c-bg2 c-br border rounded-xl shadow-2xl z-[9999] flex flex-col overflow-hidden" style={{ top: bellPos.top, right: bellPos.right, width: dropdownWidth, height: dropdownHeight }}>
+              {/* Handle de arrasto — canto inferior esquerdo */}
+              <div onMouseDown={e => startResize(e, "bell")} className="absolute bottom-0 left-0 w-5 h-5 cursor-sw-resize z-50 flex items-end justify-start pl-1 pb-1 opacity-30 hover:opacity-80 transition-opacity" title="Redimensionar">
+                <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 10 L10 0" stroke="currentColor" strokeWidth="1.5"/><path d="M0 6 L6 0" stroke="currentColor" strokeWidth="1.5"/></svg>
+              </div>
               <div className="flex items-center justify-between px-5 py-3.5 border-b c-br">
                 <span className="text-sm font-semibold c-tx">Notificações</span>
                 <div className="flex items-center gap-3">
