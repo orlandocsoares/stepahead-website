@@ -644,7 +644,7 @@ export default function HeroSection() {
                 </div>
                 {areasPublicas.length > 0 ? (
                   <div className="grid grid-cols-2 gap-1.5">
-                    {areasPublicas.slice(0, 4).map(({ area, total }, i) => {
+                    {areasPublicas.slice(0, 4).filter(({ area }) => !!area).map(({ area, total }, i) => {
                       const c = areaColors[area] ?? defaultAreaColor;
                       const Icon = c.icon;
                       return (

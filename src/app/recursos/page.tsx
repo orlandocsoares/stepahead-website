@@ -3,7 +3,6 @@
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FileText, X, BookOpen, Loader2, ExternalLink, LayoutDashboard } from "lucide-react";
-import Image from "next/image";
 import { HeroBranding } from "@/components/HeroBranding";
 
 type Recurso = {
@@ -112,65 +111,44 @@ function RecursosContent() {
       style={{ backgroundImage: "url('/modos/meio-escuro.webp')", backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
       {/* Overlay escuro para legibilidade */}
       <div className="fixed inset-0 bg-[#080c1a]/70 pointer-events-none z-0" />
-      {/* Header */}
-      <header className="border-b border-white/[0.06] bg-[#080c1a]/80 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between gap-6">
-          {/* Logo */}
-          <a href="/" className="shrink-0">
-            <Image src="/logo.png" alt="SaberMais" width={120} height={32}
-              className="h-8 w-auto brightness-0 invert drop-shadow-[0_0_8px_rgba(99,179,237,0.85)]" />
-          </a>
-
-          {/* Nav links — apenas Início no header; resto vai para o painel lateral */}
-          <nav className="hidden sm:flex items-center gap-1">
-            <a href="/" className="px-3 py-1.5 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors">
-              Início
+      {/* Botões fixos topo direito — igual à home */}
+      <div className="fixed top-5 right-4 sm:right-6 md:right-10 z-40 flex items-center gap-2">
+        {profile ? (
+          <>
+            <button
+              onClick={() => router.push("/dashboard/perfil")}
+              className="relative w-10 h-10 rounded-full border border-white/20 bg-slate-950/80 overflow-hidden hover:border-white/50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.08)]"
+              title={profile.first_name || "Perfil"}
+            >
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="w-full h-full flex items-center justify-center text-[11px] font-bold text-white/80 uppercase">
+                  {(profile.first_name?.[0] ?? "") + (profile.last_name?.[0] ?? "")}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 h-10 rounded-full border border-white/20 bg-slate-950/80 text-white/80 text-[11px] font-bold uppercase tracking-[0.25em] transition-all hover:border-blue-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(59,130,246,0.18)]"
+            >
+              <LayoutDashboard size={14} />
+              <span>Dashboard</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <a href="/login"
+              className="inline-flex items-center gap-2 px-4 h-10 rounded-full border border-white/20 bg-slate-950/80 text-white/80 text-[11px] font-bold uppercase tracking-[0.25em] transition-all hover:border-white/40 hover:text-white shadow-[0_0_20px_rgba(255,255,255,0.08)]">
+              Entrar
             </a>
-            <a href="/recursos" className="px-3 py-1.5 rounded-lg text-sm text-white font-medium hover:bg-white/[0.06] transition-colors">
-              Recursos
+            <a href="/register"
+              className="inline-flex items-center px-4 h-10 rounded-full border border-blue-500/60 bg-blue-600/80 text-white text-[11px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+              Área reservada
             </a>
-          </nav>
-
-          {/* CTA */}
-          <div className="flex items-center gap-2 shrink-0">
-            {profile ? (
-              <>
-                <button
-                  onClick={() => router.push("/dashboard/perfil")}
-                  className="relative w-9 h-9 rounded-full border border-white/20 bg-slate-950/80 overflow-hidden hover:border-white/50 transition-all"
-                  title={profile.first_name || "Perfil"}
-                >
-                  {profile.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="w-full h-full flex items-center justify-center text-[11px] font-bold text-white/80 uppercase">
-                      {(profile.first_name?.[0] ?? "") + (profile.last_name?.[0] ?? "")}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => router.push("/dashboard")}
-                  className="inline-flex items-center gap-2 px-4 h-9 rounded-full border border-white/20 bg-slate-950/80 text-white/80 text-[11px] font-bold uppercase tracking-[0.25em] transition-all hover:border-blue-400/60 hover:bg-slate-900/95 hover:text-white"
-                >
-                  <LayoutDashboard size={13} />
-                  <span className="hidden sm:inline">Dashboard</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <a href="/login"
-                  className="px-4 py-1.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors hidden sm:block">
-                  Entrar
-                </a>
-                <a href="/register"
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors">
-                  Área reservada
-                </a>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+          </>
+        )}
+      </div>
 
       <main className="max-w-5xl mx-auto px-6 py-12 relative z-10">
         {/* Título */}
