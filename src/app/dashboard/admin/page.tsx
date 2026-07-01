@@ -817,8 +817,10 @@ export default function SuperAdminPage() {
                               <motion.div key={item.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.02 }}
                                 className="c-bg2 border c-br rounded-xl p-4 flex flex-col items-center gap-2 text-center hover:border-white/[0.12] transition-colors"
                               >
-                                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-lg font-bold shrink-0">
-                                  {(item.first_name?.[0] || "?").toUpperCase()}
+                                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-lg font-bold shrink-0 overflow-hidden">
+                                  {item.avatar_url
+                                    ? <img src={item.avatar_url} alt={item.first_name} className="w-full h-full object-cover" />
+                                    : (item.first_name?.[0] || "?").toUpperCase()}
                                 </div>
                                 <div className="w-full min-w-0">
                                   <p className="text-xs font-semibold c-tx truncate">{name}</p>
@@ -863,8 +865,10 @@ export default function SuperAdminPage() {
                               className="c-bg2 border c-br rounded-xl px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-white/[0.12] transition-colors"
                             >
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0">
-                                  {(item.first_name?.[0] || "?").toUpperCase()}
+                                <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0 overflow-hidden">
+                                  {item.avatar_url
+                                    ? <img src={item.avatar_url} alt={item.first_name} className="w-full h-full object-cover" />
+                                    : (item.first_name?.[0] || "?").toUpperCase()}
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium c-tx">{name}</p>
@@ -992,7 +996,7 @@ export default function SuperAdminPage() {
                 })}
               </motion.div>
             ) : activeTab === "anuncios" ? (
-              <motion.div key="anuncios" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-2xl space-y-6">
+              <motion.div key="anuncios" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                 <div className="c-bg2 border c-br rounded-2xl p-6 space-y-5">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
@@ -1046,7 +1050,7 @@ export default function SuperAdminPage() {
                       value={anuncioMensagem}
                       onChange={e => setAnuncioMensagem(e.target.value)}
                       placeholder="Descreve a novidade ou aviso que queres partilhar..."
-                      rows={12}
+                      rows={6}
                       className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx placeholder:c-tx5 outline-none focus:border-amber-500/50 transition-colors resize-y"
                     />
                     <p className="text-[10px] c-tx5 text-right">{anuncioMensagem.length} caracteres</p>
