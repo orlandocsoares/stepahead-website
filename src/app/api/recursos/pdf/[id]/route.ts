@@ -43,6 +43,8 @@ export async function GET(
         "Content-Type": contentType,
         "Content-Disposition": "inline",
         "Cache-Control": "public, max-age=3600",
+        "X-Frame-Options": "SAMEORIGIN",
+        "Content-Security-Policy": "frame-ancestors 'self'",
       },
     });
   } catch {

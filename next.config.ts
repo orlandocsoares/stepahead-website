@@ -30,7 +30,18 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      // Regra geral — bloqueia iframes em todo o site
+      { source: "/(.*)", headers: securityHeaders },
+      // Excepção: rota do PDF público pode ser embebida em iframe da mesma origem
+      {
+        source: "/api/recursos/pdf/:id",
+        headers: [
+          { key: "X-Frame-Options",        value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+        ],
+      },
+    ];
   },
   // Necessário para uploads de ficheiros grandes (vídeos, etc.)
   experimental: {
