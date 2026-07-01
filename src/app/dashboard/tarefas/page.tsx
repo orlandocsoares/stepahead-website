@@ -39,6 +39,8 @@ type Entrega = {
   entregue_at?: string;
   resposta_url?: string;
   resposta_nome?: string;
+  nota?: string;
+  feedback?: string;
 };
 
 function prazoStatus(prazo?: string): "expirado" | "urgente" | "ok" | null {
@@ -102,6 +104,32 @@ export default function TarefasPage() {
   // Upload de resposta por tarefa
   const [respostaFiles, setRespostaFiles] = useState<Record<string, File | null>>({});
   const respostaInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // Modal avaliação
+  const [avaliarModal, setAvaliarModal] = useState<{ tarefaId: string; formandoId: string; nome: string } | null>(null);
+  const [avalNota, setAvalNota] = useState("");
+  const [avalFeedback, setAvalFeedback] = useState("");
+  const [avalSubmitting, setAvalSubmitting] = useState(false);
+
+  async function submitAvaliacao() {
+    if (!avaliarModal) return;
+    setAvalSubmitting(true);
+    await fetch(`/api/tarefas/${avaliarModal.tarefaId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ formando_id: avaliarModal.formandoId, estado: "avaliado", nota: avalNota || null, feedback: avalFeedback || null }),
+    });
+    setEntregas(prev => ({
+      ...prev,
+      [avaliarModal.tarefaId]: (prev[avaliarModal.tarefaId] ?? []).map(e =>
+        e.id === avaliarModal.formandoId ? { ...e, estado: "avaliado", nota: avalNota || undefined, feedback: avalFeedback || undefined } : e
+      ),
+    }));
+    setAvaliarModal(null);
+    setAvalNota("");
+    setAvalFeedback("");
+    setAvalSubmitting(false);
+  }
 
   // Modal criar tarefa
   const [modalOpen, setModalOpen] = useState(false);
@@ -442,8 +470,14 @@ export default function TarefasPage() {
                                         {e.estado === "avaliado" ? "✓ avaliado" : e.estado === "entregue" ? "entregue" : "pendente"}
                                       </span>
                                       {e.estado === "entregue" && (
-                                        <button onClick={() => marcarFormandoEstado(t.id, e.id, "avaliado")}
-                                          className="text-[9px] text-blue-400 hover:text-blue-300 transition-colors">Avaliar</button>
+                                        <button
+                                          onClick={() => { setAvaliarModal({ tarefaId: t.id, formandoId: e.id, nome: `${e.first_name} ${e.last_name}` }); setAvalNota(""); setAvalFeedback(""); }}
+                                          className="text-[9px] px-2 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/25 hover:bg-blue-500/25 transition-colors font-medium">
+                                          Avaliar
+                                        </button>
+                                      )}
+                                      {e.estado === "avaliado" && e.nota && (
+                                        <span className="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">{e.nota}</span>
                                       )}
                                       {e.estado === "avaliado" && (
                                         <button onClick={() => marcarFormandoEstado(t.id, e.id, "entregue")}
@@ -629,6 +663,53 @@ export default function TarefasPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de avaliação */}
+      {avaliarModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAvaliarModal(null)} />
+          <div className="relative c-bg border c-br rounded-2xl w-full max-w-sm shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b c-br">
+              <div>
+                <p className="text-xs c-tx3 font-medium uppercase tracking-widest">Avaliar entrega</p>
+                <p className="text-sm font-semibold c-tx">{avaliarModal.nome}</p>
+              </div>
+              <button onClick={() => setAvaliarModal(null)} className="c-tx4 hc-tx"><X size={16} /></button>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Nota / Classificação (opcional)</label>
+                <input
+                  value={avalNota}
+                  onChange={e => setAvalNota(e.target.value)}
+                  placeholder="ex: 18/20, Bom, A+, ..."
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Comentário / Feedback (opcional)</label>
+                <textarea
+                  value={avalFeedback}
+                  onChange={e => setAvalFeedback(e.target.value)}
+                  rows={3}
+                  placeholder="Observações sobre o trabalho entregue..."
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors resize-none"
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => setAvaliarModal(null)} className="flex-1 py-2 rounded-xl c-s2 border c-br c-tx3 text-sm hover:c-s3 transition-colors">
+                  Cancelar
+                </button>
+                <button onClick={submitAvaliacao} disabled={avalSubmitting}
+                  className="flex-1 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {avalSubmitting ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                  {avalSubmitting ? "A guardar..." : "Confirmar avaliação"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

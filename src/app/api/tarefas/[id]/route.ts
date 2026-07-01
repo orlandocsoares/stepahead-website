@@ -44,7 +44,7 @@ export async function GET(_req: Request, { params }: Params) {
 
   const entregasRes = await dbQuery(
     `SELECT p.id, p.first_name, p.last_name, p.email, td.estado, td.entregue_at,
-            td.resposta_url, td.resposta_nome
+            td.resposta_url, td.resposta_nome, td.nota, td.feedback
      FROM tarefa_destinatarios td
      JOIN profiles p ON p.id = td.formando_id
      WHERE td.tarefa_id = $1
@@ -89,7 +89,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   // Formador/admin — marcar avaliado para um formando específico
-  const { formando_id, estado } = body;
+  const { formando_id, estado, nota, feedback } = body;
   if (!formando_id || !["entregue", "avaliado", "pendente"].includes(estado)) {
     return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
   }
@@ -97,10 +97,17 @@ export async function PATCH(request: Request, { params }: Params) {
   const owns = await dbQuery(`SELECT id FROM tarefas WHERE id = $1 AND criador_id = $2`, [id, sessionUser.id]);
   if (!owns.rows.length) return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
 
-  await dbQuery(
-    `UPDATE tarefa_destinatarios SET estado = $1 WHERE tarefa_id = $2 AND formando_id = $3`,
-    [estado, id, formando_id]
-  );
+  if (estado === "avaliado" && (nota !== undefined || feedback !== undefined)) {
+    await dbQuery(
+      `UPDATE tarefa_destinatarios SET estado = $1, nota = $2, feedback = $3 WHERE tarefa_id = $4 AND formando_id = $5`,
+      [estado, nota ?? null, feedback ?? null, id, formando_id]
+    );
+  } else {
+    await dbQuery(
+      `UPDATE tarefa_destinatarios SET estado = $1 WHERE tarefa_id = $2 AND formando_id = $3`,
+      [estado, id, formando_id]
+    );
+  }
   return NextResponse.json({ ok: true });
 }
 
