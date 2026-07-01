@@ -219,7 +219,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           </button>
 
           {msgOpen && typeof document !== "undefined" && createPortal(
-            <div ref={msgDropdownRef} className="fixed w-[420px] c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: msgPos.top, right: msgPos.right }}>
+            <div ref={msgDropdownRef} className="fixed c-bg2 c-br border rounded-xl shadow-2xl z-[9999] flex flex-col" style={{ top: msgPos.top, right: msgPos.right, width: 420, minWidth: 300, maxWidth: 680, minHeight: 200, maxHeight: '80vh', resize: 'both', overflow: 'hidden' }}>
               <div className="flex items-center justify-between px-5 py-3.5 border-b c-br">
                 <span className="text-sm font-semibold c-tx">Mensagens</span>
                 {msgUnread > 0 && (
@@ -229,7 +229,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
                 )}
               </div>
 
-              <div className="max-h-[420px] overflow-y-auto">
+              <div className="flex-1 overflow-y-auto min-h-0">
                 {conversations.length === 0 ? (
                   <div className="py-10 text-center">
                     <MessageSquare size={28} className="mx-auto c-tx5 mb-2" />
@@ -289,7 +289,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
           </button>
 
           {notifOpen && typeof document !== "undefined" && createPortal(
-            <div ref={bellDropdownRef} className="fixed w-[420px] c-bg2 c-br border rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ top: bellPos.top, right: bellPos.right }}>
+            <div ref={bellDropdownRef} className="fixed c-bg2 c-br border rounded-xl shadow-2xl z-[9999] flex flex-col" style={{ top: bellPos.top, right: bellPos.right, width: 420, minWidth: 300, maxWidth: 680, minHeight: 200, maxHeight: '80vh', resize: 'both', overflow: 'hidden' }}>
               <div className="flex items-center justify-between px-5 py-3.5 border-b c-br">
                 <span className="text-sm font-semibold c-tx">Notificações</span>
                 <div className="flex items-center gap-3">
@@ -306,7 +306,7 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
                 </div>
               </div>
 
-              <div className="max-h-[480px] overflow-y-auto">
+              <div className="flex-1 overflow-y-auto min-h-0">
                 {notifs.length === 0 ? (
                   <div className="py-10 text-center">
                     <Bell size={28} className="mx-auto c-tx5 mb-2" />
