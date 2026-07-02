@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { DASHBOARD_URL } from "@/lib/program-config";
 
@@ -149,13 +148,9 @@ const isCooldown = useRef(false);
 const scrollIntent = useRef(0);
 
 useEffect(() => {
-  supabase.auth.getUser().then(({ data, error }) => {
-    if (!error) setUser(data.user);
-  });
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-    setUser(session?.user ?? null);
-  });
-  return () => subscription.unsubscribe();
+  fetch("/api/auth/me").then(r => r.ok ? r.json() : null).then(d => {
+    if (d?.user) setUser(d.user);
+  }).catch(() => {});
 }, []);
 
 // CAPTURA DA TELEMETRIA VIA API PRÓPRIA (PostgreSQL) + RECURSOS PÚBLICOS
@@ -182,7 +177,10 @@ useEffect(() => {
   fetchTelemetry();
 }, [isDashboardView]);
 
-const handleLogout = async () => { await supabase.auth.signOut(); router.refresh(); };
+const handleLogout = async () => {
+  await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+  router.refresh();
+};
 
 const handleLogin = async (e: React.FormEvent) => {
 e.preventDefault();
@@ -205,10 +203,13 @@ try {
 const handleSignUp = async (e: React.FormEvent) => {
 e.preventDefault();
 setError(null);
-const { error } = await supabase.auth.signUp({
-email, password, options: { data: { first_name: firstName, last_name: lastName, role: role } },
+const res = await fetch("/api/auth/register", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password, metadata: { first_name: firstName, last_name: lastName, role } }),
 });
-if (error) setError(error.message);
+const data = await res.json();
+if (!res.ok) setError(data.error ?? "Erro ao registar.");
 else { setIsLoginOpen(false); router.push("/dashboard"); }
 };
 
