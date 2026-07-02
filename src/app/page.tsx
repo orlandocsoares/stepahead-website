@@ -807,17 +807,17 @@ export default function HeroSection() {
               {/* Layout: 4 métricas + 3 indicadores em 2 colunas expandidas */}
               <div className="grid grid-cols-2 gap-2">
 
-                {/* Coluna esquerda — 4 métricas 2×2 */}
-                <div className="grid grid-cols-2 gap-1.5 content-start">
+                {/* Coluna esquerda — 4 métricas 2×2, altura igual à direita */}
+                <div className="grid grid-cols-2 grid-rows-2 gap-1.5">
                   {metrics.map(({ icon: Icon, value, label, color, border, iconColor, glow }) => (
                     <motion.div key={label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
-                      className={`relative rounded-lg border ${border} bg-gradient-to-br ${color} backdrop-blur-md px-2.5 py-2 overflow-hidden`}>
+                      className={`relative rounded-lg border ${border} bg-gradient-to-br ${color} backdrop-blur-md px-3 py-3 overflow-hidden flex flex-col justify-between`}>
                       <div className={`absolute top-0 right-0 w-10 h-10 rounded-full blur-xl ${glow} -translate-y-1/2 translate-x-1/2`} />
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Icon size={11} className={iconColor} />
+                      <div className="flex items-center gap-1.5">
+                        <Icon size={12} className={iconColor} />
                         <p className="text-[8px] text-white/50 uppercase tracking-[0.12em] font-medium leading-tight truncate">{label}</p>
                       </div>
-                      <p className="text-lg font-bold text-white tabular-nums leading-none">{value}</p>
+                      <p className="text-2xl font-bold text-white tabular-nums leading-none">{value}</p>
                     </motion.div>
                   ))}
                 </div>
