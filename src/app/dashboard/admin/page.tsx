@@ -67,6 +67,41 @@ export default function SuperAdminPage() {
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [userView, setUserView] = useState<"list" | "grid">("list");
 
+  // Modal de perfil (ver/editar utilizador)
+  const [profileModal, setProfileModal] = useState<any>(null);
+  const [profileForm, setProfileForm] = useState<any>({});
+  const [profileSaving, setProfileSaving] = useState(false);
+
+  function openProfileModal(item: any) {
+    setProfileModal(item);
+    setProfileForm({
+      first_name: item.first_name || "",
+      last_name: item.last_name || "",
+      email: item.email || "",
+      role: item.role || "formando",
+      status: item.status || "activo",
+      provincia: item.provincia || "",
+      escola: item.escola || "",
+      especialidade: item.especialidade || item.specialization || "",
+      biografia: item.biografia || "",
+    });
+  }
+
+  async function saveProfileModal() {
+    if (!profileModal) return;
+    setProfileSaving(true);
+    try {
+      const res = await fetch("/api/db/profiles", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates: profileForm, eq: { id: profileModal.id } }),
+      });
+      const { error } = await res.json();
+      if (error) { showToast("error", error); }
+      else { showToast("success", "Perfil actualizado."); setProfileModal(null); fetchData(); }
+    } finally { setProfileSaving(false); }
+  }
+
   async function saveMediaRadar() {
     const val = parseInt(mediaRadar);
     if (isNaN(val) || val < 0 || val > 100) return;
@@ -835,6 +870,9 @@ export default function SuperAdminPage() {
                                   )}
                                   {isAdminOrSuper(profile?.role) && (
                                     <div className="flex gap-1 mt-1">
+                                      <button onClick={() => openProfileModal(item)} className="p-1 rounded c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors" title="Ver perfil">
+                                        <User size={11} />
+                                      </button>
                                       <button
                                         onClick={async () => {
                                           const nova = prompt(`Nova password para ${name}:\n(mínimo 6 caracteres)`);
@@ -961,6 +999,9 @@ export default function SuperAdminPage() {
                                         ))}
                                       </select>
                                     )}
+                                    <button onClick={() => openProfileModal(item)} className="p-1.5 rounded-lg c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors" title="Ver/editar perfil">
+                                      <User size={13} />
+                                    </button>
                                     <button onClick={() => openPowerModal(item)} className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs transition-colors ${item.temporary_power ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "c-s1 c-tx4 hc-tx"}`}>
                                       <Clock size={11} /> {item.temporary_power ? "Poder activo" : "Poder"}
                                     </button>
@@ -1477,6 +1518,119 @@ export default function SuperAdminPage() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+      {/* MODAL: VER/EDITAR PERFIL DE UTILIZADOR */}
+      {profileModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setProfileModal(null)} />
+          <div className="relative w-full max-w-lg c-bg border c-br rounded-2xl overflow-hidden shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center gap-4 px-6 pt-6 pb-4 border-b c-br">
+              <div className="w-14 h-14 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 text-xl font-bold overflow-hidden shrink-0">
+                {profileModal.avatar_url
+                  ? <img src={profileModal.avatar_url} alt={profileModal.first_name} className="w-full h-full object-cover" />
+                  : (profileModal.first_name?.[0] || "?").toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-semibold c-tx">{profileModal.first_name} {profileModal.last_name}</h3>
+                <p className="text-xs c-tx4 truncate">{profileModal.email || "sem email"}</p>
+                <p className="text-[10px] c-tx5 mt-0.5">ID: {profileModal.id}</p>
+              </div>
+              <button onClick={() => setProfileModal(null)} className="c-tx4 hc-tx shrink-0"><X size={18} /></button>
+            </div>
+
+            {/* Formulário */}
+            <div className="px-6 py-5 space-y-4 max-h-[65vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Nome</label>
+                  <input value={profileForm.first_name} onChange={e => setProfileForm((f: any) => ({ ...f, first_name: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Apelido</label>
+                  <input value={profileForm.last_name} onChange={e => setProfileForm((f: any) => ({ ...f, last_name: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Função</label>
+                  <select value={profileForm.role} onChange={e => setProfileForm((f: any) => ({ ...f, role: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
+                    <option value="formando" className="c-bg">Formando</option>
+                    <option value="formador" className="c-bg">Formador</option>
+                    <option value="admin" className="c-bg">Administrador</option>
+                    <option value="super-admin" className="c-bg">Super Admin</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Estado</label>
+                  <select value={profileForm.status} onChange={e => setProfileForm((f: any) => ({ ...f, status: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
+                    <option value="activo" className="c-bg">Activo</option>
+                    <option value="email_confirmado" className="c-bg">Email confirmado</option>
+                    <option value="pendente" className="c-bg">Pendente</option>
+                    <option value="suspenso" className="c-bg">Suspenso</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Província</label>
+                  <select value={profileForm.provincia} onChange={e => setProfileForm((f: any) => ({ ...f, provincia: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
+                    <option value="" className="c-bg">— Não definida —</option>
+                    {["Luanda","Bié","Benguela","Huambo","Huíla","Cabinda","Uíge","Zaire","Malanje","Lunda Norte","Lunda Sul","Moxico","Cuando Cubango","Namibe","Cunene","Bié","Kwanza Norte","Kwanza Sul","Bengo"].map(p => (
+                      <option key={p} value={p} className="c-bg">{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Escola / Instituição</label>
+                  <input value={profileForm.escola} onChange={e => setProfileForm((f: any) => ({ ...f, escola: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Especialidade / Área</label>
+                <input value={profileForm.especialidade} onChange={e => setProfileForm((f: any) => ({ ...f, especialidade: e.target.value }))}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50" />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Biografia</label>
+                <textarea value={profileForm.biografia} onChange={e => setProfileForm((f: any) => ({ ...f, biografia: e.target.value }))}
+                  rows={3}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 resize-none" />
+              </div>
+
+              {/* Info só de leitura */}
+              <div className="pt-2 border-t c-br space-y-1">
+                <p className="text-[10px] c-tx5">Email: <span className="c-tx4">{profileModal.email || "—"}</span></p>
+                <p className="text-[10px] c-tx5">Criado em: <span className="c-tx4">{profileModal.created_at ? new Date(profileModal.created_at).toLocaleDateString("pt-PT") : "—"}</span></p>
+                {profileModal.criado_por_nome?.trim() && (
+                  <p className="text-[10px] c-tx5">Criado por: <span className="text-amber-400/70">{profileModal.criado_por_nome.trim()}</span></p>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-3 px-6 py-4 border-t c-br">
+              <button onClick={() => setProfileModal(null)} className="flex-1 py-2.5 rounded-xl border c-br text-sm c-tx3 hc-tx transition-colors">
+                Cancelar
+              </button>
+              <button onClick={saveProfileModal} disabled={profileSaving}
+                className="flex-1 py-2.5 rounded-xl bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                {profileSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                {profileSaving ? "A guardar..." : "Guardar alterações"}
+              </button>
+            </div>
           </div>
         </div>
       )}
