@@ -14,14 +14,14 @@ const FILES = [
   { src: "Layout Branco Para Outras Areas.png", out: "geral.jpg" },
 ];
 
-const OUT_W = 800;
-const OUT_H = 600; // 4:3
+const OUT_W = 640;
+const OUT_H = 800; // 4:5 -- mais alto, mostra mais da capa (menos rodape na grelha)
 
 for (const { src, out } of FILES) {
   const inputPath = path.join(SRC_DIR, src);
   const meta = await sharp(inputPath).metadata();
   const w = meta.width;
-  const cropH = Math.round((w * 3) / 4);
+  const cropH = Math.round((w * OUT_H) / OUT_W);
   await sharp(inputPath)
     .extract({ left: 0, top: 0, width: w, height: Math.min(cropH, meta.height) })
     .resize(OUT_W, OUT_H, { fit: "cover", position: "top" })

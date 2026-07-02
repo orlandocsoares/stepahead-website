@@ -11,26 +11,9 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CalendarClock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { CAPA_GERAL, AREA_COVERS, getAreaCover, isBrandedCapa } from "@/lib/capas";
 
 const CATEGORIES_FALLBACK = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
-
-const CAPA_GERAL = "/capas/geral.jpg";
-const AREA_COVERS: Record<string, string> = {
-  "matematica": "/capas/matematica.jpg",
-  "lingua portuguesa": "/capas/lingua-portuguesa.jpg",
-  "educacao especial": "/capas/educacao-especial.jpg",
-  "educacao pre-escolar": "/capas/educacao-pre-escolar.jpg",
-  "expressao motora": "/capas/expressao-motora.jpg",
-  "expressao plastica": "/capas/expressao-plastica.jpg",
-};
-
-function normalizeAreaName(s: string): string {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
-}
-
-function getAreaCover(area: string): string | null {
-  return AREA_COVERS[normalizeAreaName(area)] ?? null;
-}
 
 const VISIBILIDADE_OPTIONS = [
   { value: "privado",          label: "Só eu",              icon: Lock,          color: "c-tx3" },
@@ -150,7 +133,6 @@ export default function FicheirosPage() {
   const [visibilidade, setVisibilidade] = useState("publico");
   const [turmaId, setTurmaId] = useState<string>("");
   const [minhasTurmas, setMinhasTurmas] = useState<{ id: string; nome: string; area: string }[]>([]);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortCol, setSortCol] = useState<"nome" | "area" | "tamanho" | "data" | "visibilidade">("data");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -391,13 +373,6 @@ export default function FicheirosPage() {
     finally { setIsSavingEdit(false); }
   }
 
-  async function handleVisibilidadeChange(id: string, newVis: string) {
-    setUpdatingId(id);
-    await fetch(`/api/db/arquivos?id=${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ visibilidade: newVis }) });
-    setFiles(prev => prev.map(f => f.id === id ? { ...f, visibilidade: newVis } : f));
-    setUpdatingId(null);
-  }
-
   return (
     <div className="flex gap-4 h-full w-full min-h-0">
 
@@ -540,9 +515,16 @@ export default function FicheirosPage() {
                       className="group c-bg2 border c-br rounded-2xl overflow-hidden hover:border-white/[0.15] hover:shadow-lg transition-all flex flex-col">
 
                       {/* Thumbnail — clicável */}
-                      <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="block relative overflow-hidden" style={{ aspectRatio: "4/3" }}>
+                      <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="block relative overflow-hidden" style={{ aspectRatio: "4/5" }}>
                         {f.thumbnail_url ? (
-                          <img src={f.thumbnail_url} alt={f.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <>
+                            <img src={f.thumbnail_url} alt={f.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            {isBrandedCapa(f.thumbnail_url) && (
+                              <p className="absolute left-[8%] right-[8%] top-[18%] text-slate-800 font-semibold leading-tight line-clamp-3 text-[9px] sm:text-[10px] md:text-xs">
+                                {f.label}
+                              </p>
+                            )}
+                          </>
                         ) : label === "PDF" ? (
                           <embed src={fileUrl} type="application/pdf" className="w-full h-full pointer-events-none" />
                         ) : (
@@ -559,6 +541,14 @@ export default function FicheirosPage() {
                           {label}
                         </span>
 
+                        {/* Roda dentada — sempre visível, acesso rápido a editar/datas */}
+                        {canAct && (
+                          <button onClick={e => { e.preventDefault(); openEditModal(f); }}
+                            className="absolute top-2 left-2 p-1.5 rounded-lg bg-black/50 backdrop-blur-sm text-white/80 hover:text-white hover:bg-black/70 transition-colors" title="Editar / datas">
+                            <Settings size={13} />
+                          </button>
+                        )}
+
                         {/* Hover overlay with actions */}
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                           <a href={fileUrl} target="_blank" rel="noopener noreferrer"
@@ -568,36 +558,24 @@ export default function FicheirosPage() {
                             <ExternalLink size={15} />
                           </a>
                           {canAct && (
-                            <>
-                              <button onClick={e => { e.preventDefault(); openEditModal(f); }}
-                                className="p-2.5 rounded-xl bg-white/15 backdrop-blur-sm hover:bg-white/25 transition-colors c-tx" title="Editar">
-                                <Pencil size={15} />
-                              </button>
-                              <button onClick={e => { e.preventDefault(); handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro"); }}
-                                className="p-2.5 rounded-xl bg-red-500/30 backdrop-blur-sm hover:bg-red-500/50 transition-colors text-red-300" title="Eliminar">
-                                <Trash2 size={15} />
-                              </button>
-                            </>
+                            <button onClick={e => { e.preventDefault(); handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro"); }}
+                              className="p-2.5 rounded-xl bg-red-500/30 backdrop-blur-sm hover:bg-red-500/50 transition-colors text-red-300" title="Eliminar">
+                              <Trash2 size={15} />
+                            </button>
                           )}
                         </div>
                       </a>
 
-                      {/* Info */}
-                      <div className="px-3 py-2.5 flex flex-col gap-1 flex-1">
-                        <p className="text-xs c-tx font-medium leading-tight line-clamp-2">{f.label}</p>
-                        <div className="flex items-center justify-between mt-auto pt-1">
-                          <span className="text-[9px] c-tx5">{f.tamanho ?? "—"}</span>
-                          <span className="text-[9px] c-tx5">{formatDate(f.criado_em ?? f.created_at)}</span>
+                      {/* Info — compacta */}
+                      <div className="px-2.5 py-1.5 flex flex-col gap-0.5">
+                        <p className="text-[10px] c-tx font-medium truncate">{f.label}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[9px] c-tx5 truncate">{f.tamanho ?? "—"} · {formatDate(f.criado_em ?? f.created_at)}</p>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <DisponibilidadeBadge disponivel_de={f.disponivel_de} disponivel_ate={f.disponivel_ate} />
+                            <VisibilidadeBadge v={f.visibilidade ?? "publico"} small />
+                          </div>
                         </div>
-                        <DisponibilidadeBadge disponivel_de={f.disponivel_de} disponivel_ate={f.disponivel_ate} />
-                        {canAct ? (
-                          <select value={f.visibilidade ?? "publico"} onChange={e => handleVisibilidadeChange(f.id, e.target.value)} disabled={updatingId === f.id}
-                            className="mt-1 bg-transparent border c-br rounded-lg px-1.5 py-1 text-[10px] c-tx4 outline-none cursor-pointer hc-br transition-colors w-full">
-                            {VISIBILIDADE_OPTIONS.map(o => <option key={o.value} value={o.value} className="c-bg">{o.label}</option>)}
-                          </select>
-                        ) : (
-                          <div className="mt-1"><VisibilidadeBadge v={f.visibilidade ?? "publico"} small /></div>
-                        )}
                       </div>
                     </motion.div>
                   );

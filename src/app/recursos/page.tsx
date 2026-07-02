@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FileText, X, BookOpen, Loader2, ExternalLink, LayoutDashboard } from "lucide-react";
 import { HeroBranding } from "@/components/HeroBranding";
+import { isBrandedCapa } from "@/lib/capas";
 
 type Recurso = {
   id: string;
@@ -229,9 +230,16 @@ function RecursosContent() {
                           <div className="h-0.5 w-full shrink-0" style={{ background: accent }} />
 
                           {/* Miniatura */}
-                          <div className="w-full aspect-[4/3] bg-black/30 flex items-center justify-center relative overflow-hidden">
+                          <div className="w-full aspect-[4/5] bg-black/30 flex items-center justify-center relative overflow-hidden">
                             {r.thumbnail_url ? (
-                              <img src={r.thumbnail_url} alt={r.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                              <>
+                                <img src={r.thumbnail_url} alt={r.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                {isBrandedCapa(r.thumbnail_url) && (
+                                  <p className="absolute left-[8%] right-[8%] top-[18%] text-slate-800 font-semibold leading-tight line-clamp-3 text-[9px] sm:text-[10px] md:text-xs">
+                                    {r.label}
+                                  </p>
+                                )}
+                              </>
                             ) : fileUrl ? (
                               <embed src={fileUrl} type="application/pdf" className="w-full h-full pointer-events-none" />
                             ) : (
