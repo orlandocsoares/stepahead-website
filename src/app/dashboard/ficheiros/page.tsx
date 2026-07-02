@@ -546,14 +546,6 @@ export default function FicheirosPage() {
                           {label}
                         </span>
 
-                        {/* Roda dentada — sempre visível, acesso rápido a editar/datas */}
-                        {canAct && (
-                          <button onClick={e => { e.preventDefault(); e.stopPropagation(); openEditModal(f); }}
-                            className="absolute top-2 left-2 z-10 p-1.5 rounded-lg bg-black/50 backdrop-blur-sm text-white/80 hover:text-white hover:bg-black/70 transition-colors" title="Editar / datas">
-                            <Settings size={13} />
-                          </button>
-                        )}
-
                         {/* Hover overlay with actions */}
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                           <a href={fileUrl} target="_blank" rel="noopener noreferrer"
@@ -562,6 +554,12 @@ export default function FicheirosPage() {
                             title="Abrir">
                             <ExternalLink size={15} />
                           </a>
+                          {canAct && (
+                            <button onClick={e => { e.preventDefault(); e.stopPropagation(); openEditModal(f); }}
+                              className="p-2.5 rounded-xl bg-white/15 backdrop-blur-sm hover:bg-white/25 transition-colors c-tx" title="Editar / datas">
+                              <Settings size={15} />
+                            </button>
+                          )}
                           {canAct && (
                             <button onClick={e => { e.preventDefault(); e.stopPropagation(); handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro"); }}
                               className="p-2.5 rounded-xl bg-red-500/30 backdrop-blur-sm hover:bg-red-500/50 transition-colors text-red-300" title="Eliminar">
