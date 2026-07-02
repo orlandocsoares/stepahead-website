@@ -522,39 +522,76 @@ export default function HeroSection() {
           ),
         };
       case 2: {
-        const proximaData = telemetry.proximo_evento_data ? new Date(telemetry.proximo_evento_data) : null;
-        const diasRestantes = proximaData ? Math.max(0, Math.ceil((proximaData.getTime() - Date.now()) / 86400000)) : null;
+        const eventos = telemetry.proximos_eventos ?? [];
+        const PARTNERS = [
+          { name: "Governo de Angola", subtitle: "Ministério da Educação", src: "/storage/v1/object/public/Logo%20Institutos/med.png" },
+          { name: "República de Angola", subtitle: "Insígnia Oficial", src: "/storage/v1/object/public/Logo%20Institutos/insignia.png" },
+          { name: "INFQE", subtitle: "Instituto de Formação", src: "/storage/v1/object/public/Logo%20Institutos/infqe.png" },
+          { name: "Camões, I.P.", subtitle: "Cooperação Portuguesa", src: "/storage/v1/object/public/Logo%20Institutos/icamoes.png" },
+        ];
         return {
           ...base,
           description: (
-            <div className="space-y-4">
-              <p className={defaultTextClass}>{base.description}</p>
-              <div className="flex flex-wrap gap-3 mt-1">
-                <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
-                  <CheckCircle size={14} className="text-emerald-400 shrink-0" />
-                  <div>
-                    <p className="text-sm font-bold text-white leading-none">{telemetry.sessoes_realizadas || 0}</p>
-                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-0.5">Sessões realizadas</p>
+            <div className="space-y-3 w-full max-w-sm">
+              {/* Caixa Agenda */}
+              <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.08)]">
+                {/* Cabeçalho */}
+                <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/[0.07] bg-white/[0.03]">
+                  <div className="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+                    <Calendar size={13} className="text-blue-400" />
                   </div>
-                </div>
-                <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
-                  <GraduationCap size={14} className="text-blue-400 shrink-0" />
                   <div>
-                    <p className="text-sm font-bold text-white leading-none">{telemetry.total_turmas || 0}</p>
-                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-0.5">Turmas activas</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80 leading-none">Agenda</p>
+                    <p className="text-[8px] text-blue-400/70 tracking-widest uppercase mt-0.5">Próximos eventos</p>
                   </div>
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 </div>
-                {telemetry.proximo_evento && (
-                  <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
-                    <Clock size={14} className="text-amber-400 shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-white leading-none truncate max-w-[140px]">{telemetry.proximo_evento}</p>
-                      <p className="text-[9px] uppercase tracking-[0.2em] text-amber-400/80 mt-0.5">
-                        {diasRestantes !== null ? `Em ${diasRestantes} dia${diasRestantes !== 1 ? 's' : ''}` : 'Próxima sessão'}
-                      </p>
+
+                {/* Lista de eventos */}
+                <div className="divide-y divide-white/[0.05]">
+                  {eventos.length === 0 ? (
+                    <div className="px-4 py-5 text-center">
+                      <p className="text-[11px] text-white/30 italic">Sem eventos agendados</p>
                     </div>
-                  </div>
-                )}
+                  ) : eventos.map((ev: any, i: number) => {
+                    const d = new Date(ev.data_evento);
+                    const dias = Math.max(0, Math.ceil((d.getTime() - Date.now()) / 86400000));
+                    return (
+                      <div key={i} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.03] transition-colors">
+                        <div className="shrink-0 w-9 text-center">
+                          <p className="text-[15px] font-black text-white leading-none">{d.getDate().toString().padStart(2,"0")}</p>
+                          <p className="text-[8px] uppercase tracking-wider text-blue-400/80 leading-none mt-0.5">{d.toLocaleString("pt-PT",{month:"short"})}</p>
+                        </div>
+                        <div className="w-px h-8 bg-white/10 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-semibold text-white/90 leading-tight truncate">{ev.titulo}</p>
+                          {ev.local && <p className="text-[9px] text-white/40 mt-0.5 truncate">{ev.local}</p>}
+                        </div>
+                        <div className={`shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full ${dias === 0 ? "bg-emerald-500/20 text-emerald-400" : dias <= 7 ? "bg-amber-500/20 text-amber-400" : "bg-white/10 text-white/40"}`}>
+                          {dias === 0 ? "Hoje" : `${dias}d`}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Ticker parceiros */}
+              <div className="relative overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.03] py-2">
+                <div className="flex animate-[ticker_18s_linear_infinite] gap-6 w-max">
+                  {[...PARTNERS, ...PARTNERS].map((p, i) => (
+                    <div key={i} className="flex items-center gap-2 shrink-0 px-2">
+                      <div className="w-7 h-7 bg-white rounded-md overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+                        <img src={p.src} alt={p.name} className="w-full h-full object-contain scale-110" />
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold text-white/80 leading-none whitespace-nowrap">{p.name}</p>
+                        <p className="text-[7px] text-white/30 tracking-wider whitespace-nowrap">{p.subtitle}</p>
+                      </div>
+                      <span className="text-white/10 ml-2">·</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ),

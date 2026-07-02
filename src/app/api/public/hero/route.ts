@@ -16,11 +16,11 @@ export async function GET() {
       ORDER BY first_name ASC
     `)),
     safe(dbQuery(`
-      SELECT titulo AS proximo_evento, data_evento
+      SELECT titulo, local, data_evento, tipo
       FROM agenda_atividades
       WHERE data_evento >= NOW()
       ORDER BY data_evento ASC
-      LIMIT 1
+      LIMIT 5
     `)),
     safe(dbQuery(`SELECT COUNT(*) AS total FROM arquivos WHERE visibilidade IN ('publico', 'formadores')`)),
     safe(dbQuery(`SELECT media_radar FROM hero_telemetria LIMIT 1`)),
@@ -67,8 +67,9 @@ export async function GET() {
   return NextResponse.json({
     formadores_lista: formadores.rows,
     total_formadores: formadores.rows.length,
-    proximo_evento: proximoEvento.rows[0]?.proximo_evento ?? null,
+    proximo_evento: proximoEvento.rows[0]?.titulo ?? null,
     proximo_evento_data: proximoEvento.rows[0]?.data_evento ?? null,
+    proximos_eventos: proximoEvento.rows,
     total_materials: Number(totalMateriais.rows[0]?.total ?? 0) || null,
     media_radar: telemetria.rows[0]?.media_radar ?? null,
     total_formandos: Number(totalFormandos.rows[0]?.total ?? 0),
