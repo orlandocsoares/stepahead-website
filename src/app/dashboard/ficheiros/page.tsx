@@ -525,7 +525,7 @@ export default function FicheirosPage() {
                           <>
                             <img src={f.thumbnail_url} alt={f.label} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
                             {isBrandedCapa(f.thumbnail_url) && (
-                              <p className="absolute left-[8%] right-[8%] top-[28%] text-slate-800 font-semibold leading-tight line-clamp-2 text-[9px] sm:text-[10px] md:text-xs">
+                              <p className="absolute left-[6%] right-[6%] top-[42%] bg-white/85 backdrop-blur-sm shadow-sm rounded-md px-2 py-1.5 text-slate-800 font-semibold leading-tight line-clamp-2 text-[9px] sm:text-[10px] md:text-xs">
                                 {f.label}
                               </p>
                             )}
