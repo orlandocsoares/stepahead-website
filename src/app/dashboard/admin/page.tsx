@@ -870,7 +870,7 @@ export default function SuperAdminPage() {
                                   )}
                                   {isAdminOrSuper(profile?.role) && (
                                     <div className="flex gap-1 mt-1">
-                                      <button onClick={() => openProfileModal(item)} className="p-1 rounded c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors" title="Ver perfil">
+                                      <button onClick={(e) => { e.stopPropagation(); openProfileModal(item); }} className="p-1 rounded c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors" title="Ver perfil">
                                         <User size={11} />
                                       </button>
                                       <button
@@ -896,7 +896,8 @@ export default function SuperAdminPage() {
 
                           return (
                             <motion.div key={item.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.03 }}
-                              className="c-bg2 border c-br rounded-xl px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-white/[0.12] transition-colors"
+                              onClick={() => isAdminOrSuper(profile?.role) && openProfileModal(item)}
+                              className={`c-bg2 border c-br rounded-xl px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-white/[0.12] transition-colors ${isAdminOrSuper(profile?.role) ? "cursor-pointer" : ""}`}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0 overflow-hidden">
@@ -999,7 +1000,7 @@ export default function SuperAdminPage() {
                                         ))}
                                       </select>
                                     )}
-                                    <button onClick={() => openProfileModal(item)} className="p-1.5 rounded-lg c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors" title="Ver/editar perfil">
+                                    <button onClick={(e) => { e.stopPropagation(); openProfileModal(item); }} className="p-1.5 rounded-lg c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors" title="Ver/editar perfil">
                                       <User size={13} />
                                     </button>
                                     <button onClick={() => openPowerModal(item)} className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs transition-colors ${item.temporary_power ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "c-s1 c-tx4 hc-tx"}`}>
