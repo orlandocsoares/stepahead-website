@@ -674,85 +674,61 @@ export default function HeroSection() {
         return {
           ...base,
           description: (
-            <div className="space-y-4">
+            <div className="space-y-3 w-full max-w-sm">
               <p className={defaultTextClass}>{base.description}</p>
 
-              {/* Cabeçalho repositório */}
+              {/* Cabeçalho */}
               {areasFormadores.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
                   <span className="text-[9px] uppercase tracking-[0.2em] text-blue-300/80 font-semibold">Repositório de Professores</span>
                   <span className="text-[9px] text-white/30 ml-auto">{totalFormadores} materiais</span>
                 </div>
               )}
 
-              {/* Grelha 3 colunas: 4 áreas + 2 CTAs do mesmo tamanho */}
-              <div className="grid grid-cols-3 gap-2">
-                {/* Áreas — posições 1,2 / 4,5 */}
-                {areasFormadores.slice(0, 4).map(({ area, total }, i) => {
+              {/* Cards de área — grelha 2 colunas, apenas informativo */}
+              <div className="grid grid-cols-2 gap-2">
+                {areasFormadores.slice(0, 6).map(({ area, total }, i) => {
                   const c = areaColors[area] ?? defaultAreaColor;
                   const Icon = c.icon;
-                  const col = (i % 2) + 1;
-                  const row = Math.floor(i / 2) + 1;
                   return (
                     <motion.div
                       key={area}
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: i * 0.07 }}
-                      style={{ gridColumn: col, gridRow: row }}
-                      className={`relative rounded-xl border ${c.border} bg-gradient-to-br ${c.bg} backdrop-blur-md p-3 overflow-hidden`}
+                      transition={{ duration: 0.35, delay: i * 0.06 }}
+                      className={`relative rounded-xl border ${c.border} bg-gradient-to-br ${c.bg} backdrop-blur-md px-3 py-2.5 overflow-hidden`}
                     >
-                      <div className={`absolute top-0 right-0 w-10 h-10 rounded-full blur-xl ${c.dot} opacity-25 -translate-y-1/2 translate-x-1/2`} />
-                      <div className={`w-6 h-6 rounded-lg bg-white/10 border ${c.border} flex items-center justify-center mb-1.5`}>
-                        <Icon size={12} className={c.text} />
+                      <div className={`absolute top-0 right-0 w-12 h-12 rounded-full blur-2xl ${c.dot} opacity-20 -translate-y-1/2 translate-x-1/2`} />
+                      <div className="flex items-center gap-2">
+                        <div className={`w-5 h-5 rounded-md bg-white/10 flex items-center justify-center shrink-0`}>
+                          <Icon size={10} className={c.text} />
+                        </div>
+                        <p className={`text-xl font-black tabular-nums leading-none ${c.text}`}>{total}</p>
                       </div>
-                      <p className={`text-lg font-bold tabular-nums leading-none ${c.text}`}>{total}</p>
-                      <p className="text-[8px] text-white/50 uppercase tracking-[0.12em] mt-0.5 font-medium leading-tight">{area}</p>
+                      <p className="text-[8px] text-white/50 uppercase tracking-[0.12em] mt-1.5 font-medium leading-tight">{area}</p>
                     </motion.div>
                   );
                 })}
-
-                {/* CTA 1 — posição coluna 3, linha 1 */}
-                <motion.a
-                  href="/recursos"
-                  initial={{ opacity: 0, x: 8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.35 }}
-                  style={{ gridColumn: 3, gridRow: 1 }}
-                  className="flex flex-col justify-between rounded-xl border border-emerald-400/25 bg-emerald-900/25 backdrop-blur-md p-3 pointer-events-auto hover:bg-emerald-900/45 hover:border-emerald-400/50 transition-all group"
-                >
-                  <div className="flex items-center justify-between">
-                    <Globe size={13} className="text-emerald-400" />
-                    <span className="text-emerald-400/50 group-hover:translate-x-0.5 transition-transform text-[10px]">→</span>
-                  </div>
-                  <div>
-                    <p className="text-[9px] uppercase tracking-[0.12em] text-emerald-300 font-semibold leading-tight">Recursos públicos</p>
-                    <p className="text-[8px] text-white/35 mt-0.5 leading-tight">Acesso livre</p>
-                  </div>
-                </motion.a>
-
-                {/* CTA 2 — posição coluna 3, linha 2 — só para autenticados */}
-                {profile && (
-                  <motion.a
-                    href="/dashboard/ficheiros"
-                    initial={{ opacity: 0, x: 8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.45 }}
-                    style={{ gridColumn: 3, gridRow: 2 }}
-                    className="flex flex-col justify-between rounded-xl border border-white/10 bg-white/[0.05] backdrop-blur-md p-3 pointer-events-auto hover:bg-white/[0.10] hover:border-white/20 transition-all group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <FolderOpen size={13} className="text-white/50" />
-                      <span className="text-white/30 group-hover:translate-x-0.5 transition-transform text-[10px]">→</span>
-                    </div>
-                    <div>
-                      <p className="text-[9px] uppercase tracking-[0.12em] text-white/70 font-semibold leading-tight">Repositório</p>
-                      <p className="text-[8px] text-white/30 mt-0.5 leading-tight">Área de formadores</p>
-                    </div>
-                  </motion.a>
-                )}
               </div>
+
+              {/* Card Recursos Públicos — clicável, destaque */}
+              <motion.a
+                href="/recursos"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="flex items-center gap-4 w-full rounded-xl border-2 border-emerald-400/40 bg-gradient-to-r from-emerald-900/40 to-emerald-800/20 backdrop-blur-md px-4 py-3 pointer-events-auto hover:border-emerald-400/70 hover:from-emerald-900/60 transition-all group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0">
+                  <Globe size={16} className="text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-emerald-300 leading-none">Recursos Públicos</p>
+                  <p className="text-[10px] text-white/40 mt-0.5">{totalPublicos > 0 ? `${totalPublicos} documentos disponíveis` : "Acesso livre · Sem login"}</p>
+                </div>
+                <span className="text-emerald-400/60 group-hover:translate-x-1 transition-transform text-base font-light">→</span>
+              </motion.a>
             </div>
           ),
         };
