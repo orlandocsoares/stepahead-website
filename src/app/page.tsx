@@ -695,9 +695,9 @@ export default function HeroSection() {
                 </div>
               )}
 
-              {/* Cards de área — fila horizontal com scroll lateral, cresce para a direita */}
-              <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory hide-native-scroll">
-                {areasFormadores.map(({ area, total }, i) => {
+              {/* Cards de área — grelha compacta de 3 colunas, no máximo 2 linhas, sem scroll */}
+              <div className="grid grid-cols-3 gap-2">
+                {areasFormadores.slice(0, 6).map(({ area, total }, i) => {
                   const c = areaColors[area] ?? defaultAreaColor;
                   const Icon = c.icon;
                   return (
@@ -706,7 +706,7 @@ export default function HeroSection() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35, delay: i * 0.06 }}
-                      className={`relative rounded-xl border ${c.border} bg-gradient-to-br ${c.bg} backdrop-blur-md px-3 py-2.5 overflow-hidden shrink-0 min-w-[108px] snap-start`}
+                      className={`relative rounded-xl border ${c.border} bg-gradient-to-br ${c.bg} backdrop-blur-md px-2.5 py-2 overflow-hidden`}
                     >
                       <div className={`absolute top-0 right-0 w-12 h-12 rounded-full blur-2xl ${c.dot} opacity-20 -translate-y-1/2 translate-x-1/2`} />
                       <div className="flex items-center gap-2">
