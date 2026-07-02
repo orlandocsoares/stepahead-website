@@ -71,6 +71,7 @@ export default function SuperAdminPage() {
   const [profileModal, setProfileModal] = useState<any>(null);
   const [profileForm, setProfileForm] = useState<any>({});
   const [profileSaving, setProfileSaving] = useState(false);
+  const [disciplinas, setDisciplinas] = useState<string[]>([]);
 
   function openProfileModal(item: any) {
     setProfileModal(item);
@@ -82,7 +83,7 @@ export default function SuperAdminPage() {
       status: item.status || "activo",
       provincia: item.provincia || "",
       escola: item.escola || "",
-      especialidade: item.especialidade || item.specialization || "",
+      especialidade: (() => { try { const v = item.especialidade || item.specialization || ""; const p = JSON.parse(v); return Array.isArray(p) ? p : [v].filter(Boolean); } catch { return (item.especialidade || item.specialization || "").split(",").map((s: string) => s.trim()).filter(Boolean); } })(),
       biografia: item.biografia || "",
     });
   }
@@ -94,7 +95,7 @@ export default function SuperAdminPage() {
       const res = await fetch("/api/db/profiles", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ updates: profileForm, eq: { id: profileModal.id } }),
+        body: JSON.stringify({ updates: { ...profileForm, especialidade: JSON.stringify(Array.isArray(profileForm.especialidade) ? profileForm.especialidade : [profileForm.especialidade].filter(Boolean)) }, eq: { id: profileModal.id } }),
       });
       const { error } = await res.json();
       if (error) { showToast("error", error); }
@@ -246,9 +247,18 @@ export default function SuperAdminPage() {
     }
   }, [profile, profileLoading, router, isStaff]);
 
+
   useEffect(() => {
     if (isStaff && activeTab !== "stats") fetchData();
   }, [activeTab, profile]);
+
+  useEffect(() => {
+    if (!isStaff) return;
+    fetch("/api/admin/disciplinas")
+      .then(r => r.json())
+      .then(d => setDisciplinas((d.disciplinas ?? []).filter((x: any) => x.activo).map((x: any) => x.nome)))
+      .catch(() => {});
+  }, [isStaff]);
 
   useEffect(() => {
     if (isAdminOrSuper(profile?.role) && activeTab === "users") {
@@ -1600,8 +1610,23 @@ export default function SuperAdminPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs c-tx3">Especialidade / Área</label>
-                <input value={profileForm.especialidade} onChange={e => setProfileForm((f: any) => ({ ...f, especialidade: e.target.value }))}
-                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50" />
+                <div className="w-full c-s1 border c-br rounded-lg px-3 py-2 flex flex-wrap gap-x-4 gap-y-2">
+                  {disciplinas.length === 0 && <span className="text-xs c-tx5">Nenhuma área configurada</span>}
+                  {disciplinas.map(nome => {
+                    const selected = Array.isArray(profileForm.especialidade) && profileForm.especialidade.includes(nome);
+                    return (
+                      <label key={nome} className="flex items-center gap-1.5 cursor-pointer text-sm c-tx">
+                        <input type="checkbox" checked={selected}
+                          onChange={() => setProfileForm((f: any) => {
+                            const cur: string[] = Array.isArray(f.especialidade) ? f.especialidade : [];
+                            return { ...f, especialidade: selected ? cur.filter(x => x !== nome) : [...cur, nome] };
+                          })}
+                          className="accent-blue-500" />
+                        {nome}
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="space-y-1.5">
