@@ -174,6 +174,8 @@ export default function FicheirosPage() {
   const [editDisponivelAte, setEditDisponivelAte] = useState("");
   const [editGrupos, setEditGrupos] = useState<string[]>([]);
   const [editSitePublico, setEditSitePublico] = useState(false);
+  const [editCapa, setEditCapa] = useState<string | null>(null);
+  const [editCapaTouched, setEditCapaTouched] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const dropRef = useRef<HTMLDivElement>(null);
@@ -355,7 +357,17 @@ export default function FicheirosPage() {
     setEditDisponivelAte(f.disponivel_ate ? f.disponivel_ate.slice(0, 10) : "");
     setEditGrupos(Array.isArray(f.grupos) ? f.grupos : []);
     setEditSitePublico(f.site_publico ?? false);
+    const knownCapa = f.thumbnail_url === CAPA_GERAL || Object.values(AREA_COVERS).includes(f.thumbnail_url) ? f.thumbnail_url : null;
+    setEditCapa(knownCapa);
+    setEditCapaTouched(false);
   }
+
+  const editCapaOptions = useMemo(() => {
+    const opts = [{ label: "Geral", url: CAPA_GERAL }];
+    const specific = getAreaCover(editArea);
+    if (specific) opts.push({ label: editArea, url: specific });
+    return opts;
+  }, [editArea]);
 
   async function handleSaveEdit(e: React.FormEvent) {
     e.preventDefault();
@@ -370,6 +382,7 @@ export default function FicheirosPage() {
           turma_id: editTurmaId || null, disponivel_de: editDisponivelDe || null,
           disponivel_ate: editDisponivelAte || null, grupos: editGrupos,
           site_publico: editSitePublico && editVisibilidade === "publico",
+          ...(editCapaTouched ? { thumbnail_url: editCapa ?? "" } : {}),
         }),
       });
       if (!res.ok) throw new Error("Erro ao guardar.");
@@ -831,6 +844,24 @@ export default function FicheirosPage() {
                   </div>
                 )}
               </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs c-tx3 flex items-center justify-between">
+                <span>Capa (opcional)</span>
+                {editCapa && (
+                  <button type="button" onClick={() => { setEditCapa(null); setEditCapaTouched(true); }} className="text-[10px] c-tx4 hc-tx">Remover</button>
+                )}
+              </label>
+              <div className="flex gap-2">
+                {editCapaOptions.map(opt => (
+                  <button key={opt.url} type="button" onClick={() => { setEditCapa(opt.url); setEditCapaTouched(true); }}
+                    className={`relative w-24 h-[72px] rounded-lg overflow-hidden border-2 transition-colors shrink-0 ${editCapa === opt.url ? "border-blue-500" : "border-transparent hover:border-white/20"}`}>
+                    <img src={opt.url} alt={opt.label} className="w-full h-full object-cover" />
+                    <span className="absolute bottom-0 inset-x-0 bg-black/60 text-[8px] text-white text-center py-0.5 truncate px-1">{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] c-tx5">Se não escolher, mantém-se a capa atual do ficheiro.</p>
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3">Visibilidade</label>

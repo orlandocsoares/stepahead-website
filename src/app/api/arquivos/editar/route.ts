@@ -11,7 +11,7 @@ export async function PATCH(request: Request) {
   const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [session.id]);
   const role = profileRes.rows[0]?.role;
 
-  const { id, label, area, visibilidade, turma_id, disponivel_de, disponivel_ate, grupos, site_publico } = await request.json();
+  const { id, label, area, visibilidade, turma_id, disponivel_de, disponivel_ate, grupos, site_publico, thumbnail_url } = await request.json();
   if (!id) return NextResponse.json({ error: "ID obrigatório." }, { status: 400 });
 
   // Verificar que o utilizador é dono ou admin
@@ -24,6 +24,10 @@ export async function PATCH(request: Request) {
   }
 
   // Actualizar metadados
+  // thumbnail_url tem 3 estados possíveis vindos do cliente:
+  //   undefined -> não foi tocado, mantém o valor actual
+  //   ""        -> remover capa (voltar à miniatura automática)
+  //   "url"     -> definir esta capa
   await dbQuery(
     `UPDATE arquivos SET
        label          = COALESCE($2, label),
@@ -32,7 +36,12 @@ export async function PATCH(request: Request) {
        turma_id       = $5,
        disponivel_de  = $6,
        disponivel_ate = $7,
-       site_publico   = COALESCE($8, site_publico)
+       site_publico   = COALESCE($8, site_publico),
+       thumbnail_url  = CASE
+         WHEN $9::text IS NULL THEN thumbnail_url
+         WHEN $9::text = ''    THEN NULL
+         ELSE $9::text
+       END
      WHERE id = $1`,
     [
       id,
@@ -43,6 +52,7 @@ export async function PATCH(request: Request) {
       disponivel_de || null,
       disponivel_ate || null,
       typeof site_publico === "boolean" ? site_publico : null,
+      typeof thumbnail_url === "string" ? thumbnail_url : null,
     ]
   );
 
