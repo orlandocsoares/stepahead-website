@@ -35,7 +35,7 @@ export async function GET(request: Request) {
   const [rows, countRes] = await Promise.all([
     dbQuery(
       `SELECT al.*,
-              actor.first_name AS actor_nome, actor.last_name AS actor_apelido, actor.role AS actor_role,
+              actor.first_name AS actor_nome, actor.last_name AS actor_apelido, actor.role AS actor_role, actor.avatar_url AS actor_avatar,
               target.first_name AS target_nome, target.last_name AS target_apelido
        FROM audit_logs al
        LEFT JOIN profiles actor ON actor.id = al.actor_id
