@@ -684,13 +684,17 @@ export default function HeroSection() {
                 )}
                 <motion.a
                   href="/recursos"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.25em] text-emerald-400/50 hover:text-emerald-400 transition-colors pointer-events-auto group"
+                  className="flex items-center gap-3 rounded-xl border border-emerald-400/25 bg-emerald-900/25 backdrop-blur-md px-3 py-2.5 pointer-events-auto hover:bg-emerald-900/45 hover:border-emerald-400/50 transition-all group"
                 >
-                  Ver todos os recursos públicos
-                  <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                  <Globe size={14} className="text-emerald-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-emerald-300 font-semibold">Ver recursos públicos</p>
+                    <p className="text-[8px] text-white/35 mt-0.5">Acesso livre · sem conta necessária</p>
+                  </div>
+                  <span className="text-emerald-400/60 group-hover:translate-x-0.5 transition-transform text-xs">→</span>
                 </motion.a>
               </div>
 
@@ -698,13 +702,17 @@ export default function HeroSection() {
               {profile && (
                 <motion.a
                   href="/dashboard/ficheiros"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 }}
-                  className="inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.25em] text-white/30 hover:text-white/60 transition-colors pointer-events-auto group"
+                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.05] backdrop-blur-md px-3 py-2.5 pointer-events-auto hover:bg-white/[0.10] hover:border-white/20 transition-all group"
                 >
-                  Aceder ao repositório completo
-                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                  <FolderOpen size={14} className="text-white/50 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/70 font-semibold">Repositório completo</p>
+                    <p className="text-[8px] text-white/30 mt-0.5">Todos os materiais · área de formadores</p>
+                  </div>
+                  <span className="text-white/30 group-hover:translate-x-0.5 transition-transform text-xs">→</span>
                 </motion.a>
               )}
             </div>
