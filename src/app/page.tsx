@@ -611,112 +611,80 @@ export default function HeroSection() {
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
 
-              {/* Layout principal: grelha de áreas + CTAs lado a lado */}
-              <div className="flex gap-3">
-
-                {/* Coluna esquerda: repositório de professores + público */}
-                <div className="flex-1 space-y-3 min-w-0">
-
-                  {/* Bloco professores */}
-                  {areasFormadores.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                        <span className="text-[9px] uppercase tracking-[0.2em] text-blue-300/80 font-semibold">Repositório de Professores</span>
-                        <span className="text-[9px] text-white/30 ml-auto">{totalFormadores} materiais</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {areasFormadores.slice(0, 4).map(({ area, total }, i) => {
-                          const c = areaColors[area] ?? defaultAreaColor;
-                          const Icon = c.icon;
-                          return (
-                            <motion.div
-                              key={area}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.4, delay: i * 0.07 }}
-                              className={`relative rounded-xl border ${c.border} bg-gradient-to-br ${c.bg} backdrop-blur-md p-3 overflow-hidden`}
-                            >
-                              <div className={`absolute top-0 right-0 w-10 h-10 rounded-full blur-xl ${c.dot} opacity-25 -translate-y-1/2 translate-x-1/2`} />
-                              <div className={`w-6 h-6 rounded-lg bg-white/10 border ${c.border} flex items-center justify-center mb-1.5`}>
-                                <Icon size={12} className={c.text} />
-                              </div>
-                              <p className={`text-lg font-bold tabular-nums leading-none ${c.text}`}>{total}</p>
-                              <p className="text-[8px] text-white/50 uppercase tracking-[0.12em] mt-0.5 font-medium leading-tight">{area}</p>
-                            </motion.div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Bloco público */}
-                  {areasPublicas.length > 0 && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                        <span className="text-[9px] uppercase tracking-[0.2em] text-emerald-300/80 font-semibold">Disponível ao Público</span>
-                        <span className="text-[9px] text-white/30 ml-auto">{totalPublicos} mat.</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {areasPublicas.slice(0, 2).filter(({ area }) => !!area).map(({ area, total }, i) => {
-                          const c = areaColors[area] ?? defaultAreaColor;
-                          const Icon = c.icon;
-                          return (
-                            <motion.a
-                              key={area}
-                              href={`/recursos?area=${encodeURIComponent(area)}`}
-                              initial={{ opacity: 0, y: 6 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.3, delay: 0.3 + i * 0.06 }}
-                              className="flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-900/20 px-2.5 py-2 pointer-events-auto hover:bg-emerald-900/40 hover:border-emerald-400/40 transition-all group"
-                            >
-                              <Icon size={11} className="text-emerald-400/70 shrink-0" />
-                              <span className="text-[9px] text-white/60 group-hover:text-white/90 uppercase tracking-[0.1em] font-medium truncate flex-1">{area}</span>
-                              <span className="text-[9px] font-bold text-emerald-400 tabular-nums shrink-0">{total}</span>
-                            </motion.a>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+              {/* Cabeçalho repositório */}
+              {areasFormadores.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                  <span className="text-[9px] uppercase tracking-[0.2em] text-blue-300/80 font-semibold">Repositório de Professores</span>
+                  <span className="text-[9px] text-white/30 ml-auto">{totalFormadores} materiais</span>
                 </div>
+              )}
 
-                {/* Coluna direita: CTAs de acesso */}
-                <div className="flex flex-col gap-2 w-[140px] shrink-0 justify-center">
-                  <motion.a
-                    href="/recursos"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="flex flex-col gap-1.5 rounded-xl border border-emerald-400/25 bg-emerald-900/25 backdrop-blur-md p-3 pointer-events-auto hover:bg-emerald-900/45 hover:border-emerald-400/50 transition-all group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <Globe size={13} className="text-emerald-400" />
-                      <span className="text-emerald-400/60 group-hover:translate-x-0.5 transition-transform text-xs">→</span>
-                    </div>
-                    <p className="text-[9px] uppercase tracking-[0.15em] text-emerald-300 font-semibold leading-tight">Recursos públicos</p>
-                    <p className="text-[8px] text-white/35 leading-tight">Acesso livre</p>
-                  </motion.a>
-
-                  {profile && (
-                    <motion.a
-                      href="/dashboard/ficheiros"
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 }}
-                      className="flex flex-col gap-1.5 rounded-xl border border-white/10 bg-white/[0.05] backdrop-blur-md p-3 pointer-events-auto hover:bg-white/[0.10] hover:border-white/20 transition-all group"
+              {/* Grelha 3 colunas: 4 áreas + 2 CTAs do mesmo tamanho */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* Áreas — posições 1,2 / 4,5 */}
+                {areasFormadores.slice(0, 4).map(({ area, total }, i) => {
+                  const c = areaColors[area] ?? defaultAreaColor;
+                  const Icon = c.icon;
+                  const col = (i % 2) + 1;
+                  const row = Math.floor(i / 2) + 1;
+                  return (
+                    <motion.div
+                      key={area}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: i * 0.07 }}
+                      style={{ gridColumn: col, gridRow: row }}
+                      className={`relative rounded-xl border ${c.border} bg-gradient-to-br ${c.bg} backdrop-blur-md p-3 overflow-hidden`}
                     >
-                      <div className="flex items-center justify-between">
-                        <FolderOpen size={13} className="text-white/50" />
-                        <span className="text-white/30 group-hover:translate-x-0.5 transition-transform text-xs">→</span>
+                      <div className={`absolute top-0 right-0 w-10 h-10 rounded-full blur-xl ${c.dot} opacity-25 -translate-y-1/2 translate-x-1/2`} />
+                      <div className={`w-6 h-6 rounded-lg bg-white/10 border ${c.border} flex items-center justify-center mb-1.5`}>
+                        <Icon size={12} className={c.text} />
                       </div>
-                      <p className="text-[9px] uppercase tracking-[0.15em] text-white/70 font-semibold leading-tight">Repositório</p>
-                      <p className="text-[8px] text-white/30 leading-tight">Área de formadores</p>
-                    </motion.a>
-                  )}
-                </div>
+                      <p className={`text-lg font-bold tabular-nums leading-none ${c.text}`}>{total}</p>
+                      <p className="text-[8px] text-white/50 uppercase tracking-[0.12em] mt-0.5 font-medium leading-tight">{area}</p>
+                    </motion.div>
+                  );
+                })}
 
+                {/* CTA 1 — posição coluna 3, linha 1 */}
+                <motion.a
+                  href="/recursos"
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.35 }}
+                  style={{ gridColumn: 3, gridRow: 1 }}
+                  className="flex flex-col justify-between rounded-xl border border-emerald-400/25 bg-emerald-900/25 backdrop-blur-md p-3 pointer-events-auto hover:bg-emerald-900/45 hover:border-emerald-400/50 transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <Globe size={13} className="text-emerald-400" />
+                    <span className="text-emerald-400/50 group-hover:translate-x-0.5 transition-transform text-[10px]">→</span>
+                  </div>
+                  <div>
+                    <p className="text-[9px] uppercase tracking-[0.12em] text-emerald-300 font-semibold leading-tight">Recursos públicos</p>
+                    <p className="text-[8px] text-white/35 mt-0.5 leading-tight">Acesso livre</p>
+                  </div>
+                </motion.a>
+
+                {/* CTA 2 — posição coluna 3, linha 2 */}
+                <motion.a
+                  href={profile ? "/dashboard/ficheiros" : "#"}
+                  onClick={!profile ? () => {} : undefined}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.45 }}
+                  style={{ gridColumn: 3, gridRow: 2 }}
+                  className="flex flex-col justify-between rounded-xl border border-white/10 bg-white/[0.05] backdrop-blur-md p-3 pointer-events-auto hover:bg-white/[0.10] hover:border-white/20 transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <FolderOpen size={13} className="text-white/50" />
+                    <span className="text-white/30 group-hover:translate-x-0.5 transition-transform text-[10px]">→</span>
+                  </div>
+                  <div>
+                    <p className="text-[9px] uppercase tracking-[0.12em] text-white/70 font-semibold leading-tight">Repositório</p>
+                    <p className="text-[8px] text-white/30 mt-0.5 leading-tight">{profile ? "Área de formadores" : "Requer acesso"}</p>
+                  </div>
+                </motion.a>
               </div>
             </div>
           ),
