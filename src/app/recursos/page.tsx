@@ -230,7 +230,7 @@ function RecursosContent() {
                           <div className="h-0.5 w-full shrink-0" style={{ background: accent }} />
 
                           {/* Miniatura */}
-                          <div className={`w-full aspect-[2/3] flex items-center justify-center relative overflow-hidden ${r.thumbnail_url ? "bg-white" : "bg-black/30"}`}>
+                          <div className={`w-full flex items-center justify-center relative overflow-hidden ${r.thumbnail_url ? "bg-white" : "bg-black/30"}`} style={{ aspectRatio: "640/905" }}>
                             {r.thumbnail_url ? (
                               <>
                                 <img src={r.thumbnail_url} alt={r.label} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />

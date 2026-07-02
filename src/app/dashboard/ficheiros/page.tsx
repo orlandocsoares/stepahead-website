@@ -520,7 +520,7 @@ export default function FicheirosPage() {
                         tabIndex={0}
                         onClick={() => window.open(fileUrl, "_blank", "noopener,noreferrer")}
                         onKeyDown={e => { if (e.key === "Enter") window.open(fileUrl, "_blank", "noopener,noreferrer"); }}
-                        className={`block relative overflow-hidden cursor-pointer ${f.thumbnail_url ? "bg-white" : ""}`} style={{ aspectRatio: "2/3" }}>
+                        className={`block relative overflow-hidden cursor-pointer ${f.thumbnail_url ? "bg-white" : ""}`} style={{ aspectRatio: "640/905" }}>
                         {f.thumbnail_url ? (
                           <>
                             <img src={f.thumbnail_url} alt={f.label} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />

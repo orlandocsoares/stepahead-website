@@ -14,15 +14,19 @@ const FILES = [
   { src: "Layout Branco Para Outras Areas.png", out: "geral.jpg" },
 ];
 
-const OUT_W = 640; // sem recorte -- mantem a proporcao original de cada capa na totalidade
+// Todas as capas saem com o MESMO tamanho (640x905), para a caixa na grelha
+// (que usa esse aspect-ratio) ficar sempre preenchida sem cortar nada.
+// fit:"contain" nunca corta -- so acrescenta fundo branco se a proporcao
+// original nao bater certo exactamente.
+const OUT_W = 640;
+const OUT_H = 905;
 
 for (const { src, out } of FILES) {
   const inputPath = path.join(SRC_DIR, src);
   const meta = await sharp(inputPath).metadata();
-  const outH = Math.round((meta.height / meta.width) * OUT_W);
   await sharp(inputPath)
-    .resize(OUT_W, outH, { fit: "fill" })
+    .resize(OUT_W, OUT_H, { fit: "contain", background: "#ffffff" })
     .jpeg({ quality: 85 })
     .toFile(path.join(OUT_DIR, out));
-  console.log(`OK ${src} (${meta.width}x${meta.height}) -> ${out} (${OUT_W}x${outH}, sem recorte)`);
+  console.log(`OK ${src} (${meta.width}x${meta.height}) -> ${out} (${OUT_W}x${OUT_H}, sem recorte)`);
 }
