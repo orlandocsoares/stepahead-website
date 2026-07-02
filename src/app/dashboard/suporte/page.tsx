@@ -323,16 +323,17 @@ export default function SupportPage() {
                         )}
                       </div>
                       {isEditing ? (
-                        <div className="flex items-center gap-1.5 w-full">
-                          <input
+                        <div className="flex items-end gap-1.5 w-full">
+                          <textarea
                             value={editText}
                             onChange={e => setEditText(e.target.value)}
                             onKeyDown={e => {
-                              if (e.key === "Enter") { e.preventDefault(); handleSaveEditMessage(msg); }
+                              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSaveEditMessage(msg); }
                               if (e.key === "Escape") cancelEditMessage();
                             }}
                             autoFocus
-                            className="flex-1 c-s1 border c-br rounded-lg px-2.5 py-1.5 text-xs c-tx outline-none focus:border-blue-500/40"
+                            rows={2}
+                            className="flex-1 c-s1 border c-br rounded-lg px-2.5 py-1.5 text-xs c-tx outline-none focus:border-blue-500/40 resize-none"
                           />
                           <button onClick={() => handleSaveEditMessage(msg)} disabled={isLoadingThis || !editText.trim()}
                             className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-40 shrink-0">
@@ -344,7 +345,7 @@ export default function SupportPage() {
                         </div>
                       ) : (
                         <div className="flex items-center gap-1">
-                          <div className={`px-3 py-2 rounded-xl text-xs leading-relaxed ${isMe ? "bg-blue-600/20 c-tx2 rounded-tr-sm" : "c-s2 c-tx2 rounded-tl-sm"}`}>
+                          <div className={`px-3 py-2 rounded-xl text-xs leading-relaxed whitespace-pre-wrap break-words ${isMe ? "bg-blue-600/20 c-tx2 rounded-tr-sm" : "c-s2 c-tx2 rounded-tl-sm"}`}>
                             {msg.content}
                           </div>
                           {canManage && (
@@ -371,13 +372,14 @@ export default function SupportPage() {
 
             {/* Input de resposta */}
             {selectedTicket.status !== "Resolvido" ? (
-              <div className="px-4 py-3 border-t c-br shrink-0 flex gap-2">
-                <input
+              <div className="px-4 py-3 border-t c-br shrink-0 flex items-end gap-2">
+                <textarea
                   value={msgText}
                   onChange={e => setMsgText(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                  placeholder="Escreva uma resposta..."
-                  className="flex-1 c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/40"
+                  placeholder="Escreva uma resposta... (Shift+Enter para nova linha)"
+                  rows={1}
+                  className="flex-1 c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/40 resize-none max-h-32"
                 />
                 <button
                   onClick={handleSendMessage}
