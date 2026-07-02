@@ -5,7 +5,7 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LifeBuoy, Clock, CheckCircle2, Send, Plus, X, Search, Loader2, User,
-  ChevronRight, MessageSquare, AlertCircle, RefreshCw
+  ChevronRight, MessageSquare, AlertCircle, RefreshCw, Pencil, Trash2, Check
 } from "lucide-react";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -32,6 +32,9 @@ export default function SupportPage() {
   const [msgText, setMsgText] = useState("");
   const [msgSubmitting, setMsgSubmitting] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [msgActionLoading, setMsgActionLoading] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
@@ -94,6 +97,46 @@ export default function SupportPage() {
     await fetchMessages(selectedTicket.id);
     setMsgSubmitting(false);
   };
+
+  function startEditMessage(msg: any) {
+    setEditingMsgId(msg.id);
+    setEditText(msg.content);
+  }
+
+  function cancelEditMessage() {
+    setEditingMsgId(null);
+    setEditText("");
+  }
+
+  async function handleSaveEditMessage(msg: any) {
+    if (!editText.trim() || !user || !selectedTicket) return;
+    setMsgActionLoading(msg.id);
+    await fetch("/api/db/ticket_mensagens", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        updates: { content: editText.trim() },
+        eq: isAdmin ? { id: msg.id } : { id: msg.id, user_id: user.id },
+      }),
+    });
+    setEditingMsgId(null);
+    setEditText("");
+    await fetchMessages(selectedTicket.id);
+    setMsgActionLoading(null);
+  }
+
+  async function handleDeleteMessage(msg: any) {
+    if (!user || !selectedTicket) return;
+    if (!confirm("Eliminar esta mensagem?")) return;
+    setMsgActionLoading(msg.id);
+    await fetch("/api/db/ticket_mensagens", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eq: isAdmin ? { id: msg.id } : { id: msg.id, user_id: user.id } }),
+    });
+    await fetchMessages(selectedTicket.id);
+    setMsgActionLoading(null);
+  }
 
   const handleStatusChange = async (status: string) => {
     if (!selectedTicket) return;
@@ -260,11 +303,14 @@ export default function SupportPage() {
               )}
               {messages.map((msg) => {
                 const isMe = msg.user_id === user?.id;
+                const canManage = isMe || isAdmin;
                 const senderName = `${msg.profiles?.first_name || ""} ${msg.profiles?.last_name || ""}`.trim() || "Utilizador";
                 const senderRole = msg.profiles?.role;
                 const isStaff = senderRole === "admin" || senderRole === "super-admin";
+                const isEditing = editingMsgId === msg.id;
+                const isLoadingThis = msgActionLoading === msg.id;
                 return (
-                  <div key={msg.id} className={`flex gap-2.5 ${isMe ? "flex-row-reverse" : ""}`}>
+                  <div key={msg.id} className={`flex gap-2.5 group ${isMe ? "flex-row-reverse" : ""}`}>
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${isStaff ? "bg-blue-500/20 text-blue-400" : "bg-white/10 c-tx3"}`}>
                       {senderName[0]?.toUpperCase() || "?"}
                     </div>
@@ -272,10 +318,49 @@ export default function SupportPage() {
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] c-tx4">{senderName}</span>
                         {isStaff && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 font-medium">Suporte</span>}
+                        {msg.updated_at && msg.updated_at !== msg.created_at && (
+                          <span className="text-[9px] c-tx5 italic">editado</span>
+                        )}
                       </div>
-                      <div className={`px-3 py-2 rounded-xl text-xs leading-relaxed ${isMe ? "bg-blue-600/20 c-tx2 rounded-tr-sm" : "c-s2 c-tx2 rounded-tl-sm"}`}>
-                        {msg.content}
-                      </div>
+                      {isEditing ? (
+                        <div className="flex items-center gap-1.5 w-full">
+                          <input
+                            value={editText}
+                            onChange={e => setEditText(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === "Enter") { e.preventDefault(); handleSaveEditMessage(msg); }
+                              if (e.key === "Escape") cancelEditMessage();
+                            }}
+                            autoFocus
+                            className="flex-1 c-s1 border c-br rounded-lg px-2.5 py-1.5 text-xs c-tx outline-none focus:border-blue-500/40"
+                          />
+                          <button onClick={() => handleSaveEditMessage(msg)} disabled={isLoadingThis || !editText.trim()}
+                            className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-40 shrink-0">
+                            {isLoadingThis ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                          </button>
+                          <button onClick={cancelEditMessage} className="p-1.5 rounded-lg c-tx5 hover:bg-white/5 transition-colors shrink-0">
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <div className={`px-3 py-2 rounded-xl text-xs leading-relaxed ${isMe ? "bg-blue-600/20 c-tx2 rounded-tr-sm" : "c-s2 c-tx2 rounded-tl-sm"}`}>
+                            {msg.content}
+                          </div>
+                          {canManage && (
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => startEditMessage(msg)} title="Editar"
+                                className="p-1 rounded-lg c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors">
+                                <Pencil size={11} />
+                              </button>
+                              <button onClick={() => handleDeleteMessage(msg)} disabled={isLoadingThis} title="Eliminar"
+                                className="p-1 rounded-lg c-tx5 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-40">
+                                {isLoadingThis ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <span className="text-[9px] c-tx5">{new Date(msg.created_at).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}</span>
                     </div>
                   </div>

@@ -342,6 +342,7 @@ const OWNED_TABLES: Record<string, string> = {
   profiles: "id",
   tickets: "user_id",
   comunidade_posts: "user_id",
+  ticket_mensagens: "user_id",
 };
 
 export async function PATCH(request: Request, context: { params: Promise<{ table: string }> }) {
