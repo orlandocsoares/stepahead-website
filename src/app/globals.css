@@ -6,8 +6,8 @@
 :root {
   /* DARK (default) */
   --dash-bg-image: url('/dashboard-bg.png');
-  --c-bg:   #0d0d14;
-  --c-bg2:  #13131f;
+  --c-bg:   rgba(13,13,20,0.82);
+  --c-bg2:  rgba(19,19,31,0.72);
   --c-s1:   rgba(255,255,255,0.025);
   --c-s2:   rgba(255,255,255,0.05);
   --c-s3:   rgba(255,255,255,0.08);
@@ -22,8 +22,8 @@
 }
 /* MEIO ESCURO — lua crescente, azul profundo */
 html.meio-escuro {
-  --c-bg:   #0a0f1e;
-  --c-bg2:  #0f1829;
+  --c-bg:   rgba(10,15,30,0.82);
+  --c-bg2:  rgba(15,24,41,0.72);
   --c-s1:   rgba(255,255,255,0.04);
   --c-s2:   rgba(255,255,255,0.07);
   --c-s3:   rgba(255,255,255,0.10);
@@ -39,8 +39,8 @@ html.meio-escuro {
 
 /* MEIO CLARO — pôr do sol laranja/dourado */
 html.meio-claro {
-  --c-bg:   #1a1008;
-  --c-bg2:  #251808;
+  --c-bg:   rgba(26,16,8,0.82);
+  --c-bg2:  rgba(37,24,8,0.72);
   --c-s1:   rgba(255,240,200,0.06);
   --c-s2:   rgba(255,240,200,0.10);
   --c-s3:   rgba(255,240,200,0.14);
@@ -72,8 +72,8 @@ html.light {
   --c-ov:   rgba(210,225,242,0.92);
 }
 
-/* No modo claro, os cards têm backdrop-blur leve para efeito glass nas bordas */
-html.light .c-bg2 { backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; }
+/* Efeito glass em todos os modos — backdrop-blur nos cards c-bg2 */
+.c-bg2 { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 
 /* Overlay do dashboard — remover gradiente escuro no modo claro */
 html.light .dashboard-overlay { background: none !important; }
