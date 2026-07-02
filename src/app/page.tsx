@@ -50,57 +50,65 @@ const SIMULATED_FORMADORES = [
 function FormadoresLoop({ formadores }: { formadores: any[] }) {
   const [idx, setIdx] = useState(0);
   const data = formadores && formadores.length > 0 ? formadores : SIMULATED_FORMADORES;
-  
+
   useEffect(() => {
     if (!data || data.length <= 1) return;
-    const interval = setInterval(() => setIdx(p => (p + 1) % data.length), 5500);
+    const interval = setInterval(() => setIdx(p => (p + 1) % data.length), 6000);
     return () => clearInterval(interval);
   }, [data]);
 
   if (!data || data.length === 0) return null;
   const f = data[idx];
-  const avatar = f.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${f.first_name}&backgroundColor=ffffff&textColor=000000`;
+  const avatar = f.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${f.first_name}&backgroundColor=1e293b&textColor=ffffff`;
 
-  // Limpar especialidade — pode ser array JSON ou string com emails
   const rawEsp = f.especialidade || f.specialization || "";
   const especialidade = (() => {
     try {
       const parsed = JSON.parse(rawEsp);
-      if (Array.isArray(parsed)) {
-        return parsed
-          .filter((v: string) => v && !v.includes("@") && !v.includes(".com"))
-          .join(" · ") || "Área Pedagógica";
-      }
+      if (Array.isArray(parsed)) return parsed.filter((v: string) => v && !v.includes("@")).join(" · ") || "Área Pedagógica";
     } catch {}
     return rawEsp.includes("@") ? "Área Pedagógica" : (rawEsp || "Área Pedagógica");
   })();
 
+  const prev = () => setIdx(p => (p - 1 + data.length) % data.length);
+  const next = () => setIdx(p => (p + 1) % data.length);
+
   return (
-    <div className="relative w-full mt-2" style={{ minHeight: 120 }}>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={idx}
-          initial={{ opacity: 0, filter: "blur(4px)" }}
-          animate={{ opacity: 1, filter: "blur(0px)" }}
-          exit={{ opacity: 0, filter: "blur(4px)" }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="absolute inset-0 flex items-center gap-4 bg-white/[0.06] backdrop-blur-md border border-white/10 rounded-2xl px-5 py-4 w-full"
-        >
-          <img src={avatar} className="w-14 h-14 rounded-full border border-white/20 object-cover shrink-0 drop-shadow-md" alt="Formador" />
-          <div className="flex flex-col text-left min-w-0 flex-1">
-            <span className="text-xl text-white font-bold tracking-tight drop-shadow-md">{f.first_name} {f.last_name}</span>
-            <span className="text-[10px] text-emerald-400 uppercase tracking-[0.2em] font-bold mt-0.5 truncate">{especialidade}</span>
-            <p className="text-[12px] text-white/70 mt-1.5 font-light leading-snug line-clamp-2">{f.biografia || 'Reforço das metodologias de ensino activo.'}</p>
+    <div className="w-full mt-2 bg-white/[0.06] backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden">
+      {/* Conteúdo — só este troca, sem animar o container */}
+      <div className="flex gap-4 px-5 pt-5 pb-4">
+        <img src={avatar} className="w-16 h-16 rounded-xl border border-white/20 object-cover shrink-0 shadow-lg" alt="Formador" />
+        <div className="flex flex-col min-w-0 flex-1">
+          <AnimatePresence mode="wait">
+            <motion.div key={idx} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3 }}>
+              <p className="text-base font-bold text-white leading-tight">{f.first_name} {f.last_name}</p>
+              <p className="text-[9px] text-emerald-400 uppercase tracking-[0.2em] font-bold mt-0.5">{especialidade}</p>
+              {f.escola && <p className="text-[10px] text-white/40 mt-1 truncate">{f.escola}</p>}
+              <p className="text-[11px] text-white/65 mt-2 leading-relaxed line-clamp-3">{f.biografia || "Formador de excelência no reforço pedagógico do ensino secundário."}</p>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Rodapé com navegação */}
+      {data.length > 1 && (
+        <div className="flex items-center justify-between px-5 py-2.5 border-t border-white/[0.07] bg-white/[0.02]">
+          <div className="flex gap-1">
+            {data.map((_: any, i: number) => (
+              <button key={i} onClick={() => setIdx(i)} className={`h-1 rounded-full transition-all duration-300 ${i === idx ? "w-4 bg-emerald-400" : "w-1 bg-white/20"}`} />
+            ))}
           </div>
-          {data.length > 1 && (
-            <div className="absolute bottom-2.5 right-3 flex gap-1">
-              {data.map((_: any, i: number) => (
-                <div key={i} className={`w-1 h-1 rounded-full transition-all duration-300 ${i === idx ? "bg-white/70 w-3" : "bg-white/20"}`} />
-              ))}
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+          <p className="text-[9px] text-white/30 font-mono">{idx + 1} / {data.length}</p>
+          <div className="flex gap-1">
+            <button onClick={prev} className="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M6 2L3 5L6 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+            <button onClick={next} className="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M4 2L7 5L4 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
