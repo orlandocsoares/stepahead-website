@@ -169,7 +169,7 @@ export default function PerfilPage() {
       </AnimatePresence>
 
       {/* ── Cabeçalho do perfil ── */}
-      <div className="c-bg2 border c-br rounded-xl p-6">
+      <div id="tour-profile-header" className="c-bg2 border c-br rounded-xl p-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
 
           {/* Avatar */}
@@ -237,7 +237,7 @@ export default function PerfilPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Segurança */}
-        <div className="c-bg2 border c-br rounded-xl p-4 space-y-3">
+        <div id="tour-security-section" className="c-bg2 border c-br rounded-xl p-4 space-y-3">
           <h3 className="text-xs font-semibold c-tx flex items-center gap-2 uppercase tracking-wider">
             <ShieldCheck size={13} className="text-emerald-400" /> Segurança
           </h3>
@@ -264,7 +264,7 @@ export default function PerfilPage() {
         </div>
 
         {/* Dados de identidade */}
-        <div className="c-bg2 border c-br rounded-xl p-4 space-y-3">
+        <div id="tour-identity-section" className="c-bg2 border c-br rounded-xl p-4 space-y-3">
           <h3 className="text-xs font-semibold c-tx flex items-center gap-2 uppercase tracking-wider">
             <FileText size={13} className="text-blue-400" /> Dados de identidade
           </h3>

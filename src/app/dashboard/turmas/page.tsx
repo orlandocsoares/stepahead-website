@@ -182,7 +182,7 @@ export default function TurmasPage() {
 
       {/* Formandos pendentes */}
       {pendentes.length > 0 && (
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl overflow-hidden">
+        <div id="tour-pendentes" className="bg-amber-500/5 border border-amber-500/20 rounded-xl overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-3 border-b border-amber-500/10">
             <UserCheck size={14} className="text-amber-400" />
             <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
@@ -217,7 +217,7 @@ export default function TurmasPage() {
 
       {/* Formandos sem turma */}
       {semTurma.length > 0 && (
-        <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl overflow-hidden">
+        <div id="tour-sem-turma" className="bg-blue-500/5 border border-blue-500/20 rounded-xl overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-500/10">
             <UserPlus size={14} className="text-blue-400" />
             <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
@@ -252,7 +252,7 @@ export default function TurmasPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div id="tour-turmas-header" className="flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold c-tx">Turmas</h2>
           <p className="text-[11px] c-tx4 mt-0.5">{turmas.length} turma{turmas.length !== 1 ? "s" : ""}</p>
@@ -320,7 +320,7 @@ export default function TurmasPage() {
           <p className="text-sm c-tx3">Ainda não há turmas. Cria a primeira.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
+        <div id="tour-turmas-list" className="grid grid-cols-1 gap-3">
           {turmas.map(turma => {
             const isOpen = expanded === turma.id;
             const color = areaColor(turma.area);

@@ -163,12 +163,12 @@ export default function AgendaPage() {
 
   return (
     <div className="space-y-6 w-full">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div id="tour-agenda-header" className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-lg font-semibold c-tx">Agenda</h2>
           <p className="text-sm c-tx3 mt-0.5">{filtered.length} actividade{filtered.length !== 1 ? "s" : ""} {archived.length > 0 ? `· ${archived.length} arquivada${archived.length !== 1 ? "s" : ""}` : ""}.</p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div id="tour-agenda-filters" className="flex items-center gap-3 flex-wrap">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pesquisar..." className="pl-9 pr-4 py-2 rounded-lg c-s1 border c-br text-sm c-tx placeholder:c-tx4 outline-none focus:border-blue-500/50 w-44 transition-colors" />
@@ -191,7 +191,7 @@ export default function AgendaPage() {
         <div className="py-20 text-center text-sm c-tx5">Nenhuma actividade encontrada.</div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div id="tour-events-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <AnimatePresence mode="popLayout">
           {filtered.map((item, index) => {
             const isRegistered = myInscriptions.includes(item.id);

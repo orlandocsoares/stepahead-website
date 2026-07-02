@@ -68,7 +68,7 @@ export default function DashboardPage() {
     <div className="space-y-6 w-full">
 
       {/* Boas-vindas */}
-      <div>
+      <div id="tour-dash-welcome">
         <h2 className="text-lg font-semibold c-tx">
           Olá, {user?.first_name ?? "utilizador"} 👋
         </h2>
@@ -76,7 +76,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div id="tour-kpi-cards" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "Utilizadores", value: t.total_users ?? "—", icon: Users, color: "text-blue-400 bg-blue-500/10", href: "/dashboard/admin" },
           { label: "Ficheiros", value: t.total_ficheiros ?? "—", icon: FolderOpen, color: "text-emerald-400 bg-emerald-500/10", href: "/dashboard/ficheiros" },
@@ -98,7 +98,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Linha 2: Rankings */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div id="tour-rankings" className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Top Uploaders */}
         <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
@@ -194,7 +194,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Linha 3: Próximos eventos + tickets + disco */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div id="tour-dash-stats" className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Próximos eventos */}
         <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">

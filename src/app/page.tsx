@@ -15,7 +15,7 @@ import { PhasesSidebar } from "@/components/PhasesSidebar";
 import { Navigator } from "@/components/Navigator";
 import { CommandCenter } from "@/components/CommandCenter";
 import { HeroBranding } from "@/components/HeroBranding";
-import { HelpGuide } from "@/components/HelpGuide";
+import { TourGuide, shouldShowTour } from "@/components/TourGuide";
 import { useProfile } from "@/hooks/useProfile";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -254,6 +254,7 @@ export default function HeroSection() {
   const [remoteImageUrl, setRemoteImageUrl] = useState<string | null>(null);
   const [uploadMode, setUploadMode] = useState<"local" | "qr">("local");
   const [helpOpen, setHelpOpen] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
 
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
@@ -272,6 +273,14 @@ export default function HeroSection() {
   // Geração de Sessão para QR Code
   useEffect(() => {
     setSessionId(Math.random().toString(36).substring(2, 11) + Date.now().toString(36));
+  }, []);
+
+  // Auto-start tour for first-time visitors
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (shouldShowTour()) setTourActive(true);
+    }, 1800);
+    return () => clearTimeout(timer);
   }, []);
 
 
@@ -1079,7 +1088,7 @@ export default function HeroSection() {
               </DialogContent>
             </Dialog>
 
-            <HelpGuide open={helpOpen} setOpen={setHelpOpen} />
+            <TourGuide start={tourActive} onDone={() => setTourActive(false)} />
 
             <div className="fixed top-0 right-4 sm:right-6 md:right-16 lg:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-5 sm:py-10 pointer-events-none">
               {/* TOPO: Botões de Ação */}
@@ -1089,6 +1098,7 @@ export default function HeroSection() {
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, delay: 1.3, ease: "easeOut" }}
+                    id="tour-entrar-btn"
                     onClick={() => { setIsLoginOpen(true); setIsSuccess(false); setAuthMode('login'); }}
                     className="inline-flex items-center gap-2 px-4 h-10 sm:h-11 rounded-full border border-white/20 bg-slate-950/80 text-white/80 text-[11px] font-bold uppercase tracking-[0.25em] transition-all hover:border-blue-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(59,130,246,0.18)] focus:outline-none focus:ring-2 focus:ring-blue-400/50"
                   >
@@ -1128,7 +1138,7 @@ export default function HeroSection() {
                     </button>
                   </motion.div>
                 )}
-                <button onClick={() => setHelpOpen(true)} className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white transition hover:border-sky-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-400/50">
+                <button id="tour-help-btn" onClick={() => setTourActive(true)} className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-white transition hover:border-sky-400/60 hover:bg-slate-900/95 hover:text-white shadow-[0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-400/50">
                   <span className="text-lg font-black">?</span>
                   <span className="sr-only">Abrir guia de ajuda</span>
                 </button>
@@ -1136,8 +1146,8 @@ export default function HeroSection() {
 
               <div className="hidden md:flex flex-col items-end gap-4 md:gap-8 pointer-events-auto my-auto shrink-0 transform-gpu min-[1000px]:scale-100 scale-90 origin-right">
                 <Suspense fallback={null}><PhaseNavigator goToPhase={goToPhase} /></Suspense>
-                <PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} phases={PROGRAM_PHASES} setIsHovering={setIsHovering} />
-                <Navigator activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} setIsHovering={setIsHovering} />
+                <div id="tour-phases-sidebar"><PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} phases={PROGRAM_PHASES} setIsHovering={setIsHovering} /></div>
+                <div id="tour-navigator"><Navigator activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} setIsHovering={setIsHovering} /></div>
               </div>
 
               <div className="pointer-events-auto shrink-0">
@@ -1145,7 +1155,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div className="absolute top-[14vh] sm:top-[28vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-auto sm:w-[90%] md:w-[540px] z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '75vh'}}>
+            <div id="tour-content" className="absolute top-[14vh] sm:top-[28vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-auto sm:w-[90%] md:w-[540px] z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '75vh'}}>
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
                   <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">
@@ -1170,6 +1180,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 1.2, ease: "easeOut" }}
+              id="tour-bandeiras"
               className="fixed top-6 left-6 sm:top-10 sm:left-10 z-50 pointer-events-auto flex items-center gap-3"
             >
               <img src="/flags/Flag_of_Angola.svg.png" alt="Bandeira de Angola" className="h-5 w-auto rounded-sm shadow-lg" />
@@ -1178,7 +1189,7 @@ export default function HeroSection() {
 
 
 
-            <motion.div initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-[72px] sm:bottom-12 md:bottom-16 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
+            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-[72px] sm:bottom-12 md:bottom-16 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>

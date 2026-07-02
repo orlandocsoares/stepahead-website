@@ -257,13 +257,13 @@ function MensagensInner() {
     <div className="w-full h-full flex gap-3 min-h-0">
 
       {/* ── Sidebar: conversas ── */}
-      <div className={`flex flex-col c-bg2 border c-br rounded-xl overflow-hidden
+      <div id="tour-conversations-sidebar" className={`flex flex-col c-bg2 border c-br rounded-xl overflow-hidden
         ${activeId ? "hidden md:flex" : "flex"} w-full md:w-72 lg:w-80 shrink-0`}>
 
         <div className="p-3 border-b c-br space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold c-tx">Mensagens</h2>
-            <button onClick={() => { setIsComposing(true); setComposeTarget("formandos"); setComposeText(""); setComposeIds([]); setComposeSearch(""); setComposeSent(null); }}
+            <button id="tour-compose-btn" onClick={() => { setIsComposing(true); setComposeTarget("formandos"); setComposeText(""); setComposeIds([]); setComposeSearch(""); setComposeSent(null); }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-600/15 text-blue-400 hover:bg-blue-600/25 transition-colors text-xs font-medium">
               <PenSquare size={12} /> Enviar
             </button>
@@ -334,7 +334,7 @@ function MensagensInner() {
       </div>
 
       {/* ── Área de chat ── */}
-      <div className={`flex-1 flex flex-col c-bg2 border c-br rounded-xl overflow-hidden min-w-0 ${!activeId ? "hidden md:flex" : "flex"}`}>
+      <div id="tour-chat-area" className={`flex-1 flex flex-col c-bg2 border c-br rounded-xl overflow-hidden min-w-0 ${!activeId ? "hidden md:flex" : "flex"}`}>
 
         {!activeId ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-8">

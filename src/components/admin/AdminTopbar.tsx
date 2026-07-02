@@ -25,9 +25,9 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/admin/audit":   "Audit Log",
 };
 
-type Props = { onMobileMenuToggle: () => void };
+type Props = { onMobileMenuToggle: () => void; onStartTour?: () => void };
 
-export function AdminTopbar({ onMobileMenuToggle }: Props) {
+export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAdminUser();
@@ -209,6 +209,16 @@ export function AdminTopbar({ onMobileMenuToggle }: Props) {
 
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
         <BrightnessSlider />
+
+        {onStartTour && (
+          <button
+            onClick={onStartTour}
+            title="Ajuda — tour desta página"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg border c-br c-tx4 hc-tx hc-s2 transition-colors text-sm font-black"
+          >
+            ?
+          </button>
+        )}
 
         <a href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border c-br c-tx4 hc-tx hc-br2 hc-s2 transition-all text-[10px] font-bold uppercase tracking-[0.2em]" title="Ver site público">
           <Globe size={12} />

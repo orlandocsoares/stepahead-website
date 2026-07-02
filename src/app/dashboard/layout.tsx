@@ -1,19 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { usePathname } from "next/navigation";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 import { ShieldAlert } from "lucide-react";
+import { DashboardTour, shouldShowDashboardTour } from "@/components/dashboard/DashboardTour";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
   const pathname = usePathname();
   const { warning, countdown, stayLoggedIn } = useInactivityLogout();
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (shouldShowDashboardTour(pathname)) setTourActive(true);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [pathname]);
+
+  const handleStartTour = useCallback(() => setTourActive(true), []);
 
   const mm = String(Math.floor(countdown / 60)).padStart(2, "0");
   const ss = String(countdown % 60).padStart(2, "0");
@@ -85,7 +96,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             collapsed ? "md:ml-[68px]" : "md:ml-[220px]"
           }`}
         >
-          <AdminTopbar onMobileMenuToggle={() => setMobileOpen((o) => !o)} />
+          <AdminTopbar onMobileMenuToggle={() => setMobileOpen((o) => !o)} onStartTour={handleStartTour} />
+          <DashboardTour start={tourActive} onDone={() => setTourActive(false)} />
           <main className="dashboard-main flex-1 overflow-y-auto p-4 md:p-6 flex flex-col">{children}</main>
         </div>
       </div>

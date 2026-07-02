@@ -229,7 +229,7 @@ export default function RepositorioPage() {
       `}} />
 
       {/* HEADER DINÂMICO FIXO */}
-      <header className="mb-10 space-y-8 shrink-0">
+      <header id="tour-repo-header" className="mb-10 space-y-8 shrink-0">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10">
           <div className="space-y-4 text-left">
             <motion.p 
@@ -270,7 +270,7 @@ export default function RepositorioPage() {
           </div>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide pt-2">
+        <div id="tour-category-tabs" className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide pt-2">
           {categories.map((cat) => (
             <button 
               key={cat} 
@@ -287,9 +287,9 @@ export default function RepositorioPage() {
         </div>
 
         {/* FILTROS OPERACIONAIS DE VISIBILIDADE */}
-        <div className="flex flex-wrap gap-3 border-t border-white/5 pt-6 pb-2">
-          <button 
-            onClick={() => setActiveShareFilter("todos")} 
+        <div id="tour-share-filters" className="flex flex-wrap gap-3 border-t border-white/5 pt-6 pb-2">
+          <button
+            onClick={() => setActiveShareFilter("todos")}
             className={`px-6 py-3 rounded-xl text-[9px] uppercase tracking-wider font-black transition-all border whitespace-nowrap ${
               activeShareFilter === "todos" 
                 ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.15)]" 
@@ -375,7 +375,7 @@ export default function RepositorioPage() {
           </motion.section>
 
           {/* GRELHA DE MATERIAIS - CARTÕES INTELIGENTES */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div id="tour-materials-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <AnimatePresence mode="popLayout">
               {filtered.map((file, index) => {
                 const fileName = file.nome_arquivo || "";
