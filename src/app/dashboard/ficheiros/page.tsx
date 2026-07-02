@@ -14,6 +14,24 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const CATEGORIES_FALLBACK = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
+const CAPA_GERAL = "/capas/geral.jpg";
+const AREA_COVERS: Record<string, string> = {
+  "matematica": "/capas/matematica.jpg",
+  "lingua portuguesa": "/capas/lingua-portuguesa.jpg",
+  "educacao especial": "/capas/educacao-especial.jpg",
+  "educacao pre-escolar": "/capas/educacao-pre-escolar.jpg",
+  "expressao motora": "/capas/expressao-motora.jpg",
+  "expressao plastica": "/capas/expressao-plastica.jpg",
+};
+
+function normalizeAreaName(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
+function getAreaCover(area: string): string | null {
+  return AREA_COVERS[normalizeAreaName(area)] ?? null;
+}
+
 const VISIBILIDADE_OPTIONS = [
   { value: "privado",          label: "Só eu",              icon: Lock,          color: "c-tx3" },
   { value: "turma",            label: "Minha turma",        icon: GraduationCap, color: "text-amber-400" },
@@ -137,6 +155,7 @@ export default function FicheirosPage() {
   const [sortCol, setSortCol] = useState<"nome" | "area" | "tamanho" | "data" | "visibilidade">("data");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [selectedCapa, setSelectedCapa] = useState<string | null>(null);
   const [disponivel_de, setDisponivelDe] = useState("");
   const [disponivel_ate, setDisponivelAte] = useState("");
   const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
@@ -177,8 +196,21 @@ export default function FicheirosPage() {
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
     setDisponivelDe(""); setDisponivelAte("");
     setGruposUpload([]); setSitePublico(false);
+    setSelectedCapa(null);
     setIsModalOpen(true);
   }
+
+  const capaOptions = useMemo(() => {
+    const opts = [{ label: "Geral", url: CAPA_GERAL }];
+    const specific = getAreaCover(uploadCategory);
+    if (specific) opts.push({ label: uploadCategory, url: specific });
+    return opts;
+  }, [uploadCategory]);
+
+  // Se mudar de disciplina, a capa específica anterior deixa de fazer sentido.
+  useEffect(() => {
+    if (selectedCapa && !capaOptions.some(o => o.url === selectedCapa)) setSelectedCapa(null);
+  }, [capaOptions]);
 
   function handleFileSelect(file: File) {
     setUploadFile(file);
@@ -296,6 +328,7 @@ export default function FicheirosPage() {
           ...(disponivel_de ? { disponivel_de } : {}),
           ...(disponivel_ate ? { disponivel_ate } : {}),
           ...(gruposUpload[0] ? { grupo_formacao_id: gruposUpload[0] } : {}),
+          ...(selectedCapa ? { thumbnail_url: selectedCapa } : {}),
           site_publico: sitePublico && visibilidade === "publico",
         }),
       });
@@ -693,6 +726,24 @@ export default function FicheirosPage() {
                   </div>
                 )}
               </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs c-tx3 flex items-center justify-between">
+                <span>Capa (opcional)</span>
+                {selectedCapa && (
+                  <button type="button" onClick={() => setSelectedCapa(null)} className="text-[10px] c-tx4 hc-tx">Remover</button>
+                )}
+              </label>
+              <div className="flex gap-2">
+                {capaOptions.map(opt => (
+                  <button key={opt.url} type="button" onClick={() => setSelectedCapa(opt.url)}
+                    className={`relative w-24 h-[72px] rounded-lg overflow-hidden border-2 transition-colors shrink-0 ${selectedCapa === opt.url ? "border-blue-500" : "border-transparent hover:border-white/20"}`}>
+                    <img src={opt.url} alt={opt.label} className="w-full h-full object-cover" />
+                    <span className="absolute bottom-0 inset-x-0 bg-black/60 text-[8px] text-white text-center py-0.5 truncate px-1">{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] c-tx5">Se não escolher, é usada a pré-visualização automática do ficheiro.</p>
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3">Visibilidade</label>
