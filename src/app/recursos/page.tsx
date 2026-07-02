@@ -108,7 +108,7 @@ function RecursosContent() {
         );
       }
     `}</style>
-    <div className="min-h-screen text-white overflow-y-auto relative"
+    <div className="h-screen text-white overflow-y-auto relative"
       style={{ backgroundImage: "url('/modos/meio-escuro.webp')", backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
       {/* Overlay escuro para legibilidade */}
       <div className="fixed inset-0 bg-[#080c1a]/70 pointer-events-none z-0" />
