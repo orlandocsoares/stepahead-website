@@ -45,13 +45,16 @@ export async function GET() {
     safe(dbQuery(`SELECT COUNT(*) AS total FROM arquivos WHERE site_publico = true AND visibilidade = 'publico'`)),
     safe(dbQuery(`
       SELECT
-        LOWER(provincia) AS prov,
+        CASE
+          WHEN provincia ILIKE 'luanda' THEN 'luanda'
+          WHEN provincia ILIKE 'bi%' THEN 'bié'
+        END AS prov,
         COUNT(*) FILTER (WHERE role = 'formador') AS formadores,
         COUNT(*) FILTER (WHERE role = 'formando') AS formandos
       FROM profiles
       WHERE provincia IS NOT NULL AND provincia != ''
-        AND LOWER(provincia) IN ('luanda', 'bié', 'bie')
-      GROUP BY LOWER(provincia)
+        AND (provincia ILIKE 'luanda' OR provincia ILIKE 'bi%')
+      GROUP BY prov
     `)),
   ]);
 
