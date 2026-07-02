@@ -120,6 +120,27 @@ export default function SuperAdminPage() {
     }
   }
 
+  function fmtLastLogin(dt: string | null): string {
+    if (!dt) return "—";
+    const diff = Date.now() - new Date(dt).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return "agora mesmo";
+    if (m < 60) return `há ${m}min`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `há ${h}h`;
+    const d = Math.floor(h / 24);
+    if (d < 30) return `há ${d}d`;
+    return new Date(dt).toLocaleDateString("pt-PT", { day: "2-digit", month: "short" });
+  }
+
+  function fmtSessionTime(secs: number | null): string {
+    if (!secs || secs <= 0) return "—";
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    if (h >= 1) return `${h}h ${m}min`;
+    return `${m}min`;
+  }
+
   function showToast(type: "success" | "error", text: string) {
     setToast({ type, text });
     setTimeout(() => setToast(null), 4000);
@@ -858,10 +879,13 @@ export default function SuperAdminPage() {
                               <motion.div key={item.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.02 }}
                                 className="c-bg2 border c-br rounded-xl p-4 flex flex-col items-center gap-2 text-center hover:border-white/[0.12] transition-colors"
                               >
-                                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-lg font-bold shrink-0 overflow-hidden">
-                                  {item.avatar_url
-                                    ? <img src={item.avatar_url} alt={item.first_name} className="w-full h-full object-cover" />
-                                    : (item.first_name?.[0] || "?").toUpperCase()}
+                                <div className="relative">
+                                  <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-lg font-bold shrink-0 overflow-hidden">
+                                    {item.avatar_url
+                                      ? <img src={item.avatar_url} alt={item.first_name} className="w-full h-full object-cover" />
+                                      : (item.first_name?.[0] || "?").toUpperCase()}
+                                  </div>
+                                  {item.online_now && <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[var(--c-bg2)]" title="Online agora" />}
                                 </div>
                                 <div className="w-full min-w-0">
                                   <p className="text-xs font-semibold c-tx truncate">{name}</p>
@@ -870,7 +894,18 @@ export default function SuperAdminPage() {
                                     <p className="text-[9px] text-amber-400/70 mt-0.5 truncate">por {item.criado_por_nome.trim()}</p>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-1.5 flex-wrap justify-center mt-1">
+                                {/* Actividade */}
+                                <div className="w-full border-t c-br pt-2 space-y-1">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[9px] c-tx5">Último acesso</span>
+                                    <span className="text-[9px] text-blue-400 font-medium">{fmtLastLogin(item.last_login)}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[9px] c-tx5">Tempo no portal</span>
+                                    <span className="text-[9px] c-tx4 font-medium">{fmtSessionTime(item.total_session_seconds)}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-wrap justify-center">
                                   {item.status && (
                                     <span className={`text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded-full border ${
                                       item.status === "activo" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
@@ -910,17 +945,23 @@ export default function SuperAdminPage() {
                               className={`c-bg2 border c-br rounded-xl px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-white/[0.12] transition-colors ${isAdminOrSuper(profile?.role) ? "cursor-pointer" : ""}`}
                             >
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0 overflow-hidden">
-                                  {item.avatar_url
-                                    ? <img src={item.avatar_url} alt={item.first_name} className="w-full h-full object-cover" />
-                                    : (item.first_name?.[0] || "?").toUpperCase()}
+                                <div className="relative shrink-0">
+                                  <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold overflow-hidden">
+                                    {item.avatar_url
+                                      ? <img src={item.avatar_url} alt={item.first_name} className="w-full h-full object-cover" />
+                                      : (item.first_name?.[0] || "?").toUpperCase()}
+                                  </div>
+                                  {item.online_now && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[var(--c-bg2)]" />}
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium c-tx">{name}</p>
                                   <p className="text-xs c-tx4">{item.email ?? <span className="italic opacity-50">sem email</span>}</p>
-                                  {item.criado_por_nome?.trim() && (
-                                    <p className="text-[10px] text-amber-400/70 mt-0.5">criado por {item.criado_por_nome.trim()}</p>
-                                  )}
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[9px] c-tx5">Acesso: <span className="text-blue-400">{fmtLastLogin(item.last_login)}</span></span>
+                                    {item.total_session_seconds > 0 && (
+                                      <span className="text-[9px] c-tx5">· Tempo: <span className="c-tx4">{fmtSessionTime(item.total_session_seconds)}</span></span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 flex-wrap">
