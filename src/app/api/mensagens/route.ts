@@ -141,8 +141,19 @@ export async function POST(request: Request) {
     );
     const senderRole = rolesRes.rows.find((r: any) => r.id === session.id)?.role;
     const recipientRole = rolesRes.rows.find((r: any) => r.id === to_user_id)?.role;
-    if (senderRole === "formando" && recipientRole === "formando") {
-      return NextResponse.json({ error: "Formandos só podem enviar mensagens a formadores, coordenadores ou administradores." }, { status: 403 });
+    if (senderRole === "formando") {
+      if (recipientRole === "formando") {
+        return NextResponse.json({ error: "Formandos só podem enviar mensagens aos seus formadores, coordenadores ou administradores." }, { status: 403 });
+      }
+      if (recipientRole === "formador") {
+        const assoc = await db.query(
+          `SELECT id FROM formando_formadores WHERE formando_id = $1 AND formador_id = $2 AND status = 'aceite' LIMIT 1`,
+          [session.id, to_user_id]
+        );
+        if (!assoc.rows[0]) {
+          return NextResponse.json({ error: "Só podes enviar mensagens aos teus formadores." }, { status: 403 });
+        }
+      }
     }
 
     const result = await db.query(

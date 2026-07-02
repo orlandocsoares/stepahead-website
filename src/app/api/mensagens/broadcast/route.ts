@@ -25,11 +25,23 @@ export async function POST(request: Request) {
       }
       recipientIds = ids.filter((id: string) => id !== session.id);
 
-      // Formandos não podem contactar outros formandos, nem em envio manual.
+      // Formandos só podem contactar os seus formadores aceites, coordenadores ou administradores.
       if (role === "formando" && recipientIds.length > 0) {
-        const recipRes = await dbQuery(`SELECT id FROM profiles WHERE id = ANY($1) AND role = 'formando'`, [recipientIds]);
-        if (recipRes.rows.length > 0) {
+        const recipRes = await dbQuery(`SELECT id, role FROM profiles WHERE id = ANY($1)`, [recipientIds]);
+        const naoFormandos = recipRes.rows.filter((r: any) => r.role !== "formando");
+        if (naoFormandos.length < recipRes.rows.length) {
           return NextResponse.json({ error: "Formandos só podem enviar mensagens a formadores, coordenadores ou administradores." }, { status: 403 });
+        }
+        const formadorIds = naoFormandos.filter((r: any) => r.role === "formador").map((r: any) => r.id);
+        if (formadorIds.length > 0) {
+          const assocRes = await dbQuery(
+            `SELECT formador_id FROM formando_formadores WHERE formando_id = $1 AND formador_id = ANY($2) AND status = 'aceite'`,
+            [session.id, formadorIds]
+          );
+          const aceitesIds = new Set(assocRes.rows.map((r: any) => r.formador_id));
+          if (formadorIds.some((id: string) => !aceitesIds.has(id))) {
+            return NextResponse.json({ error: "Só podes enviar mensagens aos teus formadores." }, { status: 403 });
+          }
         }
       }
     } else {

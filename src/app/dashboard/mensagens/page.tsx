@@ -104,6 +104,7 @@ function MensagensInner() {
   const [sendError, setSendError] = useState<string | null>(null);
   const [showEmojis, setShowEmojis] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [meusFormadoresIds, setMeusFormadoresIds] = useState<Set<string>>(new Set());
 
   const [isComposing, setIsComposing] = useState(false);
   const [composeTarget, setComposeTarget] = useState<"formandos"|"formadores"|"todos"|"ids">("formandos");
@@ -139,6 +140,17 @@ function MensagensInner() {
     fetch("/api/db/profiles?orderBy=first_name&ascending=true")
       .then(r => r.json()).then(({ data }) => setAllUsers(data ?? []));
   }, []);
+
+  useEffect(() => {
+    if (user?.role !== "formando") return;
+    fetch("/api/meus-formadores")
+      .then(r => r.json())
+      .then(d => {
+        const aceites = (d.associacoes ?? []).filter((a: any) => a.status === "aceite").map((a: any) => a.formador_id);
+        setMeusFormadoresIds(new Set(aceites));
+      })
+      .catch(() => {});
+  }, [user]);
 
   useEffect(() => { fetchConversations(); }, [fetchConversations]);
 
@@ -222,12 +234,18 @@ function MensagensInner() {
     const name = `${c.first_name ?? ""} ${c.last_name ?? ""}`.toLowerCase();
     return name.includes(search.toLowerCase());
   });
-  // Formandos só podem contactar formadores/coordenadores/administradores — nunca outros formandos.
+  // Formandos só podem contactar os seus formadores aceites, coordenadores ou administradores.
   const isFormando = user?.role === "formando";
+  const podeContactar = (u: Profile) => {
+    if (!isFormando) return true;
+    if (u.role === "admin" || u.role === "super-admin") return true;
+    if (u.role === "formador") return meusFormadoresIds.has(u.id);
+    return false;
+  };
   const convIds = new Set(conversations.map(c => c.other_id));
   const newUsers = allUsers.filter(u => {
     if (u.id === user?.id || convIds.has(u.id)) return false;
-    if (isFormando && u.role === "formando") return false;
+    if (!podeContactar(u)) return false;
     const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.toLowerCase();
     return name.includes(search.toLowerCase());
   });
@@ -586,7 +604,7 @@ function MensagensInner() {
                 <div className="max-h-36 overflow-y-auto c-s1 border c-br rounded-lg">
                   {allUsers.filter(u => {
                     if (u.id === user?.id || composeIds.includes(u.id)) return false;
-                    if (isFormando && u.role === "formando") return false;
+                    if (!podeContactar(u)) return false;
                     const name = `${u.first_name} ${u.last_name}`.toLowerCase();
                     return composeSearch ? name.includes(composeSearch.toLowerCase()) : true;
                   }).slice(0, 20).map(u => (
