@@ -7,7 +7,7 @@ export async function GET() {
   const [
     formadores, proximoEvento, totalMateriais, telemetria,
     totalFormandos, provincias, turmas, areasMateriais,
-    sessoesRealizadas, provinciasStats, areasPublicas, totalPublicos,
+    sessoesRealizadas, areasPublicas, totalPublicos, provinciasStats,
   ] = await Promise.all([
     safe(dbQuery(`
       SELECT id, first_name, last_name, specialization AS especialidade, biografia, avatar_url, provincia
