@@ -2,8 +2,23 @@ import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 import { setSession } from "@/lib/server-auth";
+import { auditLog } from "@/lib/audit";
+import { rateLimiter, getClientIp } from "@/lib/rate-limit";
+
+// Máx. 10 tentativas de login por IP em 15 minutos
+const LOGIN_LIMIT = { max: 10, windowMs: 15 * 60 * 1000 };
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+
+  const rl = rateLimiter.check("login", ip, LOGIN_LIMIT);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Demasiadas tentativas. Tente novamente em ${rl.retryAfterSecs}s.` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSecs) } }
+    );
+  }
+
   try {
     const body = await request.json();
     const { email, password } = body;
@@ -23,6 +38,7 @@ export async function POST(request: Request) {
 
     if (password) {
       if (!user || !verifyPassword(String(password), user.password_hash)) {
+        await auditLog("login_fail", { ip, details: { identifier: clean } });
         return NextResponse.json({ error: "Email ou password incorrectos." }, { status: 401 });
       }
     } else {
@@ -56,6 +72,7 @@ export async function POST(request: Request) {
     }
 
     await setSession(user.id);
+    await auditLog("login_success", { actorId: user.id, ip });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
