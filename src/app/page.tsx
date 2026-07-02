@@ -62,7 +62,7 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
   const avatar = f.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${f.first_name}&backgroundColor=ffffff&textColor=000000`;
 
   return (
-    <div className="relative overflow-hidden w-full h-[90px] mt-2 bg-transparent">
+    <div className="relative w-full mt-2" style={{ minHeight: 110 }}>
       <AnimatePresence mode="wait">
         <motion.div
           key={idx}
@@ -70,14 +70,21 @@ function FormadoresLoop({ formadores }: { formadores: any[] }) {
           animate={{ opacity: 1, filter: "blur(0px)" }}
           exit={{ opacity: 0, filter: "blur(4px)" }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="flex items-center gap-5 w-full absolute inset-0"
+          className="absolute inset-0 flex items-center gap-4 bg-white/[0.06] backdrop-blur-md border border-white/10 rounded-2xl px-5 py-4 w-full"
         >
-          <img src={avatar} className="w-16 h-16 rounded-full border border-white/20 object-cover shrink-0 drop-shadow-md" alt="Formador" />
-          <div className="flex flex-col text-left">
-            <span className="text-2xl text-white font-bold tracking-tight drop-shadow-md">{f.first_name} {f.last_name}</span>
-            <span className="text-[11px] text-emerald-400 uppercase tracking-[0.2em] font-bold mt-1 drop-shadow-sm">{f.especialidade || 'Área Pedagógica'}</span>
-            <p className="text-sm text-white/80 mt-1.5 font-light leading-relaxed line-clamp-2 drop-shadow-sm">{f.biografia || 'Reforço das metodologias de ensino activo.'}</p>
+          <img src={avatar} className="w-14 h-14 rounded-full border border-white/20 object-cover shrink-0 drop-shadow-md" alt="Formador" />
+          <div className="flex flex-col text-left min-w-0">
+            <span className="text-xl text-white font-bold tracking-tight drop-shadow-md truncate">{f.first_name} {f.last_name}</span>
+            <span className="text-[10px] text-emerald-400 uppercase tracking-[0.2em] font-bold mt-0.5">{f.especialidade || 'Área Pedagógica'}</span>
+            <p className="text-[12px] text-white/70 mt-1.5 font-light leading-snug line-clamp-2">{f.biografia || 'Reforço das metodologias de ensino activo.'}</p>
           </div>
+          {data.length > 1 && (
+            <div className="absolute bottom-2.5 right-3 flex gap-1">
+              {data.map((_: any, i: number) => (
+                <div key={i} className={`w-1 h-1 rounded-full transition-all duration-300 ${i === idx ? "bg-white/70 w-3" : "bg-white/20"}`} />
+              ))}
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
     </div>
