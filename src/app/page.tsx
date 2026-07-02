@@ -666,25 +666,26 @@ export default function HeroSection() {
                   </div>
                 </motion.a>
 
-                {/* CTA 2 — posição coluna 3, linha 2 */}
-                <motion.a
-                  href={profile ? "/dashboard/ficheiros" : "#"}
-                  onClick={!profile ? () => {} : undefined}
-                  initial={{ opacity: 0, x: 8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.45 }}
-                  style={{ gridColumn: 3, gridRow: 2 }}
-                  className="flex flex-col justify-between rounded-xl border border-white/10 bg-white/[0.05] backdrop-blur-md p-3 pointer-events-auto hover:bg-white/[0.10] hover:border-white/20 transition-all group"
-                >
-                  <div className="flex items-center justify-between">
-                    <FolderOpen size={13} className="text-white/50" />
-                    <span className="text-white/30 group-hover:translate-x-0.5 transition-transform text-[10px]">→</span>
-                  </div>
-                  <div>
-                    <p className="text-[9px] uppercase tracking-[0.12em] text-white/70 font-semibold leading-tight">Repositório</p>
-                    <p className="text-[8px] text-white/30 mt-0.5 leading-tight">{profile ? "Área de formadores" : "Requer acesso"}</p>
-                  </div>
-                </motion.a>
+                {/* CTA 2 — posição coluna 3, linha 2 — só para autenticados */}
+                {profile && (
+                  <motion.a
+                    href="/dashboard/ficheiros"
+                    initial={{ opacity: 0, x: 8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.45 }}
+                    style={{ gridColumn: 3, gridRow: 2 }}
+                    className="flex flex-col justify-between rounded-xl border border-white/10 bg-white/[0.05] backdrop-blur-md p-3 pointer-events-auto hover:bg-white/[0.10] hover:border-white/20 transition-all group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <FolderOpen size={13} className="text-white/50" />
+                      <span className="text-white/30 group-hover:translate-x-0.5 transition-transform text-[10px]">→</span>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-[0.12em] text-white/70 font-semibold leading-tight">Repositório</p>
+                      <p className="text-[8px] text-white/30 mt-0.5 leading-tight">Área de formadores</p>
+                    </div>
+                  </motion.a>
+                )}
               </div>
             </div>
           ),
