@@ -514,13 +514,18 @@ export default function FicheirosPage() {
                     <motion.div key={f.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ delay: i * 0.02 }}
                       className="group c-bg2 border c-br rounded-2xl overflow-hidden hover:border-white/[0.15] hover:shadow-lg transition-all flex flex-col">
 
-                      {/* Thumbnail — clicável */}
-                      <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="block relative overflow-hidden" style={{ aspectRatio: "4/5" }}>
+                      {/* Thumbnail — clicável (div, não <a>, para poder conter botões sem HTML inválido) */}
+                      <div
+                        role="link"
+                        tabIndex={0}
+                        onClick={() => window.open(fileUrl, "_blank", "noopener,noreferrer")}
+                        onKeyDown={e => { if (e.key === "Enter") window.open(fileUrl, "_blank", "noopener,noreferrer"); }}
+                        className={`block relative overflow-hidden cursor-pointer ${f.thumbnail_url ? "bg-white" : ""}`} style={{ aspectRatio: "2/3" }}>
                         {f.thumbnail_url ? (
                           <>
-                            <img src={f.thumbnail_url} alt={f.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            <img src={f.thumbnail_url} alt={f.label} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
                             {isBrandedCapa(f.thumbnail_url) && (
-                              <p className="absolute left-[8%] right-[8%] top-[18%] text-slate-800 font-semibold leading-tight line-clamp-3 text-[9px] sm:text-[10px] md:text-xs">
+                              <p className="absolute left-[8%] right-[8%] top-[28%] text-slate-800 font-semibold leading-tight line-clamp-2 text-[9px] sm:text-[10px] md:text-xs">
                                 {f.label}
                               </p>
                             )}
@@ -543,8 +548,8 @@ export default function FicheirosPage() {
 
                         {/* Roda dentada — sempre visível, acesso rápido a editar/datas */}
                         {canAct && (
-                          <button onClick={e => { e.preventDefault(); openEditModal(f); }}
-                            className="absolute top-2 left-2 p-1.5 rounded-lg bg-black/50 backdrop-blur-sm text-white/80 hover:text-white hover:bg-black/70 transition-colors" title="Editar / datas">
+                          <button onClick={e => { e.preventDefault(); e.stopPropagation(); openEditModal(f); }}
+                            className="absolute top-2 left-2 z-10 p-1.5 rounded-lg bg-black/50 backdrop-blur-sm text-white/80 hover:text-white hover:bg-black/70 transition-colors" title="Editar / datas">
                             <Settings size={13} />
                           </button>
                         )}
@@ -558,13 +563,13 @@ export default function FicheirosPage() {
                             <ExternalLink size={15} />
                           </a>
                           {canAct && (
-                            <button onClick={e => { e.preventDefault(); handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro"); }}
+                            <button onClick={e => { e.preventDefault(); e.stopPropagation(); handleDelete(f.id, f.label ?? f.nome_arquivo ?? "ficheiro"); }}
                               className="p-2.5 rounded-xl bg-red-500/30 backdrop-blur-sm hover:bg-red-500/50 transition-colors text-red-300" title="Eliminar">
                               <Trash2 size={15} />
                             </button>
                           )}
                         </div>
-                      </a>
+                      </div>
 
                       {/* Info — compacta */}
                       <div className="px-2.5 py-1.5 flex flex-col gap-0.5">
