@@ -222,9 +222,12 @@ function MensagensInner() {
     const name = `${c.first_name ?? ""} ${c.last_name ?? ""}`.toLowerCase();
     return name.includes(search.toLowerCase());
   });
+  // Formandos só podem contactar formadores/coordenadores/administradores — nunca outros formandos.
+  const isFormando = user?.role === "formando";
   const convIds = new Set(conversations.map(c => c.other_id));
   const newUsers = allUsers.filter(u => {
     if (u.id === user?.id || convIds.has(u.id)) return false;
+    if (isFormando && u.role === "formando") return false;
     const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.toLowerCase();
     return name.includes(search.toLowerCase());
   });
@@ -263,7 +266,7 @@ function MensagensInner() {
         <div className="p-3 border-b c-br space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold c-tx">Mensagens</h2>
-            <button id="tour-compose-btn" onClick={() => { setIsComposing(true); setComposeTarget("formandos"); setComposeText(""); setComposeIds([]); setComposeSearch(""); setComposeSent(null); }}
+            <button id="tour-compose-btn" onClick={() => { setIsComposing(true); setComposeTarget(isFormando ? "ids" : "formandos"); setComposeText(""); setComposeIds([]); setComposeSearch(""); setComposeSent(null); }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-600/15 text-blue-400 hover:bg-blue-600/25 transition-colors text-xs font-medium">
               <PenSquare size={12} /> Enviar
             </button>
@@ -539,12 +542,15 @@ function MensagensInner() {
             <div className="space-y-2">
               <label className="text-xs c-tx3">Destinatários</label>
               <div className="grid grid-cols-2 gap-2">
-                {[
-                  { value: "formandos",  label: "Todos os formandos",   icon: GraduationCap },
-                  { value: "formadores", label: "Todos os formadores",   icon: UserCheck },
-                  { value: "todos",      label: "Todos os utilizadores", icon: Users },
-                  { value: "ids",        label: "Selecção manual",       icon: ChevronDown },
-                ].map(opt => {
+                {(isFormando
+                  ? [{ value: "ids", label: "Selecção manual", icon: ChevronDown }]
+                  : [
+                      { value: "formandos",  label: "Todos os formandos",   icon: GraduationCap },
+                      { value: "formadores", label: "Todos os formadores",   icon: UserCheck },
+                      { value: "todos",      label: "Todos os utilizadores", icon: Users },
+                      { value: "ids",        label: "Selecção manual",       icon: ChevronDown },
+                    ]
+                ).map(opt => {
                   const Icon = opt.icon;
                   const sel = composeTarget === opt.value;
                   return (
@@ -580,6 +586,7 @@ function MensagensInner() {
                 <div className="max-h-36 overflow-y-auto c-s1 border c-br rounded-lg">
                   {allUsers.filter(u => {
                     if (u.id === user?.id || composeIds.includes(u.id)) return false;
+                    if (isFormando && u.role === "formando") return false;
                     const name = `${u.first_name} ${u.last_name}`.toLowerCase();
                     return composeSearch ? name.includes(composeSearch.toLowerCase()) : true;
                   }).slice(0, 20).map(u => (

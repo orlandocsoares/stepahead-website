@@ -135,6 +135,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não podes enviar mensagens para ti próprio" }, { status: 400 });
     }
 
+    const rolesRes = await db.query(
+      `SELECT id, role FROM profiles WHERE id IN ($1, $2)`,
+      [session.id, to_user_id]
+    );
+    const senderRole = rolesRes.rows.find((r: any) => r.id === session.id)?.role;
+    const recipientRole = rolesRes.rows.find((r: any) => r.id === to_user_id)?.role;
+    if (senderRole === "formando" && recipientRole === "formando") {
+      return NextResponse.json({ error: "Formandos só podem enviar mensagens a formadores, coordenadores ou administradores." }, { status: 403 });
+    }
+
     const result = await db.query(
       `INSERT INTO mensagens (from_user_id, to_user_id, content) VALUES ($1, $2, $3) RETURNING *`,
       [session.id, to_user_id, content.trim()]

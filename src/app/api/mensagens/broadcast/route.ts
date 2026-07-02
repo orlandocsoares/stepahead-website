@@ -24,6 +24,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Nenhum destinatário seleccionado." }, { status: 400 });
       }
       recipientIds = ids.filter((id: string) => id !== session.id);
+
+      // Formandos não podem contactar outros formandos, nem em envio manual.
+      if (role === "formando" && recipientIds.length > 0) {
+        const recipRes = await dbQuery(`SELECT id FROM profiles WHERE id = ANY($1) AND role = 'formando'`, [recipientIds]);
+        if (recipRes.rows.length > 0) {
+          return NextResponse.json({ error: "Formandos só podem enviar mensagens a formadores, coordenadores ou administradores." }, { status: 403 });
+        }
+      }
     } else {
       // Formadores podem enviar a todos ou à sua turma de formandos
       // Admins podem enviar a todos
