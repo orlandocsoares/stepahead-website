@@ -772,12 +772,40 @@ export default function HeroSection() {
             glow: "bg-violet-500/10",
           },
         ];
+        // Calcular indicadores de performance
+        const totalFormandos = telemetry.total_formandos || 0;
+        const totalFormadores = telemetry.total_formadores || 0;
+        const totalMateriais = telemetry.total_materials || 0;
+        const totalTurmas = telemetry.total_turmas || 0;
+        const luanda = telemetry.provincias_stats?.luanda ?? { formadores: 0, formandos: 0 };
+        const bie = telemetry.provincias_stats?.bie ?? { formadores: 0, formandos: 0 };
+
+        // Índice de actividade (0-100): pesos baseados nas métricas disponíveis
+        const metaFormandos = 50, metaFormadores = 15, metaMateriais = 30, metaTurmas = 10;
+        const indiceActividade = Math.min(100, Math.round(
+          (Math.min(totalFormandos / metaFormandos, 1) * 40) +
+          (Math.min(totalFormadores / metaFormadores, 1) * 25) +
+          (Math.min(totalMateriais / metaMateriais, 1) * 25) +
+          (Math.min(totalTurmas / metaTurmas, 1) * 10)
+        ));
+
+        // Rácio formador/formando
+        const ratioVal = totalFormadores > 0 ? (totalFormandos / totalFormadores).toFixed(1) : "—";
+        const ratioIdeal = totalFormadores > 0 ? Math.min(100, Math.round((1 / (totalFormandos / Math.max(totalFormadores * 10, 1))) * 100)) : 0;
+
+        // Cobertura geográfica
+        const totalLuanda = luanda.formadores + luanda.formandos;
+        const totalBie = bie.formadores + bie.formandos;
+        const totalGeo = totalLuanda + totalBie || 1;
+
         return {
           ...base,
           description: (
-            <div className="space-y-3">
+            <div className="space-y-3 w-full max-w-sm">
               <p className={defaultTextClass}>{base.description}</p>
-              <div className="grid grid-cols-2 gap-2 mt-3">
+
+              {/* 4 métricas base */}
+              <div className="grid grid-cols-2 gap-2">
                 {metrics.map(({ icon: Icon, value, label, color, border, iconColor, glow }) => (
                   <motion.div
                     key={label}
@@ -794,6 +822,66 @@ export default function HeroSection() {
                     <p className="text-[9px] text-white/50 uppercase tracking-[0.15em] mt-0.5 font-medium leading-tight">{label}</p>
                   </motion.div>
                 ))}
+              </div>
+
+              {/* Indicadores de performance */}
+              <div className="space-y-2 pt-1">
+                <p className="text-[8px] uppercase tracking-[0.25em] text-white/30 font-semibold">Indicadores de Performance</p>
+
+                {/* 1. Índice de Actividade */}
+                <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-4 py-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-semibold text-white/80 uppercase tracking-wider">Índice de Actividade</p>
+                    <span className={`text-sm font-black tabular-nums ${indiceActividade >= 70 ? "text-emerald-400" : indiceActividade >= 40 ? "text-amber-400" : "text-red-400"}`}>
+                      {indiceActividade}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${indiceActividade}%` }} transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+                      className={`h-full rounded-full ${indiceActividade >= 70 ? "bg-emerald-400" : indiceActividade >= 40 ? "bg-amber-400" : "bg-red-400"}`} />
+                  </div>
+                  <p className="text-[8px] text-white/30 mt-1.5">Baseado em formandos, formadores, materiais e turmas</p>
+                </motion.div>
+
+                {/* 2. Rácio Formador/Formando */}
+                <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-4 py-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-semibold text-white/80 uppercase tracking-wider">Rácio Formandos / Formador</p>
+                    <span className="text-sm font-black tabular-nums text-blue-400">{ratioVal}:1</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, totalFormadores > 0 ? (totalFormandos / totalFormadores / 10) * 100 : 0)}%` }}
+                      transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                      className="h-full rounded-full bg-blue-400" />
+                  </div>
+                  <p className="text-[8px] text-white/30 mt-1.5">Meta ideal: ≤ 10 formandos por formador</p>
+                </motion.div>
+
+                {/* 3. Cobertura Geográfica */}
+                <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-4 py-3">
+                  <p className="text-[10px] font-semibold text-white/80 uppercase tracking-wider mb-2.5">Cobertura Geográfica</p>
+                  <div className="space-y-2">
+                    {[
+                      { nome: "Luanda", total: totalLuanda, cor: "bg-blue-400" },
+                      { nome: "Bié",    total: totalBie,    cor: "bg-amber-400" },
+                    ].map(({ nome, total, cor }) => (
+                      <div key={nome}>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-[9px] text-white/50 uppercase tracking-wider">{nome}</span>
+                          <span className="text-[9px] font-bold text-white/70 tabular-nums">{total} participantes</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                          <motion.div initial={{ width: 0 }} animate={{ width: `${Math.round((total / totalGeo) * 100)}%` }}
+                            transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
+                            className={`h-full rounded-full ${cor}`} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
               </div>
             </div>
           ),
