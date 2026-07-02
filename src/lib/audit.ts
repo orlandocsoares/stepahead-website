@@ -17,9 +17,18 @@ export type AuditAction =
   // Turmas
   | "turma_create" | "turma_delete" | "turma_membro_add" | "turma_membro_remove"
   // Comunidade
-  | "post_create" | "post_delete" | "comentario_create" | "comentario_delete"
+  | "post_create" | "post_update" | "post_delete"
+  | "comentario_create" | "comentario_delete"
+  | "gosto_create" | "gosto_delete"
   // Agenda
-  | "evento_create" | "evento_delete"
+  | "evento_create" | "evento_update" | "evento_delete"
+  | "inscricao_create" | "inscricao_delete"
+  // Tickets
+  | "ticket_create" | "ticket_update" | "ticket_delete"
+  // Documentos
+  | "document_create" | "document_update" | "document_delete"
+  // Perfil
+  | "profile_update"
   // Anúncios
   | "anuncio_create" | "anuncio_delete"
   // Config

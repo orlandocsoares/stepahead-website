@@ -306,9 +306,31 @@ export default function PerfilPage() {
           <div className="space-y-1 col-span-2">
             <label className="text-[10px] c-tx3 flex items-center justify-between">
               <span>Áreas</span>
-              <span className="c-tx5 text-[10px]">clica para seleccionar</span>
+              <span className="c-tx5 text-[10px]">
+                {localProfile.role === "formando" ? "definidas pelos teus formadores" : "clica para seleccionar"}
+              </span>
             </label>
-            {(() => {
+            {localProfile.role === "formando" ? (() => {
+              const areasFormandos = Array.from(new Set(
+                associacoes.filter(a => a.status === "aceite" && a.especialidade).map(a => a.especialidade)
+              ));
+              return (
+                <div className="flex flex-wrap gap-1.5">
+                  {areasFormandos.length === 0 ? (
+                    <p className="text-[10px] c-tx5 self-center ml-1">Sem área — associa um formador para definir a tua área.</p>
+                  ) : (
+                    areasFormandos.map(area => (
+                      <span
+                        key={area}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-medium border bg-black/30 text-white/70 border-white/15 backdrop-blur-sm"
+                      >
+                        {area}
+                      </span>
+                    ))
+                  )}
+                </div>
+              );
+            })() : (() => {
               const AREAS = areasDisponiveis;
               let selected: string[] = [];
               try { selected = JSON.parse(localProfile.specialization || "[]"); } catch { selected = localProfile.specialization ? [localProfile.specialization] : []; }

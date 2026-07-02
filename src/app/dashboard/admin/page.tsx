@@ -33,6 +33,7 @@ export default function SuperAdminPage() {
   const [approvingFormadorId, setApprovingFormadorId] = useState<string | null>(null);
   const [mediaRadarSaving, setMediaRadarSaving] = useState(false);
   const [mediaRadarSaved, setMediaRadarSaved] = useState(false);
+  const [userRoleTab, setUserRoleTab] = useState<"admin" | "formador" | "formando">("admin");
 
   // Anúncios
   const [anuncioTitulo, setAnuncioTitulo] = useState("");
@@ -351,15 +352,29 @@ export default function SuperAdminPage() {
     });
   }, [data, searchTerm, activeTab]);
 
-  const groupedUsers = useMemo(() => {
+  const allGroupedUsers = useMemo(() => {
     if (activeTab !== "users") return null;
     return [
-      { title: "Super Admins", data: filteredData.filter(u => u.role === "super-admin"), color: "text-purple-400" },
-      { title: "Administradores", data: filteredData.filter(u => u.role === "admin"), color: "text-red-400" },
-      { title: "Formadores Oficiais", data: filteredData.filter(u => u.role === "formador"), color: "text-blue-400" },
-      { title: "Formandos Inscritos", data: filteredData.filter(u => u.role === "formando"), color: "text-emerald-400" },
+      { key: "admin" as const, title: "Super Admins", data: filteredData.filter(u => u.role === "super-admin"), color: "text-purple-400" },
+      { key: "admin" as const, title: "Administradores", data: filteredData.filter(u => u.role === "admin"), color: "text-red-400" },
+      { key: "formador" as const, title: "Formadores Oficiais", data: filteredData.filter(u => u.role === "formador"), color: "text-blue-400" },
+      { key: "formando" as const, title: "Formandos Inscritos", data: filteredData.filter(u => u.role === "formando"), color: "text-emerald-400" },
     ];
   }, [filteredData, activeTab]);
+
+  const userRoleTabs = useMemo(() => {
+    if (!allGroupedUsers) return [];
+    return [
+      { key: "admin" as const, label: "Administradores", count: allGroupedUsers.filter(g => g.key === "admin").reduce((s, g) => s + g.data.length, 0) },
+      { key: "formador" as const, label: "Formadores", count: allGroupedUsers.filter(g => g.key === "formador").reduce((s, g) => s + g.data.length, 0) },
+      { key: "formando" as const, label: "Formandos", count: allGroupedUsers.filter(g => g.key === "formando").reduce((s, g) => s + g.data.length, 0) },
+    ];
+  }, [allGroupedUsers]);
+
+  const groupedUsers = useMemo(() => {
+    if (!allGroupedUsers) return null;
+    return allGroupedUsers.filter(g => g.key === userRoleTab);
+  }, [allGroupedUsers, userRoleTab]);
 
   const handleExportCSV = async () => {
     setLoading(true);
@@ -860,6 +875,21 @@ export default function SuperAdminPage() {
                     </div>
                   </div>
                 )}
+
+                <div className="flex items-center gap-1 c-s1 border c-br rounded-lg p-1 w-fit">
+                  {userRoleTabs.map((t) => (
+                    <button
+                      key={t.key}
+                      onClick={() => setUserRoleTab(t.key)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        userRoleTab === t.key ? "bg-blue-600 text-white" : "c-tx4 hc-tx"
+                      }`}
+                    >
+                      {t.label}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${userRoleTab === t.key ? "bg-white/20" : "c-s2"}`}>{t.count}</span>
+                    </button>
+                  ))}
+                </div>
 
                 {groupedUsers.map((group) => {
                   if (group.data.length === 0) return null;

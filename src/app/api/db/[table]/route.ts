@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { assertIdentifier, dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
-import { auditLog } from "@/lib/audit";
+import { auditLog, type AuditAction } from "@/lib/audit";
 
 const ALLOWED_TABLES = new Set([
   "profiles",
@@ -45,6 +45,39 @@ const ALLOWED_COLUMNS: Record<string, Set<string> | null> = {
   comunidade_comentarios: null,
   comunidade_gostos:    null,
   ticket_mensagens:     null,
+};
+
+// Tabelas fora destes mapas (ticket_mensagens, hero_telemetria, dashboard_stats)
+// ficam de fora do audit log: mensagens por privacidade, telemetria por ser ruído de sistema.
+const CREATE_AUDIT_MAP: Partial<Record<string, AuditAction>> = {
+  arquivos: "ficheiro_upload",
+  agenda_atividades: "evento_create",
+  comunidade_posts: "post_create",
+  comunidade_comentarios: "comentario_create",
+  comunidade_gostos: "gosto_create",
+  tickets: "ticket_create",
+  inscricoes_agenda: "inscricao_create",
+  documents: "document_create",
+};
+
+const UPDATE_AUDIT_MAP: Partial<Record<string, AuditAction>> = {
+  profiles: "profile_update",
+  tickets: "ticket_update",
+  arquivos: "ficheiro_edit",
+  comunidade_posts: "post_update",
+  agenda_atividades: "evento_update",
+  documents: "document_update",
+};
+
+const DELETE_AUDIT_MAP: Partial<Record<string, AuditAction>> = {
+  arquivos: "ficheiro_delete",
+  agenda_atividades: "evento_delete",
+  comunidade_posts: "post_delete",
+  comunidade_comentarios: "comentario_delete",
+  comunidade_gostos: "gosto_delete",
+  tickets: "ticket_delete",
+  inscricoes_agenda: "inscricao_delete",
+  documents: "document_delete",
 };
 
 /** Regex de UUID v4 para validar parâmetros de ID nas queries */
@@ -278,21 +311,19 @@ export async function POST(request: Request, context: { params: Promise<{ table:
       insertedRows.push(result.rows[0]);
     }
 
-    // Audit log para tabelas relevantes
-    const AUDIT_MAP: Record<string, any> = {
-      arquivos: "ficheiro_upload",
-      agenda_atividades: "evento_create",
-      comunidade_posts: "post_create",
-      comunidade_comentarios: "comentario_create",
-    };
-    if (AUDIT_MAP[table]) {
+    // Audit log — regista tudo o que o utilizador faz, exceto mensagens/telemetria.
+    if (CREATE_AUDIT_MAP[table]) {
       const first = insertedRows[0];
-      await auditLog(AUDIT_MAP[table], {
+      await auditLog(CREATE_AUDIT_MAP[table]!, {
         actorId: sessionUser.id,
         targetId: first?.id,
         details: table === "arquivos" ? { label: first?.label, area: first?.area } :
                  table === "agenda_atividades" ? { titulo: first?.titulo } :
-                 table === "comunidade_posts" ? { content: String(first?.content ?? "").slice(0, 100) } : undefined,
+                 table === "comunidade_posts" ? { content: String(first?.content ?? "").slice(0, 100) } :
+                 table === "tickets" ? { subject: first?.subject, category: first?.category } :
+                 table === "inscricoes_agenda" ? { evento_id: first?.evento_id } :
+                 table === "comunidade_gostos" ? { post_id: first?.post_id } :
+                 table === "documents" ? { title: first?.title } : undefined,
       });
     }
 
@@ -377,6 +408,15 @@ export async function PATCH(request: Request, context: { params: Promise<{ table
       values
     );
 
+    if (UPDATE_AUDIT_MAP[table] && result.rows.length > 0) {
+      const first = result.rows[0];
+      await auditLog(UPDATE_AUDIT_MAP[table]!, {
+        actorId: sessionUser.id,
+        targetId: first?.id,
+        details: table === "tickets" ? { status: first?.status } : { fields: Object.keys(updates) },
+      });
+    }
+
     return NextResponse.json({ data: result.rows, error: null });
   } catch (error: any) {
     console.error("[db-route PATCH]", error.message);
@@ -422,19 +462,13 @@ export async function DELETE(request: Request, context: { params: Promise<{ tabl
 
     const result = await dbQuery(`DELETE FROM ${tableSql} ${whereSql} RETURNING *`, values);
 
-    // Audit log para eliminações relevantes
-    const AUDIT_DELETE_MAP: Record<string, any> = {
-      arquivos: "ficheiro_delete",
-      agenda_atividades: "evento_delete",
-      comunidade_posts: "post_delete",
-      comunidade_comentarios: "comentario_delete",
-    };
-    if (AUDIT_DELETE_MAP[table] && result.rows.length > 0) {
+    if (DELETE_AUDIT_MAP[table] && result.rows.length > 0) {
       const first = result.rows[0];
-      await auditLog(AUDIT_DELETE_MAP[table], {
+      await auditLog(DELETE_AUDIT_MAP[table]!, {
         actorId: sessionUser.id,
         targetId: first?.id,
-        details: table === "arquivos" ? { label: first?.label, area: first?.area } : undefined,
+        details: table === "arquivos" ? { label: first?.label, area: first?.area } :
+                 table === "tickets" ? { subject: first?.subject } : undefined,
       });
     }
 
