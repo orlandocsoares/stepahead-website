@@ -932,7 +932,7 @@ export default function SuperAdminPage() {
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-[9px] c-tx5">Tempo no portal</span>
-                                    <span className="text-[9px] c-tx4 font-medium">{fmtSessionTime(item.total_session_seconds)}</span>
+                                    <span className="text-[9px] c-tx4 font-medium">{fmtSessionTime(item.last_session_seconds)}</span>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 flex-wrap justify-center">
@@ -988,8 +988,8 @@ export default function SuperAdminPage() {
                                   <p className="text-xs c-tx4">{item.email ?? <span className="italic opacity-50">sem email</span>}</p>
                                   <div className="flex items-center gap-2 mt-0.5">
                                     <span className="text-[9px] c-tx5">Acesso: <span className="text-blue-400">{fmtLastLogin(item.last_login)}</span></span>
-                                    {item.total_session_seconds > 0 && (
-                                      <span className="text-[9px] c-tx5">· Tempo: <span className="c-tx4">{fmtSessionTime(item.total_session_seconds)}</span></span>
+                                    {item.last_session_seconds > 0 && (
+                                      <span className="text-[9px] c-tx5">· Tempo: <span className="c-tx4">{fmtSessionTime(item.last_session_seconds)}</span></span>
                                     )}
                                   </div>
                                 </div>

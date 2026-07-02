@@ -30,7 +30,7 @@ export async function GET() {
         f.first_name || ' ' || COALESCE(f.last_name, '') AS formador_nome,
         c.first_name || ' ' || COALESCE(c.last_name, '') AS criado_por_nome,
         al_login.last_login,
-        al_total.total_session_seconds,
+        al_last.last_session_seconds,
         CASE WHEN us.user_id IS NOT NULL THEN true ELSE false END AS online_now
       FROM profiles p
       LEFT JOIN profiles f ON f.id = p.formador_id
@@ -41,18 +41,22 @@ export async function GET() {
         GROUP BY actor_id
       ) al_login ON al_login.actor_id = p.id
       LEFT JOIN (
-        SELECT
+        -- Duração apenas da sessão mais recente (não soma sessões antigas).
+        -- Se ainda não houver logout correspondente, conta até agora (sessão em curso).
+        SELECT DISTINCT ON (l.actor_id)
           l.actor_id,
-          COALESCE(SUM(EXTRACT(EPOCH FROM (lo.created_at - l.created_at))), 0) AS total_session_seconds
+          EXTRACT(EPOCH FROM (
+            COALESCE(
+              (SELECT created_at FROM audit_logs
+               WHERE actor_id = l.actor_id AND action = 'logout' AND created_at > l.created_at
+               ORDER BY created_at ASC LIMIT 1),
+              NOW()
+            ) - l.created_at
+          )) AS last_session_seconds
         FROM audit_logs l
-        JOIN LATERAL (
-          SELECT created_at FROM audit_logs
-          WHERE actor_id = l.actor_id AND action = 'logout' AND created_at > l.created_at
-          ORDER BY created_at ASC LIMIT 1
-        ) lo ON true
         WHERE l.action = 'login_success'
-        GROUP BY l.actor_id
-      ) al_total ON al_total.actor_id = p.id
+        ORDER BY l.actor_id, l.created_at DESC
+      ) al_last ON al_last.actor_id = p.id
       LEFT JOIN (
         SELECT DISTINCT user_id FROM user_sessions WHERE expires_at > NOW()
       ) us ON us.user_id = p.id
