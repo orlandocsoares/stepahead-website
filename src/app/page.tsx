@@ -801,88 +801,92 @@ export default function HeroSection() {
         return {
           ...base,
           description: (
-            <div className="space-y-3 w-full max-w-sm">
+            <div className="space-y-3 w-full max-w-2xl">
               <p className={defaultTextClass}>{base.description}</p>
 
-              {/* 4 métricas base */}
-              <div className="grid grid-cols-2 gap-2">
-                {metrics.map(({ icon: Icon, value, label, color, border, iconColor, glow }) => (
-                  <motion.div
-                    key={label}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    className={`relative rounded-xl border ${border} bg-gradient-to-br ${color} backdrop-blur-md p-3 overflow-hidden`}
-                  >
-                    <div className={`absolute top-0 right-0 w-12 h-12 rounded-full blur-xl ${glow} -translate-y-1/2 translate-x-1/2`} />
-                    <div className={`w-7 h-7 rounded-lg ${glow} border ${border} flex items-center justify-center mb-2`}>
-                      <Icon size={14} className={iconColor} />
-                    </div>
-                    <p className="text-xl font-bold text-white tabular-nums leading-none">{value}</p>
-                    <p className="text-[9px] text-white/50 uppercase tracking-[0.15em] mt-0.5 font-medium leading-tight">{label}</p>
-                  </motion.div>
-                ))}
-              </div>
+              {/* Layout lado a lado: métricas | indicadores */}
+              <div className="grid grid-cols-2 gap-3">
 
-              {/* Indicadores de performance */}
-              <div className="space-y-2 pt-1">
-                <p className="text-[8px] uppercase tracking-[0.25em] text-white/30 font-semibold">Indicadores de Performance</p>
-
-                {/* 1. Índice de Actividade */}
-                <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-                  className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-4 py-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[10px] font-semibold text-white/80 uppercase tracking-wider">Índice de Actividade</p>
-                    <span className={`text-sm font-black tabular-nums ${indiceActividade >= 70 ? "text-emerald-400" : indiceActividade >= 40 ? "text-amber-400" : "text-red-400"}`}>
-                      {indiceActividade}%
-                    </span>
-                  </div>
-                  <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${indiceActividade}%` }} transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-                      className={`h-full rounded-full ${indiceActividade >= 70 ? "bg-emerald-400" : indiceActividade >= 40 ? "bg-amber-400" : "bg-red-400"}`} />
-                  </div>
-                  <p className="text-[8px] text-white/30 mt-1.5">Baseado em formandos, formadores, materiais e turmas</p>
-                </motion.div>
-
-                {/* 2. Rácio Formador/Formando */}
-                <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
-                  className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-4 py-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[10px] font-semibold text-white/80 uppercase tracking-wider">Rácio Formandos / Formador</p>
-                    <span className="text-sm font-black tabular-nums text-blue-400">{ratioVal}:1</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, totalFormadores > 0 ? (totalFormandos / totalFormadores / 10) * 100 : 0)}%` }}
-                      transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-                      className="h-full rounded-full bg-blue-400" />
-                  </div>
-                  <p className="text-[8px] text-white/30 mt-1.5">Meta ideal: ≤ 10 formandos por formador</p>
-                </motion.div>
-
-                {/* 3. Cobertura Geográfica */}
-                <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
-                  className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-4 py-3">
-                  <p className="text-[10px] font-semibold text-white/80 uppercase tracking-wider mb-2.5">Cobertura Geográfica</p>
-                  <div className="space-y-2">
-                    {[
-                      { nome: "Luanda", total: totalLuanda, cor: "bg-blue-400" },
-                      { nome: "Bié",    total: totalBie,    cor: "bg-amber-400" },
-                    ].map(({ nome, total, cor }) => (
-                      <div key={nome}>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-[9px] text-white/50 uppercase tracking-wider">{nome}</span>
-                          <span className="text-[9px] font-bold text-white/70 tabular-nums">{total} participantes</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${Math.round((total / totalGeo) * 100)}%` }}
-                            transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
-                            className={`h-full rounded-full ${cor}`} />
-                        </div>
+                {/* Coluna esquerda — 4 métricas base */}
+                <div className="grid grid-cols-2 gap-2 content-start">
+                  {metrics.map(({ icon: Icon, value, label, color, border, iconColor, glow }) => (
+                    <motion.div
+                      key={label}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.1 }}
+                      className={`relative rounded-xl border ${border} bg-gradient-to-br ${color} backdrop-blur-md p-3 overflow-hidden`}
+                    >
+                      <div className={`absolute top-0 right-0 w-12 h-12 rounded-full blur-xl ${glow} -translate-y-1/2 translate-x-1/2`} />
+                      <div className={`w-7 h-7 rounded-lg ${glow} border ${border} flex items-center justify-center mb-2`}>
+                        <Icon size={14} className={iconColor} />
                       </div>
-                    ))}
-                  </div>
-                </motion.div>
-              </div>
+                      <p className="text-xl font-bold text-white tabular-nums leading-none">{value}</p>
+                      <p className="text-[9px] text-white/50 uppercase tracking-[0.15em] mt-0.5 font-medium leading-tight">{label}</p>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Coluna direita — indicadores de performance */}
+                <div className="space-y-2 flex flex-col justify-between">
+                  <p className="text-[8px] uppercase tracking-[0.25em] text-white/30 font-semibold">Indicadores de Performance</p>
+
+                  {/* 1. Índice de Actividade */}
+                  <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
+                    className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-3 py-2.5 flex-1">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-[9px] font-semibold text-white/70 uppercase tracking-wider">Índice de Actividade</p>
+                      <span className={`text-sm font-black tabular-nums ${indiceActividade >= 70 ? "text-emerald-400" : indiceActividade >= 40 ? "text-amber-400" : "text-red-400"}`}>
+                        {indiceActividade}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${indiceActividade}%` }} transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+                        className={`h-full rounded-full ${indiceActividade >= 70 ? "bg-emerald-400" : indiceActividade >= 40 ? "bg-amber-400" : "bg-red-400"}`} />
+                    </div>
+                    <p className="text-[7px] text-white/25 mt-1">Formandos · Formadores · Materiais · Turmas</p>
+                  </motion.div>
+
+                  {/* 2. Rácio Formador/Formando */}
+                  <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
+                    className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-3 py-2.5 flex-1">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-[9px] font-semibold text-white/70 uppercase tracking-wider">Rácio / Formador</p>
+                      <span className="text-sm font-black tabular-nums text-blue-400">{ratioVal}:1</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, totalFormadores > 0 ? (totalFormandos / totalFormadores / 10) * 100 : 0)}%` }}
+                        transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                        className="h-full rounded-full bg-blue-400" />
+                    </div>
+                    <p className="text-[7px] text-white/25 mt-1">Meta ideal: ≤ 10 formandos / formador</p>
+                  </motion.div>
+
+                  {/* 3. Cobertura Geográfica */}
+                  <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
+                    className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-3 py-2.5 flex-1">
+                    <p className="text-[9px] font-semibold text-white/70 uppercase tracking-wider mb-2">Cobertura Geográfica</p>
+                    <div className="space-y-1.5">
+                      {[
+                        { nome: "Luanda", total: totalLuanda, cor: "bg-blue-400" },
+                        { nome: "Bié",    total: totalBie,    cor: "bg-amber-400" },
+                      ].map(({ nome, total, cor }) => (
+                        <div key={nome}>
+                          <div className="flex justify-between mb-0.5">
+                            <span className="text-[8px] text-white/50 uppercase tracking-wider">{nome}</span>
+                            <span className="text-[8px] font-bold text-white/60 tabular-nums">{total} part.</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.round((total / totalGeo) * 100)}%` }}
+                              transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
+                              className={`h-full rounded-full ${cor}`} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                </div>{/* fim coluna direita */}
+              </div>{/* fim grid 2 colunas */}
             </div>
           ),
         };
