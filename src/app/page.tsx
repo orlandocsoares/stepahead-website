@@ -263,6 +263,7 @@ export default function HeroSection() {
   const [isLogoHovered, setIsLogoHovered] = useState(false);
 
   const [telemetry, setTelemetry] = useState<any>(null);
+  const [selectedEvento, setSelectedEvento] = useState<any>(null);
 
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
@@ -574,7 +575,7 @@ export default function HeroSection() {
                     const d = new Date(ev.data_evento);
                     const dias = Math.max(0, Math.ceil((d.getTime() - Date.now()) / 86400000));
                     return (
-                      <div key={i} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.03] transition-colors">
+                      <div key={i} onClick={() => setSelectedEvento(ev)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.03] transition-colors cursor-pointer">
                         <div className="shrink-0 w-9 text-center">
                           <p className="text-[15px] font-black text-white leading-none">{d.getDate().toString().padStart(2,"0")}</p>
                           <p className="text-[8px] uppercase tracking-wider text-blue-400/80 leading-none mt-0.5">{d.toLocaleString("pt-PT",{month:"short"})}</p>
@@ -1085,6 +1086,62 @@ export default function HeroSection() {
                   </AnimatePresence>
                 )}
 
+              </DialogContent>
+            </Dialog>
+
+            {/* Detalhe do evento — clicável a partir da lista da Agenda */}
+            <Dialog open={!!selectedEvento} onOpenChange={(o) => { if (!o) setSelectedEvento(null); }}>
+              <DialogContent className="w-[95vw] sm:max-w-[420px] bg-[#0a0a0a]/90 backdrop-blur-3xl border border-white/10 text-white rounded-3xl p-0 overflow-hidden pointer-events-auto z-[200]">
+                {selectedEvento && (() => {
+                  const d = new Date(selectedEvento.data_evento);
+                  const dias = Math.max(0, Math.ceil((d.getTime() - Date.now()) / 86400000));
+                  const isOnline = selectedEvento.local === "Online";
+                  return (
+                    <div>
+                      {selectedEvento.imagem_url && (
+                        <div className="w-full aspect-[16/9] bg-black/40">
+                          <img src={selectedEvento.imagem_url} alt={selectedEvento.titulo} className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="p-6 space-y-4">
+                        <div className="flex items-start gap-3">
+                          <div className="shrink-0 w-14 h-14 rounded-xl border border-white/15 bg-white/[0.04] flex flex-col items-center justify-center">
+                            <span className="text-xl font-black leading-none text-white">{d.getDate()}</span>
+                            <span className="text-[9px] uppercase tracking-wider text-blue-400/80 mt-0.5">{d.toLocaleString("pt-PT", { month: "short" })}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <DialogTitle className="text-base font-bold text-white leading-snug">{selectedEvento.titulo}</DialogTitle>
+                            <p className={`flex items-center gap-1.5 text-xs font-bold mt-1 ${dias === 0 ? "text-emerald-400" : dias <= 7 ? "text-amber-400" : "text-blue-400"}`}>
+                              {dias === 0 ? "Hoje" : `Faltam ${dias} dia${dias !== 1 ? "s" : ""}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5 text-sm text-white/70">
+                          <p className="flex items-center gap-2">
+                            <Calendar size={13} className="text-blue-400 shrink-0" />
+                            {d.toLocaleDateString("pt-PT", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+                          </p>
+                          <p className="flex items-center gap-2">
+                            <MapPin size={13} className="text-emerald-400 shrink-0" />
+                            {isOnline ? "Online" : selectedEvento.local}{selectedEvento.endereco ? ` — ${selectedEvento.endereco}` : ""}
+                          </p>
+                          {selectedEvento.tipo && (
+                            <p className="flex items-center gap-2 flex-wrap pt-1">
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 font-medium">{selectedEvento.tipo}</span>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/60 font-medium">{isOnline ? "Online" : "Presencial"}</span>
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => { setSelectedEvento(null); setIsLoginOpen(true); }}
+                          className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white transition-colors"
+                        >
+                          Entrar para me inscrever
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </DialogContent>
             </Dialog>
 
