@@ -138,7 +138,7 @@ export default function AgendaPage() {
       if (uploadRes.ok) imagem_url = `/storage/v1/object/public/eventos/${fileName}`;
     }
 
-    await fetch("/api/db/agenda_atividades", {
+    const res = await fetch("/api/db/agenda_atividades", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -147,6 +147,12 @@ export default function AgendaPage() {
         ...(imagem_url ? { imagem_url } : {}),
       }),
     });
+    if (!res.ok) {
+      const json = await res.json().catch(() => null);
+      alert(json?.error?.message ?? "Erro ao criar o evento.");
+      setIsSubmitting(false);
+      return;
+    }
     setIsModalOpen(false);
     setForm({ titulo: "", formato: "Presencial", provincia: "Luanda", tipo: "Global", data_evento: "", endereco: "" });
     handleImagemSelect(null);
