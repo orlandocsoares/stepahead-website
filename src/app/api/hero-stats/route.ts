@@ -22,10 +22,10 @@ export async function GET() {
       []
     ),
     dbQuery(
-      `SELECT titulo, data_inicio
+      `SELECT titulo, data_evento AS data_inicio, local, endereco, imagem_url
        FROM agenda_atividades
-       WHERE data_inicio >= NOW()
-       ORDER BY data_inicio ASC
+       WHERE data_evento >= NOW()
+       ORDER BY data_evento ASC
        LIMIT 1`,
       []
     ),
@@ -77,6 +77,9 @@ export async function GET() {
     areas_materiais:     areas,
     proximo_evento:      evento?.titulo ?? null,
     data_proximo_evento: evento?.data_inicio ?? null,
+    local_proximo_evento: evento?.local ?? null,
+    endereco_proximo_evento: evento?.endereco ?? null,
+    imagem_proximo_evento: evento?.imagem_url ?? null,
     formadores_lista:    formadores,
   });
 }

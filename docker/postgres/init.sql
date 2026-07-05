@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS agenda_atividades (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   titulo TEXT NOT NULL,
   local TEXT NOT NULL,
+  endereco TEXT,
+  imagem_url TEXT,
   data_evento TIMESTAMPTZ NOT NULL,
   tipo TEXT NOT NULL DEFAULT 'Global',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

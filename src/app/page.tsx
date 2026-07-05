@@ -582,7 +582,7 @@ export default function HeroSection() {
                         <div className="w-px h-8 bg-white/10 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-[11px] font-semibold text-white/90 leading-tight truncate">{ev.titulo}</p>
-                          {ev.local && <p className="text-[9px] text-white/40 mt-0.5 truncate">{ev.local}</p>}
+                          {ev.local && <p className="text-[9px] text-white/40 mt-0.5 truncate">{ev.local}{ev.endereco ? ` — ${ev.endereco}` : ""}</p>}
                         </div>
                         <div className={`shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full ${dias === 0 ? "bg-emerald-500/20 text-emerald-400" : dias <= 7 ? "bg-amber-500/20 text-amber-400" : "bg-white/10 text-white/40"}`}>
                           {dias === 0 ? "Hoje" : `${dias}d`}

@@ -1,0 +1,28 @@
+name: Migração agenda (endereço + imagem)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    name: Adicionar endereco e imagem_url a agenda_atividades
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Executar SQL no servidor
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            APP_DIR=/opt/apps/sabermais/sabermais.edu.ao
+            DB_USER=$(grep '^POSTGRES_USER=' "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
+            DB_NAME=$(grep '^POSTGRES_DB='   "$APP_DIR/.env.production" | cut -d'=' -f2 | tr -d '"')
+
+            docker exec sabermais-postgres psql -U "$DB_USER" -d "$DB_NAME" -c "
+              ALTER TABLE agenda_atividades ADD COLUMN IF NOT EXISTS endereco TEXT;
+              ALTER TABLE agenda_atividades ADD COLUMN IF NOT EXISTS imagem_url TEXT;
+            "
+            echo "✅ Migração agenda (endereco + imagem_url) concluída!"

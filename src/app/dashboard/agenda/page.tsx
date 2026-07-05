@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar as CalendarIcon, MapPin,
   CheckCircle2, Loader2, Plus, X, Laptop, Search,
-  Users, ChevronDown, ChevronUp, GraduationCap, BookOpen, ShieldCheck
+  Users, ChevronDown, ChevronUp, GraduationCap, BookOpen, ShieldCheck,
+  ImagePlus, Clock
 } from "lucide-react";
 
 const LOCAIS = ["Luanda", "Bié", "Online"];
@@ -21,7 +22,14 @@ export default function AgendaPage() {
   const [filterScope, setFilterScope] = useState("Todos");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({ titulo: "", formato: "Presencial", provincia: "Luanda", tipo: "Global", data_evento: "" });
+  const [form, setForm] = useState({ titulo: "", formato: "Presencial", provincia: "Luanda", tipo: "Global", data_evento: "", endereco: "" });
+  const [imagemFile, setImagemFile] = useState<File | null>(null);
+  const [imagemPreview, setImagemPreview] = useState<string | null>(null);
+
+  function handleImagemSelect(file: File | null) {
+    setImagemFile(file);
+    setImagemPreview(file ? URL.createObjectURL(file) : null);
+  }
 
   const canManage = user?.role === "admin" || user?.role === "formador";
   const isStaff = user?.role === "admin" || user?.role === "super-admin" || user?.role === "formador";
@@ -119,13 +127,29 @@ export default function AgendaPage() {
     e.preventDefault();
     setIsSubmitting(true);
     const local = form.formato === "Online" ? "Online" : form.provincia;
+
+    let imagem_url: string | undefined;
+    if (imagemFile) {
+      const sanitized = imagemFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const fileName = `${Date.now()}_${sanitized}`;
+      const uploadForm = new FormData();
+      uploadForm.append("bucket", "eventos"); uploadForm.append("path", fileName); uploadForm.append("file", imagemFile);
+      const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: uploadForm });
+      if (uploadRes.ok) imagem_url = `/storage/v1/object/public/eventos/${fileName}`;
+    }
+
     await fetch("/api/db/agenda_atividades", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ titulo: form.titulo, local, data_evento: form.data_evento, tipo: form.tipo }),
+      body: JSON.stringify({
+        titulo: form.titulo, local, data_evento: form.data_evento, tipo: form.tipo,
+        endereco: form.formato === "Presencial" ? (form.endereco || null) : null,
+        ...(imagem_url ? { imagem_url } : {}),
+      }),
     });
     setIsModalOpen(false);
-    setForm({ titulo: "", formato: "Presencial", provincia: "Luanda", tipo: "Global", data_evento: "" });
+    setForm({ titulo: "", formato: "Presencial", provincia: "Luanda", tipo: "Global", data_evento: "", endereco: "" });
+    handleImagemSelect(null);
     fetchData();
     setIsSubmitting(false);
   }
@@ -210,28 +234,55 @@ export default function AgendaPage() {
               urgency === "urgent" ? "border-red-500/30" :
               urgency === "soon"   ? "border-amber-500/30" : "c-br";
 
-            const countdownBadge =
-              urgency === "today"  ? <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold animate-pulse uppercase tracking-widest">Hoje</span> :
-              urgency === "urgent" ? <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-semibold">em {days} dia{days !== 1 ? "s" : ""}</span> :
-              urgency === "soon"   ? <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-semibold">em {days} dias</span> :
-              urgency === "upcoming"? <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">em {days} dias</span> : null;
+            const countdownText =
+              urgency === "today"  ? "Hoje" :
+              urgency === "past"   ? "Concluído" :
+              `Faltam ${days} dia${days !== 1 ? "s" : ""}`;
+
+            const countdownColorClass =
+              urgency === "today"  ? "text-emerald-400" :
+              urgency === "urgent" ? "text-red-400" :
+              urgency === "soon"   ? "text-amber-400" : "text-blue-400";
+
+            const dataObj = new Date(item.data_evento);
 
             return (
               <motion.div key={item.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: index * 0.04 }}
                 className={`c-bg2 border ${borderClass} rounded-xl overflow-hidden flex flex-col hover:border-white/[0.15] transition-colors`}
               >
-                {/* Barra de urgência no topo */}
-                <div className={`h-1 w-full ${accentBar}`} />
+                {/* Cartaz do evento (se existir) */}
+                {item.imagem_url ? (
+                  <div className="w-full aspect-[16/9] bg-black/30 overflow-hidden">
+                    <img src={item.imagem_url} alt={item.titulo} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className={`h-1 w-full ${accentBar}`} />
+                )}
                 <div className="p-5 flex flex-col gap-4 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${item.tipo === "Restrito" ? "bg-amber-500/10 text-amber-400" : "bg-blue-500/10 text-blue-400"}`}>{item.tipo}</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${isOnline ? "bg-purple-500/10 text-purple-400" : "bg-emerald-500/10 text-emerald-400"}`}>{isOnline ? "Online" : "Presencial"}</span>
-                    {countdownBadge}
                   </div>
-                  <p className="text-sm font-semibold c-tx leading-snug">{item.titulo}</p>
-                  <div className="flex items-center gap-4 text-xs c-tx3">
-                    <span className="flex items-center gap-1.5"><CalendarIcon size={12} className="text-blue-400" />{new Date(item.data_evento).toLocaleDateString("pt-PT")}</span>
-                    <span className="flex items-center gap-1.5">{isOnline ? <Laptop size={12} className="text-purple-400" /> : <MapPin size={12} className="text-emerald-400" />}{item.local}</span>
+
+                  <div className="flex items-start gap-3">
+                    {/* Bloco de data em destaque */}
+                    <div className={`flex flex-col items-center justify-center shrink-0 w-14 h-14 rounded-xl border ${borderClass} c-s1`}>
+                      <span className="text-xl font-black leading-none c-tx">{dataObj.getDate()}</span>
+                      <span className="text-[9px] uppercase tracking-wider c-tx4 mt-0.5">{dataObj.toLocaleDateString("pt-PT", { month: "short" })}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold c-tx leading-snug">{item.titulo}</p>
+                      {urgency !== "future" && (
+                        <p className={`flex items-center gap-1.5 text-xs font-bold mt-1 ${countdownColorClass} ${urgency === "today" ? "animate-pulse" : ""}`}>
+                          <Clock size={12} /> {countdownText}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1 text-xs c-tx3">
+                    <span className="flex items-center gap-1.5"><CalendarIcon size={12} className="text-blue-400" />{dataObj.toLocaleDateString("pt-PT", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</span>
+                    <span className="flex items-center gap-1.5">{isOnline ? <Laptop size={12} className="text-purple-400" /> : <MapPin size={12} className="text-emerald-400" />}{item.local}{item.endereco ? ` — ${item.endereco}` : ""}</span>
                   </div>
                   {/* Contador de inscritos */}
                   {(() => {
@@ -365,13 +416,28 @@ export default function AgendaPage() {
                 </div>
               </div>
               {form.formato === "Presencial" && (
-                <div className="space-y-1.5">
-                  <label className="text-xs c-tx3">Local</label>
-                  <select value={form.provincia} onChange={(e) => setForm({ ...form, provincia: e.target.value })} className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none">
-                    {["Luanda", "Bié"].map((l) => <option key={l} className="c-bg">{l}</option>)}
-                  </select>
-                </div>
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-xs c-tx3">Local</label>
+                    <select value={form.provincia} onChange={(e) => setForm({ ...form, provincia: e.target.value })} className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none">
+                      {["Luanda", "Bié"].map((l) => <option key={l} className="c-bg">{l}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs c-tx3">Morada (opcional)</label>
+                    <input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} placeholder="Ex: Rua da Missão, nº 12, Maianga" className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50" />
+                  </div>
+                </>
               )}
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Imagem / cartaz (opcional)</label>
+                <label className="flex items-center gap-2 border border-dashed c-br rounded-lg px-3 py-2 cursor-pointer hover:border-blue-500/40 transition-colors">
+                  <input type="file" accept="image/*" onChange={(e) => handleImagemSelect(e.target.files?.[0] ?? null)} className="sr-only" />
+                  <ImagePlus size={14} className="c-tx5 shrink-0" />
+                  <p className="text-sm c-tx3 truncate">{imagemFile ? imagemFile.name : "Seleccionar imagem"}</p>
+                </label>
+                {imagemPreview && <img src={imagemPreview} alt="Pré-visualização" className="w-full h-28 object-cover rounded-lg mt-1" />}
+              </div>
               <div className="space-y-1.5">
                 <label className="text-xs c-tx3">Âmbito</label>
                 <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none">
