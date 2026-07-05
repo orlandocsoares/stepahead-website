@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen, Facebook, Instagram } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
@@ -1242,6 +1242,15 @@ export default function HeroSection() {
             >
               <img src="/flags/Flag_of_Angola.svg.png" alt="Bandeira de Angola" className="h-5 w-auto rounded-sm shadow-lg" />
               <img src="/flags/Flag_of_Portugal.svg.webp" alt="Bandeira de Portugal" className="h-5 w-auto rounded-sm shadow-lg" />
+              <div className="w-px h-4 bg-white/20 mx-1" />
+              <a href="https://www.facebook.com/profile.php?id=100091617683484" target="_blank" rel="noopener noreferrer" title="Facebook"
+                className="w-7 h-7 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 transition-colors">
+                <Facebook size={13} />
+              </a>
+              <a href="https://www.instagram.com/sabermais.angola/" target="_blank" rel="noopener noreferrer" title="Instagram"
+                className="w-7 h-7 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 transition-colors">
+                <Instagram size={13} />
+              </a>
             </motion.div>
 
 
