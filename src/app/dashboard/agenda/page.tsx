@@ -122,9 +122,11 @@ export default function AgendaPage() {
       });
       if (evento?.acao_formacao_id) {
         const res = await fetch(`/api/acoes-formacao/${evento.acao_formacao_id}/inscricoes`, { method: "POST" });
+        const json = await res.json().catch(() => null);
         if (!res.ok) {
-          const json = await res.json().catch(() => null);
           alert(json?.error ?? "Não foi possível inscrever na Acção de Formação associada.");
+        } else if (json?.data?.status === "pendente") {
+          alert("Inscrição enviada — aguarda confirmação do formador responsável.");
         }
       }
       setMyInscriptions((p) => [...p, eventoId]);
