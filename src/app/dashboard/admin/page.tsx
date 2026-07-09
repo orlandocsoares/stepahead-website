@@ -19,6 +19,7 @@ export default function SuperAdminPage() {
   const [loading, setLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [provinciaFilter, setProvinciaFilter] = useState("");
   const router = useRouter();
 
   const [isAgendaModalOpen, setIsAgendaModalOpen] = useState(false);
@@ -340,9 +341,13 @@ export default function SuperAdminPage() {
   }
 
   const filteredData = useMemo(() => {
-    if (!searchTerm) return data;
+    let result = data;
+    if (activeTab === "users" && provinciaFilter) {
+      result = result.filter(item => item.provincia === provinciaFilter);
+    }
+    if (!searchTerm) return result;
     const s = searchTerm.toLowerCase();
-    return data.filter(item => {
+    return result.filter(item => {
       if (activeTab === "users") {
         const fullName = `${item.first_name || ""} ${item.last_name || ""}`.toLowerCase();
         return fullName.includes(s) || item.email?.toLowerCase().includes(s);
@@ -350,7 +355,14 @@ export default function SuperAdminPage() {
       if (activeTab === "agenda") return item.titulo?.toLowerCase().includes(s) || item.local?.toLowerCase().includes(s);
       return true;
     });
-  }, [data, searchTerm, activeTab]);
+  }, [data, searchTerm, activeTab, provinciaFilter]);
+
+  const provinciasDisponiveis = useMemo(() => {
+    if (activeTab !== "users") return [];
+    const set = new Set<string>();
+    data.forEach(item => { if (item.provincia) set.add(item.provincia); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt"));
+  }, [data, activeTab]);
 
   const allGroupedUsers = useMemo(() => {
     if (activeTab !== "users") return null;
@@ -534,6 +546,16 @@ export default function SuperAdminPage() {
               className="w-full c-s1 border c-br rounded-lg pl-9 pr-4 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors"
             />
           </div>
+          {activeTab === "users" && provinciasDisponiveis.length > 0 && (
+            <select value={provinciaFilter} onChange={(e) => setProvinciaFilter(e.target.value)}
+              className="c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors shrink-0"
+            >
+              <option value="">Todas as províncias</option>
+              {provinciasDisponiveis.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          )}
           {activeTab === "users" && (
             <div className="flex items-center gap-1 c-s1 border c-br rounded-lg p-1 shrink-0">
               <button onClick={() => setUserView("list")} title="Vista em lista"
