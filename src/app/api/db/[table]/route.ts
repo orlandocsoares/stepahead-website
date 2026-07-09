@@ -153,11 +153,19 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
       if (sessionUser) {
         if (userRole !== "super-admin" && userRole !== "admin") {
           if (userRole === "formador") {
-            // formador: vê os seus + publico + formadores + ficheiros das acções de formação que lecciona
+            // formador: vê sempre os seus (qualquer área); ficheiros "publico"/"formadores" de outros só
+            // se forem da área de alguma acção de formação que este formador lecciona (ou área "Geral").
             // (turma/formadores_turma mantidos por compatibilidade com ficheiros antigos)
             filters.push(`(
               ${tableSql}.uploader_id = $${valueIndex}
-              OR ${tableSql}.visibilidade IN ('publico', 'formadores')
+              OR (${tableSql}.visibilidade IN ('publico', 'formadores') AND (
+                ${tableSql}.area = 'Geral'
+                OR ${tableSql}.area IN (
+                  SELECT af.area FROM acao_formadores acf
+                  INNER JOIN acoes_formacao af ON af.id = acf.acao_formacao_id
+                  WHERE acf.formador_id = $${valueIndex} AND af.area IS NOT NULL
+                )
+              ))
               OR (${tableSql}.visibilidade IN ('turma', 'formadores_turma') AND ${tableSql}.turma_id IN (
                 SELECT id FROM turmas WHERE formador_id = $${valueIndex}
               ))
@@ -168,10 +176,17 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
             values.push(sessionUser.id);
             valueIndex++;
           } else {
-            // formando: vê publico/formadores (área certa), e ficheiros das acções de formação em que está inscrito
+            // formando: vê publico/formadores (área certa), e ficheiros das acções de formação em que está inscrito.
+            // A área "certa" é decidida pela Acção de Formação em que o formando está inscrito (entidade central),
+            // não pelo formador/turma directamente — formando_formadores/turmas mantidos só para dados antigos.
             filters.push(`(
               (${tableSql}.visibilidade IN ('publico', 'formadores') AND (
                 ${tableSql}.area = 'Geral'
+                OR ${tableSql}.area IN (
+                  SELECT af.area FROM inscricoes_acao ia
+                  INNER JOIN acoes_formacao af ON af.id = ia.acao_formacao_id
+                  WHERE ia.formando_id = $${valueIndex} AND ia.status = 'inscrito' AND af.area IS NOT NULL
+                )
                 OR ${tableSql}.area IN (
                   SELECT p.specialization FROM profiles p
                   INNER JOIN formando_formadores ff ON ff.formador_id = p.id
@@ -192,6 +207,14 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
               OR (${tableSql}.visibilidade IN ('acao_formacao', 'formadores_acao') AND ${tableSql}.acao_formacao_id IN (
                 SELECT acao_formacao_id FROM inscricoes_acao WHERE formando_id = $${valueIndex} AND status = 'inscrito'
               ))
+              OR EXISTS (
+                SELECT 1 FROM arquivo_acoes_formacao l
+                INNER JOIN inscricoes_acao ia ON ia.acao_formacao_id = l.acao_formacao_id
+                WHERE l.arquivo_id = ${tableSql}.id
+                  AND ia.formando_id = $${valueIndex} AND ia.status = 'inscrito'
+                  AND (l.disponivel_de IS NULL OR l.disponivel_de <= NOW())
+                  AND (l.disponivel_ate IS NULL OR l.disponivel_ate >= NOW())
+              )
             )`);
             values.push(sessionUser.id);
             valueIndex++;

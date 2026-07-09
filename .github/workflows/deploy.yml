@@ -325,6 +325,27 @@ jobs:
               -- Visibilidade de ficheiros passa a poder referenciar uma acção de formação
               ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS acao_formacao_id UUID REFERENCES acoes_formacao(id) ON DELETE SET NULL;
               CREATE INDEX IF NOT EXISTS idx_arquivos_acao_formacao ON arquivos(acao_formacao_id);
+
+              -- Imagem/cartaz opcional para a acção de formação (espelhada no evento de agenda)
+              ALTER TABLE acoes_formacao ADD COLUMN IF NOT EXISTS imagem_url TEXT;
+
+              -- Área/disciplina da acção de formação — determina que ficheiros do repositório
+              -- (área geral) ficam visíveis aos formandos inscritos nesta acção
+              ALTER TABLE acoes_formacao ADD COLUMN IF NOT EXISTS area TEXT;
+
+              -- Repositório (nuvem de ficheiros por área) ligado a Acções de Formação: um ficheiro
+              -- pode ser publicado em várias acções, cada uma com a sua própria janela de disponibilidade
+              CREATE TABLE IF NOT EXISTS arquivo_acoes_formacao (
+                id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+                arquivo_id        UUID        NOT NULL REFERENCES arquivos(id) ON DELETE CASCADE,
+                acao_formacao_id  UUID        NOT NULL REFERENCES acoes_formacao(id) ON DELETE CASCADE,
+                disponivel_de     TIMESTAMPTZ,
+                disponivel_ate    TIMESTAMPTZ,
+                created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE(arquivo_id, acao_formacao_id)
+              );
+              CREATE INDEX IF NOT EXISTS idx_arq_acoes_arquivo ON arquivo_acoes_formacao(arquivo_id);
+              CREATE INDEX IF NOT EXISTS idx_arq_acoes_acao     ON arquivo_acoes_formacao(acao_formacao_id);
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             echo "==> A construir e reiniciar o container web..."

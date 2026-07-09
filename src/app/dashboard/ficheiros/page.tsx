@@ -17,13 +17,14 @@ const CATEGORIES_FALLBACK = ["Geral", "Matemática", "Língua Portuguesa", "Fís
 
 const VISIBILIDADE_OPTIONS = [
   { value: "privado",           label: "Só eu",                        icon: Lock,          color: "c-tx3" },
-  { value: "acao_formacao",     label: "Minha Acção de Formação",       icon: GraduationCap, color: "text-amber-400" },
-  { value: "formadores",        label: "Formadores",                    icon: Users,         color: "text-blue-400" },
-  { value: "formadores_acao",   label: "Formadores + Acção de Formação", icon: Users,         color: "text-purple-400" },
+  { value: "formadores",        label: "Formadores",                   icon: Users,         color: "text-blue-400" },
   { value: "publico",           label: "Todos",                        icon: Globe,         color: "text-emerald-400" },
-  // Legado — apenas para exibir ficheiros antigos, não seleccionável em novos uploads
-  { value: "turma",             label: "Minha turma (legado)",         icon: GraduationCap, color: "text-amber-400" },
-  { value: "formadores_turma",  label: "Formadores + Turma (legado)",  icon: Users,         color: "text-purple-400" },
+  // Legado — apenas para exibir ficheiros antigos, não seleccionável em novos uploads.
+  // A publicação numa Acção de Formação específica passa a fazer-se em Acções de Formação → Materiais.
+  { value: "turma",             label: "Minha turma (legado)",              icon: GraduationCap, color: "text-amber-400" },
+  { value: "formadores_turma",  label: "Formadores + Turma (legado)",       icon: Users,         color: "text-purple-400" },
+  { value: "acao_formacao",     label: "Acção de Formação (legado)",        icon: GraduationCap, color: "text-amber-400" },
+  { value: "formadores_acao",   label: "Formadores + Acção (legado)",       icon: Users,         color: "text-purple-400" },
 ];
 
 const CAT_COLORS: Record<string, string> = {
@@ -32,12 +33,13 @@ const CAT_COLORS: Record<string, string> = {
   "Química": "text-emerald-400", "Pedagogia": "text-amber-400",
 };
 
-function VisibilidadeBadge({ v, small }: { v: string; small?: boolean }) {
+function VisibilidadeBadge({ v, small, acaoNome }: { v: string; small?: boolean; acaoNome?: string }) {
   const opt = VISIBILIDADE_OPTIONS.find(o => o.value === v) ?? VISIBILIDADE_OPTIONS[0];
   const Icon = opt.icon;
+  const isAcao = v === "acao_formacao" || v === "formadores_acao";
   return (
     <span className={`inline-flex items-center gap-1 ${small ? "text-[9px]" : "text-[10px]"} ${opt.color}`}>
-      <Icon size={small ? 9 : 10} /> {opt.label}
+      <Icon size={small ? 9 : 10} /> {isAcao && acaoNome ? acaoNome : opt.label}
     </span>
   );
 }
@@ -136,6 +138,7 @@ export default function FicheirosPage() {
   const [visibilidade, setVisibilidade] = useState("publico");
   const [acaoFormacaoId, setAcaoFormacaoId] = useState<string>("");
   const [minhasAcoes, setMinhasAcoes] = useState<{ id: string; designacao: string }[]>([]);
+  const [acoesNomes, setAcoesNomes] = useState<Record<string, string>>({});
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortCol, setSortCol] = useState<"nome" | "area" | "tamanho" | "data" | "visibilidade">("data");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -234,10 +237,14 @@ export default function FicheirosPage() {
     fetchFiles();
     fetch("/api/admin/disciplinas").then(r => r.json()).then(j => setDisciplinas(j.disciplinas?.filter((d: any) => d.activo) ?? []));
     fetch("/api/admin/grupos-formacao").then(r => r.json()).then(j => setGruposFormacao(j.grupos?.filter((g: any) => g.activo) ?? []));
-    if (user?.role === "formador") {
+    if (user) {
       fetch("/api/acoes-formacao").then(r => r.json()).then(json => {
         const todas = json.data ?? [];
-        setMinhasAcoes(todas.filter((a: any) => (a.formadores ?? []).some((f: any) => f.id === user.id)));
+        setAcoesNomes(Object.fromEntries(todas.map((a: any) => [a.id, a.designacao])));
+        const isAdminUser = user.role === "admin" || user.role === "super-admin";
+        if (isAdminUser || user.role === "formador") {
+          setMinhasAcoes(isAdminUser ? todas : todas.filter((a: any) => (a.formadores ?? []).some((f: any) => f.id === user.id)));
+        }
       });
     }
   }, [user?.id, user?.role]);
@@ -579,7 +586,7 @@ export default function FicheirosPage() {
                           <p className="text-[9px] c-tx5 truncate">{f.tamanho ?? "—"} · {formatDate(f.criado_em ?? f.created_at)}</p>
                           <div className="flex items-center gap-1 shrink-0">
                             <DisponibilidadeBadge disponivel_de={f.disponivel_de} disponivel_ate={f.disponivel_ate} />
-                            <VisibilidadeBadge v={f.visibilidade ?? "publico"} small />
+                            <VisibilidadeBadge v={f.visibilidade ?? "publico"} small acaoNome={f.acao_formacao_id ? acoesNomes[f.acao_formacao_id] : undefined} />
                           </div>
                         </div>
                       </div>
@@ -744,10 +751,10 @@ export default function FicheirosPage() {
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3">Visibilidade</label>
-              <div className={`grid gap-2 ${(user?.role === "formador" && minhasAcoes.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
+              <div className={"grid gap-2 grid-cols-3"}>
                 {VISIBILIDADE_OPTIONS.filter(opt => {
                   if (opt.value === "turma" || opt.value === "formadores_turma") return false;
-                  if (opt.value === "acao_formacao" || opt.value === "formadores_acao") return user?.role === "formador" && minhasAcoes.length > 0;
+                  if (opt.value === "acao_formacao" || opt.value === "formadores_acao") return false;
                   return true;
                 }).map(opt => {
                   const Icon = opt.icon;
@@ -850,10 +857,10 @@ export default function FicheirosPage() {
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3">Visibilidade</label>
-              <div className={`grid gap-2 ${(user?.role === "formador" && minhasAcoes.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
+              <div className={"grid gap-2 grid-cols-3"}>
                 {VISIBILIDADE_OPTIONS.filter(opt => {
                   if (opt.value === "turma" || opt.value === "formadores_turma") return false;
-                  if (opt.value === "acao_formacao" || opt.value === "formadores_acao") return user?.role === "formador" && minhasAcoes.length > 0;
+                  if (opt.value === "acao_formacao" || opt.value === "formadores_acao") return false;
                   return true;
                 }).map(opt => {
                   const Icon = opt.icon;

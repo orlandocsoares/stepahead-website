@@ -111,6 +111,31 @@ export async function POST() {
       name: "create_arquivos_acao_formacao_index",
       sql: `CREATE INDEX IF NOT EXISTS idx_arquivos_acao_formacao ON arquivos(acao_formacao_id)`,
     },
+    {
+      name: "add_imagem_url_to_acoes_formacao",
+      sql: `ALTER TABLE acoes_formacao ADD COLUMN IF NOT EXISTS imagem_url TEXT`,
+    },
+    {
+      name: "add_area_to_acoes_formacao",
+      sql: `ALTER TABLE acoes_formacao ADD COLUMN IF NOT EXISTS area TEXT`,
+    },
+    {
+      name: "create_arquivo_acoes_formacao",
+      sql: `CREATE TABLE IF NOT EXISTS arquivo_acoes_formacao (
+        id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        arquivo_id        UUID        NOT NULL REFERENCES arquivos(id) ON DELETE CASCADE,
+        acao_formacao_id  UUID        NOT NULL REFERENCES acoes_formacao(id) ON DELETE CASCADE,
+        disponivel_de     TIMESTAMPTZ,
+        disponivel_ate    TIMESTAMPTZ,
+        created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(arquivo_id, acao_formacao_id)
+      )`,
+    },
+    {
+      name: "create_arquivo_acoes_formacao_indexes",
+      sql: `CREATE INDEX IF NOT EXISTS idx_arq_acoes_arquivo ON arquivo_acoes_formacao(arquivo_id);
+            CREATE INDEX IF NOT EXISTS idx_arq_acoes_acao     ON arquivo_acoes_formacao(acao_formacao_id)`,
+    },
   ];
 
   const results: { name: string; ok: boolean; error?: string }[] = [];

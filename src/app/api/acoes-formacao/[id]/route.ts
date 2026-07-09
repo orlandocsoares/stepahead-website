@@ -25,7 +25,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
   }
 
-  const allowed = ["formacao_id", "designacao", "data_inicio", "data_fim", "horario", "local", "modalidade", "vagas_max", "estado"];
+  const allowed = ["formacao_id", "designacao", "data_inicio", "data_fim", "horario", "local", "modalidade", "vagas_max", "estado", "imagem_url", "area"];
   const body = await req.json();
   const updates: Record<string, unknown> = {};
   for (const key of allowed) {
@@ -45,18 +45,18 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   const acao = result.rows[0];
 
   // Manter o evento de agenda ligado a esta acção em sincronia
-  if ("designacao" in updates || "local" in updates || "data_inicio" in updates) {
+  if ("designacao" in updates || "local" in updates || "data_inicio" in updates || "imagem_url" in updates) {
     const existente = await dbQuery(`SELECT id FROM agenda_atividades WHERE acao_formacao_id = $1 LIMIT 1`, [id]);
     if (existente.rows[0]) {
       await dbQuery(
-        `UPDATE agenda_atividades SET titulo = $2, local = $3, data_evento = COALESCE($4, data_evento) WHERE id = $1`,
-        [existente.rows[0].id, acao.designacao, acao.local?.trim() || "A definir", acao.data_inicio]
+        `UPDATE agenda_atividades SET titulo = $2, local = $3, data_evento = COALESCE($4, data_evento), imagem_url = COALESCE($5, imagem_url) WHERE id = $1`,
+        [existente.rows[0].id, acao.designacao, acao.local?.trim() || "A definir", acao.data_inicio, acao.imagem_url]
       );
     } else if (acao.data_inicio) {
       await dbQuery(
-        `INSERT INTO agenda_atividades (titulo, local, data_evento, tipo, acao_formacao_id)
-         VALUES ($1, $2, $3, 'Restrito', $4)`,
-        [acao.designacao, acao.local?.trim() || "A definir", acao.data_inicio, id]
+        `INSERT INTO agenda_atividades (titulo, local, data_evento, tipo, acao_formacao_id, imagem_url)
+         VALUES ($1, $2, $3, 'Restrito', $4, $5)`,
+        [acao.designacao, acao.local?.trim() || "A definir", acao.data_inicio, id, acao.imagem_url || null]
       );
     }
   }
