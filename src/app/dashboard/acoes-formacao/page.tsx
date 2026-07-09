@@ -58,6 +58,7 @@ export default function AcoesFormacaoPage() {
   const [formandos, setFormandos] = useState<Pessoa[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [painelTab, setPainelTab] = useState<"materiais" | "utilizadores">("materiais");
   const [inscritos, setInscritos] = useState<Record<string, Pessoa[]>>({});
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -114,6 +115,7 @@ export default function AcoesFormacaoPage() {
   async function toggleExpand(id: string) {
     if (expanded === id) { setExpanded(null); return; }
     setExpanded(id);
+    setPainelTab("materiais");
     if (!inscritos[id]) {
       const res = await fetch(`/api/acoes-formacao/${id}/inscricoes`).then(r => r.json());
       setInscritos(prev => ({ ...prev, [id]: res.data ?? [] }));
@@ -344,28 +346,19 @@ export default function AcoesFormacaoPage() {
                     className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs c-tx3">Imagem / cartaz (opcional)</label>
-                  <label className="flex items-center gap-2 border border-dashed c-br rounded-lg px-3 py-2 cursor-pointer hover:border-blue-500/40 transition-colors">
-                    <input type="file" accept="image/*" onChange={e => handleImagemSelect(e.target.files?.[0] ?? null)} className="sr-only" />
-                    <GraduationCap size={14} className="c-tx5 shrink-0" />
-                    <p className="text-sm c-tx3 truncate">{imagemFile ? imagemFile.name : "Seleccionar imagem"}</p>
-                  </label>
-                  {imagemPreview && <img src={imagemPreview} alt="Pré-visualização" className="w-full h-20 object-cover rounded-lg mt-1" />}
-                  <p className="text-[10px] c-tx5">Aparece também no evento da Agenda gerado automaticamente.</p>
-                </div>
-                {isAdmin && (
-                  <div className="space-y-1.5">
-                    <label className="text-xs c-tx3">Formador(es)</label>
-                    <select multiple value={form.formador_ids}
-                      onChange={e => setForm(f => ({ ...f, formador_ids: Array.from(e.target.selectedOptions, o => o.value) }))}
-                      className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors h-[104px]">
-                      {formadores.map(f => <option key={f.id} value={f.id} className="c-bg">{f.first_name} {f.last_name}</option>)}
-                    </select>
-                  </div>
-                )}
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Imagem / cartaz (opcional)</label>
+                <label className="flex items-center gap-2 border border-dashed c-br rounded-lg px-3 py-2 cursor-pointer hover:border-blue-500/40 transition-colors">
+                  <input type="file" accept="image/*" onChange={e => handleImagemSelect(e.target.files?.[0] ?? null)} className="sr-only" />
+                  <GraduationCap size={14} className="c-tx5 shrink-0" />
+                  <p className="text-sm c-tx3 truncate">{imagemFile ? imagemFile.name : "Seleccionar imagem"}</p>
+                </label>
+                {imagemPreview && <img src={imagemPreview} alt="Pré-visualização" className="w-full h-24 object-cover rounded-lg mt-1" />}
+                <p className="text-[10px] c-tx5">Aparece também no evento da Agenda gerado automaticamente.</p>
               </div>
+              {isAdmin && (
+                <p className="text-[10px] c-tx5 -mt-2">Ficas como responsável se fores formador; caso contrário, associa um formador depois de criar (painel "Formador(es) responsável(eis)").</p>
+              )}
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setShowCreate(false)}
                   className="flex-1 py-2.5 rounded-xl border c-br text-sm c-tx3 hc-tx transition-colors">Cancelar</button>
@@ -445,17 +438,19 @@ export default function AcoesFormacaoPage() {
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                       <div className="border-t c-br px-5 py-4 space-y-4">
-                        {isAdmin && (
-                          <div className="space-y-2">
-                            <p className="text-[10px] font-semibold uppercase tracking-wider c-tx5">Área (repositório)</p>
-                            <select value={acao.area ?? ""} onChange={e => handleAreaChange(acao.id, e.target.value)}
-                              className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
-                              <option value="" className="c-bg">Sem área definida</option>
-                              {disciplinas.map(d => <option key={d.id} value={d.nome} className="c-bg">{d.nome}</option>)}
-                            </select>
-                            <p className="text-[10px] c-tx5">Determina que ficheiros do Repositório desta área ficam visíveis aos inscritos.</p>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-1 c-s1 border c-br rounded-lg p-1 w-fit">
+                          <button onClick={() => setPainelTab("materiais")}
+                            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${painelTab === "materiais" ? "bg-blue-600 text-white" : "c-tx4 hc-tx"}`}>
+                            Materiais
+                          </button>
+                          <button onClick={() => setPainelTab("utilizadores")}
+                            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${painelTab === "utilizadores" ? "bg-blue-600 text-white" : "c-tx4 hc-tx"}`}>
+                            Utilizadores {acao.total_inscritos > 0 ? `(${acao.total_inscritos})` : ""}
+                          </button>
+                        </div>
+
+                        {painelTab === "utilizadores" && (
+                        <div className="space-y-4">
                         {isAdmin && (
                           <div className="space-y-2">
                             <p className="text-[10px] font-semibold uppercase tracking-wider c-tx5">Formador(es) responsável(eis)</p>
@@ -560,14 +555,28 @@ export default function AcoesFormacaoPage() {
                             )}
                           </div>
                         )}
+                        </div>
+                        )}
 
-                        {(() => {
+                        {painelTab === "materiais" && (() => {
                           const podeGerir = isAdmin || (acao.formadores ?? []).some(f => f.id === user?.id);
                           const ficheirosParaPublicar = getFicheirosDisponiveisParaPublicar(acao);
                           const draft = novoMaterial[acao.id] ?? { arquivo_id: "", de: "", ate: "" };
                           return (
-                            <div className="space-y-2 pt-1 border-t c-br">
-                              <p className="text-[10px] font-semibold uppercase tracking-wider c-tx5 pt-3">
+                            <div className="space-y-4">
+                              {isAdmin && (
+                                <div className="space-y-2">
+                                  <p className="text-[10px] font-semibold uppercase tracking-wider c-tx5">Área (repositório)</p>
+                                  <select value={acao.area ?? ""} onChange={e => handleAreaChange(acao.id, e.target.value)}
+                                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                                    <option value="" className="c-bg">Sem área definida</option>
+                                    {disciplinas.map(d => <option key={d.id} value={d.nome} className="c-bg">{d.nome}</option>)}
+                                  </select>
+                                  <p className="text-[10px] c-tx5">Determina que ficheiros do Repositório desta área ficam visíveis aos inscritos.</p>
+                                </div>
+                              )}
+                              <div className="space-y-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-wider c-tx5">
                                 Materiais {acao.area ? `— ${acao.area}` : ""}
                               </p>
                               {(materiais[acao.id] ?? []).length > 0 ? (
@@ -627,6 +636,7 @@ export default function AcoesFormacaoPage() {
                                   </p>
                                 )
                               )}
+                              </div>
                             </div>
                           );
                         })()}
