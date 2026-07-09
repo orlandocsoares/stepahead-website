@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { Plus, Trash2, ChevronDown, ChevronUp, Loader2, X, UserPlus, GraduationCap, Calendar, MapPin, Users, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocalidades } from "@/hooks/useLocalidades";
 
 const ESTADOS = ["agendada", "em_curso", "concluida", "cancelada"];
 const ESTADO_LABEL: Record<string, string> = {
@@ -32,6 +33,7 @@ type AcaoFormacao = {
   formadores: { id: string; nome: string }[];
   imagem_url: string | null;
   area: string | null;
+  provincia: string | null;
 };
 
 type Pessoa = { id: string; first_name: string; last_name: string; email: string; status?: string };
@@ -53,6 +55,7 @@ function fmtData(d: string | null) {
 
 export default function AcoesFormacaoPage() {
   const { user } = useAdminUser();
+  const { provincias: PROVINCIAS_ANGOLA } = useLocalidades();
   const [acoes, setAcoes] = useState<AcaoFormacao[]>([]);
   const [formadores, setFormadores] = useState<Pessoa[]>([]);
   const [formandos, setFormandos] = useState<Pessoa[]>([]);
@@ -68,7 +71,7 @@ export default function AcoesFormacaoPage() {
   const [selectedNovoFormador, setSelectedNovoFormador] = useState<string>("");
   const [formandoSearch, setFormandoSearch] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
-    designacao: "", data_inicio: "", data_fim: "", horario: "", local: "",
+    designacao: "", data_inicio: "", data_fim: "", horario: "", local: "", provincia: "",
     modalidade: "presencial", vagas_max: "", formador_ids: [] as string[], imagem_url: "", area: "",
   });
   const [imagemFile, setImagemFile] = useState<File | null>(null);
@@ -185,7 +188,7 @@ export default function AcoesFormacaoPage() {
       }),
     });
     setShowCreate(false);
-    setForm({ designacao: "", data_inicio: "", data_fim: "", horario: "", local: "", modalidade: "presencial", vagas_max: "", formador_ids: [], imagem_url: "", area: "" });
+    setForm({ designacao: "", data_inicio: "", data_fim: "", horario: "", local: "", provincia: "", modalidade: "presencial", vagas_max: "", formador_ids: [], imagem_url: "", area: "" });
     handleImagemSelect(null);
     await fetchAll();
     setCreating(false);
@@ -354,11 +357,21 @@ export default function AcoesFormacaoPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs c-tx3">Local / modalidade</label>
+                  <label className="text-xs c-tx3">Província</label>
+                  <select value={form.provincia} onChange={e => setForm(f => ({ ...f, provincia: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                    <option value="" className="c-bg">Sem província definida</option>
+                    {PROVINCIAS_ANGOLA.map(p => <option key={p} value={p} className="c-bg">{p}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Local (opcional)</label>
                   <input value={form.local} onChange={e => setForm(f => ({ ...f, local: e.target.value }))}
-                    placeholder="Ex: Luanda, Sala 3"
+                    placeholder="Ex: Sala 3, Escola X"
                     className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors" />
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs c-tx3">Vagas (opcional)</label>
                   <input type="number" min="1" value={form.vagas_max} onChange={e => setForm(f => ({ ...f, vagas_max: e.target.value }))}
@@ -430,7 +443,9 @@ export default function AcoesFormacaoPage() {
                     </div>
                     <div className="flex items-center gap-3 mt-0.5 text-[11px] c-tx4 flex-wrap">
                       <span className="flex items-center gap-1"><Calendar size={10} /> {fmtData(acao.data_inicio)} — {fmtData(acao.data_fim)}</span>
-                      {acao.local && <span className="flex items-center gap-1"><MapPin size={10} /> {acao.local}</span>}
+                      {(acao.provincia || acao.local) && (
+                        <span className="flex items-center gap-1"><MapPin size={10} /> {[acao.provincia, acao.local].filter(Boolean).join(" — ")}</span>
+                      )}
                       <span className="flex items-center gap-1"><Users size={10} /> {acao.total_inscritos}{acao.vagas_max ? `/${acao.vagas_max}` : ""} inscritos</span>
                       {acao.formadores.length > 0 && <span>{acao.formadores.map(f => f.nome.trim()).join(", ")}</span>}
                     </div>

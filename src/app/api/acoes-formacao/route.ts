@@ -11,7 +11,7 @@ export async function GET() {
   const result = await dbQuery(`
     SELECT
       a.id, a.designacao, a.data_inicio, a.data_fim, a.horario, a.local, a.modalidade,
-      a.vagas_max, a.estado, a.created_at, a.imagem_url, a.area,
+      a.vagas_max, a.estado, a.created_at, a.imagem_url, a.area, a.provincia,
       f.id AS formacao_id, f.nome AS formacao_nome, f.area AS formacao_area,
       COUNT(DISTINCT i.id) FILTER (WHERE i.status = 'inscrito')::int AS total_inscritos,
       COALESCE(
@@ -46,16 +46,16 @@ export async function POST(req: Request) {
 
   const {
     formacao_id, designacao, data_inicio, data_fim, horario, local,
-    modalidade, vagas_max, estado, formador_ids, imagem_url, area,
+    modalidade, vagas_max, estado, formador_ids, imagem_url, area, provincia,
   } = await req.json();
 
   if (!designacao) return NextResponse.json({ error: "Designação obrigatória" }, { status: 400 });
 
   const result = await dbQuery(
-    `INSERT INTO acoes_formacao (formacao_id, designacao, data_inicio, data_fim, horario, local, modalidade, vagas_max, estado, imagem_url, area)
-     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'presencial'), $8, COALESCE($9, 'agendada'), $10, $11)
+    `INSERT INTO acoes_formacao (formacao_id, designacao, data_inicio, data_fim, horario, local, modalidade, vagas_max, estado, imagem_url, area, provincia)
+     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'presencial'), $8, COALESCE($9, 'agendada'), $10, $11, $12)
      RETURNING *`,
-    [formacao_id || null, designacao, data_inicio || null, data_fim || null, horario || null, local || null, modalidade || null, vagas_max || null, estado || null, imagem_url || null, area || null]
+    [formacao_id || null, designacao, data_inicio || null, data_fim || null, horario || null, local || null, modalidade || null, vagas_max || null, estado || null, imagem_url || null, area || null, provincia || null]
   );
   const acao = result.rows[0];
 
@@ -70,10 +70,13 @@ export async function POST(req: Request) {
 
   // A acção aparece automaticamente na Agenda, para que os formandos se possam inscrever
   if (acao.data_inicio) {
+    const localAgenda = provincia
+      ? (local?.trim() ? `${provincia} — ${local.trim()}` : provincia)
+      : (local?.trim() || "A definir");
     await dbQuery(
       `INSERT INTO agenda_atividades (titulo, local, data_evento, tipo, acao_formacao_id, imagem_url)
        VALUES ($1, $2, $3, 'Restrito', $4, $5)`,
-      [designacao, local?.trim() || "A definir", acao.data_inicio, acao.id, acao.imagem_url || null]
+      [designacao, localAgenda, acao.data_inicio, acao.id, acao.imagem_url || null]
     );
   }
 

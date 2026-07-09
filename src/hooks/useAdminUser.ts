@@ -14,6 +14,24 @@ export type AdminUser = {
   specialization?: string;
   province?: string;
   biografia?: string;
+  genero?: string;
+  bi_number?: string;
+  nome_pai?: string;
+  nome_mae?: string;
+  data_nascimento?: string;
+  telemovel?: string;
+  naturalidade_provincia?: string;
+  naturalidade_municipio?: string;
+  municipio_residencia?: string;
+  habilitacoes_academicas?: string;
+  curso_concluido?: string;
+  agregacao_pedagogica?: boolean;
+  municipio_escola?: string;
+  ciclo_ensino?: string;
+  anos_servico_docente?: number;
+  disciplinas_lecciona?: string;
+  classes_lecciona?: string;
+  cargos_pedagogicos?: string;
 };
 
 export function useAdminUser() {

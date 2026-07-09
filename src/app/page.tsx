@@ -4,7 +4,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
 import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen, Facebook, Instagram } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { CommandCenter } from "@/components/CommandCenter";
 import { HeroBranding } from "@/components/HeroBranding";
 import { TourGuide, shouldShowTour } from "@/components/TourGuide";
 import { useProfile } from "@/hooks/useProfile";
+import { useLocalidades } from "@/hooks/useLocalidades";
 import { QRCodeSVG } from "qrcode.react";
 
 const FRAME_SUFFIX = "_delay-0.033s.webp";
@@ -227,6 +227,7 @@ export default function HeroSection() {
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const router = useRouter();
   const { profile, loading: profileLoading, refresh: refreshProfile } = useProfile();
+  const { provincias: provinciasAngola, getMunicipios: getMunicipiosAngola } = useLocalidades();
 
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isVIPWelcomeOpen, setIsVIPWelcomeOpen] = useState(false);
@@ -238,10 +239,8 @@ export default function HeroSection() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [provincia, setProvincia] = useState('');
+  const [municipio, setMunicipio] = useState('');
   const [escola, setEscola] = useState('');
-  const [formadoresIds, setFormadoresIds] = useState<string[]>([]);
-  const [anoLetivo, setAnoLetivo] = useState(getAnoLetivoActivo());
-  const [formadoresList, setFormadoresList] = useState<any[]>([]);
   const [especialidade, setEspecialidade] = useState('');
   const [bio, setBio] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -333,7 +332,7 @@ export default function HeroSection() {
     if (isDashboardView) return;
     fetch("/api/public/hero")
       .then(r => r.json())
-      .then(data => { setTelemetry(data); setFormadoresList(data.formadores_lista ?? []); })
+      .then(data => { setTelemetry(data); })
       .catch(() => {});
   }, [isDashboardView]);
 
@@ -397,7 +396,7 @@ export default function HeroSection() {
         first_name: firstName,
         last_name: lastName,
         role: userRole,
-        ...(userRole === 'formando' ? { provincia, escola, formadores_ids: formadoresIds, ano_letivo: anoLetivo } : { especialidade, biografia: bio }),
+        ...(userRole === 'formando' ? { provincia, municipio, escola } : { especialidade, biografia: bio }),
       }),
     });
     const syncData = await syncRes.json();
@@ -1006,59 +1005,24 @@ export default function HeroSection() {
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
                                   <Label className="text-[8px] uppercase tracking-widest text-blue-400">Província</Label>
-                                  <select required value={provincia} onChange={(e) => setProvincia(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
+                                  <select required value={provincia} onChange={(e) => { setProvincia(e.target.value); setMunicipio(''); }} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
                                     <option value="" disabled className="bg-[#0d0d14]">Seleccionar</option>
-                                    {["Luanda","Bié"].map(p => (
+                                    {provinciasAngola.map(p => (
                                       <option key={p} value={p} className="bg-[#0d0d14]">{p}</option>
                                     ))}
                                   </select>
                                 </div>
-                                <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-[8px] uppercase tracking-widest text-blue-400">Ano Lectivo</Label>
-                                <select value={anoLetivo} onChange={e => setAnoLetivo(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
-                                  {getAnosLetivos().map(a => (
-                                    <option key={a} value={a} className="bg-[#0d0d14]">{a}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              {formadoresList.filter(f => !provincia || f.provincia === provincia).length > 0 && (
-                                <div className="space-y-2">
-                                  <Label className="text-[8px] uppercase tracking-widest text-blue-400">
-                                    Formadores <span className="text-white/30">(escolha os seus professores)</span>
-                                  </Label>
-                                  <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
-                                    {formadoresList
-                                      .filter(f => !provincia || f.provincia === provincia)
-                                      .map((f: any) => {
-                                        const selected = formadoresIds.includes(f.id);
-                                        return (
-                                          <button
-                                            key={f.id}
-                                            type="button"
-                                            onClick={() => setFormadoresIds(prev =>
-                                              selected ? prev.filter(id => id !== f.id) : [...prev, f.id]
-                                            )}
-                                            className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-left text-xs transition-all border ${
-                                              selected
-                                                ? 'bg-blue-500/20 border-blue-500/40 text-white'
-                                                : 'bg-white/[0.03] border-white/10 text-white/50 hover:border-white/20 hover:text-white/80'
-                                            }`}
-                                          >
-                                            <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 ${selected ? 'bg-blue-500 border-blue-500' : 'border-white/30'}`}>
-                                              {selected && <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
-                                            </span>
-                                            <span className="font-medium">{f.first_name} {f.last_name}</span>
-                                          </button>
-                                        );
-                                      })}
-                                  </div>
-                                  {formadoresIds.length > 0 && (
-                                    <p className="text-[10px] text-blue-400">{formadoresIds.length} formador{formadoresIds.length > 1 ? 'es' : ''} seleccionado{formadoresIds.length > 1 ? 's' : ''}</p>
-                                  )}
+                                <div className="space-y-1">
+                                  <Label className="text-[8px] uppercase tracking-widest text-blue-400">Município</Label>
+                                  <select required value={municipio} onChange={(e) => setMunicipio(e.target.value)} disabled={!provincia} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none disabled:opacity-40">
+                                    <option value="" disabled className="bg-[#0d0d14]">{provincia ? 'Seleccionar' : 'Escolhe a província'}</option>
+                                    {getMunicipiosAngola(provincia).map(m => (
+                                      <option key={m} value={m} className="bg-[#0d0d14]">{m}</option>
+                                    ))}
+                                  </select>
                                 </div>
-                              )}
+                              </div>
+                              <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
                             </div>
                           ) : (
                             <div className="space-y-6 pt-2">
