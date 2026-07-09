@@ -68,6 +68,15 @@ export async function POST(req: Request) {
     await dbQuery(`INSERT INTO acao_formadores (acao_formacao_id, formador_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [acao.id, fid]);
   }
 
+  // A acção aparece automaticamente na Agenda, para que os formandos se possam inscrever
+  if (acao.data_inicio) {
+    await dbQuery(
+      `INSERT INTO agenda_atividades (titulo, local, data_evento, tipo, acao_formacao_id)
+       VALUES ($1, $2, $3, 'Restrito', $4)`,
+      [designacao, local?.trim() || "A definir", acao.data_inicio, acao.id]
+    );
+  }
+
   await auditLog("acao_formacao_create", { actorId: sessionUser.id, targetId: acao.id, details: { designacao } });
   return NextResponse.json({ data: acao });
 }

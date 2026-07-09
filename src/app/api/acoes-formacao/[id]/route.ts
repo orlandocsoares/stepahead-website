@@ -42,9 +42,27 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     [id, ...values]
   );
   if (!result.rows[0]) return NextResponse.json({ error: "Acção de formação não encontrada" }, { status: 404 });
+  const acao = result.rows[0];
+
+  // Manter o evento de agenda ligado a esta acção em sincronia
+  if ("designacao" in updates || "local" in updates || "data_inicio" in updates) {
+    const existente = await dbQuery(`SELECT id FROM agenda_atividades WHERE acao_formacao_id = $1 LIMIT 1`, [id]);
+    if (existente.rows[0]) {
+      await dbQuery(
+        `UPDATE agenda_atividades SET titulo = $2, local = $3, data_evento = COALESCE($4, data_evento) WHERE id = $1`,
+        [existente.rows[0].id, acao.designacao, acao.local?.trim() || "A definir", acao.data_inicio]
+      );
+    } else if (acao.data_inicio) {
+      await dbQuery(
+        `INSERT INTO agenda_atividades (titulo, local, data_evento, tipo, acao_formacao_id)
+         VALUES ($1, $2, $3, 'Restrito', $4)`,
+        [acao.designacao, acao.local?.trim() || "A definir", acao.data_inicio, id]
+      );
+    }
+  }
 
   await auditLog("acao_formacao_update", { actorId: sessionUser.id, targetId: id, details: updates });
-  return NextResponse.json({ data: result.rows[0] });
+  return NextResponse.json({ data: acao });
 }
 
 // DELETE /api/acoes-formacao/[id] — apagar acção (admin ou formador associado)
@@ -59,6 +77,7 @@ export async function DELETE(_: Request, context: { params: Promise<{ id: string
     return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
   }
 
+  await dbQuery(`DELETE FROM agenda_atividades WHERE acao_formacao_id = $1`, [id]);
   const result = await dbQuery(`DELETE FROM acoes_formacao WHERE id = $1 RETURNING id`, [id]);
   if (!result.rows[0]) return NextResponse.json({ error: "Acção de formação não encontrada" }, { status: 404 });
 
