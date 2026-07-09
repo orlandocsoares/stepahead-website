@@ -147,23 +147,28 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
     let valueIndex = 1;
 
     // Filtros de segurança para a tabela "arquivos"
-    // visibilidade: 'publico' | 'formadores' | 'privado' | 'turma'
+    // visibilidade: 'publico' | 'formadores' | 'privado' | 'turma' (legado) | 'formadores_turma' (legado)
+    //             | 'acao_formacao' | 'formadores_acao'
     if (table === "arquivos") {
       if (sessionUser) {
         if (userRole !== "super-admin" && userRole !== "admin") {
           if (userRole === "formador") {
-            // formador: vê os seus + publico + formadores + turma/formadores_turma das suas turmas
+            // formador: vê os seus + publico + formadores + ficheiros das ações de formação que lecciona
+            // (turma/formadores_turma mantidos por compatibilidade com ficheiros antigos)
             filters.push(`(
               ${tableSql}.uploader_id = $${valueIndex}
               OR ${tableSql}.visibilidade IN ('publico', 'formadores')
               OR (${tableSql}.visibilidade IN ('turma', 'formadores_turma') AND ${tableSql}.turma_id IN (
                 SELECT id FROM turmas WHERE formador_id = $${valueIndex}
               ))
+              OR (${tableSql}.visibilidade IN ('acao_formacao', 'formadores_acao') AND ${tableSql}.acao_formacao_id IN (
+                SELECT acao_formacao_id FROM acao_formadores WHERE formador_id = $${valueIndex}
+              ))
             )`);
             values.push(sessionUser.id);
             valueIndex++;
           } else {
-            // formando: vê publico/formadores (área certa), turma propria, formadores_turma se membro
+            // formando: vê publico/formadores (área certa), e ficheiros das ações de formação em que está inscrito
             filters.push(`(
               (${tableSql}.visibilidade IN ('publico', 'formadores') AND (
                 ${tableSql}.area = 'Geral'
@@ -183,6 +188,9 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
               ))
               OR (${tableSql}.visibilidade = 'formadores_turma' AND ${tableSql}.turma_id IN (
                 SELECT turma_id FROM turma_membros WHERE formando_id = $${valueIndex}
+              ))
+              OR (${tableSql}.visibilidade IN ('acao_formacao', 'formadores_acao') AND ${tableSql}.acao_formacao_id IN (
+                SELECT acao_formacao_id FROM inscricoes_acao WHERE formando_id = $${valueIndex} AND status = 'inscrito'
               ))
             )`);
             values.push(sessionUser.id);

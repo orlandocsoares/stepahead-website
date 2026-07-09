@@ -16,11 +16,14 @@ import { CAPA_GERAL, AREA_COVERS, getAreaCover, isBrandedCapa } from "@/lib/capa
 const CATEGORIES_FALLBACK = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
 const VISIBILIDADE_OPTIONS = [
-  { value: "privado",          label: "Só eu",              icon: Lock,          color: "c-tx3" },
-  { value: "turma",            label: "Minha turma",        icon: GraduationCap, color: "text-amber-400" },
-  { value: "formadores",       label: "Formadores",         icon: Users,         color: "text-blue-400" },
-  { value: "formadores_turma", label: "Formadores + Turma", icon: Users,         color: "text-purple-400" },
-  { value: "publico",          label: "Todos",              icon: Globe,         color: "text-emerald-400" },
+  { value: "privado",           label: "Só eu",                        icon: Lock,          color: "c-tx3" },
+  { value: "acao_formacao",     label: "Minha Ação de Formação",       icon: GraduationCap, color: "text-amber-400" },
+  { value: "formadores",        label: "Formadores",                   icon: Users,         color: "text-blue-400" },
+  { value: "formadores_acao",   label: "Formadores + Ação de Formação", icon: Users,         color: "text-purple-400" },
+  { value: "publico",           label: "Todos",                        icon: Globe,         color: "text-emerald-400" },
+  // Legado — apenas para exibir ficheiros antigos, não seleccionável em novos uploads
+  { value: "turma",             label: "Minha turma (legado)",         icon: GraduationCap, color: "text-amber-400" },
+  { value: "formadores_turma",  label: "Formadores + Turma (legado)",  icon: Users,         color: "text-purple-400" },
 ];
 
 const CAT_COLORS: Record<string, string> = {
@@ -131,8 +134,8 @@ export default function FicheirosPage() {
   const [title, setTitle] = useState("");
   const [uploadCategory, setUploadCategory] = useState("Geral");
   const [visibilidade, setVisibilidade] = useState("publico");
-  const [turmaId, setTurmaId] = useState<string>("");
-  const [minhasTurmas, setMinhasTurmas] = useState<{ id: string; nome: string; area: string }[]>([]);
+  const [acaoFormacaoId, setAcaoFormacaoId] = useState<string>("");
+  const [minhasAcoes, setMinhasAcoes] = useState<{ id: string; designacao: string }[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortCol, setSortCol] = useState<"nome" | "area" | "tamanho" | "data" | "visibilidade">("data");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -151,7 +154,7 @@ export default function FicheirosPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editArea, setEditArea] = useState("Geral");
   const [editVisibilidade, setEditVisibilidade] = useState("publico");
-  const [editTurmaId, setEditTurmaId] = useState("");
+  const [editAcaoFormacaoId, setEditAcaoFormacaoId] = useState("");
   const [editDisponivelDe, setEditDisponivelDe] = useState("");
   const [editDisponivelAte, setEditDisponivelAte] = useState("");
   const [editGrupos, setEditGrupos] = useState<string[]>([]);
@@ -176,7 +179,7 @@ export default function FicheirosPage() {
     setUploadFile(prefillFile ?? null);
     setThumbnailPreview(prefillFile?.type === "application/pdf" ? URL.createObjectURL(prefillFile) : null);
     setVisibilidade("publico");
-    setTurmaId(minhasTurmas[0]?.id ?? "");
+    setAcaoFormacaoId(minhasAcoes[0]?.id ?? "");
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
     setDisponivelDe(""); setDisponivelAte("");
     setGruposUpload([]); setSitePublico(false);
@@ -232,9 +235,9 @@ export default function FicheirosPage() {
     fetch("/api/admin/disciplinas").then(r => r.json()).then(j => setDisciplinas(j.disciplinas?.filter((d: any) => d.activo) ?? []));
     fetch("/api/admin/grupos-formacao").then(r => r.json()).then(j => setGruposFormacao(j.grupos?.filter((g: any) => g.activo) ?? []));
     if (user?.role === "formador") {
-      fetch("/api/turmas").then(r => r.json()).then(json => {
+      fetch("/api/acoes-formacao").then(r => r.json()).then(json => {
         const todas = json.data ?? [];
-        setMinhasTurmas(todas.filter((t: any) => t.formador_id === user.id));
+        setMinhasAcoes(todas.filter((a: any) => (a.formadores ?? []).some((f: any) => f.id === user.id)));
       });
     }
   }, [user?.id, user?.role]);
@@ -308,7 +311,7 @@ export default function FicheirosPage() {
           tamanho: (uploadFile.size / (1024 * 1024)).toFixed(2) + " MB",
           tipo: uploadFile.type.includes("video") ? "video" : "pdf",
           visibilidade,
-          ...(visibilidade === "turma" && turmaId ? { turma_id: turmaId } : {}),
+          ...((visibilidade === "acao_formacao" || visibilidade === "formadores_acao") && acaoFormacaoId ? { acao_formacao_id: acaoFormacaoId } : {}),
           ...(disponivel_de ? { disponivel_de } : {}),
           ...(disponivel_ate ? { disponivel_ate } : {}),
           ...(gruposUpload[0] ? { grupo_formacao_id: gruposUpload[0] } : {}),
@@ -334,7 +337,7 @@ export default function FicheirosPage() {
 
   function openEditModal(f: any) {
     setEditingFile(f); setEditTitle(f.label ?? ""); setEditArea(f.area ?? "Geral");
-    setEditVisibilidade(f.visibilidade ?? "publico"); setEditTurmaId(f.turma_id ?? "");
+    setEditVisibilidade(f.visibilidade ?? "publico"); setEditAcaoFormacaoId(f.acao_formacao_id ?? "");
     setEditDisponivelDe(f.disponivel_de ? f.disponivel_de.slice(0, 10) : "");
     setEditDisponivelAte(f.disponivel_ate ? f.disponivel_ate.slice(0, 10) : "");
     setEditGrupos(Array.isArray(f.grupos) ? f.grupos : []);
@@ -361,7 +364,7 @@ export default function FicheirosPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: editingFile.id, label: editTitle, area: editArea, visibilidade: editVisibilidade,
-          turma_id: editTurmaId || null, disponivel_de: editDisponivelDe || null,
+          acao_formacao_id: editAcaoFormacaoId || null, disponivel_de: editDisponivelDe || null,
           disponivel_ate: editDisponivelAte || null, grupos: editGrupos,
           site_publico: editSitePublico && editVisibilidade === "publico",
           ...(editCapaTouched ? { thumbnail_url: editCapa ?? "" } : {}),
@@ -741,9 +744,10 @@ export default function FicheirosPage() {
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3">Visibilidade</label>
-              <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
+              <div className={`grid gap-2 ${(user?.role === "formador" && minhasAcoes.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
                 {VISIBILIDADE_OPTIONS.filter(opt => {
-                  if (opt.value === "turma" || opt.value === "formadores_turma") return user?.role === "formador" && minhasTurmas.length > 0;
+                  if (opt.value === "turma" || opt.value === "formadores_turma") return false;
+                  if (opt.value === "acao_formacao" || opt.value === "formadores_acao") return user?.role === "formador" && minhasAcoes.length > 0;
                   return true;
                 }).map(opt => {
                   const Icon = opt.icon;
@@ -757,9 +761,9 @@ export default function FicheirosPage() {
                   );
                 })}
               </div>
-              {(visibilidade === "turma" || visibilidade === "formadores_turma") && minhasTurmas.length > 0 && (
-                <select value={turmaId} onChange={e => setTurmaId(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
-                  {minhasTurmas.map(t => <option key={t.id} value={t.id} className="c-bg">{t.nome} ({t.area})</option>)}
+              {(visibilidade === "acao_formacao" || visibilidade === "formadores_acao") && minhasAcoes.length > 0 && (
+                <select value={acaoFormacaoId} onChange={e => setAcaoFormacaoId(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
+                  {minhasAcoes.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao}</option>)}
                 </select>
               )}
             </div>
@@ -846,9 +850,10 @@ export default function FicheirosPage() {
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3">Visibilidade</label>
-              <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
+              <div className={`grid gap-2 ${(user?.role === "formador" && minhasAcoes.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
                 {VISIBILIDADE_OPTIONS.filter(opt => {
-                  if (opt.value === "turma" || opt.value === "formadores_turma") return user?.role === "formador" && minhasTurmas.length > 0;
+                  if (opt.value === "turma" || opt.value === "formadores_turma") return false;
+                  if (opt.value === "acao_formacao" || opt.value === "formadores_acao") return user?.role === "formador" && minhasAcoes.length > 0;
                   return true;
                 }).map(opt => {
                   const Icon = opt.icon;
@@ -862,9 +867,9 @@ export default function FicheirosPage() {
                   );
                 })}
               </div>
-              {(editVisibilidade === "turma" || editVisibilidade === "formadores_turma") && minhasTurmas.length > 0 && (
-                <select value={editTurmaId} onChange={e => setEditTurmaId(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
-                  {minhasTurmas.map(t => <option key={t.id} value={t.id} className="c-bg">{t.nome} ({t.area})</option>)}
+              {(editVisibilidade === "acao_formacao" || editVisibilidade === "formadores_acao") && minhasAcoes.length > 0 && (
+                <select value={editAcaoFormacaoId} onChange={e => setEditAcaoFormacaoId(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
+                  {minhasAcoes.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao}</option>)}
                 </select>
               )}
             </div>

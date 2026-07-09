@@ -71,12 +71,13 @@ export async function POST(request: Request) {
   );
   const userId = authRes.rows[0].id;
 
-  // Criar perfil — sem email → activo imediatamente; com email → pendente (fluxo normal)
+  // Criar perfil — sem professor/turma associado. Sem email → activo imediatamente (pronto a inscrever-se
+  // numa Ação de Formação); com email → pendente (fluxo normal de confirmação).
   const status = emailClean ? "pendente" : "activo";
   await dbQuery(
-    `INSERT INTO profiles (id, email, first_name, last_name, role, status, formador_id, criado_por)
-     VALUES ($1, $2, $3, $4, 'formando', $5, $6, $7)`,
-    [userId, emailClean, first_name.trim(), last_name.trim(), status, sessionUser.id, sessionUser.id]
+    `INSERT INTO profiles (id, email, first_name, last_name, role, status, criado_por)
+     VALUES ($1, $2, $3, $4, 'formando', $5, $6)`,
+    [userId, emailClean, first_name.trim(), last_name.trim(), status, sessionUser.id]
   );
 
   return NextResponse.json({ username, status, userId });

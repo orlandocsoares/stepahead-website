@@ -14,8 +14,12 @@ export type AuditAction =
   | "mensagem_send" | "mensagem_broadcast" | "mensagem_delete"
   // Tarefas
   | "tarefa_create" | "tarefa_delete" | "tarefa_status_change"
-  // Turmas
+  // Turmas (legado)
   | "turma_create" | "turma_delete" | "turma_membro_add" | "turma_membro_remove"
+  // Ações de Formação
+  | "acao_formacao_create" | "acao_formacao_update" | "acao_formacao_delete"
+  | "acao_formacao_formador_add" | "acao_formacao_formador_remove"
+  | "acao_formacao_inscricao_create" | "acao_formacao_inscricao_cancel"
   // Comunidade
   | "post_create" | "post_update" | "post_delete"
   | "comentario_create" | "comentario_delete"

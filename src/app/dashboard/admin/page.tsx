@@ -28,7 +28,6 @@ export default function SuperAdminPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const [statsData, setStatsData] = useState<any>(null);
-  const [formadoresList, setFormadoresList] = useState<any[]>([]);
   const [mediaRadar, setMediaRadar] = useState<string>("");
   const [formadoresPendentes, setFormadoresPendentes] = useState<any[]>([]);
   const [approvingFormadorId, setApprovingFormadorId] = useState<string | null>(null);
@@ -329,12 +328,6 @@ export default function SuperAdminPage() {
           return dB.localeCompare(dA);
         });
         setData(sorted);
-        // Carregar lista de formadores para o select de associação (só admins)
-        if (activeTab === "users" && isAdminOrSuper(profile?.role) && formadoresList.length === 0) {
-          fetch("/api/db/profiles?eq.role=formador")
-            .then(r => r.json())
-            .then(d => setFormadoresList(d.data ?? []));
-        }
       }
     } catch (e: any) { setDbError(e.message); setData([]); }
     setLoading(false);
@@ -1090,19 +1083,6 @@ export default function SuperAdminPage() {
                                         <option value="suspenso" className="c-bg">Suspenso</option>
                                       </select>
                                     </div>
-                                    {item.role === "formando" && formadoresList.length > 0 && (
-                                      <select
-                                        value={item.formador_id ?? ""}
-                                        onChange={e => handleUpdate(item.id, { formador_id: e.target.value || null })}
-                                        className="px-2 py-1 rounded-lg c-s1 border c-br text-xs c-tx2 outline-none cursor-pointer max-w-[160px]"
-                                        title="Formador associado"
-                                      >
-                                        <option value="" className="c-bg">— Sem formador —</option>
-                                        {formadoresList.map((f: any) => (
-                                          <option key={f.id} value={f.id} className="c-bg">{f.first_name} {f.last_name}</option>
-                                        ))}
-                                      </select>
-                                    )}
                                     <button onClick={(e) => { e.stopPropagation(); openProfileModal(item); }} className="p-1.5 rounded-lg c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors" title="Ver/editar perfil">
                                       <User size={13} />
                                     </button>

@@ -22,7 +22,8 @@ export default function AgendaPage() {
   const [filterScope, setFilterScope] = useState("Todos");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({ titulo: "", formato: "Presencial", provincia: "Luanda", tipo: "Global", data_evento: "", endereco: "" });
+  const [form, setForm] = useState({ titulo: "", formato: "Presencial", provincia: "Luanda", tipo: "Global", data_evento: "", endereco: "", acao_formacao_id: "" });
+  const [acoesFormacao, setAcoesFormacao] = useState<any[]>([]);
   const [imagemFile, setImagemFile] = useState<File | null>(null);
   const [imagemPreview, setImagemPreview] = useState<string | null>(null);
 
@@ -39,9 +40,10 @@ export default function AgendaPage() {
 
   async function fetchData() {
     setLoading(true);
-    const [evRes, insRes] = await Promise.all([
+    const [evRes, insRes, acoesRes] = await Promise.all([
       fetch("/api/db/agenda_atividades?orderBy=data_evento&ascending=true"),
       user?.id ? fetch(`/api/db/inscricoes_agenda?eq.user_id=${user.id}`) : Promise.resolve(null),
+      fetch("/api/acoes-formacao").then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
     ]);
     const { data: evs } = await evRes.json();
     const evList: any[] = evs ?? [];
@@ -50,6 +52,7 @@ export default function AgendaPage() {
       const { data: ins } = await insRes.json();
       setMyInscriptions((ins ?? []).map((i: any) => i.evento_id));
     }
+    setAcoesFormacao(acoesRes.data ?? []);
     setLoading(false);
     // Carregar contagens para todos os eventos visíveis
     evList.forEach(ev => fetchInscritos(ev.id, false));
@@ -93,12 +96,16 @@ export default function AgendaPage() {
 
   async function handleInscription(eventoId: string) {
     if (!user?.id) return;
+    const evento = events.find(e => e.id === eventoId);
     if (myInscriptions.includes(eventoId)) {
       await fetch("/api/db/inscricoes_agenda", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ eq: { user_id: user.id, evento_id: eventoId } }),
       });
+      if (evento?.acao_formacao_id) {
+        await fetch(`/api/acoes-formacao/${evento.acao_formacao_id}/inscricoes`, { method: "DELETE" });
+      }
       setMyInscriptions((p) => p.filter((id) => id !== eventoId));
       setInscritosMap(prev => {
         const cur = prev[eventoId];
@@ -113,6 +120,13 @@ export default function AgendaPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: user.id, evento_id: eventoId }),
       });
+      if (evento?.acao_formacao_id) {
+        const res = await fetch(`/api/acoes-formacao/${evento.acao_formacao_id}/inscricoes`, { method: "POST" });
+        if (!res.ok) {
+          const json = await res.json().catch(() => null);
+          alert(json?.error ?? "Não foi possível inscrever na Ação de Formação associada.");
+        }
+      }
       setMyInscriptions((p) => [...p, eventoId]);
       setInscritosMap(prev => {
         const cur = prev[eventoId] ?? { total: 0, counts: {} };
@@ -144,6 +158,7 @@ export default function AgendaPage() {
       body: JSON.stringify({
         titulo: form.titulo, local, data_evento: form.data_evento, tipo: form.tipo,
         endereco: form.formato === "Presencial" ? (form.endereco || null) : null,
+        acao_formacao_id: form.acao_formacao_id || null,
         ...(imagem_url ? { imagem_url } : {}),
       }),
     });
@@ -154,7 +169,7 @@ export default function AgendaPage() {
       return;
     }
     setIsModalOpen(false);
-    setForm({ titulo: "", formato: "Presencial", provincia: "Luanda", tipo: "Global", data_evento: "", endereco: "" });
+    setForm({ titulo: "", formato: "Presencial", provincia: "Luanda", tipo: "Global", data_evento: "", endereco: "", acao_formacao_id: "" });
     handleImagemSelect(null);
     fetchData();
     setIsSubmitting(false);
@@ -268,6 +283,11 @@ export default function AgendaPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${item.tipo === "Restrito" ? "bg-amber-500/10 text-amber-400" : "bg-blue-500/10 text-blue-400"}`}>{item.tipo}</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${isOnline ? "bg-purple-500/10 text-purple-400" : "bg-emerald-500/10 text-emerald-400"}`}>{isOnline ? "Online" : "Presencial"}</span>
+                    {item.acao_formacao_id && (
+                      <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-medium bg-emerald-500/10 text-emerald-400">
+                        <GraduationCap size={10} /> {acoesFormacao.find((a: any) => a.id === item.acao_formacao_id)?.designacao ?? "Ação de Formação"}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-start gap-3">
@@ -450,6 +470,14 @@ export default function AgendaPage() {
                   <option value="Global" className="c-bg">Global</option>
                   <option value="Restrito" className="c-bg">Restrito</option>
                 </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Ação de Formação associada (opcional)</label>
+                <select value={form.acao_formacao_id} onChange={(e) => setForm({ ...form, acao_formacao_id: e.target.value })} className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none">
+                  <option value="" className="c-bg">Nenhuma — evento genérico</option>
+                  {acoesFormacao.map((a: any) => <option key={a.id} value={a.id} className="c-bg">{a.designacao}</option>)}
+                </select>
+                <p className="text-[10px] c-tx5">Ao ligar, inscrever-se neste evento inscreve automaticamente na Ação de Formação.</p>
               </div>
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx transition-colors">Cancelar</button>
