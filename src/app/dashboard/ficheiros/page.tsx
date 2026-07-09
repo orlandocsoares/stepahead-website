@@ -145,9 +145,7 @@ export default function FicheirosPage() {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [selectedCapa, setSelectedCapa] = useState<string | null>(null);
   const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
-  const [gruposFormacao, setGruposFormacao] = useState<{ id: string; nome: string }[]>([]);
   const [sitePublico, setSitePublico] = useState(false);
-  const [activeGrupo, setActiveGrupo] = useState<string>("todos");
   const [isDragging, setIsDragging] = useState(false);
 
   const [editingFile, setEditingFile] = useState<any>(null);
@@ -165,7 +163,19 @@ export default function FicheirosPage() {
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
 
   const allCatNames = useMemo(() => ["Geral", ...disciplinas.map(d => d.nome)], [disciplinas]);
-  const visibleCategories = useMemo(() => getVisibleCategories(user?.role, user?.specialization, allCatNames), [user?.role, user?.specialization, allCatNames]);
+
+  // Contagens por categoria
+  const catCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const f of files) c[f.area] = (c[f.area] ?? 0) + 1;
+    return c;
+  }, [files]);
+
+  const visibleCategories = useMemo(() => {
+    // formando: só vê disciplinas onde tem, de facto, ficheiros publicados numa Acção de Formação
+    if (user?.role === "formando") return allCatNames.filter(cat => (catCounts[cat] ?? 0) > 0);
+    return getVisibleCategories(user?.role, user?.specialization, allCatNames);
+  }, [user?.role, user?.specialization, allCatNames, catCounts]);
   const uploadAreas = useMemo(() => getUploadAreas(user?.role, user?.specialization, allCatNames), [user?.role, user?.specialization, allCatNames]);
   const isRestricted = user?.role === "formador" && uploadAreas !== null;
   const uploadCategoryOptions = uploadAreas ?? allCatNames;
@@ -229,7 +239,6 @@ export default function FicheirosPage() {
   useEffect(() => {
     fetchFiles();
     fetch("/api/admin/disciplinas").then(r => r.json()).then(j => setDisciplinas(j.disciplinas?.filter((d: any) => d.activo) ?? []));
-    fetch("/api/admin/grupos-formacao").then(r => r.json()).then(j => setGruposFormacao(j.grupos?.filter((g: any) => g.activo) ?? []));
     if (user) {
       fetch("/api/acoes-formacao").then(r => r.json()).then(json => {
         const todas = json.data ?? [];
@@ -241,13 +250,6 @@ export default function FicheirosPage() {
       });
     }
   }, [user?.id, user?.role]);
-
-  // Contagens por categoria
-  const catCounts = useMemo(() => {
-    const c: Record<string, number> = {};
-    for (const f of files) c[f.area] = (c[f.area] ?? 0) + 1;
-    return c;
-  }, [files]);
 
   const totalSizeMB = useMemo(() => {
     let total = 0;
@@ -269,11 +271,6 @@ export default function FicheirosPage() {
       }
       if (!visibleCategories.includes(f.area)) return false;
       if (activeCategory !== "Geral" && f.area !== activeCategory) return false;
-      if (activeGrupo !== "todos") {
-        const gs: string[] = Array.isArray(f.grupos) ? f.grupos : [];
-        if (activeGrupo === "sem-grupo") { if (gs.length > 0) return false; }
-        else { if (!gs.includes(activeGrupo)) return false; }
-      }
       if (search && !f.label?.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     }).sort((a, b) => {
@@ -284,7 +281,7 @@ export default function FicheirosPage() {
       else if (sortCol === "data") cmp = new Date(a.criado_em ?? 0).getTime() - new Date(b.criado_em ?? 0).getTime();
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [files, search, activeCategory, activeGrupo, visibleCategories, user, sortCol, sortDir]);
+  }, [files, search, activeCategory, visibleCategories, user, sortCol, sortDir]);
 
   function toggleSort(col: typeof sortCol) {
     if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -399,20 +396,6 @@ export default function FicheirosPage() {
             </button>
           );
         })}
-
-        {/* Grupos */}
-        {gruposFormacao.length > 0 && (
-          <>
-            <p className="text-[9px] font-bold uppercase tracking-widest c-tx5 px-2 mb-1 mt-3">Grupos</p>
-            {[{ id: "todos", nome: "Todos" }, ...gruposFormacao, { id: "sem-grupo", nome: "Sem grupo" }].map(g => (
-              <button key={g.id} onClick={() => setActiveGrupo(g.id)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs transition-all ${activeGrupo === g.id ? "c-s1 border c-br font-medium c-tx" : "c-tx3 hc-s1 hc-tx"}`}>
-                <Users size={12} className="c-tx5" />
-                <span className="truncate">{g.nome}</span>
-              </button>
-            ))}
-          </>
-        )}
 
         {/* Upload drop zone — admin/formador */}
         {canUpload && (
