@@ -264,6 +264,31 @@ export default function HeroSection() {
 
   const [telemetry, setTelemetry] = useState<any>(null);
   const [selectedEvento, setSelectedEvento] = useState<any>(null);
+  const [minhasInscricoes, setMinhasInscricoes] = useState<Set<string>>(new Set());
+  const [inscrevendo, setInscrevendo] = useState(false);
+
+  useEffect(() => {
+    if (!profile?.id) { setMinhasInscricoes(new Set()); return; }
+    fetch(`/api/db/inscricoes_agenda?eq.user_id=${profile.id}`)
+      .then(r => r.json())
+      .then(({ data }) => setMinhasInscricoes(new Set((data ?? []).map((i: any) => i.evento_id))))
+      .catch(() => {});
+  }, [profile?.id]);
+
+  async function handleInscricaoPublica(eventoId: string) {
+    if (!profile?.id) return;
+    setInscrevendo(true);
+    try {
+      await fetch("/api/db/inscricoes_agenda", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: profile.id, evento_id: eventoId }),
+      });
+      setMinhasInscricoes(prev => new Set(prev).add(eventoId));
+    } finally {
+      setInscrevendo(false);
+    }
+  }
 
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
@@ -1132,12 +1157,29 @@ export default function HeroSection() {
                             </p>
                           )}
                         </div>
-                        <button
-                          onClick={() => { setSelectedEvento(null); setIsLoginOpen(true); }}
-                          className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white transition-colors"
-                        >
-                          Entrar para me inscrever
-                        </button>
+                        {profile ? (
+                          minhasInscricoes.has(selectedEvento.id) ? (
+                            <button disabled
+                              className="w-full py-2.5 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-sm font-medium text-emerald-400 flex items-center justify-center gap-2">
+                              <CheckCircle size={15} /> Inscrito
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleInscricaoPublica(selectedEvento.id)}
+                              disabled={inscrevendo}
+                              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                            >
+                              {inscrevendo ? "A inscrever..." : "Inscrever-me"}
+                            </button>
+                          )
+                        ) : (
+                          <button
+                            onClick={() => { setSelectedEvento(null); setIsLoginOpen(true); }}
+                            className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white transition-colors"
+                          >
+                            Entrar para me inscrever
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

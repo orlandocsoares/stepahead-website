@@ -116,6 +116,12 @@ export async function POST() {
       sql: `ALTER TABLE acoes_formacao ADD COLUMN IF NOT EXISTS imagem_url TEXT`,
     },
     {
+      name: "add_anexo_to_mensagens",
+      sql: `ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS anexo_url TEXT;
+            ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS anexo_nome TEXT;
+            ALTER TABLE mensagens ALTER COLUMN content DROP NOT NULL`,
+    },
+    {
       name: "add_area_to_acoes_formacao",
       sql: `ALTER TABLE acoes_formacao ADD COLUMN IF NOT EXISTS area TEXT`,
     },

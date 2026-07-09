@@ -35,14 +35,14 @@ export async function GET(request: Request) {
         `SELECT DISTINCT ON (m.other_id)
           m.other_id,
           p.first_name, p.last_name, p.avatar_url, p.role,
-          m.content AS last_message,
+          COALESCE(m.content, '📎 ' || m.anexo_nome) AS last_message,
           m.created_at,
           m.from_user_id,
           COALESCE(unread.unread_count, 0)::int AS unread_count
         FROM (
           -- Subquery para identificar o outro utilizador na conversa
           SELECT CASE WHEN from_user_id = $1 THEN to_user_id ELSE from_user_id END AS other_id,
-                 id, content, created_at, from_user_id
+                 id, content, anexo_nome, created_at, from_user_id
           FROM mensagens
           WHERE from_user_id = $1 OR to_user_id = $1
         ) m
@@ -127,9 +127,9 @@ export async function POST(request: Request) {
     const session = await getSessionUser();
     if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-    const { to_user_id, content } = await request.json();
-    if (!to_user_id || !content?.trim()) {
-      return NextResponse.json({ error: "Destinatário e conteúdo são obrigatórios" }, { status: 400 });
+    const { to_user_id, content, anexo_url, anexo_nome } = await request.json();
+    if (!to_user_id || (!content?.trim() && !anexo_url)) {
+      return NextResponse.json({ error: "Destinatário e conteúdo (ou anexo) são obrigatórios" }, { status: 400 });
     }
     if (to_user_id === session.id) {
       return NextResponse.json({ error: "Não podes enviar mensagens para ti próprio" }, { status: 400 });
@@ -157,8 +157,8 @@ export async function POST(request: Request) {
     }
 
     const result = await db.query(
-      `INSERT INTO mensagens (from_user_id, to_user_id, content) VALUES ($1, $2, $3) RETURNING *`,
-      [session.id, to_user_id, content.trim()]
+      `INSERT INTO mensagens (from_user_id, to_user_id, content, anexo_url, anexo_nome) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [session.id, to_user_id, content?.trim() || null, anexo_url || null, anexo_nome || null]
     );
     // Mensagens privadas não são auditadas — conteúdo pessoal
     return NextResponse.json({ data: result.rows[0] }, { status: 201 });

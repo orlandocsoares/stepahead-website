@@ -326,6 +326,11 @@ jobs:
               ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS acao_formacao_id UUID REFERENCES acoes_formacao(id) ON DELETE SET NULL;
               CREATE INDEX IF NOT EXISTS idx_arquivos_acao_formacao ON arquivos(acao_formacao_id);
 
+              -- Anexo opcional em mensagens privadas
+              ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS anexo_url TEXT;
+              ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS anexo_nome TEXT;
+              ALTER TABLE mensagens ALTER COLUMN content DROP NOT NULL;
+
               -- Imagem/cartaz opcional para a acção de formação (espelhada no evento de agenda)
               ALTER TABLE acoes_formacao ADD COLUMN IF NOT EXISTS imagem_url TEXT;
 
