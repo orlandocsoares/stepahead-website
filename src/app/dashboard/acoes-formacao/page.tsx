@@ -35,7 +35,7 @@ type AcaoFormacao = {
 };
 
 type Pessoa = { id: string; first_name: string; last_name: string; email: string };
-type Material = { link_id: string; id: string; label: string; tamanho: string | null; area: string; disponivel_de: string | null; disponivel_ate: string | null };
+type Material = { link_id: string; id: string; label: string; tamanho: string | null; area: string; disponivel_de: string | null; disponivel_ate: string | null; thumbnail_url: string | null };
 type FicheiroRepo = { id: string; label: string; area: string };
 
 function InitialAvatar({ name, className = "" }: { name: string; className?: string }) {
@@ -584,7 +584,15 @@ export default function AcoesFormacaoPage() {
                                   {(materiais[acao.id] ?? []).map(m => (
                                     <div key={m.link_id}
                                       className="group flex items-center gap-2.5 px-3 py-2 rounded-lg c-s1 border c-br hover:border-red-500/20 transition-colors">
-                                      <FileText size={16} className="text-blue-400 shrink-0" />
+                                      {m.thumbnail_url ? (
+                                        <div className="w-9 h-9 rounded-md overflow-hidden bg-white shrink-0">
+                                          <img src={m.thumbnail_url} alt={m.label} className="w-full h-full object-cover" />
+                                        </div>
+                                      ) : (
+                                        <div className="w-9 h-9 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
+                                          <FileText size={16} className="text-blue-400" />
+                                        </div>
+                                      )}
                                       <div className="flex-1 min-w-0">
                                         <p className="text-[11px] font-medium c-tx truncate">{m.label}</p>
                                         <p className="text-[9px] c-tx5">

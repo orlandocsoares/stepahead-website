@@ -20,7 +20,7 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
   const { id } = await context.params;
 
   const result = await dbQuery(`
-    SELECT l.id AS link_id, l.disponivel_de, l.disponivel_ate, a.id, a.label, a.tamanho, a.area, a.tipo
+    SELECT l.id AS link_id, l.disponivel_de, l.disponivel_ate, a.id, a.label, a.tamanho, a.area, a.tipo, a.thumbnail_url
     FROM arquivo_acoes_formacao l
     INNER JOIN arquivos a ON a.id = l.arquivo_id
     WHERE l.acao_formacao_id = $1
