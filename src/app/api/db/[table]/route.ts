@@ -176,45 +176,16 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
             values.push(sessionUser.id);
             valueIndex++;
           } else {
-            // formando: vê publico/formadores (área certa), e ficheiros das acções de formação em que está inscrito.
-            // A área "certa" é decidida pela Acção de Formação em que o formando está inscrito (entidade central),
-            // não pelo formador/turma directamente — formando_formadores/turmas mantidos só para dados antigos.
-            filters.push(`(
-              (${tableSql}.visibilidade IN ('publico', 'formadores') AND (
-                ${tableSql}.area = 'Geral'
-                OR ${tableSql}.area IN (
-                  SELECT af.area FROM inscricoes_acao ia
-                  INNER JOIN acoes_formacao af ON af.id = ia.acao_formacao_id
-                  WHERE ia.formando_id = $${valueIndex} AND ia.status = 'inscrito' AND af.area IS NOT NULL
-                )
-                OR ${tableSql}.area IN (
-                  SELECT p.specialization FROM profiles p
-                  INNER JOIN formando_formadores ff ON ff.formador_id = p.id
-                  WHERE ff.formando_id = $${valueIndex} AND ff.status IN ('aceite')
-                )
-                OR ${tableSql}.area IN (
-                  SELECT t.area FROM turmas t
-                  INNER JOIN turma_membros tm ON tm.turma_id = t.id
-                  WHERE tm.formando_id = $${valueIndex}
-                )
-              ))
-              OR (${tableSql}.visibilidade = 'turma' AND ${tableSql}.turma_id IN (
-                SELECT turma_id FROM turma_membros WHERE formando_id = $${valueIndex}
-              ))
-              OR (${tableSql}.visibilidade = 'formadores_turma' AND ${tableSql}.turma_id IN (
-                SELECT turma_id FROM turma_membros WHERE formando_id = $${valueIndex}
-              ))
-              OR (${tableSql}.visibilidade IN ('acao_formacao', 'formadores_acao') AND ${tableSql}.acao_formacao_id IN (
-                SELECT acao_formacao_id FROM inscricoes_acao WHERE formando_id = $${valueIndex} AND status = 'inscrito'
-              ))
-              OR EXISTS (
-                SELECT 1 FROM arquivo_acoes_formacao l
-                INNER JOIN inscricoes_acao ia ON ia.acao_formacao_id = l.acao_formacao_id
-                WHERE l.arquivo_id = ${tableSql}.id
-                  AND ia.formando_id = $${valueIndex} AND ia.status = 'inscrito'
-                  AND (l.disponivel_de IS NULL OR l.disponivel_de <= NOW())
-                  AND (l.disponivel_ate IS NULL OR l.disponivel_ate >= NOW())
-              )
+            // formando: só vê ficheiros explicitamente publicados numa Acção de Formação em que está
+            // inscrito, e apenas dentro da janela de disponibilidade definida nessa publicação.
+            // (Sem acesso "geral por área" — a publicação por acção é o único caminho.)
+            filters.push(`EXISTS (
+              SELECT 1 FROM arquivo_acoes_formacao l
+              INNER JOIN inscricoes_acao ia ON ia.acao_formacao_id = l.acao_formacao_id
+              WHERE l.arquivo_id = ${tableSql}.id
+                AND ia.formando_id = $${valueIndex} AND ia.status = 'inscrito'
+                AND (l.disponivel_de IS NULL OR l.disponivel_de <= NOW())
+                AND (l.disponivel_ate IS NULL OR l.disponivel_ate >= NOW())
             )`);
             values.push(sessionUser.id);
             valueIndex++;

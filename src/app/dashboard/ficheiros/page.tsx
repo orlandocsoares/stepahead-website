@@ -144,11 +144,8 @@ export default function FicheirosPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [selectedCapa, setSelectedCapa] = useState<string | null>(null);
-  const [disponivel_de, setDisponivelDe] = useState("");
-  const [disponivel_ate, setDisponivelAte] = useState("");
   const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
   const [gruposFormacao, setGruposFormacao] = useState<{ id: string; nome: string }[]>([]);
-  const [gruposUpload, setGruposUpload] = useState<string[]>([]);
   const [sitePublico, setSitePublico] = useState(false);
   const [activeGrupo, setActiveGrupo] = useState<string>("todos");
   const [isDragging, setIsDragging] = useState(false);
@@ -158,9 +155,6 @@ export default function FicheirosPage() {
   const [editArea, setEditArea] = useState("Geral");
   const [editVisibilidade, setEditVisibilidade] = useState("publico");
   const [editAcaoFormacaoId, setEditAcaoFormacaoId] = useState("");
-  const [editDisponivelDe, setEditDisponivelDe] = useState("");
-  const [editDisponivelAte, setEditDisponivelAte] = useState("");
-  const [editGrupos, setEditGrupos] = useState<string[]>([]);
   const [editSitePublico, setEditSitePublico] = useState(false);
   const [editCapa, setEditCapa] = useState<string | null>(null);
   const [editCapaTouched, setEditCapaTouched] = useState(false);
@@ -184,8 +178,7 @@ export default function FicheirosPage() {
     setVisibilidade("publico");
     setAcaoFormacaoId(minhasAcoes[0]?.id ?? "");
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
-    setDisponivelDe(""); setDisponivelAte("");
-    setGruposUpload([]); setSitePublico(false);
+    setSitePublico(false);
     setSelectedCapa(null);
     setIsModalOpen(true);
   }
@@ -319,18 +312,11 @@ export default function FicheirosPage() {
           tipo: uploadFile.type.includes("video") ? "video" : "pdf",
           visibilidade,
           ...((visibilidade === "acao_formacao" || visibilidade === "formadores_acao") && acaoFormacaoId ? { acao_formacao_id: acaoFormacaoId } : {}),
-          ...(disponivel_de ? { disponivel_de } : {}),
-          ...(disponivel_ate ? { disponivel_ate } : {}),
-          ...(gruposUpload[0] ? { grupo_formacao_id: gruposUpload[0] } : {}),
           ...(selectedCapa ? { thumbnail_url: selectedCapa } : {}),
           site_publico: sitePublico && visibilidade === "publico",
         }),
       });
       if (!dbRes.ok) throw new Error("Erro ao registar.");
-      if (gruposUpload.length > 0) {
-        const newFile = (await dbRes.json())?.data?.[0];
-        if (newFile?.id) await fetch("/api/arquivos/editar", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: newFile.id, grupos: gruposUpload }) });
-      }
       setIsModalOpen(false); setThumbnailPreview(null); fetchFiles();
     } catch (err: any) { alert(err.message ?? "Erro."); }
     finally { setIsUploading(false); }
@@ -345,9 +331,6 @@ export default function FicheirosPage() {
   function openEditModal(f: any) {
     setEditingFile(f); setEditTitle(f.label ?? ""); setEditArea(f.area ?? "Geral");
     setEditVisibilidade(f.visibilidade ?? "publico"); setEditAcaoFormacaoId(f.acao_formacao_id ?? "");
-    setEditDisponivelDe(f.disponivel_de ? f.disponivel_de.slice(0, 10) : "");
-    setEditDisponivelAte(f.disponivel_ate ? f.disponivel_ate.slice(0, 10) : "");
-    setEditGrupos(Array.isArray(f.grupos) ? f.grupos : []);
     setEditSitePublico(f.site_publico ?? false);
     const knownCapa = f.thumbnail_url === CAPA_GERAL || Object.values(AREA_COVERS).includes(f.thumbnail_url) ? f.thumbnail_url : null;
     setEditCapa(knownCapa);
@@ -371,8 +354,7 @@ export default function FicheirosPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: editingFile.id, label: editTitle, area: editArea, visibilidade: editVisibilidade,
-          acao_formacao_id: editAcaoFormacaoId || null, disponivel_de: editDisponivelDe || null,
-          disponivel_ate: editDisponivelAte || null, grupos: editGrupos,
+          acao_formacao_id: editAcaoFormacaoId || null,
           site_publico: editSitePublico && editVisibilidade === "publico",
           ...(editCapaTouched ? { thumbnail_url: editCapa ?? "" } : {}),
         }),
@@ -714,22 +696,6 @@ export default function FicheirosPage() {
                   </select>
                 )}
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Grupos</label>
-                {gruposFormacao.length === 0 ? <p className="text-xs c-tx5 italic pt-2">Nenhum grupo criado</p> : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {gruposFormacao.map(g => {
-                      const sel = gruposUpload.includes(g.id);
-                      return (
-                        <button key={g.id} type="button" onClick={() => setGruposUpload(prev => sel ? prev.filter(x => x !== g.id) : [...prev, g.id])}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-medium border transition-colors ${sel ? "bg-emerald-600/20 text-emerald-400 border-emerald-500/30" : "c-s1 c-tx3 c-br hc-s2"}`}>
-                          {g.nome}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3 flex items-center justify-between">
@@ -774,15 +740,6 @@ export default function FicheirosPage() {
                 </select>
               )}
             </div>
-            <div className="space-y-2">
-              <label className="text-xs c-tx3 flex items-center gap-1.5"><CalendarClock size={11} /> Disponibilidade (opcional)</label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><span className="text-[10px] c-tx4">A partir de</span>
-                  <input type="date" value={disponivel_de} onChange={e => setDisponivelDe(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 [color-scheme:dark]" /></div>
-                <div className="space-y-1"><span className="text-[10px] c-tx4">Expira em</span>
-                  <input type="date" value={disponivel_ate} onChange={e => setDisponivelAte(e.target.value)} min={disponivel_de || undefined} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 [color-scheme:dark]" /></div>
-              </div>
-            </div>
             {visibilidade === "publico" && (
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border c-br hc-s1 transition-colors">
                 <div className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${sitePublico ? "bg-emerald-500" : "bg-white/10"}`}>
@@ -813,29 +770,11 @@ export default function FicheirosPage() {
               <label className="text-xs c-tx3">Título *</label>
               <input required value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Disciplina</label>
-                <select value={editArea} onChange={e => setEditArea(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
-                  {allCatNames.map(c => <option key={c} value={c} className="c-bg">{c}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Grupos</label>
-                {gruposFormacao.length === 0 ? <p className="text-xs c-tx5 italic pt-2">Nenhum grupo</p> : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {gruposFormacao.map(g => {
-                      const sel = editGrupos.includes(g.id);
-                      return (
-                        <button key={g.id} type="button" onClick={() => setEditGrupos(prev => sel ? prev.filter(x => x !== g.id) : [...prev, g.id])}
-                          className={`px-2 py-1 rounded-lg text-[11px] border transition-colors ${sel ? "bg-emerald-600/20 text-emerald-400 border-emerald-500/30" : "c-s1 c-tx3 c-br hc-s2"}`}>
-                          {g.nome}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+            <div className="space-y-1.5">
+              <label className="text-xs c-tx3">Disciplina</label>
+              <select value={editArea} onChange={e => setEditArea(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
+                {allCatNames.map(c => <option key={c} value={c} className="c-bg">{c}</option>)}
+              </select>
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3 flex items-center justify-between">
@@ -879,15 +818,6 @@ export default function FicheirosPage() {
                   {minhasAcoes.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao}</option>)}
                 </select>
               )}
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs c-tx3 flex items-center gap-1.5"><CalendarClock size={11} /> Disponibilidade (opcional)</label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><span className="text-[10px] c-tx4">A partir de</span>
-                  <input type="date" value={editDisponivelDe} onChange={e => setEditDisponivelDe(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 [color-scheme:dark]" /></div>
-                <div className="space-y-1"><span className="text-[10px] c-tx4">Expira em</span>
-                  <input type="date" value={editDisponivelAte} onChange={e => setEditDisponivelAte(e.target.value)} min={editDisponivelDe || undefined} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 [color-scheme:dark]" /></div>
-              </div>
             </div>
             {editVisibilidade === "publico" && (
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border c-br hc-s1 transition-colors">
