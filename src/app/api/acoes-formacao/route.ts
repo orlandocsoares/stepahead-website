@@ -3,7 +3,7 @@ import { dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
 import { auditLog } from "@/lib/audit";
 
-// GET /api/acoes-formacao — lista ações de formação com formação, formadores e nº de inscritos
+// GET /api/acoes-formacao — lista acções de formação com formação, formadores e nº de inscritos
 export async function GET() {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -31,7 +31,7 @@ export async function GET() {
   return NextResponse.json({ data: result.rows });
 }
 
-// POST /api/acoes-formacao — criar ação de formação (admin ou formador)
+// POST /api/acoes-formacao — criar acção de formação (admin ou formador)
 export async function POST(req: Request) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });

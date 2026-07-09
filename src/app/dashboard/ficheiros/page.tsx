@@ -17,9 +17,9 @@ const CATEGORIES_FALLBACK = ["Geral", "Matemática", "Língua Portuguesa", "Fís
 
 const VISIBILIDADE_OPTIONS = [
   { value: "privado",           label: "Só eu",                        icon: Lock,          color: "c-tx3" },
-  { value: "acao_formacao",     label: "Minha Ação de Formação",       icon: GraduationCap, color: "text-amber-400" },
-  { value: "formadores",        label: "Formadores",                   icon: Users,         color: "text-blue-400" },
-  { value: "formadores_acao",   label: "Formadores + Ação de Formação", icon: Users,         color: "text-purple-400" },
+  { value: "acao_formacao",     label: "Minha Acção de Formação",       icon: GraduationCap, color: "text-amber-400" },
+  { value: "formadores",        label: "Formadores",                    icon: Users,         color: "text-blue-400" },
+  { value: "formadores_acao",   label: "Formadores + Acção de Formação", icon: Users,         color: "text-purple-400" },
   { value: "publico",           label: "Todos",                        icon: Globe,         color: "text-emerald-400" },
   // Legado — apenas para exibir ficheiros antigos, não seleccionável em novos uploads
   { value: "turma",             label: "Minha turma (legado)",         icon: GraduationCap, color: "text-amber-400" },

@@ -117,7 +117,7 @@ export default function AcoesFormacaoPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Apagar esta ação de formação?")) return;
+    if (!confirm("Apagar esta acção de formação?")) return;
     await fetch(`/api/acoes-formacao/${id}`, { method: "DELETE" });
     setAcoes(prev => prev.filter(a => a.id !== id));
     setExpanded(null);
@@ -168,13 +168,13 @@ export default function AcoesFormacaoPage() {
     <div className="space-y-5 w-full">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold c-tx">Ações de Formação</h2>
-          <p className="text-[11px] c-tx4 mt-0.5">{acoes.length} ação{acoes.length !== 1 ? "ões" : ""} de formação</p>
+          <h2 className="text-sm font-semibold c-tx">Acções de Formação</h2>
+          <p className="text-[11px] c-tx4 mt-0.5">{acoes.length} acção{acoes.length !== 1 ? "ões" : ""} de formação</p>
         </div>
         {(isAdmin || isFormador) && (
           <button onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-xs c-tx font-medium hover:bg-blue-500 transition-colors">
-            <Plus size={13} /> Nova ação de formação
+            <Plus size={13} /> Nova acção de formação
           </button>
         )}
       </div>
@@ -184,7 +184,7 @@ export default function AcoesFormacaoPage() {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
           <div className="relative w-full max-w-md c-bg border c-br rounded-2xl p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold c-tx">Nova ação de formação</h3>
+              <h3 className="text-sm font-semibold c-tx">Nova acção de formação</h3>
               <button onClick={() => setShowCreate(false)}><X size={16} className="c-tx3" /></button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
@@ -253,7 +253,7 @@ export default function AcoesFormacaoPage() {
       ) : acoes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 c-bg2 border c-br rounded-xl">
           <GraduationCap size={32} className="c-tx5" />
-          <p className="text-sm c-tx3">Ainda não há ações de formação. Cria a primeira.</p>
+          <p className="text-sm c-tx3">Ainda não há acções de formação. Cria a primeira.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3">

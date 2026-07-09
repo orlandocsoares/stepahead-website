@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     );
     formandoIds = res.rows.map((r: any) => r.id);
   } else {
-    // "meus" — formandos inscritos em ações de formação que este formador lecciona
+    // "meus" — formandos inscritos em acções de formação que este formador lecciona
     const res = await dbQuery(
       `SELECT DISTINCT ia.formando_id AS id
        FROM inscricoes_acao ia

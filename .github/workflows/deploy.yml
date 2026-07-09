@@ -257,7 +257,7 @@ jobs:
               -- Limpar sessoes expiradas
               DELETE FROM user_sessions WHERE expires_at < NOW();
 
-              -- ===== Módulo Ações de Formação (substitui Turmas) =====
+              -- ===== Módulo Acções de Formação (substitui Turmas) =====
 
               -- Anos lectivos (referenciado antes mas nunca criado)
               CREATE TABLE IF NOT EXISTS anos_letivos (
@@ -280,7 +280,7 @@ jobs:
                 updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
               );
 
-              -- Ação de Formação: uma edição concreta de uma formação
+              -- Acção de Formação: uma edição concreta de uma formação
               CREATE TABLE IF NOT EXISTS acoes_formacao (
                 id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
                 formacao_id   UUID        REFERENCES formacoes(id) ON DELETE SET NULL,
@@ -298,7 +298,7 @@ jobs:
               CREATE INDEX IF NOT EXISTS idx_acoes_formacao_formacao ON acoes_formacao(formacao_id);
               CREATE INDEX IF NOT EXISTS idx_acoes_formacao_estado   ON acoes_formacao(estado);
 
-              -- Formadores associados a uma ação de formação (1 ou vários)
+              -- Formadores associados a uma acção de formação (1 ou vários)
               CREATE TABLE IF NOT EXISTS acao_formadores (
                 acao_formacao_id UUID        NOT NULL REFERENCES acoes_formacao(id) ON DELETE CASCADE,
                 formador_id       UUID        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -307,7 +307,7 @@ jobs:
               );
               CREATE INDEX IF NOT EXISTS idx_acao_formadores_formador ON acao_formadores(formador_id);
 
-              -- Inscrições: formando inscrito numa ação de formação
+              -- Inscrições: formando inscrito numa acção de formação
               CREATE TABLE IF NOT EXISTS inscricoes_acao (
                 id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
                 formando_id       UUID        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -319,10 +319,10 @@ jobs:
               CREATE INDEX IF NOT EXISTS idx_inscricoes_acao_formando ON inscricoes_acao(formando_id, status);
               CREATE INDEX IF NOT EXISTS idx_inscricoes_acao_acao     ON inscricoes_acao(acao_formacao_id, status);
 
-              -- Ligação opcional de eventos de agenda a uma ação de formação
+              -- Ligação opcional de eventos de agenda a uma acção de formação
               ALTER TABLE agenda_atividades ADD COLUMN IF NOT EXISTS acao_formacao_id UUID REFERENCES acoes_formacao(id) ON DELETE SET NULL;
 
-              -- Visibilidade de ficheiros passa a poder referenciar uma ação de formação
+              -- Visibilidade de ficheiros passa a poder referenciar uma acção de formação
               ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS acao_formacao_id UUID REFERENCES acoes_formacao(id) ON DELETE SET NULL;
               CREATE INDEX IF NOT EXISTS idx_arquivos_acao_formacao ON arquivos(acao_formacao_id);
             " || echo "Aviso: migração já aplicada ou erro ignorado"

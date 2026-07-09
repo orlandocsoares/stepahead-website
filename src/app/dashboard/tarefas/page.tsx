@@ -570,7 +570,7 @@ export default function TarefasPage() {
                 <div className={`grid gap-2 ${(user?.role === "admin" || user?.role === "super-admin") ? "grid-cols-4" : "grid-cols-3"}`}>
                   {[
                     { value: "meus",       label: "Meus formandos", icon: Users },
-                    { value: "acao",       label: "Por Ação de Formação", icon: ChevronDown },
+                    { value: "acao",       label: "Por Acção de Formação", icon: ChevronDown },
                     { value: "individual", label: "Individual",      icon: User },
                     ...((user?.role === "admin" || user?.role === "super-admin")
                       ? [{ value: "todos", label: "Todos", icon: Users }]
@@ -594,7 +594,7 @@ export default function TarefasPage() {
                   <select value={destAcao} onChange={e => setDestAcao(e.target.value)}
                     className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
                     {acoesFormacao.length === 0
-                      ? <option value="">Sem ações de formação criadas</option>
+                      ? <option value="">Sem acções de formação criadas</option>
                       : acoesFormacao.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao} ({a.total_inscritos} inscritos)</option>)
                     }
                   </select>

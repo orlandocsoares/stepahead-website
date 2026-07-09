@@ -3,7 +3,7 @@ import { dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
 import { auditLog } from "@/lib/audit";
 
-// GET /api/acoes-formacao/[id]/inscricoes — lista de inscritos (staff da ação) ou o estado da própria inscrição
+// GET /api/acoes-formacao/[id]/inscricoes — lista de inscritos (staff da acção) ou o estado da própria inscrição
 export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -34,7 +34,7 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
   return NextResponse.json({ data: own.rows[0] ?? null });
 }
 
-// POST /api/acoes-formacao/[id]/inscricoes — o formando inscreve-se na ação
+// POST /api/acoes-formacao/[id]/inscricoes — o formando inscreve-se na acção
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -58,9 +58,9 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
   const acaoRes = await dbQuery(`SELECT vagas_max, estado FROM acoes_formacao WHERE id = $1 LIMIT 1`, [id]);
   const acao = acaoRes.rows[0];
-  if (!acao) return NextResponse.json({ error: "Ação de formação não encontrada" }, { status: 404 });
+  if (!acao) return NextResponse.json({ error: "Acção de formação não encontrada" }, { status: 404 });
   if (acao.estado === "cancelada" || acao.estado === "concluida") {
-    return NextResponse.json({ error: "Esta ação de formação já não aceita inscrições" }, { status: 400 });
+    return NextResponse.json({ error: "Esta acção de formação já não aceita inscrições" }, { status: 400 });
   }
 
   if (acao.vagas_max != null) {

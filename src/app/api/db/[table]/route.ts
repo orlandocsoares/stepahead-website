@@ -153,7 +153,7 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
       if (sessionUser) {
         if (userRole !== "super-admin" && userRole !== "admin") {
           if (userRole === "formador") {
-            // formador: vê os seus + publico + formadores + ficheiros das ações de formação que lecciona
+            // formador: vê os seus + publico + formadores + ficheiros das acções de formação que lecciona
             // (turma/formadores_turma mantidos por compatibilidade com ficheiros antigos)
             filters.push(`(
               ${tableSql}.uploader_id = $${valueIndex}
@@ -168,7 +168,7 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
             values.push(sessionUser.id);
             valueIndex++;
           } else {
-            // formando: vê publico/formadores (área certa), e ficheiros das ações de formação em que está inscrito
+            // formando: vê publico/formadores (área certa), e ficheiros das acções de formação em que está inscrito
             filters.push(`(
               (${tableSql}.visibilidade IN ('publico', 'formadores') AND (
                 ${tableSql}.area = 'Geral'

@@ -13,7 +13,7 @@ async function isAcaoManager(userId: string, role: string, acaoId: string) {
   return !!res.rows[0];
 }
 
-// PATCH /api/acoes-formacao/[id] — actualizar dados da ação (admin ou formador associado)
+// PATCH /api/acoes-formacao/[id] — actualizar dados da acção (admin ou formador associado)
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -41,13 +41,13 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     `UPDATE acoes_formacao SET ${setClauses.join(", ")}, updated_at = NOW() WHERE id = $1 RETURNING *`,
     [id, ...values]
   );
-  if (!result.rows[0]) return NextResponse.json({ error: "Ação de formação não encontrada" }, { status: 404 });
+  if (!result.rows[0]) return NextResponse.json({ error: "Acção de formação não encontrada" }, { status: 404 });
 
   await auditLog("acao_formacao_update", { actorId: sessionUser.id, targetId: id, details: updates });
   return NextResponse.json({ data: result.rows[0] });
 }
 
-// DELETE /api/acoes-formacao/[id] — apagar ação (admin ou formador associado)
+// DELETE /api/acoes-formacao/[id] — apagar acção (admin ou formador associado)
 export async function DELETE(_: Request, context: { params: Promise<{ id: string }> }) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -60,7 +60,7 @@ export async function DELETE(_: Request, context: { params: Promise<{ id: string
   }
 
   const result = await dbQuery(`DELETE FROM acoes_formacao WHERE id = $1 RETURNING id`, [id]);
-  if (!result.rows[0]) return NextResponse.json({ error: "Ação de formação não encontrada" }, { status: 404 });
+  if (!result.rows[0]) return NextResponse.json({ error: "Acção de formação não encontrada" }, { status: 404 });
 
   await auditLog("acao_formacao_delete", { actorId: sessionUser.id, targetId: id });
   return NextResponse.json({ ok: true });

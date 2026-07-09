@@ -72,7 +72,7 @@ export async function POST(request: Request) {
   const userId = authRes.rows[0].id;
 
   // Criar perfil — sem professor/turma associado. Sem email → activo imediatamente (pronto a inscrever-se
-  // numa Ação de Formação); com email → pendente (fluxo normal de confirmação).
+  // numa Acção de Formação); com email → pendente (fluxo normal de confirmação).
   const status = emailClean ? "pendente" : "activo";
   await dbQuery(
     `INSERT INTO profiles (id, email, first_name, last_name, role, status, criado_por)

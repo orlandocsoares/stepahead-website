@@ -3,7 +3,7 @@ import { dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
 import { auditLog } from "@/lib/audit";
 
-// GET /api/acoes-formacao/[id]/formadores — lista formadores associados à ação
+// GET /api/acoes-formacao/[id]/formadores — lista formadores associados à acção
 export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });

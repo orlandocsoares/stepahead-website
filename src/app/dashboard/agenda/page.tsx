@@ -124,7 +124,7 @@ export default function AgendaPage() {
         const res = await fetch(`/api/acoes-formacao/${evento.acao_formacao_id}/inscricoes`, { method: "POST" });
         if (!res.ok) {
           const json = await res.json().catch(() => null);
-          alert(json?.error ?? "Não foi possível inscrever na Ação de Formação associada.");
+          alert(json?.error ?? "Não foi possível inscrever na Acção de Formação associada.");
         }
       }
       setMyInscriptions((p) => [...p, eventoId]);
@@ -285,7 +285,7 @@ export default function AgendaPage() {
                     <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${isOnline ? "bg-purple-500/10 text-purple-400" : "bg-emerald-500/10 text-emerald-400"}`}>{isOnline ? "Online" : "Presencial"}</span>
                     {item.acao_formacao_id && (
                       <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-medium bg-emerald-500/10 text-emerald-400">
-                        <GraduationCap size={10} /> {acoesFormacao.find((a: any) => a.id === item.acao_formacao_id)?.designacao ?? "Ação de Formação"}
+                        <GraduationCap size={10} /> {acoesFormacao.find((a: any) => a.id === item.acao_formacao_id)?.designacao ?? "Acção de Formação"}
                       </span>
                     )}
                   </div>
@@ -472,12 +472,12 @@ export default function AgendaPage() {
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Ação de Formação associada (opcional)</label>
+                <label className="text-xs c-tx3">Acção de Formação associada (opcional)</label>
                 <select value={form.acao_formacao_id} onChange={(e) => setForm({ ...form, acao_formacao_id: e.target.value })} className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none">
                   <option value="" className="c-bg">Nenhuma — evento genérico</option>
                   {acoesFormacao.map((a: any) => <option key={a.id} value={a.id} className="c-bg">{a.designacao}</option>)}
                 </select>
-                <p className="text-[10px] c-tx5">Ao ligar, inscrever-se neste evento inscreve automaticamente na Ação de Formação.</p>
+                <p className="text-[10px] c-tx5">Ao ligar, inscrever-se neste evento inscreve automaticamente na Acção de Formação.</p>
               </div>
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3 hc-tx transition-colors">Cancelar</button>

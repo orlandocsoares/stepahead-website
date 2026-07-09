@@ -16,7 +16,7 @@ export type AuditAction =
   | "tarefa_create" | "tarefa_delete" | "tarefa_status_change"
   // Turmas (legado)
   | "turma_create" | "turma_delete" | "turma_membro_add" | "turma_membro_remove"
-  // Ações de Formação
+  // Acções de Formação
   | "acao_formacao_create" | "acao_formacao_update" | "acao_formacao_delete"
   | "acao_formacao_formador_add" | "acao_formacao_formador_remove"
   | "acao_formacao_inscricao_create" | "acao_formacao_inscricao_cancel"
