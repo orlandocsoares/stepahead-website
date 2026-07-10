@@ -94,16 +94,22 @@ export async function POST(request: Request) {
   }
 
   if (formandoIds.length > 0) {
-    const destValues = formandoIds.map((id) => `('${tarefaId}', '${id}')`).join(", ");
-    await dbQuery(`INSERT INTO tarefa_destinatarios (tarefa_id, formando_id) VALUES ${destValues} ON CONFLICT DO NOTHING`, []);
+    const destPlaceholders = formandoIds.map((_, i) => `($1, $${i + 2})`).join(", ");
+    await dbQuery(
+      `INSERT INTO tarefa_destinatarios (tarefa_id, formando_id) VALUES ${destPlaceholders} ON CONFLICT DO NOTHING`,
+      [tarefaId, ...formandoIds]
+    );
 
     const prazoStr = prazo ? ` — prazo: ${new Date(prazo).toLocaleDateString("pt-PT")}` : "";
-    const tituloEsc = titulo.trim().replace(/'/g, "''");
-    const mensagemEsc = `Nova tarefa${prazoStr}`.replace(/'/g, "''");
-    const notifValues = formandoIds.map((id) =>
-      `('${id}', 'tarefa', '${tituloEsc}', '${mensagemEsc}')`
-    ).join(", ");
-    await dbQuery(`INSERT INTO notificacoes (user_id, tipo, titulo, mensagem) VALUES ${notifValues}`, []);
+    const tituloMsg = titulo.trim();
+    const mensagemMsg = `Nova tarefa${prazoStr}`;
+    const notifValues: unknown[] = [];
+    const notifPlaceholders = formandoIds.map((id, i) => {
+      const base = i * 4;
+      notifValues.push(id, "tarefa", tituloMsg, mensagemMsg);
+      return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4})`;
+    }).join(", ");
+    await dbQuery(`INSERT INTO notificacoes (user_id, tipo, titulo, mensagem) VALUES ${notifPlaceholders}`, notifValues);
   }
 
   await auditLog("tarefa_create", {

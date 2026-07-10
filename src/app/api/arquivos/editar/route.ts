@@ -60,8 +60,11 @@ export async function PATCH(request: Request) {
   if (Array.isArray(grupos)) {
     await dbQuery(`DELETE FROM arquivo_grupos WHERE arquivo_id = $1`, [id]);
     if (grupos.length > 0) {
-      const vals = grupos.map((gid: string) => `('${id}', '${gid}')`).join(", ");
-      await dbQuery(`INSERT INTO arquivo_grupos (arquivo_id, grupo_id) VALUES ${vals} ON CONFLICT DO NOTHING`, []);
+      const placeholders = grupos.map((_: string, i: number) => `($1, $${i + 2})`).join(", ");
+      await dbQuery(
+        `INSERT INTO arquivo_grupos (arquivo_id, grupo_id) VALUES ${placeholders} ON CONFLICT DO NOTHING`,
+        [id, ...grupos]
+      );
     }
     // Manter coluna legada em sync com o primeiro grupo (ou null)
     await dbQuery(`UPDATE arquivos SET grupo_formacao_id = $2 WHERE id = $1`, [id, grupos[0] ?? null]);
