@@ -86,6 +86,26 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
      RETURNING *`,
     [targetFormandoId, id, status]
   );
+
+  if (status === "pendente") {
+    const acaoInfo = await dbQuery(`SELECT designacao FROM acoes_formacao WHERE id = $1 LIMIT 1`, [id]);
+    const formandoInfo = await dbQuery(`SELECT first_name, last_name FROM profiles WHERE id = $1 LIMIT 1`, [targetFormandoId]);
+    const designacao = acaoInfo.rows[0]?.designacao ?? "acção de formação";
+    const nomeFormando = `${formandoInfo.rows[0]?.first_name ?? ""} ${formandoInfo.rows[0]?.last_name ?? ""}`.trim();
+    const responsaveis = await dbQuery(
+      `SELECT formador_id AS id FROM acao_formadores WHERE acao_formacao_id = $1
+       UNION SELECT id FROM profiles WHERE role IN ('admin', 'super-admin')`,
+      [id]
+    );
+    for (const r of responsaveis.rows) {
+      await dbQuery(
+        `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
+         VALUES ($1, 'nova_inscricao', 'Nova inscrição pendente', $2, '/dashboard/acoes-formacao')`,
+        [r.id, `${nomeFormando} inscreveu-se em "${designacao}" e aguarda confirmação.`]
+      );
+    }
+  }
+
   await auditLog("acao_formacao_inscricao_create", { actorId: sessionUser.id, targetId: targetFormandoId, details: { acao_formacao_id: id, status } });
   return NextResponse.json({ data: result.rows[0] });
 }

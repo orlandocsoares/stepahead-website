@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Plus, Trash2, Pencil, ChevronDown, ChevronUp, Loader2, X, UserPlus, GraduationCap, Calendar, MapPin, Users, FileText } from "lucide-react";
+import { Plus, Trash2, Pencil, ChevronDown, ChevronUp, Loader2, X, UserPlus, GraduationCap, Calendar, MapPin, Users, FileText, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocalidades } from "@/hooks/useLocalidades";
 
@@ -36,7 +36,7 @@ type AcaoFormacao = {
   provincia: string | null;
 };
 
-type Pessoa = { id: string; first_name: string; last_name: string; email: string; status?: string };
+type Pessoa = { id: string; first_name: string; last_name: string; email: string; status?: string; provincia?: string | null };
 type Material = { link_id: string; id: string; label: string; tamanho: string | null; area: string; disponivel_de: string | null; disponivel_ate: string | null; thumbnail_url: string | null };
 type FicheiroRepo = { id: string; label: string; area: string };
 
@@ -687,12 +687,20 @@ export default function AcoesFormacaoPage() {
                                     {pendentes.length} a aguardar confirmação
                                   </p>
                                   <div className="grid grid-cols-3 gap-2">
-                                    {pendentes.map(m => (
+                                    {pendentes.map(m => {
+                                      const provinciaDiferente = !!acao.provincia && !!m.provincia && m.provincia !== acao.provincia;
+                                      return (
                                       <div key={m.id}
                                         className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
                                         <InitialAvatar name={m.first_name} className="w-7 h-7 bg-amber-500/10 text-amber-400 text-[11px]" />
                                         <div className="flex-1 min-w-0">
                                           <p className="text-[11px] font-medium c-tx truncate">{m.first_name} {m.last_name}</p>
+                                          {provinciaDiferente && (
+                                            <p title={`Formando em ${m.provincia}, acção em ${acao.provincia}`}
+                                              className="flex items-center gap-1 text-[9px] text-orange-400 truncate">
+                                              <AlertTriangle size={9} /> Reside em {m.provincia}
+                                            </p>
+                                          )}
                                         </div>
                                         <button onClick={() => handleResponderPendente(acao.id, m.id, "inscrito")}
                                           title="Aprovar" className="c-tx5 hover:text-emerald-400 transition-colors shrink-0">
@@ -703,7 +711,7 @@ export default function AcoesFormacaoPage() {
                                           <X size={13} />
                                         </button>
                                       </div>
-                                    ))}
+                                    );})}
                                   </div>
                                 </div>
                               )}
@@ -714,19 +722,27 @@ export default function AcoesFormacaoPage() {
                                     {confirmados.length} inscrito{confirmados.length !== 1 ? "s" : ""}
                                   </p>
                                   <div className="grid grid-cols-3 gap-2">
-                                    {confirmados.map(m => (
+                                    {confirmados.map(m => {
+                                      const provinciaDiferente = !!acao.provincia && !!m.provincia && m.provincia !== acao.provincia;
+                                      return (
                                       <div key={m.id}
                                         className="group flex items-center gap-2.5 px-3 py-2 rounded-lg c-s1 border c-br hover:border-red-500/20 transition-colors">
                                         <InitialAvatar name={m.first_name} className="w-7 h-7 bg-blue-500/10 text-blue-400 text-[11px]" />
                                         <div className="flex-1 min-w-0">
                                           <p className="text-[11px] font-medium c-tx truncate">{m.first_name} {m.last_name}</p>
+                                          {provinciaDiferente && (
+                                            <p title={`Formando em ${m.provincia}, acção em ${acao.provincia}`}
+                                              className="flex items-center gap-1 text-[9px] text-orange-400 truncate">
+                                              <AlertTriangle size={9} /> Reside em {m.provincia}
+                                            </p>
+                                          )}
                                         </div>
                                         <button onClick={() => handleRemoveInscrito(acao.id, m.id)}
                                           className="opacity-0 group-hover:opacity-100 c-tx5 hover:text-red-400 transition-all shrink-0">
                                           <X size={11} />
                                         </button>
                                       </div>
-                                    ))}
+                                    );})}
                                   </div>
                                 </div>
                               ) : pendentes.length === 0 ? (
