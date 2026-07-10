@@ -3,7 +3,7 @@
 import { HeroBranding } from "./HeroBranding";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, LogOut, User, Camera, GraduationCap, UserCheck, Calendar, FileText, Users, Activity } from "lucide-react";
+import { LogIn, LogOut, User, Camera, GraduationCap, UserCheck, Calendar, FileText, Users, Activity, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -128,6 +128,7 @@ const [isLoginOpen, setIsLoginOpen] = useState(false);
 const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 const [email, setEmail] = useState('');
 const [password, setPassword] = useState('');
+const [showPassword, setShowPassword] = useState(false);
 const [firstName, setFirstName] = useState('');
 const [lastName, setLastName] = useState('');
 const [role, setRole] = useState('formando');
@@ -392,7 +393,7 @@ return (
 {authMode === 'login' ? (
 <form onSubmit={handleLogin} className="space-y-6">
 <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-8 rounded-none border-0 border-b border-white/20 bg-transparent px-0 text-sm text-white focus-visible:ring-0 shadow-none"/></div>
-<div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 rounded-none border-0 border-b border-white/20 bg-transparent px-0 text-sm text-white focus-visible:ring-0 shadow-none"/></div>
+<div className="space-y-1 relative"><Label className="text-[9px] uppercase tracking-widest text-white/40">Passe</Label><Input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 rounded-none border-0 border-b border-white/20 bg-transparent px-0 pr-7 text-sm text-white focus-visible:ring-0 shadow-none"/><button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-0 bottom-1.5 text-white/30 hover:text-white/70 transition-colors">{showPassword ? <EyeOff size={14} /> : <Eye size={14} />}</button></div>
 {error && <p className="text-[10px] text-red-400 uppercase tracking-widest text-center">{error}</p>}
 <Button type="submit" className="w-full rounded-none border border-white/20 bg-transparent text-white hover:bg-white hover:text-black font-light uppercase tracking-[0.2em] py-6 shadow-none">Entrar</Button>
 </form>
@@ -403,7 +404,7 @@ return (
 <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Apelido</Label><Input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
 </div>
 <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
-<div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0"/></div>
+<div className="space-y-1 relative"><Label className="text-[9px] uppercase tracking-widest text-white/40">Passe</Label><Input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 pr-7"/><button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-0 bottom-1.5 text-white/30 hover:text-white/70 transition-colors">{showPassword ? <EyeOff size={14} /> : <Eye size={14} />}</button></div>
 <div className="space-y-2">
 <Label className="text-[9px] uppercase tracking-widest text-white/40">Função</Label>
 <RadioGroup value={role} onValueChange={setRole} className="flex gap-6">

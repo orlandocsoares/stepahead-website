@@ -135,6 +135,10 @@ export async function POST() {
             ALTER TABLE profiles ADD COLUMN IF NOT EXISTS cargos_pedagogicos TEXT`,
     },
     {
+      name: "add_must_change_password_to_profiles",
+      sql: `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT false`,
+    },
+    {
       name: "add_anexo_to_mensagens",
       sql: `ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS anexo_url TEXT;
             ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS anexo_nome TEXT;

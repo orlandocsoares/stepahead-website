@@ -344,6 +344,9 @@ jobs:
               ALTER TABLE profiles ADD COLUMN IF NOT EXISTS classes_lecciona TEXT;
               ALTER TABLE profiles ADD COLUMN IF NOT EXISTS cargos_pedagogicos TEXT;
 
+              -- Obriga a troca de password no proximo login (contas criadas por staff com password temporaria)
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT false;
+
               -- Anexo opcional em mensagens privadas
               ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS anexo_url TEXT;
               ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS anexo_nome TEXT;

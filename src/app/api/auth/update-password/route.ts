@@ -15,6 +15,7 @@ export async function PATCH(request: Request) {
   }
 
   await dbQuery("UPDATE auth_users SET password_hash = $1, updated_at = NOW() WHERE id = $2", [hashPassword(password), user.id]);
+  await dbQuery("UPDATE profiles SET must_change_password = false WHERE id = $1", [user.id]);
   await auditLog("password_change", { actorId: user.id, ip: request.headers.get("x-forwarded-for") ?? undefined });
 
   return NextResponse.json({ data: { success: true } });

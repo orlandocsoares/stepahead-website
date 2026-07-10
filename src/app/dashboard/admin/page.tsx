@@ -1564,6 +1564,7 @@ export default function SuperAdminPage() {
                 <div className="space-y-1.5">
                   <label className="text-xs c-tx3">Nome de utilizador (login)</label>
                   <input required value={noEmailForm.username}
+                    name="novo-formando-login" autoComplete="off" data-1p-ignore data-lpignore="true"
                     onChange={e => {
                       setNoEmailUsernameEdited(true);
                       setNoEmailUsernameError(null);
@@ -1580,6 +1581,7 @@ export default function SuperAdminPage() {
                   <label className="text-xs c-tx3">Password temporária</label>
                   <div className="relative">
                     <input required type={showNoEmailPwd ? "text" : "password"} value={noEmailForm.password}
+                      name="novo-formando-password" autoComplete="new-password" data-1p-ignore data-lpignore="true"
                       onChange={e => setNoEmailForm(f => ({ ...f, password: e.target.value }))}
                       minLength={6} placeholder="Mínimo 6 caracteres"
                       className="w-full c-s1 border c-br rounded-lg px-3 py-2 pr-10 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors" />

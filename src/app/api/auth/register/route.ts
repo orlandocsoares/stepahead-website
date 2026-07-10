@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { dbQuery } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
-import { setSession } from "@/lib/server-auth";
+import { setSession, getSessionUser } from "@/lib/server-auth";
 import { rateLimiter, getClientIp } from "@/lib/rate-limit";
 import { auditLog } from "@/lib/audit";
 import { randomBytes } from "crypto";
@@ -131,14 +131,35 @@ export async function POST(request: Request) {
     );
 
     const userId = created.rows[0].id;
-    const firstName = String(metadata.first_name ?? "").trim();
-    const lastName = String(metadata.last_name ?? "").trim();
-    const role = String(metadata.role ?? "formando");
+    // Aceita first_name/last_name/role tanto em metadata (fluxo público) como no topo do corpo
+    // (fluxo do admin, dashboard/admin/page.tsx).
+    const firstName = String(metadata.first_name ?? body.first_name ?? "").trim();
+    const lastName = String(metadata.last_name ?? body.last_name ?? "").trim();
+    const requestedRole = String(metadata.role ?? body.role ?? "formando");
+
+    // Segurança: só uma sessão já autenticada como admin/super-admin pode criar contas
+    // com papel admin/super-admin. Qualquer outro pedido fica limitado a formando/formador.
+    const caller = await getSessionUser();
+    const callerRole = caller
+      ? (await dbQuery<{ role: string }>(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [caller.id])).rows[0]?.role
+      : null;
+    const callerIsStaff = callerRole === "admin" || callerRole === "super-admin";
+
+    let role = ["formando", "formador"].includes(requestedRole) ? requestedRole : "formando";
+    if (["admin", "super-admin"].includes(requestedRole)) {
+      if (!callerIsStaff) {
+        return NextResponse.json({ error: { message: "Sem permissão para criar esta conta." } }, { status: 403 });
+      }
+      role = requestedRole;
+    }
+    // Contas criadas a partir de uma sessão de staff activa ficam marcadas para obrigar
+    // troca de password no primeiro login (a password foi escolhida por outra pessoa).
+    const createdByStaff = callerIsStaff;
 
     await dbQuery(
-      `INSERT INTO profiles (id, email, first_name, last_name, role, status)
-       VALUES ($1, $2, $3, $4, $5, 'pendente')`,
-      [userId, email, firstName || null, lastName || null, role]
+      `INSERT INTO profiles (id, email, first_name, last_name, role, status, must_change_password)
+       VALUES ($1, $2, $3, $4, $5, 'pendente', $6)`,
+      [userId, email, firstName || null, lastName || null, role, createdByStaff]
     );
 
     await auditLog("register", { actorId: userId, ip, details: { role, email } });

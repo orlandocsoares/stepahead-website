@@ -18,7 +18,7 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
 
   if (isAdmin || isFormadorDaAcao) {
     const result = await dbQuery(`
-      SELECT p.id, p.first_name, p.last_name, p.email, i.status, i.created_at
+      SELECT p.id, p.first_name, p.last_name, p.email, p.provincia, i.status, i.created_at
       FROM inscricoes_acao i
       INNER JOIN profiles p ON p.id = i.formando_id
       WHERE i.acao_formacao_id = $1 AND i.status IN ('inscrito', 'pendente')

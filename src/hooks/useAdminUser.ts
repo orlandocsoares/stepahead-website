@@ -32,6 +32,7 @@ export type AdminUser = {
   disciplinas_lecciona?: string;
   classes_lecciona?: string;
   cargos_pedagogicos?: string;
+  must_change_password?: boolean;
 };
 
 export function useAdminUser() {

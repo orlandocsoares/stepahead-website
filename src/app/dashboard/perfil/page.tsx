@@ -5,7 +5,7 @@ import {
   User, ShieldCheck, Save, Loader2, Camera,
   Key, FileText, CheckCircle2, AlertCircle, Activity, Award,
   GraduationCap, Plus, X, Clock, CheckCheck, XCircle,
-  IdCard, MapPin, BookOpen, Briefcase,
+  IdCard, MapPin, BookOpen, Briefcase, Eye, EyeOff,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
@@ -23,6 +23,7 @@ export default function PerfilPage() {
   const [addingFormador, setAddingFormador] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [areasDisponiveis, setAreasDisponiveis] = useState<string[]>([]);
@@ -122,13 +123,13 @@ export default function PerfilPage() {
       showMsg("error", "A nova palavra-passe deve ter pelo menos 6 caracteres."); return;
     }
     setIsSavingPassword(true);
-    const res = await fetch("/api/auth/change-password", {
-      method: "POST",
+    const res = await fetch("/api/auth/update-password", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
     });
     const { error } = await res.json();
-    if (error) showMsg("error", error);
+    if (error) showMsg("error", error.message ?? error);
     else { showMsg("success", "Palavra-passe actualizada com sucesso."); setPassword(""); }
     setIsSavingPassword(false);
   };
@@ -266,12 +267,16 @@ export default function PerfilPage() {
           <div className="relative flex-1">
             <Key size={13} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx5" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Nova palavra-passe (mín. 6)"
-              className="w-full pl-8 pr-3 py-2 c-s1 border c-br rounded-lg text-xs c-tx placeholder:c-tx5 outline-none focus:border-emerald-500/40 transition-colors"
+              className="w-full pl-8 pr-8 py-2 c-s1 border c-br rounded-lg text-xs c-tx placeholder:c-tx5 outline-none focus:border-emerald-500/40 transition-colors"
             />
+            <button type="button" onClick={() => setShowPassword(v => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 c-tx5 hover:c-tx3 transition-colors">
+              {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+            </button>
           </div>
           <button
             onClick={handleUpdatePassword}

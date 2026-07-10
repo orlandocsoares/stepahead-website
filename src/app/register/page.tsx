@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  UserPlus, FileText, School, MapPin, 
-  CreditCard, Loader2, CheckCircle, ArrowRight, Lock, Mail, Camera, QrCode, Smartphone
+  UserPlus, FileText, School, MapPin,
+  CreditCard, Loader2, CheckCircle, ArrowRight, Lock, Mail, Camera, QrCode, Smartphone, Eye, EyeOff
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [role, setRole] = useState<"formando" | "formador">("formando");
   const [sessionId, setSessionId] = useState<string>("");
   const [uploadMode, setUploadMode] = useState<"local" | "qr">("local");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -221,7 +222,10 @@ export default function RegisterPage() {
             </div>
             <div className="relative md:col-span-1">
               <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-white/10" size={18} />
-              <input type="password" placeholder="PALAVRA-PASSE" required className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-5 pl-16 text-xs outline-none focus:border-blue-500" onChange={e => setFormData({...formData, password: e.target.value})} />
+              <input type={showPassword ? "text" : "password"} placeholder="PALAVRA-PASSE" required className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-5 pl-16 pr-14 text-xs outline-none focus:border-blue-500" onChange={e => setFormData({...formData, password: e.target.value})} />
+              <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/60 transition-colors">
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </section>
 

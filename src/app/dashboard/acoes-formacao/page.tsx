@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Plus, Trash2, ChevronDown, ChevronUp, Loader2, X, UserPlus, GraduationCap, Calendar, MapPin, Users, FileText } from "lucide-react";
+import { Plus, Trash2, Pencil, ChevronDown, ChevronUp, Loader2, X, UserPlus, GraduationCap, Calendar, MapPin, Users, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocalidades } from "@/hooks/useLocalidades";
 
@@ -76,6 +76,14 @@ export default function AcoesFormacaoPage() {
   });
   const [imagemFile, setImagemFile] = useState<File | null>(null);
   const [imagemPreview, setImagemPreview] = useState<string | null>(null);
+  const [editingAcao, setEditingAcao] = useState<AcaoFormacao | null>(null);
+  const [editForm, setEditForm] = useState({
+    designacao: "", data_inicio: "", data_fim: "", horario: "", local: "", provincia: "",
+    modalidade: "presencial", vagas_max: "", imagem_url: "", area: "",
+  });
+  const [editImagemFile, setEditImagemFile] = useState<File | null>(null);
+  const [editImagemPreview, setEditImagemPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
   const [materiais, setMateriais] = useState<Record<string, Material[]>>({});
   const [meuRepositorio, setMeuRepositorio] = useState<FicheiroRepo[]>([]);
@@ -192,6 +200,58 @@ export default function AcoesFormacaoPage() {
     handleImagemSelect(null);
     await fetchAll();
     setCreating(false);
+  }
+
+  function openEdit(acao: AcaoFormacao) {
+    setEditingAcao(acao);
+    setEditForm({
+      designacao: acao.designacao ?? "",
+      data_inicio: acao.data_inicio ? acao.data_inicio.slice(0, 10) : "",
+      data_fim: acao.data_fim ? acao.data_fim.slice(0, 10) : "",
+      horario: acao.horario ?? "",
+      local: acao.local ?? "",
+      provincia: acao.provincia ?? "",
+      modalidade: acao.modalidade ?? "presencial",
+      vagas_max: acao.vagas_max ? String(acao.vagas_max) : "",
+      imagem_url: acao.imagem_url ?? "",
+      area: acao.area ?? "",
+    });
+    setEditImagemFile(null);
+    setEditImagemPreview(acao.imagem_url ?? null);
+  }
+
+  function handleEditImagemSelect(file: File | null) {
+    setEditImagemFile(file);
+    setEditImagemPreview(file ? URL.createObjectURL(file) : editForm.imagem_url || null);
+  }
+
+  async function handleEditSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingAcao || !editForm.designacao) return;
+    setSaving(true);
+
+    let imagem_url = editForm.imagem_url;
+    if (editImagemFile) {
+      const sanitized = editImagemFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const fileName = `${Date.now()}_${sanitized}`;
+      const uploadForm = new FormData();
+      uploadForm.append("bucket", "eventos"); uploadForm.append("path", fileName); uploadForm.append("file", editImagemFile);
+      const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: uploadForm });
+      if (uploadRes.ok) imagem_url = `/storage/v1/object/public/eventos/${fileName}`;
+    }
+
+    await fetch(`/api/acoes-formacao/${editingAcao.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...editForm,
+        vagas_max: editForm.vagas_max ? Number(editForm.vagas_max) : null,
+        imagem_url,
+      }),
+    });
+    setEditingAcao(null);
+    await fetchAll();
+    setSaving(false);
   }
 
   async function handleDelete(id: string) {
@@ -404,6 +464,93 @@ export default function AcoesFormacaoPage() {
         </div>
       )}
 
+      {editingAcao && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEditingAcao(null)} />
+          <div className="relative w-full max-w-2xl c-bg border c-br rounded-2xl p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold c-tx">Editar acção de formação</h3>
+              <button onClick={() => setEditingAcao(null)}><X size={16} className="c-tx3" /></button>
+            </div>
+            <form onSubmit={handleEditSave} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Designação</label>
+                <input required value={editForm.designacao} onChange={e => setEditForm(f => ({ ...f, designacao: e.target.value }))}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Área</label>
+                  <select value={editForm.area} onChange={e => setEditForm(f => ({ ...f, area: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                    <option value="" className="c-bg">Sem área definida</option>
+                    {disciplinas.map(d => <option key={d.id} value={d.nome} className="c-bg">{d.nome}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Horário</label>
+                  <input value={editForm.horario} onChange={e => setEditForm(f => ({ ...f, horario: e.target.value }))}
+                    placeholder="Ex: 14h00 — 17h00"
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Data início</label>
+                  <input type="date" value={editForm.data_inicio} onChange={e => setEditForm(f => ({ ...f, data_inicio: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Data fim</label>
+                  <input type="date" value={editForm.data_fim} onChange={e => setEditForm(f => ({ ...f, data_fim: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Província</label>
+                  <select value={editForm.provincia} onChange={e => setEditForm(f => ({ ...f, provincia: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                    <option value="" className="c-bg">Sem província definida</option>
+                    {PROVINCIAS_ANGOLA.map(p => <option key={p} value={p} className="c-bg">{p}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Local (opcional)</label>
+                  <input value={editForm.local} onChange={e => setEditForm(f => ({ ...f, local: e.target.value }))}
+                    placeholder="Ex: Sala 3, Escola X"
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs c-tx3">Vagas (opcional)</label>
+                  <input type="number" min="1" value={editForm.vagas_max} onChange={e => setEditForm(f => ({ ...f, vagas_max: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Imagem / cartaz (opcional)</label>
+                <label className="flex items-center gap-2 border border-dashed c-br rounded-lg px-3 py-2 cursor-pointer hover:border-blue-500/40 transition-colors">
+                  <input type="file" accept="image/*" onChange={e => handleEditImagemSelect(e.target.files?.[0] ?? null)} className="sr-only" />
+                  <GraduationCap size={14} className="c-tx5 shrink-0" />
+                  <p className="text-sm c-tx3 truncate">{editImagemFile ? editImagemFile.name : "Seleccionar nova imagem"}</p>
+                </label>
+                {editImagemPreview && <img src={editImagemPreview} alt="Pré-visualização" className="w-full h-24 object-cover rounded-lg mt-1" />}
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setEditingAcao(null)}
+                  className="flex-1 py-2.5 rounded-xl border c-br text-sm c-tx3 hc-tx transition-colors">Cancelar</button>
+                <button type="submit" disabled={saving}
+                  className="flex-1 py-2.5 rounded-xl bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {saving ? <Loader2 size={13} className="animate-spin" /> : null} Guardar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 size={22} className="animate-spin text-blue-500" /></div>
       ) : acoes.length === 0 ? (
@@ -457,6 +604,10 @@ export default function AcoesFormacaoPage() {
                         {ESTADOS.map(e => <option key={e} value={e} className="c-bg">{ESTADO_LABEL[e]}</option>)}
                       </select>
                     )}
+                    <button onClick={() => openEdit(acao)}
+                      className="p-1.5 rounded-lg c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors">
+                      <Pencil size={13} />
+                    </button>
                     <button onClick={() => handleDelete(acao.id)}
                       className="p-1.5 rounded-lg c-tx5 hover:text-red-400 hover:bg-red-500/10 transition-colors">
                       <Trash2 size={13} />

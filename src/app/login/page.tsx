@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, ArrowRight, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
+import { Mail, Lock, ArrowRight, ShieldCheck, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
 
 // --- COMPONENTE BOTÃO MAGNÉTICO INTEGRADO PARA EVITAR ERROS DE IMPORTAÇÃO ---
 function MagneticButton({ children, className, strength = 0.1 }: any) {
@@ -30,6 +30,7 @@ function MagneticButton({ children, className, strength = 0.1 }: any) {
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -109,11 +110,15 @@ export default function LoginPage() {
             {/* Input Password */}
             <div className="group relative">
               <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-blue-500 transition-all" size={18} />
-              <input 
-                required type="password" placeholder="PALAVRA-PASSE" 
-                className="w-full h-16 bg-white/[0.02] border border-white/5 rounded-2xl pl-14 pr-6 text-[10px] text-white tracking-widest outline-none focus:border-blue-500/40 focus:bg-white/[0.04] transition-all"
+              <input
+                required type={showPassword ? "text" : "password"} placeholder="PALAVRA-PASSE"
+                className="w-full h-16 bg-white/[0.02] border border-white/5 rounded-2xl pl-14 pr-12 text-[10px] text-white tracking-widest outline-none focus:border-blue-500/40 focus:bg-white/[0.04] transition-all"
                 value={password} onChange={(e) => setPassword(e.target.value)}
               />
+              <button type="button" onClick={() => setShowPassword(v => !v)}
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/60 transition-colors">
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 

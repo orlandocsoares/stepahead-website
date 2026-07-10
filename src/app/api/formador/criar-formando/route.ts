@@ -75,8 +75,8 @@ export async function POST(request: Request) {
   // numa Acção de Formação); com email → pendente (fluxo normal de confirmação).
   const status = emailClean ? "pendente" : "activo";
   await dbQuery(
-    `INSERT INTO profiles (id, email, first_name, last_name, role, status, criado_por)
-     VALUES ($1, $2, $3, $4, 'formando', $5, $6)`,
+    `INSERT INTO profiles (id, email, first_name, last_name, role, status, criado_por, must_change_password)
+     VALUES ($1, $2, $3, $4, 'formando', $5, $6, true)`,
     [userId, emailClean, first_name.trim(), last_name.trim(), status, sessionUser.id]
   );
 
