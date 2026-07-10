@@ -78,7 +78,17 @@ export async function POST(request: Request) {
   } else if (destinatarios === "todos") {
     const res = await dbQuery(`SELECT id FROM profiles WHERE role = 'formando' AND status = 'activo'`, []);
     formandoIds = res.rows.map((r: any) => r.id);
+  } else if (typeof destinatarios === "string" && destinatarios.startsWith("acao:")) {
+    const acaoId = destinatarios.slice(5);
+    const res = await dbQuery(
+      `SELECT ia.formando_id AS id FROM inscricoes_acao ia
+       JOIN profiles p ON p.id = ia.formando_id
+       WHERE ia.acao_formacao_id = $1 AND ia.status = 'inscrito' AND p.status = 'activo'`,
+      [acaoId]
+    );
+    formandoIds = res.rows.map((r: any) => r.id);
   } else if (typeof destinatarios === "string" && destinatarios.startsWith("turma:")) {
+    // legado
     const turmaId = destinatarios.slice(6);
     const res = await dbQuery(
       `SELECT tm.formando_id AS id FROM turma_membros tm
@@ -88,8 +98,15 @@ export async function POST(request: Request) {
     );
     formandoIds = res.rows.map((r: any) => r.id);
   } else {
-    // "meus" — formandos deste formador
-    const res = await dbQuery(`SELECT id FROM profiles WHERE formador_id = $1 AND status = 'activo'`, [sessionUser.id]);
+    // "meus" — formandos inscritos em acções de formação que este formador lecciona
+    const res = await dbQuery(
+      `SELECT DISTINCT ia.formando_id AS id
+       FROM inscricoes_acao ia
+       JOIN acao_formadores af ON af.acao_formacao_id = ia.acao_formacao_id
+       JOIN profiles p ON p.id = ia.formando_id
+       WHERE af.formador_id = $1 AND ia.status = 'inscrito' AND p.status = 'activo'`,
+      [sessionUser.id]
+    );
     formandoIds = res.rows.map((r: any) => r.id);
   }
 

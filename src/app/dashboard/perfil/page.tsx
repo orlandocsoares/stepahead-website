@@ -5,13 +5,16 @@ import {
   User, ShieldCheck, Save, Loader2, Camera,
   Key, FileText, CheckCircle2, AlertCircle, Activity, Award,
   GraduationCap, Plus, X, Clock, CheckCheck, XCircle,
+  IdCard, MapPin, BookOpen, Briefcase, Eye, EyeOff,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
+import { useLocalidades } from "@/hooks/useLocalidades";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function PerfilPage() {
   const { user, loading } = useAdminUser();
+  const { provincias: PROVINCIAS_ANGOLA, getMunicipios } = useLocalidades();
   const [localProfile, setLocalProfile] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [anoLetivo, setAnoLetivo] = useState(getAnoLetivoActivo());
@@ -20,9 +23,11 @@ export default function PerfilPage() {
   const [addingFormador, setAddingFormador] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [areasDisponiveis, setAreasDisponiveis] = useState<string[]>([]);
+  const [infoTab, setInfoTab] = useState<"conta" | "identificacao" | "residencia" | "academico" | "profissional">("conta");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (user) setLocalProfile({ ...user }); }, [user]);
@@ -83,6 +88,26 @@ export default function PerfilPage() {
           specialization: localProfile.specialization,
           province: localProfile.province,
           biografia: localProfile.biografia,
+          genero: localProfile.genero,
+          bi_number: localProfile.bi_number,
+          nome_pai: localProfile.nome_pai,
+          nome_mae: localProfile.nome_mae,
+          data_nascimento: localProfile.data_nascimento || null,
+          telemovel: localProfile.telemovel,
+          naturalidade_provincia: localProfile.naturalidade_provincia,
+          naturalidade_municipio: localProfile.naturalidade_municipio,
+          provincia: localProfile.provincia,
+          municipio_residencia: localProfile.municipio_residencia,
+          habilitacoes_academicas: localProfile.habilitacoes_academicas,
+          curso_concluido: localProfile.curso_concluido,
+          agregacao_pedagogica: localProfile.agregacao_pedagogica ?? null,
+          escola: localProfile.escola,
+          municipio_escola: localProfile.municipio_escola,
+          ciclo_ensino: localProfile.ciclo_ensino,
+          anos_servico_docente: localProfile.anos_servico_docente || null,
+          disciplinas_lecciona: localProfile.disciplinas_lecciona,
+          classes_lecciona: localProfile.classes_lecciona,
+          cargos_pedagogicos: localProfile.cargos_pedagogicos,
         },
         eq: { id: localProfile.id },
       }),
@@ -98,13 +123,13 @@ export default function PerfilPage() {
       showMsg("error", "A nova palavra-passe deve ter pelo menos 6 caracteres."); return;
     }
     setIsSavingPassword(true);
-    const res = await fetch("/api/auth/change-password", {
-      method: "POST",
+    const res = await fetch("/api/auth/update-password", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
     });
     const { error } = await res.json();
-    if (error) showMsg("error", error);
+    if (error) showMsg("error", error.message ?? error);
     else { showMsg("success", "Palavra-passe actualizada com sucesso."); setPassword(""); }
     setIsSavingPassword(false);
   };
@@ -233,157 +258,347 @@ export default function PerfilPage() {
         </div>
       </div>
 
-      {/* ── Segurança + Dados de identidade lado a lado ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        {/* Segurança */}
-        <div id="tour-security-section" className="c-bg2 border c-br rounded-xl p-4 space-y-3">
-          <h3 className="text-xs font-semibold c-tx flex items-center gap-2 uppercase tracking-wider">
-            <ShieldCheck size={13} className="text-emerald-400" /> Segurança
-          </h3>
-          <div className="flex gap-2 items-center">
-            <div className="relative flex-1">
-              <Key size={13} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx5" />
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Nova palavra-passe (mín. 6)"
-                className="w-full pl-8 pr-3 py-2 c-s1 border c-br rounded-lg text-xs c-tx placeholder:c-tx5 outline-none focus:border-emerald-500/40 transition-colors"
-              />
-            </div>
-            <button
-              onClick={handleUpdatePassword}
-              disabled={isSavingPassword || !password}
-              className="px-3 py-2 rounded-lg border border-emerald-500/30 text-xs text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-30 flex items-center gap-1.5 shrink-0"
-            >
-              {isSavingPassword ? <Loader2 size={12} className="animate-spin" /> : null}
-              Actualizar
+      {/* ── Segurança ── */}
+      <div id="tour-security-section" className="c-bg2 border c-br rounded-xl p-4 space-y-3">
+        <h3 className="text-xs font-semibold c-tx flex items-center gap-2 uppercase tracking-wider">
+          <ShieldCheck size={13} className="text-emerald-400" /> Segurança
+        </h3>
+        <div className="flex gap-2 items-center max-w-md">
+          <div className="relative flex-1">
+            <Key size={13} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx5" />
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Nova palavra-passe (mín. 6)"
+              className="w-full pl-8 pr-8 py-2 c-s1 border c-br rounded-lg text-xs c-tx placeholder:c-tx5 outline-none focus:border-emerald-500/40 transition-colors"
+            />
+            <button type="button" onClick={() => setShowPassword(v => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 c-tx5 hover:c-tx3 transition-colors">
+              {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
             </button>
           </div>
+          <button
+            onClick={handleUpdatePassword}
+            disabled={isSavingPassword || !password}
+            className="px-3 py-2 rounded-lg border border-emerald-500/30 text-xs text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-30 flex items-center gap-1.5 shrink-0"
+          >
+            {isSavingPassword ? <Loader2 size={12} className="animate-spin" /> : null}
+            Actualizar
+          </button>
+        </div>
+      </div>
+
+      {/* ── Ficha de inscrição, por abas ── */}
+      <div id="tour-identity-section" className="c-bg2 border c-br rounded-xl overflow-hidden">
+        <div className="flex items-center gap-1 p-2 border-b c-br overflow-x-auto">
+          {([
+            { id: "conta", label: "Conta", icon: FileText },
+            { id: "identificacao", label: "Identificação", icon: IdCard },
+            { id: "residencia", label: "Residência", icon: MapPin },
+            { id: "academico", label: "Habilitações Académicas", icon: BookOpen },
+            { id: "profissional", label: "Situação Profissional", icon: Briefcase },
+          ] as const).map(t => {
+            const Icon = t.icon;
+            const active = infoTab === t.id;
+            return (
+              <button key={t.id} onClick={() => setInfoTab(t.id)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                  active ? "bg-blue-600 text-white" : "c-tx4 hc-tx hc-s1"
+                }`}>
+                <Icon size={13} /> {t.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Dados de identidade */}
-        <div id="tour-identity-section" className="c-bg2 border c-br rounded-xl p-4 space-y-3">
-          <h3 className="text-xs font-semibold c-tx flex items-center gap-2 uppercase tracking-wider">
-            <FileText size={13} className="text-blue-400" /> Dados de identidade
-          </h3>
-          <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <label className="text-[10px] c-tx3">Nome próprio</label>
-            <input
-              value={localProfile.first_name || ""}
-              onChange={e => setLocalProfile({ ...localProfile, first_name: e.target.value })}
-              className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] c-tx3">Apelido</label>
-            <input
-              value={localProfile.last_name || ""}
-              onChange={e => setLocalProfile({ ...localProfile, last_name: e.target.value })}
-              className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] c-tx3">E-mail</label>
-            <div className="px-3 py-2 bg-white/[0.02] border c-br rounded-lg text-xs c-tx4 cursor-not-allowed font-mono truncate">
-              {localProfile.email}
+        <div className="p-4 space-y-3">
+
+          {/* Conta */}
+          {infoTab === "conta" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Nome próprio</label>
+                <input
+                  value={localProfile.first_name || ""}
+                  onChange={e => setLocalProfile({ ...localProfile, first_name: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Apelido</label>
+                <input
+                  value={localProfile.last_name || ""}
+                  onChange={e => setLocalProfile({ ...localProfile, last_name: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">E-mail</label>
+                <div className="px-3 py-2 bg-white/[0.02] border c-br rounded-lg text-xs c-tx4 cursor-not-allowed font-mono truncate">
+                  {localProfile.email}
+                </div>
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] c-tx3 flex items-center justify-between">
+                  <span>Áreas</span>
+                  <span className="c-tx5 text-[10px]">
+                    {localProfile.role === "formando" ? "definidas pelos teus formadores" : "clica para seleccionar"}
+                  </span>
+                </label>
+                {localProfile.role === "formando" ? (() => {
+                  const areasFormandos = Array.from(new Set(
+                    associacoes.filter(a => a.status === "aceite" && a.especialidade).map(a => a.especialidade)
+                  ));
+                  return (
+                    <div className="flex flex-wrap gap-1.5">
+                      {areasFormandos.length === 0 ? (
+                        <p className="text-[10px] c-tx5 self-center ml-1">Sem área — associa um formador para definir a tua área.</p>
+                      ) : (
+                        areasFormandos.map(area => (
+                          <span
+                            key={area}
+                            className="px-2.5 py-1 rounded-lg text-[10px] font-medium border bg-black/30 text-white/70 border-white/15 backdrop-blur-sm"
+                          >
+                            {area}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  );
+                })() : (() => {
+                  const AREAS = areasDisponiveis;
+                  let selected: string[] = [];
+                  try { selected = JSON.parse(localProfile.specialization || "[]"); } catch { selected = localProfile.specialization ? [localProfile.specialization] : []; }
+                  const toggle = (area: string) => {
+                    const next = selected.includes(area) ? selected.filter(a => a !== area) : [...selected, area];
+                    setLocalProfile({ ...localProfile, specialization: JSON.stringify(next) });
+                  };
+                  return (
+                    <div className="flex flex-wrap gap-1.5">
+                      {AREAS.map(area => {
+                        const active = selected.includes(area);
+                        return (
+                          <button
+                            key={area}
+                            type="button"
+                            onClick={() => toggle(area)}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-colors ${
+                              active
+                                ? "bg-blue-600 text-white border-blue-500"
+                                : "bg-black/30 text-white/70 border-white/15 hover:bg-black/50 hover:text-white backdrop-blur-sm"
+                            }`}
+                          >
+                            {area}
+                          </button>
+                        );
+                      })}
+                      {selected.length === 0 && (
+                        <p className="text-[10px] c-tx5 self-center ml-1">Nenhuma seleccionada — acesso a todas as áreas</p>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] c-tx3 flex items-center justify-between">
+                  <span>Biografia profissional</span>
+                  {localProfile.role === "formador" && (
+                    <span className="text-amber-400 text-[10px]">* Obrigatório</span>
+                  )}
+                </label>
+                <textarea
+                  value={localProfile.biografia || ""}
+                  onChange={e => setLocalProfile({ ...localProfile, biografia: e.target.value })}
+                  rows={2}
+                  placeholder="Breve resumo da sua jornada..."
+                  className={`w-full c-s1 border rounded-lg px-3 py-2 text-xs c-tx2 placeholder:c-tx5 outline-none transition-colors resize-none ${
+                    localProfile.role === "formador" && !localProfile.biografia?.trim()
+                      ? "border-amber-500/40 focus:border-amber-400"
+                      : "c-br focus:border-blue-500/50"
+                  }`}
+                />
+              </div>
             </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] c-tx3">Província</label>
-            <select
-              value={localProfile.province || ""}
-              onChange={e => setLocalProfile({ ...localProfile, province: e.target.value })}
-              className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors"
-            >
-              <option value="" className="c-bg">Seleccionar...</option>
-              <option value="Luanda" className="c-bg">Luanda</option>
-              <option value="Bié" className="c-bg">Bié</option>
-            </select>
-          </div>
-          <div className="space-y-1 col-span-2">
-            <label className="text-[10px] c-tx3 flex items-center justify-between">
-              <span>Áreas</span>
-              <span className="c-tx5 text-[10px]">
-                {localProfile.role === "formando" ? "definidas pelos teus formadores" : "clica para seleccionar"}
-              </span>
-            </label>
-            {localProfile.role === "formando" ? (() => {
-              const areasFormandos = Array.from(new Set(
-                associacoes.filter(a => a.status === "aceite" && a.especialidade).map(a => a.especialidade)
-              ));
-              return (
+          )}
+
+          {/* Identificação */}
+          {infoTab === "identificacao" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Nome do pai</label>
+                <input value={localProfile.nome_pai || ""} onChange={e => setLocalProfile({ ...localProfile, nome_pai: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Nome da mãe</label>
+                <input value={localProfile.nome_mae || ""} onChange={e => setLocalProfile({ ...localProfile, nome_mae: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Género</label>
+                <select value={localProfile.genero || ""} onChange={e => setLocalProfile({ ...localProfile, genero: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors">
+                  <option value="" className="c-bg">Seleccionar...</option>
+                  <option value="M" className="c-bg">Masculino</option>
+                  <option value="F" className="c-bg">Feminino</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Data de nascimento</label>
+                <input type="date" value={localProfile.data_nascimento ? String(localProfile.data_nascimento).slice(0, 10) : ""}
+                  onChange={e => setLocalProfile({ ...localProfile, data_nascimento: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Bilhete de Identidade nº</label>
+                <input value={localProfile.bi_number || ""} onChange={e => setLocalProfile({ ...localProfile, bi_number: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Telemóvel</label>
+                <input value={localProfile.telemovel || ""} onChange={e => setLocalProfile({ ...localProfile, telemovel: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Naturalidade — Província</label>
+                <select value={localProfile.naturalidade_provincia || ""}
+                  onChange={e => setLocalProfile({ ...localProfile, naturalidade_provincia: e.target.value, naturalidade_municipio: "" })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors">
+                  <option value="" className="c-bg">Seleccionar...</option>
+                  {PROVINCIAS_ANGOLA.map(p => <option key={p} value={p} className="c-bg">{p}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Naturalidade — Município</label>
+                <select value={localProfile.naturalidade_municipio || ""}
+                  onChange={e => setLocalProfile({ ...localProfile, naturalidade_municipio: e.target.value })}
+                  disabled={!localProfile.naturalidade_provincia}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors disabled:opacity-40">
+                  <option value="" className="c-bg">{localProfile.naturalidade_provincia ? "Seleccionar..." : "Escolhe primeiro a província"}</option>
+                  {getMunicipios(localProfile.naturalidade_provincia).map(m => <option key={m} value={m} className="c-bg">{m}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Residência */}
+          {infoTab === "residencia" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Província</label>
+                <select
+                  value={localProfile.provincia || ""}
+                  onChange={e => setLocalProfile({ ...localProfile, provincia: e.target.value, municipio_residencia: "" })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors"
+                >
+                  <option value="" className="c-bg">Seleccionar...</option>
+                  {PROVINCIAS_ANGOLA.map(p => <option key={p} value={p} className="c-bg">{p}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Município</label>
+                <select value={localProfile.municipio_residencia || ""}
+                  onChange={e => setLocalProfile({ ...localProfile, municipio_residencia: e.target.value })}
+                  disabled={!localProfile.provincia}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors disabled:opacity-40">
+                  <option value="" className="c-bg">{localProfile.provincia ? "Seleccionar..." : "Escolhe primeiro a província"}</option>
+                  {getMunicipios(localProfile.provincia).map(m => <option key={m} value={m} className="c-bg">{m}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Habilitações Académicas */}
+          {infoTab === "academico" && (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-[10px] c-tx3">Habilitações académicas</label>
                 <div className="flex flex-wrap gap-1.5">
-                  {areasFormandos.length === 0 ? (
-                    <p className="text-[10px] c-tx5 self-center ml-1">Sem área — associa um formador para definir a tua área.</p>
-                  ) : (
-                    areasFormandos.map(area => (
-                      <span
-                        key={area}
-                        className="px-2.5 py-1 rounded-lg text-[10px] font-medium border bg-black/30 text-white/70 border-white/15 backdrop-blur-sm"
-                      >
-                        {area}
-                      </span>
-                    ))
-                  )}
+                  {["Ensino Médio", "Bacharelato", "Licenciatura", "Mestrado", "Outra"].map(opt => (
+                    <button key={opt} type="button" onClick={() => setLocalProfile({ ...localProfile, habilitacoes_academicas: opt })}
+                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-colors ${
+                        localProfile.habilitacoes_academicas === opt
+                          ? "bg-blue-600 text-white border-blue-500"
+                          : "c-s1 c-tx3 c-br hc-s2"
+                      }`}>
+                      {opt}
+                    </button>
+                  ))}
                 </div>
-              );
-            })() : (() => {
-              const AREAS = areasDisponiveis;
-              let selected: string[] = [];
-              try { selected = JSON.parse(localProfile.specialization || "[]"); } catch { selected = localProfile.specialization ? [localProfile.specialization] : []; }
-              const toggle = (area: string) => {
-                const next = selected.includes(area) ? selected.filter(a => a !== area) : [...selected, area];
-                setLocalProfile({ ...localProfile, specialization: JSON.stringify(next) });
-              };
-              return (
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[10px] c-tx3">Curso(s) concluído(s)</label>
+                  <input value={localProfile.curso_concluido || ""} onChange={e => setLocalProfile({ ...localProfile, curso_concluido: e.target.value })}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] c-tx3">Agregação pedagógica</label>
+                  <div className="flex gap-1.5 pt-1">
+                    <button type="button" onClick={() => setLocalProfile({ ...localProfile, agregacao_pedagogica: true })}
+                      className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${
+                        localProfile.agregacao_pedagogica === true ? "bg-emerald-600 text-white border-emerald-500" : "c-s1 c-tx3 c-br hc-s2"
+                      }`}>Sim</button>
+                    <button type="button" onClick={() => setLocalProfile({ ...localProfile, agregacao_pedagogica: false })}
+                      className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${
+                        localProfile.agregacao_pedagogica === false ? "bg-red-600 text-white border-red-500" : "c-s1 c-tx3 c-br hc-s2"
+                      }`}>Não</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Situação Profissional */}
+          {infoTab === "profissional" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] c-tx3">Escola onde lecciona</label>
+                <input value={localProfile.escola || ""} onChange={e => setLocalProfile({ ...localProfile, escola: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Município</label>
+                <input value={localProfile.municipio_escola || ""} onChange={e => setLocalProfile({ ...localProfile, municipio_escola: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] c-tx3">Anos de serviço docente</label>
+                <input type="number" min="0" value={localProfile.anos_servico_docente ?? ""} onChange={e => setLocalProfile({ ...localProfile, anos_servico_docente: e.target.value ? Number(e.target.value) : null })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] c-tx3">Ciclo de ensino</label>
                 <div className="flex flex-wrap gap-1.5">
-                  {AREAS.map(area => {
-                    const active = selected.includes(area);
-                    return (
-                      <button
-                        key={area}
-                        type="button"
-                        onClick={() => toggle(area)}
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-colors ${
-                          active
-                            ? "bg-blue-600 text-white border-blue-500"
-                            : "bg-black/30 text-white/70 border-white/15 hover:bg-black/50 hover:text-white backdrop-blur-sm"
-                        }`}
-                      >
-                        {area}
-                      </button>
-                    );
-                  })}
-                  {selected.length === 0 && (
-                    <p className="text-[10px] c-tx5 self-center ml-1">Nenhuma seleccionada — acesso a todas as áreas</p>
-                  )}
+                  {["I Ciclo do Ensino Secundário Geral", "II Ciclo do Ensino Secundário Geral", "II Ciclo do Ensino Secundário Pedagógico"].map(opt => (
+                    <button key={opt} type="button" onClick={() => setLocalProfile({ ...localProfile, ciclo_ensino: opt })}
+                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-colors ${
+                        localProfile.ciclo_ensino === opt ? "bg-blue-600 text-white border-blue-500" : "c-s1 c-tx3 c-br hc-s2"
+                      }`}>
+                      {opt}
+                    </button>
+                  ))}
                 </div>
-              );
-            })()}
-          </div>
-          <div className="space-y-1 col-span-2">
-            <label className="text-[10px] c-tx3 flex items-center justify-between">
-              <span>Biografia profissional</span>
-              {localProfile.role === "formador" && (
-                <span className="text-amber-400 text-[10px]">* Obrigatório</span>
-              )}
-            </label>
-            <textarea
-              value={localProfile.biografia || ""}
-              onChange={e => setLocalProfile({ ...localProfile, biografia: e.target.value })}
-              rows={2}
-              placeholder="Breve resumo da sua jornada..."
-              className={`w-full c-s1 border rounded-lg px-3 py-2 text-xs c-tx2 placeholder:c-tx5 outline-none transition-colors resize-none ${
-                localProfile.role === "formador" && !localProfile.biografia?.trim()
-                  ? "border-amber-500/40 focus:border-amber-400"
-                  : "c-br focus:border-blue-500/50"
-              }`}
-            />
-          </div>
-          </div>
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] c-tx3">Disciplinas que lecciona</label>
+                <input value={localProfile.disciplinas_lecciona || ""} onChange={e => setLocalProfile({ ...localProfile, disciplinas_lecciona: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] c-tx3">Classes a que lecciona</label>
+                <input value={localProfile.classes_lecciona || ""} onChange={e => setLocalProfile({ ...localProfile, classes_lecciona: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] c-tx3">Cargos pedagógicos</label>
+                <input value={localProfile.cargos_pedagogicos || ""} onChange={e => setLocalProfile({ ...localProfile, cargos_pedagogicos: e.target.value })}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none focus:border-blue-500/50 transition-colors" />
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end pt-1">
             <button
               onClick={handleSaveProfile}
@@ -394,8 +609,7 @@ export default function PerfilPage() {
             </button>
           </div>
         </div>
-
-      </div>{/* fim grid lg:grid-cols-2 */}
+      </div>
 
       {/* ── Secção de Formadores (só formandos) ── */}
       {localProfile.role === "formando" && (

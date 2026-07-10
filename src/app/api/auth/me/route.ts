@@ -19,7 +19,13 @@ export async function GET() {
     const result = await dbQuery(
       `SELECT p.id, u.email, p.first_name, p.last_name, p.role, p.status,
               p.avatar_url, p.provincia, p.escola, p.especialidade, p.biografia,
-              p.specialization
+              p.specialization, p.genero, p.bi_number,
+              p.nome_pai, p.nome_mae, p.data_nascimento, p.telemovel,
+              p.naturalidade_provincia, p.naturalidade_municipio, p.municipio_residencia,
+              p.habilitacoes_academicas, p.curso_concluido, p.agregacao_pedagogica,
+              p.municipio_escola, p.ciclo_ensino, p.anos_servico_docente,
+              p.disciplinas_lecciona, p.classes_lecciona, p.cargos_pedagogicos,
+              p.must_change_password
        FROM profiles p
        JOIN auth_users u ON u.id = p.id
        WHERE p.id = $1

@@ -147,43 +147,45 @@ export async function GET(request: Request, context: { params: Promise<{ table: 
     let valueIndex = 1;
 
     // Filtros de segurança para a tabela "arquivos"
-    // visibilidade: 'publico' | 'formadores' | 'privado' | 'turma'
+    // visibilidade: 'publico' | 'formadores' | 'privado' | 'turma' (legado) | 'formadores_turma' (legado)
+    //             | 'acao_formacao' | 'formadores_acao'
     if (table === "arquivos") {
       if (sessionUser) {
         if (userRole !== "super-admin" && userRole !== "admin") {
           if (userRole === "formador") {
-            // formador: vê os seus + publico + formadores + turma/formadores_turma das suas turmas
+            // formador: vê sempre os seus (qualquer área); ficheiros "publico"/"formadores" de outros só
+            // se forem da área de alguma acção de formação que este formador lecciona (ou área "Geral").
+            // (turma/formadores_turma mantidos por compatibilidade com ficheiros antigos)
             filters.push(`(
               ${tableSql}.uploader_id = $${valueIndex}
-              OR ${tableSql}.visibilidade IN ('publico', 'formadores')
+              OR (${tableSql}.visibilidade IN ('publico', 'formadores') AND (
+                ${tableSql}.area = 'Geral'
+                OR ${tableSql}.area IN (
+                  SELECT af.area FROM acao_formadores acf
+                  INNER JOIN acoes_formacao af ON af.id = acf.acao_formacao_id
+                  WHERE acf.formador_id = $${valueIndex} AND af.area IS NOT NULL
+                )
+              ))
               OR (${tableSql}.visibilidade IN ('turma', 'formadores_turma') AND ${tableSql}.turma_id IN (
                 SELECT id FROM turmas WHERE formador_id = $${valueIndex}
+              ))
+              OR (${tableSql}.visibilidade IN ('acao_formacao', 'formadores_acao') AND ${tableSql}.acao_formacao_id IN (
+                SELECT acao_formacao_id FROM acao_formadores WHERE formador_id = $${valueIndex}
               ))
             )`);
             values.push(sessionUser.id);
             valueIndex++;
           } else {
-            // formando: vê publico/formadores (área certa), turma propria, formadores_turma se membro
-            filters.push(`(
-              (${tableSql}.visibilidade IN ('publico', 'formadores') AND (
-                ${tableSql}.area = 'Geral'
-                OR ${tableSql}.area IN (
-                  SELECT p.specialization FROM profiles p
-                  INNER JOIN formando_formadores ff ON ff.formador_id = p.id
-                  WHERE ff.formando_id = $${valueIndex} AND ff.status IN ('aceite')
-                )
-                OR ${tableSql}.area IN (
-                  SELECT t.area FROM turmas t
-                  INNER JOIN turma_membros tm ON tm.turma_id = t.id
-                  WHERE tm.formando_id = $${valueIndex}
-                )
-              ))
-              OR (${tableSql}.visibilidade = 'turma' AND ${tableSql}.turma_id IN (
-                SELECT turma_id FROM turma_membros WHERE formando_id = $${valueIndex}
-              ))
-              OR (${tableSql}.visibilidade = 'formadores_turma' AND ${tableSql}.turma_id IN (
-                SELECT turma_id FROM turma_membros WHERE formando_id = $${valueIndex}
-              ))
+            // formando: só vê ficheiros explicitamente publicados numa Acção de Formação em que está
+            // inscrito, e apenas dentro da janela de disponibilidade definida nessa publicação.
+            // (Sem acesso "geral por área" — a publicação por acção é o único caminho.)
+            filters.push(`EXISTS (
+              SELECT 1 FROM arquivo_acoes_formacao l
+              INNER JOIN inscricoes_acao ia ON ia.acao_formacao_id = l.acao_formacao_id
+              WHERE l.arquivo_id = ${tableSql}.id
+                AND ia.formando_id = $${valueIndex} AND ia.status = 'inscrito'
+                AND (l.disponivel_de IS NULL OR l.disponivel_de <= NOW())
+                AND (l.disponivel_ate IS NULL OR l.disponivel_ate >= NOW())
             )`);
             values.push(sessionUser.id);
             valueIndex++;

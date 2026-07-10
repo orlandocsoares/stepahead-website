@@ -2,9 +2,8 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen, Facebook, Instagram } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen, Facebook, Instagram, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { CommandCenter } from "@/components/CommandCenter";
 import { HeroBranding } from "@/components/HeroBranding";
 import { TourGuide, shouldShowTour } from "@/components/TourGuide";
 import { useProfile } from "@/hooks/useProfile";
+import { useLocalidades } from "@/hooks/useLocalidades";
 import { QRCodeSVG } from "qrcode.react";
 
 const FRAME_SUFFIX = "_delay-0.033s.webp";
@@ -227,6 +227,7 @@ export default function HeroSection() {
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const router = useRouter();
   const { profile, loading: profileLoading, refresh: refreshProfile } = useProfile();
+  const { provincias: provinciasAngola, getMunicipios: getMunicipiosAngola } = useLocalidades();
 
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isVIPWelcomeOpen, setIsVIPWelcomeOpen] = useState(false);
@@ -235,13 +236,12 @@ export default function HeroSection() {
   const [userRole, setUserRole] = useState<'formando' | 'formador'>('formando');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [provincia, setProvincia] = useState('');
+  const [municipio, setMunicipio] = useState('');
   const [escola, setEscola] = useState('');
-  const [formadoresIds, setFormadoresIds] = useState<string[]>([]);
-  const [anoLetivo, setAnoLetivo] = useState(getAnoLetivoActivo());
-  const [formadoresList, setFormadoresList] = useState<any[]>([]);
   const [especialidade, setEspecialidade] = useState('');
   const [bio, setBio] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -264,6 +264,31 @@ export default function HeroSection() {
 
   const [telemetry, setTelemetry] = useState<any>(null);
   const [selectedEvento, setSelectedEvento] = useState<any>(null);
+  const [minhasInscricoes, setMinhasInscricoes] = useState<Set<string>>(new Set());
+  const [inscrevendo, setInscrevendo] = useState(false);
+
+  useEffect(() => {
+    if (!profile?.id) { setMinhasInscricoes(new Set()); return; }
+    fetch(`/api/db/inscricoes_agenda?eq.user_id=${profile.id}`)
+      .then(r => r.json())
+      .then(({ data }) => setMinhasInscricoes(new Set((data ?? []).map((i: any) => i.evento_id))))
+      .catch(() => {});
+  }, [profile?.id]);
+
+  async function handleInscricaoPublica(eventoId: string) {
+    if (!profile?.id) return;
+    setInscrevendo(true);
+    try {
+      await fetch("/api/db/inscricoes_agenda", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: profile.id, evento_id: eventoId }),
+      });
+      setMinhasInscricoes(prev => new Set(prev).add(eventoId));
+    } finally {
+      setInscrevendo(false);
+    }
+  }
 
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
@@ -308,7 +333,7 @@ export default function HeroSection() {
     if (isDashboardView) return;
     fetch("/api/public/hero")
       .then(r => r.json())
-      .then(data => { setTelemetry(data); setFormadoresList(data.formadores_lista ?? []); })
+      .then(data => { setTelemetry(data); })
       .catch(() => {});
   }, [isDashboardView]);
 
@@ -372,7 +397,7 @@ export default function HeroSection() {
         first_name: firstName,
         last_name: lastName,
         role: userRole,
-        ...(userRole === 'formando' ? { provincia, escola, formadores_ids: formadoresIds, ano_letivo: anoLetivo } : { especialidade, biografia: bio }),
+        ...(userRole === 'formando' ? { provincia, municipio, escola } : { especialidade, biografia: bio }),
       }),
     });
     const syncData = await syncRes.json();
@@ -956,7 +981,13 @@ export default function HeroSection() {
                       {authMode === 'login' ? (
                         <form onSubmit={handleLogin} className="space-y-6">
                           <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none"/></div>
-                          <div className="space-y-1"><Label className="text-[9px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 focus-visible:ring-0 shadow-none"/></div>
+                          <div className="space-y-1 relative">
+                            <Label className="text-[9px] uppercase tracking-widest text-white/40">Passe</Label>
+                            <Input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 rounded-none border-0 border-b border-white/20 bg-transparent px-0 pr-7 focus-visible:ring-0 shadow-none"/>
+                            <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-0 bottom-2 text-white/30 hover:text-white/70 transition-colors">
+                              {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
+                          </div>
                           {error && <p className="text-[10px] text-red-400 uppercase tracking-widest text-center">{error}</p>}
                           <Button type="submit" disabled={loading} className="w-full rounded-2xl border bg-white/5 hover:bg-white hover:text-black font-medium uppercase tracking-[0.3em] py-6 text-[11px] shadow-none mt-4 transition-all">
                             {loading ? <Loader2 className="animate-spin" /> : "Entrar"}
@@ -973,7 +1004,13 @@ export default function HeroSection() {
 
                           <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
-                            <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-white/40">Passe</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                            <div className="space-y-1 relative">
+                              <Label className="text-[8px] uppercase tracking-widest text-white/40">Passe</Label>
+                              <Input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs pr-6"/>
+                              <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-0 bottom-1.5 text-white/30 hover:text-white/70 transition-colors">
+                                {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                              </button>
+                            </div>
                           </div>
 
                           {userRole === 'formando' ? (
@@ -981,59 +1018,24 @@ export default function HeroSection() {
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
                                   <Label className="text-[8px] uppercase tracking-widest text-blue-400">Província</Label>
-                                  <select required value={provincia} onChange={(e) => setProvincia(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
+                                  <select required value={provincia} onChange={(e) => { setProvincia(e.target.value); setMunicipio(''); }} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
                                     <option value="" disabled className="bg-[#0d0d14]">Seleccionar</option>
-                                    {["Luanda","Bié"].map(p => (
+                                    {provinciasAngola.map(p => (
                                       <option key={p} value={p} className="bg-[#0d0d14]">{p}</option>
                                     ))}
                                   </select>
                                 </div>
-                                <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-[8px] uppercase tracking-widest text-blue-400">Ano Lectivo</Label>
-                                <select value={anoLetivo} onChange={e => setAnoLetivo(e.target.value)} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none">
-                                  {getAnosLetivos().map(a => (
-                                    <option key={a} value={a} className="bg-[#0d0d14]">{a}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              {formadoresList.filter(f => !provincia || f.provincia === provincia).length > 0 && (
-                                <div className="space-y-2">
-                                  <Label className="text-[8px] uppercase tracking-widest text-blue-400">
-                                    Formadores <span className="text-white/30">(escolha os seus professores)</span>
-                                  </Label>
-                                  <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
-                                    {formadoresList
-                                      .filter(f => !provincia || f.provincia === provincia)
-                                      .map((f: any) => {
-                                        const selected = formadoresIds.includes(f.id);
-                                        return (
-                                          <button
-                                            key={f.id}
-                                            type="button"
-                                            onClick={() => setFormadoresIds(prev =>
-                                              selected ? prev.filter(id => id !== f.id) : [...prev, f.id]
-                                            )}
-                                            className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-left text-xs transition-all border ${
-                                              selected
-                                                ? 'bg-blue-500/20 border-blue-500/40 text-white'
-                                                : 'bg-white/[0.03] border-white/10 text-white/50 hover:border-white/20 hover:text-white/80'
-                                            }`}
-                                          >
-                                            <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 ${selected ? 'bg-blue-500 border-blue-500' : 'border-white/30'}`}>
-                                              {selected && <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
-                                            </span>
-                                            <span className="font-medium">{f.first_name} {f.last_name}</span>
-                                          </button>
-                                        );
-                                      })}
-                                  </div>
-                                  {formadoresIds.length > 0 && (
-                                    <p className="text-[10px] text-blue-400">{formadoresIds.length} formador{formadoresIds.length > 1 ? 'es' : ''} seleccionado{formadoresIds.length > 1 ? 's' : ''}</p>
-                                  )}
+                                <div className="space-y-1">
+                                  <Label className="text-[8px] uppercase tracking-widest text-blue-400">Município</Label>
+                                  <select required value={municipio} onChange={(e) => setMunicipio(e.target.value)} disabled={!provincia} className="w-full h-8 bg-transparent border-0 border-b border-white/20 text-xs text-white outline-none cursor-pointer appearance-none disabled:opacity-40">
+                                    <option value="" disabled className="bg-[#0d0d14]">{provincia ? 'Seleccionar' : 'Escolhe a província'}</option>
+                                    {getMunicipiosAngola(provincia).map(m => (
+                                      <option key={m} value={m} className="bg-[#0d0d14]">{m}</option>
+                                    ))}
+                                  </select>
                                 </div>
-                              )}
+                              </div>
+                              <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
                             </div>
                           ) : (
                             <div className="space-y-6 pt-2">
@@ -1132,12 +1134,29 @@ export default function HeroSection() {
                             </p>
                           )}
                         </div>
-                        <button
-                          onClick={() => { setSelectedEvento(null); setIsLoginOpen(true); }}
-                          className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white transition-colors"
-                        >
-                          Entrar para me inscrever
-                        </button>
+                        {profile ? (
+                          minhasInscricoes.has(selectedEvento.id) ? (
+                            <button disabled
+                              className="w-full py-2.5 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-sm font-medium text-emerald-400 flex items-center justify-center gap-2">
+                              <CheckCircle size={15} /> Inscrito
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleInscricaoPublica(selectedEvento.id)}
+                              disabled={inscrevendo}
+                              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                            >
+                              {inscrevendo ? "A inscrever..." : "Inscrever-me"}
+                            </button>
+                          )
+                        ) : (
+                          <button
+                            onClick={() => { setSelectedEvento(null); setIsLoginOpen(true); }}
+                            className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white transition-colors"
+                          >
+                            Entrar para me inscrever
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

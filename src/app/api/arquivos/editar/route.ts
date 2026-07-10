@@ -11,7 +11,7 @@ export async function PATCH(request: Request) {
   const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [session.id]);
   const role = profileRes.rows[0]?.role;
 
-  const { id, label, area, visibilidade, turma_id, disponivel_de, disponivel_ate, grupos, site_publico, thumbnail_url } = await request.json();
+  const { id, label, area, visibilidade, turma_id, acao_formacao_id, disponivel_de, disponivel_ate, grupos, site_publico, thumbnail_url } = await request.json();
   if (!id) return NextResponse.json({ error: "ID obrigatório." }, { status: 400 });
 
   // Verificar que o utilizador é dono ou admin
@@ -34,13 +34,14 @@ export async function PATCH(request: Request) {
        area           = COALESCE($3, area),
        visibilidade   = COALESCE($4, visibilidade),
        turma_id       = $5,
-       disponivel_de  = $6,
-       disponivel_ate = $7,
-       site_publico   = COALESCE($8, site_publico),
+       acao_formacao_id = $6,
+       disponivel_de  = $7,
+       disponivel_ate = $8,
+       site_publico   = COALESCE($9, site_publico),
        thumbnail_url  = CASE
-         WHEN $9::text IS NULL THEN thumbnail_url
-         WHEN $9::text = ''    THEN NULL
-         ELSE $9::text
+         WHEN $10::text IS NULL THEN thumbnail_url
+         WHEN $10::text = ''    THEN NULL
+         ELSE $10::text
        END
      WHERE id = $1`,
     [
@@ -49,6 +50,7 @@ export async function PATCH(request: Request) {
       area || null,
       visibilidade || null,
       (visibilidade === "turma" || visibilidade === "formadores_turma") ? (turma_id || null) : null,
+      (visibilidade === "acao_formacao" || visibilidade === "formadores_acao") ? (acao_formacao_id || null) : null,
       disponivel_de || null,
       disponivel_ate || null,
       typeof site_publico === "boolean" ? site_publico : null,

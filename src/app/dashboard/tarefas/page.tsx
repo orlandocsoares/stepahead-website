@@ -136,13 +136,13 @@ export default function TarefasPage() {
   const [form, setForm] = useState({ titulo: "", descricao: "", prazo: "" });
   const [anexoFile, setAnexoFile] = useState<File | null>(null);
   const anexoInputRef = useRef<HTMLInputElement>(null);
-  const [destMode, setDestMode] = useState<"meus" | "turma" | "individual" | "todos">("meus");
-  const [destTurma, setDestTurma] = useState("");
+  const [destMode, setDestMode] = useState<"meus" | "acao" | "individual" | "todos">("meus");
+  const [destAcao, setDestAcao] = useState("");
   const [destIds, setDestIds] = useState<string[]>([]);
   const [formandoSearch, setFormandoSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [turmas, setTurmas] = useState<{ id: string; nome: string; area: string; total_membros: number }[]>([]);
+  const [acoesFormacao, setAcoesFormacao] = useState<{ id: string; designacao: string; total_inscritos: number }[]>([]);
   const [todosFormandos, setTodosFormandos] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
 
   async function fetchTarefas() {
@@ -159,7 +159,7 @@ export default function TarefasPage() {
   useEffect(() => {
     fetchTarefas();
     if (isStaff) {
-      fetch("/api/turmas").then(r => r.json()).then(j => setTurmas(j.data ?? []));
+      fetch("/api/acoes-formacao").then(r => r.json()).then(j => setAcoesFormacao(j.data ?? []));
       fetch("/api/db/profiles?orderBy=first_name&ascending=true")
         .then(r => r.json())
         .then(j => setTodosFormandos((j.data ?? []).filter((u: any) => u.role === "formando")));
@@ -228,7 +228,7 @@ export default function TarefasPage() {
     setForm({ titulo: "", descricao: "", prazo: "" });
     setAnexoFile(null);
     setDestMode("meus");
-    setDestTurma(turmas[0]?.id ?? "");
+    setDestAcao(acoesFormacao[0]?.id ?? "");
     setDestIds([]);
     setFormandoSearch("");
     setError(null);
@@ -237,7 +237,7 @@ export default function TarefasPage() {
 
   function destinatariosPayload() {
     if (destMode === "individual") return destIds;
-    if (destMode === "turma") return destTurma ? `turma:${destTurma}` : "meus";
+    if (destMode === "acao") return destAcao ? `acao:${destAcao}` : "meus";
     return destMode;
   }
 
@@ -570,7 +570,7 @@ export default function TarefasPage() {
                 <div className={`grid gap-2 ${(user?.role === "admin" || user?.role === "super-admin") ? "grid-cols-4" : "grid-cols-3"}`}>
                   {[
                     { value: "meus",       label: "Meus formandos", icon: Users },
-                    { value: "turma",      label: "Por turma",      icon: ChevronDown },
+                    { value: "acao",       label: "Por Acção de Formação", icon: ChevronDown },
                     { value: "individual", label: "Individual",      icon: User },
                     ...((user?.role === "admin" || user?.role === "super-admin")
                       ? [{ value: "todos", label: "Todos", icon: Users }]
@@ -590,12 +590,12 @@ export default function TarefasPage() {
                   })}
                 </div>
 
-                {destMode === "turma" && (
-                  <select value={destTurma} onChange={e => setDestTurma(e.target.value)}
+                {destMode === "acao" && (
+                  <select value={destAcao} onChange={e => setDestAcao(e.target.value)}
                     className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
-                    {turmas.length === 0
-                      ? <option value="">Sem turmas criadas</option>
-                      : turmas.map(t => <option key={t.id} value={t.id} className="c-bg">{t.nome} ({t.total_membros} membros)</option>)
+                    {acoesFormacao.length === 0
+                      ? <option value="">Sem acções de formação criadas</option>
+                      : acoesFormacao.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao} ({a.total_inscritos} inscritos)</option>)
                     }
                   </select>
                 )}

@@ -16,11 +16,15 @@ import { CAPA_GERAL, AREA_COVERS, getAreaCover, isBrandedCapa } from "@/lib/capa
 const CATEGORIES_FALLBACK = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
 const VISIBILIDADE_OPTIONS = [
-  { value: "privado",          label: "Só eu",              icon: Lock,          color: "c-tx3" },
-  { value: "turma",            label: "Minha turma",        icon: GraduationCap, color: "text-amber-400" },
-  { value: "formadores",       label: "Formadores",         icon: Users,         color: "text-blue-400" },
-  { value: "formadores_turma", label: "Formadores + Turma", icon: Users,         color: "text-purple-400" },
-  { value: "publico",          label: "Todos",              icon: Globe,         color: "text-emerald-400" },
+  { value: "privado",           label: "Só eu",                        icon: Lock,          color: "c-tx3" },
+  { value: "formadores",        label: "Formadores",                   icon: Users,         color: "text-blue-400" },
+  { value: "publico",           label: "Todos",                        icon: Globe,         color: "text-emerald-400" },
+  // Legado — apenas para exibir ficheiros antigos, não seleccionável em novos uploads.
+  // A publicação numa Acção de Formação específica passa a fazer-se em Acções de Formação → Materiais.
+  { value: "turma",             label: "Minha turma (legado)",              icon: GraduationCap, color: "text-amber-400" },
+  { value: "formadores_turma",  label: "Formadores + Turma (legado)",       icon: Users,         color: "text-purple-400" },
+  { value: "acao_formacao",     label: "Acção de Formação (legado)",        icon: GraduationCap, color: "text-amber-400" },
+  { value: "formadores_acao",   label: "Formadores + Acção (legado)",       icon: Users,         color: "text-purple-400" },
 ];
 
 const CAT_COLORS: Record<string, string> = {
@@ -29,12 +33,13 @@ const CAT_COLORS: Record<string, string> = {
   "Química": "text-emerald-400", "Pedagogia": "text-amber-400",
 };
 
-function VisibilidadeBadge({ v, small }: { v: string; small?: boolean }) {
+function VisibilidadeBadge({ v, small, acaoNome }: { v: string; small?: boolean; acaoNome?: string }) {
   const opt = VISIBILIDADE_OPTIONS.find(o => o.value === v) ?? VISIBILIDADE_OPTIONS[0];
   const Icon = opt.icon;
+  const isAcao = v === "acao_formacao" || v === "formadores_acao";
   return (
     <span className={`inline-flex items-center gap-1 ${small ? "text-[9px]" : "text-[10px]"} ${opt.color}`}>
-      <Icon size={small ? 9 : 10} /> {opt.label}
+      <Icon size={small ? 9 : 10} /> {isAcao && acaoNome ? acaoNome : opt.label}
     </span>
   );
 }
@@ -131,30 +136,23 @@ export default function FicheirosPage() {
   const [title, setTitle] = useState("");
   const [uploadCategory, setUploadCategory] = useState("Geral");
   const [visibilidade, setVisibilidade] = useState("publico");
-  const [turmaId, setTurmaId] = useState<string>("");
-  const [minhasTurmas, setMinhasTurmas] = useState<{ id: string; nome: string; area: string }[]>([]);
+  const [acaoFormacaoId, setAcaoFormacaoId] = useState<string>("");
+  const [minhasAcoes, setMinhasAcoes] = useState<{ id: string; designacao: string }[]>([]);
+  const [acoesNomes, setAcoesNomes] = useState<Record<string, string>>({});
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortCol, setSortCol] = useState<"nome" | "area" | "tamanho" | "data" | "visibilidade">("data");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [selectedCapa, setSelectedCapa] = useState<string | null>(null);
-  const [disponivel_de, setDisponivelDe] = useState("");
-  const [disponivel_ate, setDisponivelAte] = useState("");
   const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
-  const [gruposFormacao, setGruposFormacao] = useState<{ id: string; nome: string }[]>([]);
-  const [gruposUpload, setGruposUpload] = useState<string[]>([]);
   const [sitePublico, setSitePublico] = useState(false);
-  const [activeGrupo, setActiveGrupo] = useState<string>("todos");
   const [isDragging, setIsDragging] = useState(false);
 
   const [editingFile, setEditingFile] = useState<any>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editArea, setEditArea] = useState("Geral");
   const [editVisibilidade, setEditVisibilidade] = useState("publico");
-  const [editTurmaId, setEditTurmaId] = useState("");
-  const [editDisponivelDe, setEditDisponivelDe] = useState("");
-  const [editDisponivelAte, setEditDisponivelAte] = useState("");
-  const [editGrupos, setEditGrupos] = useState<string[]>([]);
+  const [editAcaoFormacaoId, setEditAcaoFormacaoId] = useState("");
   const [editSitePublico, setEditSitePublico] = useState(false);
   const [editCapa, setEditCapa] = useState<string | null>(null);
   const [editCapaTouched, setEditCapaTouched] = useState(false);
@@ -165,7 +163,19 @@ export default function FicheirosPage() {
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
 
   const allCatNames = useMemo(() => ["Geral", ...disciplinas.map(d => d.nome)], [disciplinas]);
-  const visibleCategories = useMemo(() => getVisibleCategories(user?.role, user?.specialization, allCatNames), [user?.role, user?.specialization, allCatNames]);
+
+  // Contagens por categoria
+  const catCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const f of files) c[f.area] = (c[f.area] ?? 0) + 1;
+    return c;
+  }, [files]);
+
+  const visibleCategories = useMemo(() => {
+    // formando: só vê disciplinas onde tem, de facto, ficheiros publicados numa Acção de Formação
+    if (user?.role === "formando") return allCatNames.filter(cat => (catCounts[cat] ?? 0) > 0);
+    return getVisibleCategories(user?.role, user?.specialization, allCatNames);
+  }, [user?.role, user?.specialization, allCatNames, catCounts]);
   const uploadAreas = useMemo(() => getUploadAreas(user?.role, user?.specialization, allCatNames), [user?.role, user?.specialization, allCatNames]);
   const isRestricted = user?.role === "formador" && uploadAreas !== null;
   const uploadCategoryOptions = uploadAreas ?? allCatNames;
@@ -176,10 +186,9 @@ export default function FicheirosPage() {
     setUploadFile(prefillFile ?? null);
     setThumbnailPreview(prefillFile?.type === "application/pdf" ? URL.createObjectURL(prefillFile) : null);
     setVisibilidade("publico");
-    setTurmaId(minhasTurmas[0]?.id ?? "");
+    setAcaoFormacaoId(minhasAcoes[0]?.id ?? "");
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
-    setDisponivelDe(""); setDisponivelAte("");
-    setGruposUpload([]); setSitePublico(false);
+    setSitePublico(false);
     setSelectedCapa(null);
     setIsModalOpen(true);
   }
@@ -230,21 +239,17 @@ export default function FicheirosPage() {
   useEffect(() => {
     fetchFiles();
     fetch("/api/admin/disciplinas").then(r => r.json()).then(j => setDisciplinas(j.disciplinas?.filter((d: any) => d.activo) ?? []));
-    fetch("/api/admin/grupos-formacao").then(r => r.json()).then(j => setGruposFormacao(j.grupos?.filter((g: any) => g.activo) ?? []));
-    if (user?.role === "formador") {
-      fetch("/api/turmas").then(r => r.json()).then(json => {
+    if (user) {
+      fetch("/api/acoes-formacao").then(r => r.json()).then(json => {
         const todas = json.data ?? [];
-        setMinhasTurmas(todas.filter((t: any) => t.formador_id === user.id));
+        setAcoesNomes(Object.fromEntries(todas.map((a: any) => [a.id, a.designacao])));
+        const isAdminUser = user.role === "admin" || user.role === "super-admin";
+        if (isAdminUser || user.role === "formador") {
+          setMinhasAcoes(isAdminUser ? todas : todas.filter((a: any) => (a.formadores ?? []).some((f: any) => f.id === user.id)));
+        }
       });
     }
   }, [user?.id, user?.role]);
-
-  // Contagens por categoria
-  const catCounts = useMemo(() => {
-    const c: Record<string, number> = {};
-    for (const f of files) c[f.area] = (c[f.area] ?? 0) + 1;
-    return c;
-  }, [files]);
 
   const totalSizeMB = useMemo(() => {
     let total = 0;
@@ -266,11 +271,6 @@ export default function FicheirosPage() {
       }
       if (!visibleCategories.includes(f.area)) return false;
       if (activeCategory !== "Geral" && f.area !== activeCategory) return false;
-      if (activeGrupo !== "todos") {
-        const gs: string[] = Array.isArray(f.grupos) ? f.grupos : [];
-        if (activeGrupo === "sem-grupo") { if (gs.length > 0) return false; }
-        else { if (!gs.includes(activeGrupo)) return false; }
-      }
       if (search && !f.label?.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     }).sort((a, b) => {
@@ -281,7 +281,7 @@ export default function FicheirosPage() {
       else if (sortCol === "data") cmp = new Date(a.criado_em ?? 0).getTime() - new Date(b.criado_em ?? 0).getTime();
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [files, search, activeCategory, activeGrupo, visibleCategories, user, sortCol, sortDir]);
+  }, [files, search, activeCategory, visibleCategories, user, sortCol, sortDir]);
 
   function toggleSort(col: typeof sortCol) {
     if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -308,19 +308,12 @@ export default function FicheirosPage() {
           tamanho: (uploadFile.size / (1024 * 1024)).toFixed(2) + " MB",
           tipo: uploadFile.type.includes("video") ? "video" : "pdf",
           visibilidade,
-          ...(visibilidade === "turma" && turmaId ? { turma_id: turmaId } : {}),
-          ...(disponivel_de ? { disponivel_de } : {}),
-          ...(disponivel_ate ? { disponivel_ate } : {}),
-          ...(gruposUpload[0] ? { grupo_formacao_id: gruposUpload[0] } : {}),
+          ...((visibilidade === "acao_formacao" || visibilidade === "formadores_acao") && acaoFormacaoId ? { acao_formacao_id: acaoFormacaoId } : {}),
           ...(selectedCapa ? { thumbnail_url: selectedCapa } : {}),
           site_publico: sitePublico && visibilidade === "publico",
         }),
       });
       if (!dbRes.ok) throw new Error("Erro ao registar.");
-      if (gruposUpload.length > 0) {
-        const newFile = (await dbRes.json())?.data?.[0];
-        if (newFile?.id) await fetch("/api/arquivos/editar", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: newFile.id, grupos: gruposUpload }) });
-      }
       setIsModalOpen(false); setThumbnailPreview(null); fetchFiles();
     } catch (err: any) { alert(err.message ?? "Erro."); }
     finally { setIsUploading(false); }
@@ -334,10 +327,7 @@ export default function FicheirosPage() {
 
   function openEditModal(f: any) {
     setEditingFile(f); setEditTitle(f.label ?? ""); setEditArea(f.area ?? "Geral");
-    setEditVisibilidade(f.visibilidade ?? "publico"); setEditTurmaId(f.turma_id ?? "");
-    setEditDisponivelDe(f.disponivel_de ? f.disponivel_de.slice(0, 10) : "");
-    setEditDisponivelAte(f.disponivel_ate ? f.disponivel_ate.slice(0, 10) : "");
-    setEditGrupos(Array.isArray(f.grupos) ? f.grupos : []);
+    setEditVisibilidade(f.visibilidade ?? "publico"); setEditAcaoFormacaoId(f.acao_formacao_id ?? "");
     setEditSitePublico(f.site_publico ?? false);
     const knownCapa = f.thumbnail_url === CAPA_GERAL || Object.values(AREA_COVERS).includes(f.thumbnail_url) ? f.thumbnail_url : null;
     setEditCapa(knownCapa);
@@ -361,8 +351,7 @@ export default function FicheirosPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: editingFile.id, label: editTitle, area: editArea, visibilidade: editVisibilidade,
-          turma_id: editTurmaId || null, disponivel_de: editDisponivelDe || null,
-          disponivel_ate: editDisponivelAte || null, grupos: editGrupos,
+          acao_formacao_id: editAcaoFormacaoId || null,
           site_publico: editSitePublico && editVisibilidade === "publico",
           ...(editCapaTouched ? { thumbnail_url: editCapa ?? "" } : {}),
         }),
@@ -407,20 +396,6 @@ export default function FicheirosPage() {
             </button>
           );
         })}
-
-        {/* Grupos */}
-        {gruposFormacao.length > 0 && (
-          <>
-            <p className="text-[9px] font-bold uppercase tracking-widest c-tx5 px-2 mb-1 mt-3">Grupos</p>
-            {[{ id: "todos", nome: "Todos" }, ...gruposFormacao, { id: "sem-grupo", nome: "Sem grupo" }].map(g => (
-              <button key={g.id} onClick={() => setActiveGrupo(g.id)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs transition-all ${activeGrupo === g.id ? "c-s1 border c-br font-medium c-tx" : "c-tx3 hc-s1 hc-tx"}`}>
-                <Users size={12} className="c-tx5" />
-                <span className="truncate">{g.nome}</span>
-              </button>
-            ))}
-          </>
-        )}
 
         {/* Upload drop zone — admin/formador */}
         {canUpload && (
@@ -576,7 +551,7 @@ export default function FicheirosPage() {
                           <p className="text-[9px] c-tx5 truncate">{f.tamanho ?? "—"} · {formatDate(f.criado_em ?? f.created_at)}</p>
                           <div className="flex items-center gap-1 shrink-0">
                             <DisponibilidadeBadge disponivel_de={f.disponivel_de} disponivel_ate={f.disponivel_ate} />
-                            <VisibilidadeBadge v={f.visibilidade ?? "publico"} small />
+                            <VisibilidadeBadge v={f.visibilidade ?? "publico"} small acaoNome={f.acao_formacao_id ? acoesNomes[f.acao_formacao_id] : undefined} />
                           </div>
                         </div>
                       </div>
@@ -704,22 +679,6 @@ export default function FicheirosPage() {
                   </select>
                 )}
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Grupos</label>
-                {gruposFormacao.length === 0 ? <p className="text-xs c-tx5 italic pt-2">Nenhum grupo criado</p> : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {gruposFormacao.map(g => {
-                      const sel = gruposUpload.includes(g.id);
-                      return (
-                        <button key={g.id} type="button" onClick={() => setGruposUpload(prev => sel ? prev.filter(x => x !== g.id) : [...prev, g.id])}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-medium border transition-colors ${sel ? "bg-emerald-600/20 text-emerald-400 border-emerald-500/30" : "c-s1 c-tx3 c-br hc-s2"}`}>
-                          {g.nome}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3 flex items-center justify-between">
@@ -741,9 +700,10 @@ export default function FicheirosPage() {
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3">Visibilidade</label>
-              <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
+              <div className={"grid gap-2 grid-cols-3"}>
                 {VISIBILIDADE_OPTIONS.filter(opt => {
-                  if (opt.value === "turma" || opt.value === "formadores_turma") return user?.role === "formador" && minhasTurmas.length > 0;
+                  if (opt.value === "turma" || opt.value === "formadores_turma") return false;
+                  if (opt.value === "acao_formacao" || opt.value === "formadores_acao") return false;
                   return true;
                 }).map(opt => {
                   const Icon = opt.icon;
@@ -757,20 +717,11 @@ export default function FicheirosPage() {
                   );
                 })}
               </div>
-              {(visibilidade === "turma" || visibilidade === "formadores_turma") && minhasTurmas.length > 0 && (
-                <select value={turmaId} onChange={e => setTurmaId(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
-                  {minhasTurmas.map(t => <option key={t.id} value={t.id} className="c-bg">{t.nome} ({t.area})</option>)}
+              {(visibilidade === "acao_formacao" || visibilidade === "formadores_acao") && minhasAcoes.length > 0 && (
+                <select value={acaoFormacaoId} onChange={e => setAcaoFormacaoId(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
+                  {minhasAcoes.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao}</option>)}
                 </select>
               )}
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs c-tx3 flex items-center gap-1.5"><CalendarClock size={11} /> Disponibilidade (opcional)</label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><span className="text-[10px] c-tx4">A partir de</span>
-                  <input type="date" value={disponivel_de} onChange={e => setDisponivelDe(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 [color-scheme:dark]" /></div>
-                <div className="space-y-1"><span className="text-[10px] c-tx4">Expira em</span>
-                  <input type="date" value={disponivel_ate} onChange={e => setDisponivelAte(e.target.value)} min={disponivel_de || undefined} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 [color-scheme:dark]" /></div>
-              </div>
             </div>
             {visibilidade === "publico" && (
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border c-br hc-s1 transition-colors">
@@ -802,29 +753,11 @@ export default function FicheirosPage() {
               <label className="text-xs c-tx3">Título *</label>
               <input required value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Disciplina</label>
-                <select value={editArea} onChange={e => setEditArea(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
-                  {allCatNames.map(c => <option key={c} value={c} className="c-bg">{c}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Grupos</label>
-                {gruposFormacao.length === 0 ? <p className="text-xs c-tx5 italic pt-2">Nenhum grupo</p> : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {gruposFormacao.map(g => {
-                      const sel = editGrupos.includes(g.id);
-                      return (
-                        <button key={g.id} type="button" onClick={() => setEditGrupos(prev => sel ? prev.filter(x => x !== g.id) : [...prev, g.id])}
-                          className={`px-2 py-1 rounded-lg text-[11px] border transition-colors ${sel ? "bg-emerald-600/20 text-emerald-400 border-emerald-500/30" : "c-s1 c-tx3 c-br hc-s2"}`}>
-                          {g.nome}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+            <div className="space-y-1.5">
+              <label className="text-xs c-tx3">Disciplina</label>
+              <select value={editArea} onChange={e => setEditArea(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
+                {allCatNames.map(c => <option key={c} value={c} className="c-bg">{c}</option>)}
+              </select>
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3 flex items-center justify-between">
@@ -846,9 +779,10 @@ export default function FicheirosPage() {
             </div>
             <div className="space-y-2">
               <label className="text-xs c-tx3">Visibilidade</label>
-              <div className={`grid gap-2 ${(user?.role === "formador" && minhasTurmas.length > 0) ? "grid-cols-5" : "grid-cols-3"}`}>
+              <div className={"grid gap-2 grid-cols-3"}>
                 {VISIBILIDADE_OPTIONS.filter(opt => {
-                  if (opt.value === "turma" || opt.value === "formadores_turma") return user?.role === "formador" && minhasTurmas.length > 0;
+                  if (opt.value === "turma" || opt.value === "formadores_turma") return false;
+                  if (opt.value === "acao_formacao" || opt.value === "formadores_acao") return false;
                   return true;
                 }).map(opt => {
                   const Icon = opt.icon;
@@ -862,20 +796,11 @@ export default function FicheirosPage() {
                   );
                 })}
               </div>
-              {(editVisibilidade === "turma" || editVisibilidade === "formadores_turma") && minhasTurmas.length > 0 && (
-                <select value={editTurmaId} onChange={e => setEditTurmaId(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
-                  {minhasTurmas.map(t => <option key={t.id} value={t.id} className="c-bg">{t.nome} ({t.area})</option>)}
+              {(editVisibilidade === "acao_formacao" || editVisibilidade === "formadores_acao") && minhasAcoes.length > 0 && (
+                <select value={editAcaoFormacaoId} onChange={e => setEditAcaoFormacaoId(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
+                  {minhasAcoes.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao}</option>)}
                 </select>
               )}
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs c-tx3 flex items-center gap-1.5"><CalendarClock size={11} /> Disponibilidade (opcional)</label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><span className="text-[10px] c-tx4">A partir de</span>
-                  <input type="date" value={editDisponivelDe} onChange={e => setEditDisponivelDe(e.target.value)} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 [color-scheme:dark]" /></div>
-                <div className="space-y-1"><span className="text-[10px] c-tx4">Expira em</span>
-                  <input type="date" value={editDisponivelAte} onChange={e => setEditDisponivelAte(e.target.value)} min={editDisponivelDe || undefined} className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2 outline-none focus:border-blue-500/50 [color-scheme:dark]" /></div>
-              </div>
             </div>
             {editVisibilidade === "publico" && (
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border c-br hc-s1 transition-colors">

@@ -29,6 +29,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Utilizador não encontrado." }, { status: 404 });
   }
 
+  // A password foi definida por um administrador — obriga o utilizador a trocá-la no próximo login.
+  await dbQuery(`UPDATE profiles SET must_change_password = true WHERE id = $1`, [user_id]);
+
   await auditLog("reset_password", { actorId: sessionUser.id, targetId: user_id });
   return NextResponse.json({ ok: true });
 }

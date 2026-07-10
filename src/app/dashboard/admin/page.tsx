@@ -19,6 +19,7 @@ export default function SuperAdminPage() {
   const [loading, setLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [provinciaFilter, setProvinciaFilter] = useState("");
   const router = useRouter();
 
   const [isAgendaModalOpen, setIsAgendaModalOpen] = useState(false);
@@ -27,7 +28,6 @@ export default function SuperAdminPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const [statsData, setStatsData] = useState<any>(null);
-  const [formadoresList, setFormadoresList] = useState<any[]>([]);
   const [mediaRadar, setMediaRadar] = useState<string>("");
   const [formadoresPendentes, setFormadoresPendentes] = useState<any[]>([]);
   const [approvingFormadorId, setApprovingFormadorId] = useState<string | null>(null);
@@ -328,21 +328,19 @@ export default function SuperAdminPage() {
           return dB.localeCompare(dA);
         });
         setData(sorted);
-        // Carregar lista de formadores para o select de associação (só admins)
-        if (activeTab === "users" && isAdminOrSuper(profile?.role) && formadoresList.length === 0) {
-          fetch("/api/db/profiles?eq.role=formador")
-            .then(r => r.json())
-            .then(d => setFormadoresList(d.data ?? []));
-        }
       }
     } catch (e: any) { setDbError(e.message); setData([]); }
     setLoading(false);
   }
 
   const filteredData = useMemo(() => {
-    if (!searchTerm) return data;
+    let result = data;
+    if (activeTab === "users" && provinciaFilter) {
+      result = result.filter(item => item.provincia === provinciaFilter);
+    }
+    if (!searchTerm) return result;
     const s = searchTerm.toLowerCase();
-    return data.filter(item => {
+    return result.filter(item => {
       if (activeTab === "users") {
         const fullName = `${item.first_name || ""} ${item.last_name || ""}`.toLowerCase();
         return fullName.includes(s) || item.email?.toLowerCase().includes(s);
@@ -350,7 +348,14 @@ export default function SuperAdminPage() {
       if (activeTab === "agenda") return item.titulo?.toLowerCase().includes(s) || item.local?.toLowerCase().includes(s);
       return true;
     });
-  }, [data, searchTerm, activeTab]);
+  }, [data, searchTerm, activeTab, provinciaFilter]);
+
+  const provinciasDisponiveis = useMemo(() => {
+    if (activeTab !== "users") return [];
+    const set = new Set<string>();
+    data.forEach(item => { if (item.provincia) set.add(item.provincia); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt"));
+  }, [data, activeTab]);
 
   const allGroupedUsers = useMemo(() => {
     if (activeTab !== "users") return null;
@@ -534,6 +539,16 @@ export default function SuperAdminPage() {
               className="w-full c-s1 border c-br rounded-lg pl-9 pr-4 py-2 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors"
             />
           </div>
+          {activeTab === "users" && provinciasDisponiveis.length > 0 && (
+            <select value={provinciaFilter} onChange={(e) => setProvinciaFilter(e.target.value)}
+              className="c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors shrink-0"
+            >
+              <option value="">Todas as províncias</option>
+              {provinciasDisponiveis.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          )}
           {activeTab === "users" && (
             <div className="flex items-center gap-1 c-s1 border c-br rounded-lg p-1 shrink-0">
               <button onClick={() => setUserView("list")} title="Vista em lista"
@@ -1068,19 +1083,6 @@ export default function SuperAdminPage() {
                                         <option value="suspenso" className="c-bg">Suspenso</option>
                                       </select>
                                     </div>
-                                    {item.role === "formando" && formadoresList.length > 0 && (
-                                      <select
-                                        value={item.formador_id ?? ""}
-                                        onChange={e => handleUpdate(item.id, { formador_id: e.target.value || null })}
-                                        className="px-2 py-1 rounded-lg c-s1 border c-br text-xs c-tx2 outline-none cursor-pointer max-w-[160px]"
-                                        title="Formador associado"
-                                      >
-                                        <option value="" className="c-bg">— Sem formador —</option>
-                                        {formadoresList.map((f: any) => (
-                                          <option key={f.id} value={f.id} className="c-bg">{f.first_name} {f.last_name}</option>
-                                        ))}
-                                      </select>
-                                    )}
                                     <button onClick={(e) => { e.stopPropagation(); openProfileModal(item); }} className="p-1.5 rounded-lg c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors" title="Ver/editar perfil">
                                       <User size={13} />
                                     </button>
@@ -1562,6 +1564,7 @@ export default function SuperAdminPage() {
                 <div className="space-y-1.5">
                   <label className="text-xs c-tx3">Nome de utilizador (login)</label>
                   <input required value={noEmailForm.username}
+                    name="novo-formando-login" autoComplete="off" data-1p-ignore data-lpignore="true"
                     onChange={e => {
                       setNoEmailUsernameEdited(true);
                       setNoEmailUsernameError(null);
@@ -1578,6 +1581,7 @@ export default function SuperAdminPage() {
                   <label className="text-xs c-tx3">Password temporária</label>
                   <div className="relative">
                     <input required type={showNoEmailPwd ? "text" : "password"} value={noEmailForm.password}
+                      name="novo-formando-password" autoComplete="new-password" data-1p-ignore data-lpignore="true"
                       onChange={e => setNoEmailForm(f => ({ ...f, password: e.target.value }))}
                       minLength={6} placeholder="Mínimo 6 caracteres"
                       className="w-full c-s1 border c-br rounded-lg px-3 py-2 pr-10 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors" />

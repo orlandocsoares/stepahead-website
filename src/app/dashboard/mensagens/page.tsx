@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import {
   Send, Search, Loader2, MessageSquare, ArrowLeft, Smile, Trash2,
   PenSquare, Users, GraduationCap, UserCheck, ChevronDown,
-  ChevronUp, Reply, X
+  ChevronUp, Reply, X, Paperclip, FileText, Download
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,7 +19,12 @@ type Conversation = {
 type Message = {
   id: string; from_user_id: string; to_user_id: string;
   content: string; created_at: string; first_name: string; last_name: string;
+  anexo_url?: string | null; anexo_nome?: string | null;
 };
+
+function isImageFile(name?: string | null) {
+  return !!name && /\.(png|jpe?g|gif|webp|svg)$/i.test(name);
+}
 type Profile = { id: string; first_name: string; last_name: string; role: string; avatar_url?: string };
 
 const EMOJIS = [
@@ -103,6 +108,9 @@ function MensagensInner() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [showEmojis, setShowEmojis] = useState(false);
+  const [anexoFile, setAnexoFile] = useState<File | null>(null);
+  const [uploadingAnexo, setUploadingAnexo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [meusFormadoresIds, setMeusFormadoresIds] = useState<Set<string>>(new Set());
 
@@ -185,7 +193,7 @@ function MensagensInner() {
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!text.trim() || !activeId || !user) return;
+    if ((!text.trim() && !anexoFile) || !activeId || !user) return;
     setSending(true); setSendError(null);
     try {
       let finalContent = text.trim();
@@ -194,14 +202,30 @@ function MensagensInner() {
         const authorName = `${replyTo.first_name} ${replyTo.last_name}`.trim();
         finalContent = `> ${authorName}: ${preview}\n\n${finalContent}`;
       }
+
+      let anexo_url: string | undefined;
+      let anexo_nome: string | undefined;
+      if (anexoFile) {
+        setUploadingAnexo(true);
+        const sanitized = anexoFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+        const fileName = `${Date.now()}_${sanitized}`;
+        const uploadForm = new FormData();
+        uploadForm.append("bucket", "mensagens"); uploadForm.append("path", fileName); uploadForm.append("file", anexoFile);
+        const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: uploadForm });
+        setUploadingAnexo(false);
+        if (!uploadRes.ok) throw new Error("Erro ao enviar o anexo.");
+        anexo_url = `/storage/v1/object/public/mensagens/${fileName}`;
+        anexo_nome = anexoFile.name;
+      }
+
       const res = await fetch("/api/mensagens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to_user_id: activeId, content: finalContent }),
+        body: JSON.stringify({ to_user_id: activeId, content: finalContent, anexo_url, anexo_nome }),
       });
       const json = await res.json();
       if (!res.ok || json.error) throw new Error(json.error ?? "Erro ao enviar mensagem.");
-      setText(""); setReplyTo(null);
+      setText(""); setReplyTo(null); setAnexoFile(null);
       await fetchMessages(activeId);
     } catch (err: any) {
       setSendError(err.message);
@@ -402,13 +426,13 @@ function MensagensInner() {
                   const isMe = msg.from_user_id === user?.id;
 
                   // Detectar se é uma resposta (começa com "> ")
-                  const isReply = msg.content.startsWith("> ");
+                  const isReply = (msg.content ?? "").startsWith("> ");
                   let quoteText = "";
-                  let mainText = msg.content;
+                  let mainText = msg.content ?? "";
                   if (isReply) {
-                    const parts = msg.content.split("\n\n");
+                    const parts = (msg.content ?? "").split("\n\n");
                     quoteText = parts[0].replace(/^> /, "");
-                    mainText = parts.slice(1).join("\n\n") || msg.content;
+                    mainText = parts.slice(1).join("\n\n") || msg.content || "";
                   }
 
                   return (
@@ -441,7 +465,21 @@ function MensagensInner() {
                                 {quoteText}
                               </div>
                             )}
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{mainText}</p>
+                            {msg.anexo_url && (
+                              isImageFile(msg.anexo_nome) ? (
+                                <a href={msg.anexo_url} target="_blank" rel="noopener noreferrer" className="block mb-2 -mx-0.5">
+                                  <img src={msg.anexo_url} alt={msg.anexo_nome ?? "Anexo"} className="max-w-full max-h-52 rounded-lg object-cover" />
+                                </a>
+                              ) : (
+                                <a href={msg.anexo_url} target="_blank" rel="noopener noreferrer"
+                                  className={`flex items-center gap-2 mb-2 px-2.5 py-2 rounded-lg border ${isMe ? "border-white/20 bg-white/10 hover:bg-white/15" : "c-br c-s1 hc-s2"} transition-colors`}>
+                                  <FileText size={14} className={isMe ? "text-white/80 shrink-0" : "c-tx4 shrink-0"} />
+                                  <span className="text-xs truncate flex-1">{msg.anexo_nome ?? "Anexo"}</span>
+                                  <Download size={12} className={isMe ? "text-white/60 shrink-0" : "c-tx5 shrink-0"} />
+                                </a>
+                              )
+                            )}
+                            {mainText && <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{mainText}</p>}
                             <p className={`text-[10px] mt-1 ${isMe ? "text-blue-200/60" : "c-tx5"} ${isMe ? "text-right" : ""}`}>
                               {formatTime(msg.created_at)}
                             </p>
@@ -525,8 +563,25 @@ function MensagensInner() {
               )}
             </AnimatePresence>
 
+            {/* Anexo seleccionado */}
+            {anexoFile && (
+              <div className="mx-4 mb-1 flex items-center gap-2 px-3 py-2 c-s1 border c-br rounded-lg">
+                <Paperclip size={13} className="text-blue-400 shrink-0" />
+                <span className="text-xs c-tx3 truncate flex-1">{anexoFile.name}</span>
+                <button type="button" onClick={() => { setAnexoFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                  className="c-tx5 hover:c-tx3 transition-colors shrink-0">
+                  <X size={13} />
+                </button>
+              </div>
+            )}
+
             {/* Input */}
             <form onSubmit={handleSend} className="flex items-end gap-2 p-3 border-t c-br shrink-0">
+              <input ref={fileInputRef} type="file" className="sr-only" onChange={e => setAnexoFile(e.target.files?.[0] ?? null)} />
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="p-2.5 rounded-xl transition-colors shrink-0 c-tx4 hc-tx hc-s2">
+                <Paperclip size={18} />
+              </button>
               <button type="button" onClick={() => setShowEmojis(s => !s)}
                 className={`p-2.5 rounded-xl transition-colors shrink-0 ${showEmojis ? "bg-blue-600/20 text-blue-400" : "c-tx4 hc-tx hc-s2"}`}>
                 <Smile size={18} />
@@ -539,9 +594,9 @@ function MensagensInner() {
                 className="flex-1 c-s1 border c-br rounded-xl px-4 py-2.5 text-sm c-tx placeholder:c-tx5 outline-none focus:border-blue-500/40 resize-none max-h-32 transition-colors"
                 style={{ minHeight: "42px" }}
               />
-              <button type="submit" disabled={!text.trim() || sending}
+              <button type="submit" disabled={(!text.trim() && !anexoFile) || sending || uploadingAnexo}
                 className="p-2.5 rounded-xl bg-blue-600 c-tx hover:bg-blue-500 transition-colors disabled:opacity-40 shrink-0">
-                {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                {sending || uploadingAnexo ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               </button>
             </form>
           </>

@@ -7,7 +7,7 @@ import { randomBytes } from "crypto";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, first_name, last_name, role, provincia, escola, especialidade, biografia, avatar_url, formadores_ids, ano_letivo } = body;
+    const { email, password, first_name, last_name, role, provincia, municipio, escola, especialidade, biografia, avatar_url } = body;
 
     if (!email || !role) return NextResponse.json({ error: "Email e role obrigatórios" }, { status: 400 });
 
@@ -42,37 +42,21 @@ export async function POST(request: Request) {
 
     // Criar ou actualizar profiles
     await dbQuery(
-      `INSERT INTO profiles (id, email, first_name, last_name, role, status, provincia, escola, especialidade, biografia, avatar_url)
-       VALUES ($1,$2,$3,$4,$5,'pendente',$6,$7,$8,$9,$10)
+      `INSERT INTO profiles (id, email, first_name, last_name, role, status, provincia, municipio_residencia, escola, especialidade, biografia, avatar_url)
+       VALUES ($1,$2,$3,$4,$5,'pendente',$6,$7,$8,$9,$10,$11)
        ON CONFLICT (email) DO UPDATE SET
-         role          = EXCLUDED.role,
-         first_name    = COALESCE(EXCLUDED.first_name,    profiles.first_name),
-         last_name     = COALESCE(EXCLUDED.last_name,     profiles.last_name),
-         provincia     = COALESCE(EXCLUDED.provincia,     profiles.provincia),
-         escola        = COALESCE(EXCLUDED.escola,        profiles.escola),
-         especialidade = COALESCE(EXCLUDED.especialidade, profiles.especialidade),
-         biografia     = COALESCE(EXCLUDED.biografia,     profiles.biografia),
-         avatar_url    = COALESCE(EXCLUDED.avatar_url,    profiles.avatar_url)`,
+         role                  = EXCLUDED.role,
+         first_name            = COALESCE(EXCLUDED.first_name,            profiles.first_name),
+         last_name             = COALESCE(EXCLUDED.last_name,             profiles.last_name),
+         provincia             = COALESCE(EXCLUDED.provincia,             profiles.provincia),
+         municipio_residencia  = COALESCE(EXCLUDED.municipio_residencia,  profiles.municipio_residencia),
+         escola                = COALESCE(EXCLUDED.escola,                profiles.escola),
+         especialidade         = COALESCE(EXCLUDED.especialidade,         profiles.especialidade),
+         biografia             = COALESCE(EXCLUDED.biografia,             profiles.biografia),
+         avatar_url            = COALESCE(EXCLUDED.avatar_url,            profiles.avatar_url)`,
       [userId, clean, first_name || null, last_name || null, role,
-       provincia || null, escola || null, especialidade || null, biografia || null, avatar_url || null]
+       provincia || null, municipio || null, escola || null, especialidade || null, biografia || null, avatar_url || null]
     );
-
-    // Associar formadores escolhidos (many-to-many)
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth() + 1;
-    const defaultAno = m >= 9 ? `${y}/${y+1}` : `${y-1}/${y}`;
-    const anoLetivoVal = ano_letivo || defaultAno;
-    if (role === 'formando' && Array.isArray(formadores_ids) && formadores_ids.length > 0) {
-      for (const fid of formadores_ids) {
-        await dbQuery(
-          `INSERT INTO formando_formadores (formando_id, formador_id, status, ano_letivo)
-           VALUES ($1, $2, 'pendente', $3)
-           ON CONFLICT (formando_id, formador_id, ano_letivo) DO NOTHING`,
-          [userId, fid, anoLetivoVal]
-        );
-      }
-    }
 
     // Enviar email de confirmação (novo utilizador OU re-envio se ainda pendente)
     const needsConfirmation = await dbQuery<{ status: string }>(
