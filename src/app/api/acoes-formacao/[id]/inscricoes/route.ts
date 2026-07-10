@@ -86,6 +86,16 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
      RETURNING *`,
     [targetFormandoId, id, status]
   );
+  if (status === "inscrito") {
+    // Mantém a Agenda em sincronia: se ficou confirmado (staff a adicionar directamente),
+    // a acção já aparece como "Inscrito" na Agenda do formando, sem passo extra.
+    await dbQuery(
+      `INSERT INTO inscricoes_agenda (user_id, evento_id)
+       SELECT $1, id FROM agenda_atividades WHERE acao_formacao_id = $2
+       ON CONFLICT DO NOTHING`,
+      [targetFormandoId, id]
+    );
+  }
 
   if (status === "pendente") {
     const acaoInfo = await dbQuery(`SELECT designacao FROM acoes_formacao WHERE id = $1 LIMIT 1`, [id]);
@@ -149,6 +159,26 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     `UPDATE inscricoes_acao SET status = $3 WHERE acao_formacao_id = $1 AND formando_id = $2`,
     [id, formando_id, status]
   );
+  if (status === "inscrito") {
+    // Mantém a Agenda em sincronia: ao aprovar, a acção passa a aparecer como "Inscrito"
+    // na Agenda do formando automaticamente.
+    await dbQuery(
+      `INSERT INTO inscricoes_agenda (user_id, evento_id)
+       SELECT $1, id FROM agenda_atividades WHERE acao_formacao_id = $2
+       ON CONFLICT DO NOTHING`,
+      [formando_id, id]
+    );
+  }
+  if (status === "cancelado") {
+    // Mantém a Agenda em sincronia: sem isto, a pessoa continuaria a ver "Inscrito" no evento
+    // ligado a esta acção mesmo depois de rejeitada/removida.
+    await dbQuery(
+      `DELETE FROM inscricoes_agenda WHERE user_id = $1 AND evento_id IN (
+         SELECT id FROM agenda_atividades WHERE acao_formacao_id = $2
+       )`,
+      [formando_id, id]
+    );
+  }
   await auditLog(
     status === "inscrito" ? "acao_formacao_inscricao_create" : "acao_formacao_inscricao_cancel",
     { actorId: sessionUser.id, targetId: formando_id, details: { acao_formacao_id: id, status } }
@@ -181,6 +211,14 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
   await dbQuery(
     `UPDATE inscricoes_acao SET status = 'cancelado' WHERE acao_formacao_id = $1 AND formando_id = $2`,
     [id, targetFormandoId]
+  );
+  // Mantém a Agenda em sincronia: sem isto, a pessoa continuaria a ver "Inscrito" no evento
+  // ligado a esta acção mesmo depois de removida, e não conseguiria candidatar-se de novo.
+  await dbQuery(
+    `DELETE FROM inscricoes_agenda WHERE user_id = $1 AND evento_id IN (
+       SELECT id FROM agenda_atividades WHERE acao_formacao_id = $2
+     )`,
+    [targetFormandoId, id]
   );
   await auditLog("acao_formacao_inscricao_cancel", { actorId: sessionUser.id, targetId: targetFormandoId, details: { acao_formacao_id: id } });
   return NextResponse.json({ ok: true });
