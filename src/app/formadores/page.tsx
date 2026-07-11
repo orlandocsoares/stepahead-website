@@ -565,8 +565,8 @@ export default function HeroSection() {
       if (isDashboardView || isCooldown.current) return;
       const delta = startY - e.changedTouches[0].clientY;
       if (Math.abs(delta) < 40) return;
-      if (delta > 0) goToPhase(activePhaseIndex + 1);
-      else goToPhase(activePhaseIndex - 1);
+      if (delta > 0) handleMenuClick(activePhaseIndex + 1);
+      else handleMenuClick(activePhaseIndex - 1);
     };
     el.addEventListener("touchstart", onTouchStart, { passive: true });
     el.addEventListener("touchend", onTouchEnd, { passive: true });
@@ -1355,20 +1355,20 @@ export default function HeroSection() {
               <div className="flex items-stretch bg-black/60 backdrop-blur-2xl border-t border-white/[0.08]">
                 {/* Fase anterior */}
                 <button
-                  onClick={() => goToPhase(activePhaseIndex - 1)}
+                  onClick={() => handleMenuClick(activePhaseIndex - 1)}
                   disabled={activePhaseIndex <= 1}
                   className="flex-1 flex flex-col items-start justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
                 >
                   <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">anterior</span>
                   <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wide truncate max-w-[90px]">
-                    {activePhaseIndex > 1 ? PROGRAM_PHASES[activePhaseIndex - 1]?.name : ''}
+                    {activePhaseIndex > 1 ? REAL_MENU[activePhaseIndex - 1]?.name : ''}
                   </span>
                 </button>
 
                 {/* Fase actual — centro */}
                 <div className="flex flex-col items-center justify-center px-3 py-2 border-x border-white/[0.08] min-w-[110px]">
                   <span className="text-[8px] uppercase tracking-[0.4em] text-white/40 font-medium">
-                    {String(activePhaseIndex).padStart(2,'0')} / {String(PROGRAM_PHASES.length - 1).padStart(2,'0')}
+                    {String(activePhaseIndex).padStart(2,'0')} / {String(REAL_MENU.length - 1).padStart(2,'0')}
                   </span>
                   <AnimatePresence mode="wait">
                     <motion.span
@@ -1379,7 +1379,7 @@ export default function HeroSection() {
                       transition={{ duration: 0.2 }}
                       className="text-[11px] font-bold text-white uppercase tracking-[0.15em] mt-0.5"
                     >
-                      {PROGRAM_PHASES[activePhaseIndex]?.name}
+                      {REAL_MENU[activePhaseIndex]?.name}
                     </motion.span>
                   </AnimatePresence>
                   {profile && (
@@ -1395,13 +1395,13 @@ export default function HeroSection() {
 
                 {/* Fase seguinte */}
                 <button
-                  onClick={() => goToPhase(activePhaseIndex + 1)}
-                  disabled={activePhaseIndex >= PROGRAM_PHASES.length - 1}
+                  onClick={() => handleMenuClick(activePhaseIndex + 1)}
+                  disabled={activePhaseIndex >= REAL_MENU.length - 1}
                   className="flex-1 flex flex-col items-end justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
                 >
                   <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">seguinte</span>
                   <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wide truncate max-w-[90px] text-right">
-                    {activePhaseIndex < PROGRAM_PHASES.length - 1 ? PROGRAM_PHASES[activePhaseIndex + 1]?.name : ''}
+                    {activePhaseIndex < REAL_MENU.length - 1 ? REAL_MENU[activePhaseIndex + 1]?.name : ''}
                   </span>
                 </button>
               </div>

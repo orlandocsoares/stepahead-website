@@ -14,7 +14,7 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 
 export default function SuperAdminPage() {
   const { user: profile, loading: profileLoading } = useAdminUser();
-  const [activeTab, setActiveTab] = useState<"users" | "agenda" | "stats" | "anuncios">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "agenda" | "stats" | "anuncios" | "config">("users");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
@@ -230,7 +230,7 @@ export default function SuperAdminPage() {
   }, [profile]);
 
   const visibleTabs = useMemo(() => {
-    if (isAdminOrSuper(profile?.role)) return ["users", "agenda", "stats", "anuncios"] as const;
+    if (isAdminOrSuper(profile?.role)) return ["users", "agenda", "stats", "anuncios", "config"] as const;
     if (profile?.role === "formador") return ["users"] as const;
     return [] as const;
   }, [profile]);
@@ -308,7 +308,7 @@ export default function SuperAdminPage() {
 
 
   useEffect(() => {
-    if (isStaff && activeTab !== "stats") fetchData();
+    if (isStaff && activeTab !== "stats" && activeTab !== "config") fetchData();
   }, [activeTab, profile]);
 
   useEffect(() => {
@@ -329,7 +329,7 @@ export default function SuperAdminPage() {
   }, [activeTab, profile]);
 
   useEffect(() => {
-    if (isAdminOrSuper(profile?.role) && activeTab === "stats" && (mediaRadar === "" || formandosAjuste === "")) {
+    if (isAdminOrSuper(profile?.role) && (activeTab === "stats" || activeTab === "config") && (mediaRadar === "" || formandosAjuste === "")) {
       fetch("/api/public/hero")
         .then(r => r.json())
         .then(d => {
@@ -552,7 +552,7 @@ export default function SuperAdminPage() {
               <button key={tab} onClick={() => setActiveTab(tab as any)}
                 className={`px-5 py-2 rounded-lg text-xs font-medium transition-all ${activeTab === tab ? "bg-blue-600 c-tx shadow" : "c-tx3 hc-tx"}`}
               >
-                {tab === "users" ? "Utilizadores" : tab === "agenda" ? "Agenda" : tab === "stats" ? "Estatísticas" : "Anúncios"}
+                {tab === "users" ? "Utilizadores" : tab === "agenda" ? "Agenda" : tab === "stats" ? "Estatísticas" : tab === "config" ? "Configurações" : "Anúncios"}
               </button>
             ))}
           </div>
@@ -571,7 +571,7 @@ export default function SuperAdminPage() {
 
       {dbError && <div className="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm shrink-0">Erro: {dbError}</div>}
 
-      {activeTab !== "stats" && (
+      {activeTab !== "stats" && activeTab !== "config" && (
         <div className="mb-5 flex gap-3 items-center shrink-0">
           <div className="relative flex-1 max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
@@ -629,7 +629,82 @@ export default function SuperAdminPage() {
       <div className="flex-1 relative flex gap-6 min-h-0">
         <div className="flex-1 overflow-y-auto hide-native-scroll pb-6 pr-2">
           <AnimatePresence mode="wait">
-            {activeTab === "stats" ? (
+            {activeTab === "config" ? (
+              <motion.div key="config" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5 pb-6">
+                <div className="c-bg2 border c-br rounded-xl p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Target size={15} className="text-blue-400" />
+                    <h3 className="text-sm font-semibold c-tx">Configurações do Site Público</h3>
+                    <span className="text-[10px] c-tx4 ml-1">Valores apresentados na página inicial</span>
+                  </div>
+                  <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
+                    <div className="flex items-end gap-3 max-w-xs">
+                      <div className="flex-1 space-y-1.5">
+                        <label className="text-[11px] c-tx3 uppercase tracking-wider">Radar de Integração (%)</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number" min="0" max="100"
+                            value={mediaRadar}
+                            onChange={e => setMediaRadar(e.target.value)}
+                            placeholder="0 – 100"
+                            className="w-24 c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
+                          />
+                          <span className="c-tx4 text-sm">%</span>
+                        </div>
+                        <p className="text-[10px] c-tx4">Aparece na Fase 2 "Capacitação" do site público</p>
+                      </div>
+                      <button
+                        onClick={saveMediaRadar}
+                        disabled={mediaRadarSaving || mediaRadar === ""}
+                        className="px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-2 bg-blue-600 hover:bg-blue-500 c-tx"
+                      >
+                        {mediaRadarSaving ? <Loader2 size={13} className="animate-spin" /> : mediaRadarSaved ? <CheckCircle2 size={13} className="text-emerald-400" /> : null}
+                        {mediaRadarSaved ? "Guardado!" : "Guardar"}
+                      </button>
+                    </div>
+
+                    <div className="flex items-end gap-3 max-w-xs">
+                      <div className="flex-1 space-y-1.5">
+                        <label className="text-[11px] c-tx3 uppercase tracking-wider">Formandos anteriores ao sistema</label>
+                        <input
+                          type="number" min="0"
+                          value={formandosAjuste}
+                          onChange={e => setFormandosAjuste(e.target.value)}
+                          placeholder="0"
+                          className="w-24 c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
+                        />
+                        <p className="text-[10px] c-tx4">Somado aos formandos das acções de formação registadas, na página "Saber Mais"</p>
+                      </div>
+                      <button
+                        onClick={saveFormandosAjuste}
+                        disabled={formandosAjusteSaving || formandosAjuste === ""}
+                        className="px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-2 bg-blue-600 hover:bg-blue-500 c-tx"
+                      >
+                        {formandosAjusteSaving ? <Loader2 size={13} className="animate-spin" /> : formandosAjusteSaved ? <CheckCircle2 size={13} className="text-emerald-400" /> : null}
+                        {formandosAjusteSaved ? "Guardado!" : "Guardar"}
+                      </button>
+                    </div>
+
+                    <div className="flex items-end gap-3 max-w-xs">
+                      <div className="flex-1 space-y-1.5">
+                        <label className="text-[11px] c-tx3 uppercase tracking-wider">Publicar nº de Formandos</label>
+                        <button
+                          onClick={toggleMostrarFormandos}
+                          disabled={mostrarFormandosSaving || mostrarFormandos === null}
+                          className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 ${
+                            mostrarFormandos ? "bg-emerald-600 hover:bg-emerald-500" : "c-s1 border c-br"
+                          } c-tx`}
+                        >
+                          {mostrarFormandosSaving ? <Loader2 size={13} className="animate-spin" /> : null}
+                          {mostrarFormandos ? "Visível no site" : "Oculto no site"}
+                        </button>
+                        <p className="text-[10px] c-tx4">Desligado por sensibilidade com as entidades parceiras, até haver exportação massiva fiável</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ) : activeTab === "stats" ? (
               <motion.div key="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5 pb-6">
                 {!statsData ? (
                   <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-blue-500" /></div>
@@ -656,80 +731,6 @@ export default function SuperAdminPage() {
 
                   return (
                     <>
-                      {/* Configurações do Site Público */}
-                      <div className="c-bg2 border c-br rounded-xl p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Target size={15} className="text-blue-400" />
-                          <h3 className="text-sm font-semibold c-tx">Configurações do Site Público</h3>
-                          <span className="text-[10px] c-tx4 ml-1">Valores apresentados na página inicial</span>
-                        </div>
-                        <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
-                          <div className="flex items-end gap-3 max-w-xs">
-                            <div className="flex-1 space-y-1.5">
-                              <label className="text-[11px] c-tx3 uppercase tracking-wider">Radar de Integração (%)</label>
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="number" min="0" max="100"
-                                  value={mediaRadar}
-                                  onChange={e => setMediaRadar(e.target.value)}
-                                  placeholder="0 – 100"
-                                  className="w-24 c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
-                                />
-                                <span className="c-tx4 text-sm">%</span>
-                              </div>
-                              <p className="text-[10px] c-tx4">Aparece na Fase 2 "Capacitação" do site público</p>
-                            </div>
-                            <button
-                              onClick={saveMediaRadar}
-                              disabled={mediaRadarSaving || mediaRadar === ""}
-                              className="px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-2 bg-blue-600 hover:bg-blue-500 c-tx"
-                            >
-                              {mediaRadarSaving ? <Loader2 size={13} className="animate-spin" /> : mediaRadarSaved ? <CheckCircle2 size={13} className="text-emerald-400" /> : null}
-                              {mediaRadarSaved ? "Guardado!" : "Guardar"}
-                            </button>
-                          </div>
-
-                          <div className="flex items-end gap-3 max-w-xs">
-                            <div className="flex-1 space-y-1.5">
-                              <label className="text-[11px] c-tx3 uppercase tracking-wider">Formandos anteriores ao sistema</label>
-                              <input
-                                type="number" min="0"
-                                value={formandosAjuste}
-                                onChange={e => setFormandosAjuste(e.target.value)}
-                                placeholder="0"
-                                className="w-24 c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
-                              />
-                              <p className="text-[10px] c-tx4">Somado aos formandos das acções de formação registadas, na página "Saber Mais"</p>
-                            </div>
-                            <button
-                              onClick={saveFormandosAjuste}
-                              disabled={formandosAjusteSaving || formandosAjuste === ""}
-                              className="px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-2 bg-blue-600 hover:bg-blue-500 c-tx"
-                            >
-                              {formandosAjusteSaving ? <Loader2 size={13} className="animate-spin" /> : formandosAjusteSaved ? <CheckCircle2 size={13} className="text-emerald-400" /> : null}
-                              {formandosAjusteSaved ? "Guardado!" : "Guardar"}
-                            </button>
-                          </div>
-
-                          <div className="flex items-end gap-3 max-w-xs">
-                            <div className="flex-1 space-y-1.5">
-                              <label className="text-[11px] c-tx3 uppercase tracking-wider">Publicar nº de Formandos</label>
-                              <button
-                                onClick={toggleMostrarFormandos}
-                                disabled={mostrarFormandosSaving || mostrarFormandos === null}
-                                className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 ${
-                                  mostrarFormandos ? "bg-emerald-600 hover:bg-emerald-500" : "c-s1 border c-br"
-                                } c-tx`}
-                              >
-                                {mostrarFormandosSaving ? <Loader2 size={13} className="animate-spin" /> : null}
-                                {mostrarFormandos ? "Visível no site" : "Oculto no site"}
-                              </button>
-                              <p className="text-[10px] c-tx4">Desligado por sensibilidade com as entidades parceiras, até haver exportação massiva fiável</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
                       {/* Linha 1: Crescimento + Saúde da comunidade */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 

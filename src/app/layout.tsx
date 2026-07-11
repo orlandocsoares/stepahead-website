@@ -4,6 +4,11 @@ import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "Saber Mais - Angola",
+  icons: {
+    icon: "/favicon-sabermais.png",
+    shortcut: "/favicon-sabermais.png",
+    apple: "/favicon-sabermais.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
