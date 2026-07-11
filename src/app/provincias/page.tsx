@@ -1316,7 +1316,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div id="tour-content" className="absolute top-[14vh] sm:top-[28vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-auto sm:w-[90%] md:w-[540px] z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '75vh'}}>
+            <div id="tour-content" className="absolute top-[14vh] sm:top-[14vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-[240px] md:right-[300px] lg:right-[340px] sm:w-auto md:w-auto z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '82vh'}}>
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
                   <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">

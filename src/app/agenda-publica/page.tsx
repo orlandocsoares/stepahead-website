@@ -775,21 +775,37 @@ export default function HeroSection() {
       case 6: {
         const eventos = telemetry.proximos_eventos ?? [];
         const abrirEvento = (ev: any) => setSelectedEvento(ev);
+
+        const agora = Date.now();
+        const diasAte = (ev: any) => Math.max(0, Math.ceil((new Date(ev.data_evento).getTime() - agora) / 86400000));
+        const grupos = [
+          { titulo: "Esta semana", itens: eventos.filter((ev: any) => diasAte(ev) <= 7) },
+          { titulo: "Próximas 2 semanas", itens: eventos.filter((ev: any) => diasAte(ev) > 7 && diasAte(ev) <= 21) },
+          { titulo: "Mais tarde", itens: eventos.filter((ev: any) => diasAte(ev) > 21) },
+        ].filter((g) => g.itens.length > 0);
+
         return {
           ...base,
           name: "Agenda",
           subtitle: "Próximos Eventos",
           description: (
-            <div className="space-y-3 w-full max-w-md">
+            <div className="space-y-4 w-full">
               <p className={defaultTextClass}>
                 Consulta os próximos eventos do programa e inscreve-te directamente por aqui.
               </p>
-              <div className="space-y-2 max-h-[52vh] overflow-y-auto pr-1">
+              <div className="space-y-5 max-h-[58vh] overflow-y-auto pr-1">
                 {eventos.length === 0 && (
                   <p className="text-sm text-white/40">Sem eventos agendados.</p>
                 )}
-                {eventos.map((ev: any, i: number) => (
-                  <AgendaRow key={ev.id ?? i} ev={ev} onAbrir={() => abrirEvento(ev)} />
+                {grupos.map(({ titulo, itens }) => (
+                  <div key={titulo}>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-2">{titulo}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {itens.map((ev: any, i: number) => (
+                        <AgendaRow key={ev.id ?? i} ev={ev} onAbrir={() => abrirEvento(ev)} />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -1111,7 +1127,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div id="tour-content" className="absolute top-[14vh] sm:top-[28vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-auto sm:w-[90%] md:w-[540px] z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '75vh'}}>
+            <div id="tour-content" className="absolute top-[14vh] sm:top-[14vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-[240px] md:right-[300px] lg:right-[340px] sm:w-auto md:w-auto z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '82vh'}}>
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
                   <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">
