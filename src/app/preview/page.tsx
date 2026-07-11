@@ -466,11 +466,11 @@ export default function HeroSection() {
     if (idx === 0) idx = len - 1;
     const item = REAL_MENU[idx];
     if (item.href) {
-      window.location.href = item.href;
+      router.push(item.href);
       return;
     }
     goToPhase(idx);
-  }, [goToPhase]);
+  }, [goToPhase, router]);
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {

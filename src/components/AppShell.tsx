@@ -2,11 +2,34 @@
 
 import { useEffect, useState, createContext, useContext } from "react";
 import { usePathname } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { getSavedMode, applyMode, saveMode, MODES, type SiteMode } from "@/lib/site-mode";
 
 type AppShellCtx = { mode: SiteMode; changeMode: (m: SiteMode) => void };
 const AppShellContext = createContext<AppShellCtx>({ mode: "escuro", changeMode: () => {} });
 export const useAppMode = () => useContext(AppShellContext);
+
+const ANIMATED_ROUTES = [
+  "/saber-mais", "/provincias", "/formadores", "/recursos", "/eventos", "/agenda-publica", "/preview",
+];
+
+function PageTransition({ pathname, children }: { pathname: string; children: React.ReactNode }) {
+  if (!ANIMATED_ROUTES.includes(pathname)) return <>{children}</>;
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={pathname}
+        initial={{ opacity: 0, filter: "blur(20px)" }}
+        animate={{ opacity: 1, filter: "blur(0px)" }}
+        exit={{ opacity: 0, filter: "blur(20px)" }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="contents"
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -31,7 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (isCleanPage) {
     return (
       <AppShellContext.Provider value={{ mode, changeMode }}>
-        {children}
+        <PageTransition pathname={pathname ?? ""}>{children}</PageTransition>
       </AppShellContext.Provider>
     );
   }
@@ -47,7 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className={`absolute inset-0 ${modeConfig.overlay} pointer-events-none transition-colors duration-500`} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
       </div>
-      {children}
+      <PageTransition pathname={pathname ?? ""}>{children}</PageTransition>
     </AppShellContext.Provider>
   );
 }
