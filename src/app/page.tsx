@@ -41,6 +41,221 @@ const PROGRAM_PHASES = [
   { id: "fase-6", focusFrame: 260, subtitle: "Avaliação de Impacto", name: "Monitorização", description: "Acompanhamento rigoroso dos indicadores de sucesso para garantir a eficácia e a sustentabilidade do projecto a longo prazo." }
 ];
 
+// Menu das páginas públicas reais do site — usado nesta pré-visualização em vez das "fases" antigas
+const REAL_MENU = [
+  { id: "menu-0", name: "" }, // placeholder — PhasesSidebar ignora o índice 0
+  { id: "menu-1", name: "Saber Mais", href: "/saber-mais" },
+  { id: "menu-2", name: "Províncias", href: "/provincias" },
+  { id: "menu-3", name: "Formadores", href: "/formadores" },
+  { id: "menu-4", name: "Recursos", href: "/recursos" },
+  { id: "menu-5", name: "Eventos", href: "/eventos" },
+  { id: "menu-6", name: "Agenda", href: "/agenda-publica" },
+];
+
+type AcaoProvincia = { id: string; designacao: string; data_inicio: string | null; estado: string };
+type FormadorProvincia = { id: string; first_name: string; last_name: string };
+type RecursoProvincia = { id: string; label: string };
+type ProvinciaData = {
+  nome: string;
+  total_acoes: number;
+  acoes: AcaoProvincia[];
+  total_formadores: number;
+  formadores: FormadorProvincia[];
+  total_recursos: number;
+  recursos: RecursoProvincia[];
+};
+
+const ESTADO_LABEL: Record<string, string> = { agendada: "Agendada", concluida: "Concluída", cancelada: "Cancelada" };
+
+function fmtDataCurta(d: string | null) {
+  if (!d) return null;
+  return new Date(d).toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function ProvinciaMiniCard({ data, loading }: { data: ProvinciaData | undefined; loading: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => setOpen(v => !v)}
+      className="text-left flex-1 min-w-[220px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3 hover:bg-white/[0.08] transition-colors"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-bold text-white">{data?.nome ?? "—"}</span>
+        <span className="text-white/30 text-[10px]">{open ? "▲" : "▼"}</span>
+      </div>
+      {!loading && (
+        <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-1">
+          {data?.total_acoes ?? 0} ações · {data?.total_formadores ?? 0} formadores · {data?.total_recursos ?? 0} recursos
+        </p>
+      )}
+      {open && (
+        <div className="mt-3 space-y-2.5 text-left">
+          <div>
+            <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Ações previstas/realizadas</p>
+            {(data?.acoes.length ?? 0) === 0 && <p className="text-[10px] text-white/30">Sem ações registadas.</p>}
+            {data?.acoes.map(a => (
+              <p key={a.id} className="text-[10px] text-white/70 flex justify-between gap-2">
+                <span className="truncate">{a.designacao}</span>
+                <span className="text-white/30 shrink-0">{fmtDataCurta(a.data_inicio) ?? ESTADO_LABEL[a.estado]}</span>
+              </p>
+            ))}
+          </div>
+          <div>
+            <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Formadores associados</p>
+            {(data?.formadores.length ?? 0) === 0 && <p className="text-[10px] text-white/30">Sem formadores associados.</p>}
+            <div className="flex flex-wrap gap-1">
+              {data?.formadores.map(f => (
+                <span key={f.id} className="text-[9px] text-white/70 border border-white/10 rounded-full px-2 py-0.5">{f.first_name} {f.last_name}</span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Recursos disponíveis</p>
+            {(data?.recursos.length ?? 0) === 0 && <p className="text-[10px] text-white/30">Sem recursos disponíveis.</p>}
+            <div className="flex flex-wrap gap-1">
+              {data?.recursos.map(r => (
+                <span key={r.id} className="text-[9px] text-white/70 border border-white/10 rounded-full px-2 py-0.5">{r.label}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </button>
+  );
+}
+
+type FormadorData = {
+  id: string;
+  nome: string;
+  area: string;
+  biografia: string | null;
+  avatar_url: string | null;
+  provincia: string | null;
+};
+
+function FormadorMiniCard({ data }: { data: FormadorData }) {
+  const [open, setOpen] = useState(false);
+  const iniciais = data.nome.split(" ").filter(Boolean).slice(0, 2).map(s => s[0]).join("").toUpperCase();
+
+  return (
+    <button
+      type="button"
+      onClick={() => setOpen(v => !v)}
+      className={`text-left backdrop-blur-md border rounded-xl px-3 py-2.5 transition-colors ${
+        open
+          ? "col-span-full bg-slate-950/90 border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+          : "bg-white/5 border-white/10 hover:bg-white/[0.08]"
+      }`}
+    >
+      <div className="flex items-center gap-2.5">
+        {data.avatar_url ? (
+          <img src={data.avatar_url} alt={data.nome} className="w-9 h-9 rounded-lg object-cover shrink-0 border border-white/10" />
+        ) : (
+          <div className="w-9 h-9 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0 text-[10px] font-bold text-blue-300">
+            {iniciais}
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold text-white truncate">{data.nome}</p>
+          <p className="text-[9px] text-emerald-400 uppercase tracking-widest truncate">{data.area}</p>
+        </div>
+      </div>
+      {open && (
+        <div className="mt-2.5 pt-2.5 border-t border-white/10 space-y-1">
+          <p className="text-[11px] text-white/85 leading-relaxed">
+            {data.biografia || "Formador de excelência no reforço pedagógico do ensino secundário."}
+          </p>
+          {data.provincia && <p className="text-[9px] text-white/40">{data.provincia}</p>}
+        </div>
+      )}
+    </button>
+  );
+}
+
+const ESTADO_EVENTO_LABEL: Record<string, string> = {
+  agendada: "Aberto", concluida: "Concluído", cancelada: "Cancelado", esgotado: "Esgotado",
+};
+const ESTADO_EVENTO_COLOR: Record<string, string> = {
+  agendada: "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
+  concluida: "text-white/50 border-white/10 bg-white/5",
+  cancelada: "text-red-400 border-red-500/20 bg-red-500/10",
+  esgotado: "text-amber-400 border-amber-500/20 bg-amber-500/10",
+};
+
+type EventoItem = {
+  id: string;
+  agenda_evento_id: string | null;
+  titulo: string;
+  area: string;
+  tipologia: string | null;
+  local: string | null;
+  endereco: string | null;
+  data_inicio: string | null;
+  data_fim: string | null;
+  horario: string | null;
+  publico_alvo: string | null;
+  estado: string;
+  total_inscritos: number;
+  vagas_max: number | null;
+  imagem_url: string | null;
+};
+type AreaEventos = { area: string; total: number; eventos: EventoItem[] };
+
+function fmtDataEvento(d: string | null) {
+  if (!d) return "Data a confirmar";
+  return new Date(d).toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function EventoRow({ ev, onAbrir }: { ev: EventoItem; onAbrir: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onAbrir}
+      disabled={!ev.agenda_evento_id}
+      className="w-full text-left bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3.5 py-3 hover:bg-white/[0.08] transition-colors disabled:opacity-60 disabled:cursor-default"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[12px] font-bold text-white truncate">{ev.titulo}</p>
+        <span className={`shrink-0 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border ${ESTADO_EVENTO_COLOR[ev.estado] ?? ESTADO_EVENTO_COLOR.agendada}`}>
+          {ESTADO_EVENTO_LABEL[ev.estado] ?? ev.estado}
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-white/50">
+        <span>{fmtDataEvento(ev.data_inicio)}</span>
+        {ev.tipologia && <span className="text-white/30">· {ev.tipologia}</span>}
+        {ev.local && <span className="text-white/30">· {ev.local}</span>}
+        {ev.publico_alvo && <span className="text-white/30">· {ev.publico_alvo}</span>}
+      </div>
+    </button>
+  );
+}
+
+function AgendaRow({ ev, onAbrir }: { ev: any; onAbrir: () => void }) {
+  const d = new Date(ev.data_evento);
+  const dias = Math.max(0, Math.ceil((d.getTime() - Date.now()) / 86400000));
+  return (
+    <button
+      type="button"
+      onClick={onAbrir}
+      className="w-full text-left flex items-center gap-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3.5 py-2.5 hover:bg-white/[0.08] transition-colors"
+    >
+      <div className="shrink-0 w-11 text-center">
+        <p className="text-lg font-black text-white leading-none">{d.getDate().toString().padStart(2, "0")}</p>
+        <p className="text-[8px] uppercase tracking-wider text-blue-400/80 leading-none mt-0.5">{d.toLocaleString("pt-PT", { month: "short" })}</p>
+      </div>
+      <div className="w-px h-8 bg-white/10 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-[12px] font-semibold text-white/90 leading-tight truncate">{ev.titulo}</p>
+        {ev.local && <p className="text-[10px] text-white/40 mt-0.5 truncate">{ev.local}{ev.endereco ? ` — ${ev.endereco}` : ""}</p>}
+      </div>
+      <div className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${dias === 0 ? "bg-emerald-500/20 text-emerald-400" : dias <= 7 ? "bg-amber-500/20 text-amber-400" : "bg-white/10 text-white/40"}`}>
+        {dias === 0 ? "Hoje" : `${dias}d`}
+      </div>
+    </button>
+  );
+}
+
 const SIMULATED_FORMADORES = [
   { first_name: "Ana", last_name: "Kiala", especialidade: "Matemática e Física", biografia: "Especialista em metodologias de ensino activo para ciências exactas no II Ciclo.", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=AnaKiala&backgroundColor=b6e3f4" },
   { first_name: "Carlos", last_name: "Mendes", especialidade: "Língua Portuguesa", biografia: "Mestre em linguística aplicada, focado na capacitação de leitura e interpretação textual.", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=CarlosMendes&backgroundColor=c0aede" },
@@ -266,6 +481,13 @@ export default function HeroSection() {
   const [selectedEvento, setSelectedEvento] = useState<any>(null);
   const [minhasInscricoes, setMinhasInscricoes] = useState<Set<string>>(new Set());
   const [inscrevendo, setInscrevendo] = useState(false);
+  const [provinciasData, setProvinciasData] = useState<ProvinciaData[]>([]);
+  const [provinciasLoading, setProvinciasLoading] = useState(true);
+  const [formadoresData, setFormadoresData] = useState<FormadorData[]>([]);
+  const [formadoresLoading, setFormadoresLoading] = useState(true);
+  const [areasEventos, setAreasEventos] = useState<AreaEventos[]>([]);
+  const [eventosLoading, setEventosLoading] = useState(true);
+  const [areaEventoSelecionada, setAreaEventoSelecionada] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile?.id) { setMinhasInscricoes(new Set()); return; }
@@ -336,6 +558,27 @@ export default function HeroSection() {
       .then(data => { setTelemetry(data); })
       .catch(() => {});
   }, [isDashboardView]);
+
+  useEffect(() => {
+    fetch("/api/public/provincias")
+      .then(r => r.json())
+      .then(d => setProvinciasData(d.provincias ?? []))
+      .finally(() => setProvinciasLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/public/formadores")
+      .then(r => r.json())
+      .then(d => setFormadoresData(d.formadores ?? []))
+      .finally(() => setFormadoresLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/public/eventos")
+      .then(r => r.json())
+      .then(d => setAreasEventos(d.areas ?? []))
+      .finally(() => setEventosLoading(false));
+  }, []);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -449,6 +692,13 @@ export default function HeroSection() {
     animate(targetFrameValue, currentFrame + diff, { duration: 1.6, ease: [0.22, 1, 0.36, 1] });
   }, [isDashboardView, targetFrameValue, hasInteracted]);
 
+  const handleMenuClick = useCallback((rawIndex: number) => {
+    const len = REAL_MENU.length;
+    let idx = ((rawIndex % len) + len) % len;
+    if (idx === 0) idx = len - 1;
+    goToPhase(idx);
+  }, [goToPhase, router]);
+
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (isDashboardView) return;
@@ -547,10 +797,12 @@ export default function HeroSection() {
               <p className={defaultTextClass}>{base.description}</p>
               <div className="flex flex-wrap gap-3 mt-2">
                 {[
-                  { icon: MapPin,     value: "2",        label: "Províncias" },
-                  { icon: Handshake,  value: "2026",     label: "Ano em curso" },
+                  { icon: MapPin,     value: `${telemetry.total_provincias || 0}`, label: "Províncias" },
+                  { icon: Handshake,  value: "2023/2027", label: "Ciclo" },
                   { icon: GraduationCap, value: `${telemetry.total_formadores || 0}`, label: "Formadores" },
-                  { icon: Users,      value: `${telemetry.total_formandos || 0}`,    label: "Formandos" },
+                  ...(telemetry.total_formandos != null
+                    ? [{ icon: Users, value: `${telemetry.total_formandos}`, label: "Formandos" }]
+                    : []),
                 ].map(({ icon: Icon, value, label }) => (
                   <div key={label} className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
                     <Icon size={14} className="text-blue-400 shrink-0" />
@@ -561,132 +813,77 @@ export default function HeroSection() {
                   </div>
                 ))}
               </div>
+              <div className="mt-1">
+                <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-1.5">Áreas de formação</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(telemetry.areas_formacao?.length ?? 0) === 0 && (
+                    <span className="text-[10px] text-white/30">Sem áreas registadas.</span>
+                  )}
+                  {telemetry.areas_formacao?.map((area: string) => (
+                    <span key={area} className="text-[10px] font-medium text-white/80 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-2.5 py-1">
+                      {area}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-1">
+                <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-1.5">Objectivo</p>
+                <p className="text-sm font-bold text-white/90 leading-relaxed [text-shadow:0_1px_8px_rgba(0,0,0,0.95)]">
+                  Capacitar e valorizar os recursos humanos, com foco no Ensino Secundário Geral e Pedagógico.
+                </p>
+              </div>
             </div>
           ),
         };
       case 2: {
-        const eventos = telemetry.proximos_eventos ?? [];
-        const PARTNERS = [
-          { name: "Governo de Angola", subtitle: "Ministério da Educação", src: "/storage/v1/object/public/Logo%20Institutos/med.png" },
-          { name: "República de Angola", subtitle: "Insígnia Oficial", src: "/storage/v1/object/public/Logo%20Institutos/insignia.png" },
-          { name: "INFQE", subtitle: "Instituto de Formação", src: "/storage/v1/object/public/Logo%20Institutos/infqe.png" },
-          { name: "Camões, I.P.", subtitle: "Cooperação Portuguesa", src: "/storage/v1/object/public/Logo%20Institutos/icamoes.png" },
-        ];
+        const bie = provinciasData.find(p => p.nome === "Bié");
+        const luanda = provinciasData.find(p => p.nome === "Luanda");
         return {
           ...base,
+          name: "Províncias",
+          subtitle: "Bié & Luanda",
           description: (
-            <div className="space-y-3 w-full max-w-sm">
-              {/* Caixa Agenda */}
-              <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.08)]">
-                {/* Cabeçalho */}
-                <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/[0.07] bg-white/[0.03]">
-                  <div className="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
-                    <Calendar size={13} className="text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80 leading-none">Agenda</p>
-                    <p className="text-[8px] text-blue-400/70 tracking-widest uppercase mt-0.5">Próximos eventos</p>
-                  </div>
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                </div>
-
-                {/* Lista de eventos */}
-                <div className="divide-y divide-white/[0.05]">
-                  {eventos.length === 0 ? (
-                    <div className="px-4 py-5 text-center">
-                      <p className="text-[11px] text-white/30 italic">Sem eventos agendados</p>
-                    </div>
-                  ) : eventos.map((ev: any, i: number) => {
-                    const d = new Date(ev.data_evento);
-                    const dias = Math.max(0, Math.ceil((d.getTime() - Date.now()) / 86400000));
-                    return (
-                      <div key={i} onClick={() => setSelectedEvento(ev)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.03] transition-colors cursor-pointer">
-                        <div className="shrink-0 w-9 text-center">
-                          <p className="text-[15px] font-black text-white leading-none">{d.getDate().toString().padStart(2,"0")}</p>
-                          <p className="text-[8px] uppercase tracking-wider text-blue-400/80 leading-none mt-0.5">{d.toLocaleString("pt-PT",{month:"short"})}</p>
-                        </div>
-                        <div className="w-px h-8 bg-white/10 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-semibold text-white/90 leading-tight truncate">{ev.titulo}</p>
-                          {ev.local && <p className="text-[9px] text-white/40 mt-0.5 truncate">{ev.local}{ev.endereco ? ` — ${ev.endereco}` : ""}</p>}
-                        </div>
-                        <div className={`shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full ${dias === 0 ? "bg-emerald-500/20 text-emerald-400" : dias <= 7 ? "bg-amber-500/20 text-amber-400" : "bg-white/10 text-white/40"}`}>
-                          {dias === 0 ? "Hoje" : `${dias}d`}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+            <div className="space-y-4">
+              <p className={defaultTextClass}>
+                O projecto está presente em duas províncias: Bié e Luanda, com foco na qualidade do ensino
+                do Subsistema do Ensino Secundário Geral e Pedagógico.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <ProvinciaMiniCard data={bie} loading={provinciasLoading} />
+                <ProvinciaMiniCard data={luanda} loading={provinciasLoading} />
               </div>
-
-              {/* Ticker parceiros */}
-              <div className="relative overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.03] py-2">
-                <div className="flex animate-[ticker_18s_linear_infinite] gap-6 w-max">
-                  {[...PARTNERS, ...PARTNERS].map((p, i) => (
-                    <div key={i} className="flex items-center gap-2 shrink-0 px-2">
-                      <div className="w-7 h-7 bg-white rounded-md overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
-                        <img src={p.src} alt={p.name} className="w-full h-full object-contain scale-110" />
-                      </div>
-                      <div>
-                        <p className="text-[9px] font-bold text-white/80 leading-none whitespace-nowrap">{p.name}</p>
-                        <p className="text-[7px] text-white/30 tracking-wider whitespace-nowrap">{p.subtitle}</p>
-                      </div>
-                      <span className="text-white/10 ml-2">·</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <p className="text-[10px] text-white/30 leading-relaxed">
+                Bié e Luanda são as províncias de referência do programa — a plataforma está preparada
+                para adicionar novas províncias no futuro.
+              </p>
             </div>
           ),
         };
       }
-      case 3:
+      case 3: {
         return {
           ...base,
+          name: "Formadores",
+          subtitle: "Equipa de Formação e Supervisão",
           description: (
-            <div className="space-y-4">
-              <p className={defaultTextClass}>A promoção da supervisão apoia-se em <strong className="text-blue-300">{telemetry.total_formadores || 3} formadores</strong> de excelência.</p>
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-300 font-bold">Equipa de Formadores</p>
-                <FormadoresLoop formadores={telemetry.formadores_lista} />
-              </div>
-            </div>
-          )
-        };
-      case 4: {
-        const luanda = telemetry.provincias_stats?.luanda ?? { formadores: 0, formandos: 0 };
-        const bie    = telemetry.provincias_stats?.bie    ?? { formadores: 0, formandos: 0 };
-        return {
-          ...base,
-          description: (
-            <div className="space-y-4">
-              <p className={defaultTextClass}>{base.description}</p>
-              <div className="flex gap-3 mt-1">
-                {[
-                  { nome: "Luanda", data: luanda, color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-500/5" },
-                  { nome: "Bié",    data: bie,    color: "text-amber-400", border: "border-amber-500/20", bg: "bg-amber-500/5" },
-                ].map(({ nome, data, color, border, bg }) => (
-                  <div key={nome} className={`flex-1 rounded-xl border ${border} ${bg} backdrop-blur-sm px-4 py-3 space-y-2`}>
-                    <p className={`text-[10px] font-black uppercase tracking-[0.3em] ${color}`}>{nome}</p>
-                    <div className="flex gap-3">
-                      <div>
-                        <p className="text-lg font-bold text-white leading-none">{data.formadores}</p>
-                        <p className="text-[9px] text-white/40 uppercase tracking-[0.15em] mt-0.5">Formadores</p>
-                      </div>
-                      <div className="w-px bg-white/10" />
-                      <div>
-                        <p className="text-lg font-bold text-white leading-none">{data.formandos}</p>
-                        <p className="text-[9px] text-white/40 uppercase tracking-[0.15em] mt-0.5">Formandos</p>
-                      </div>
-                    </div>
-                  </div>
+            <div className="space-y-4 w-full">
+              <p className={defaultTextClass}>
+                A promoção da formação e supervisão apoia-se em <strong className="text-blue-300">{formadoresData.length}</strong> formador{formadoresData.length === 1 ? "" : "es"} de excelência.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[58vh] overflow-y-auto pr-1">
+                {formadoresLoading && <p className="text-sm text-white/40 col-span-full">A carregar…</p>}
+                {!formadoresLoading && formadoresData.length === 0 && (
+                  <p className="text-sm text-white/40 col-span-full">Sem formadores activos registados.</p>
+                )}
+                {formadoresData.map((f) => (
+                  <FormadorMiniCard key={f.id} data={f} />
                 ))}
               </div>
             </div>
           ),
         };
       }
-      case 5: {
+      case 4: {
         const areaColors: Record<string, { bg: string; text: string; border: string; dot: string; icon: React.ElementType }> = {
           "Matemática":        { bg: "bg-blue-900/60",    text: "text-blue-200",   border: "border-blue-400/40",   dot: "bg-blue-400",    icon: Calculator },
           "Língua Portuguesa": { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400", icon: Languages },
@@ -702,26 +899,27 @@ export default function HeroSection() {
         };
         const defaultAreaColor = { bg: "bg-white/10", text: "text-white/80", border: "border-white/20", dot: "bg-white/50", icon: FolderOpen };
         const areasFormadores: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
-        const areasPublicas: { area: string; total: number }[] = telemetry.areas_publicas ?? [];
         const totalPublicos: number = telemetry.total_recursos_publicos ?? 0;
-        const totalFormadores: number = areasFormadores.reduce((s, a) => s + a.total, 0);
+        const totalFormadoresRec: number = areasFormadores.reduce((s, a) => s + a.total, 0);
 
         return {
           ...base,
+          name: "Recursos",
+          subtitle: "Apoio Contínuo",
           description: (
             <div className="space-y-3 w-full max-w-sm">
-              <p className={defaultTextClass}>{base.description}</p>
+              <p className={defaultTextClass}>
+                Disponibilização de materiais didácticos e pedagógicos inovadores para apoio aos professores nas salas diárias.
+              </p>
 
-              {/* Cabeçalho */}
               {areasFormadores.length > 0 && (
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
                   <span className="text-[9px] uppercase tracking-[0.2em] text-blue-300/80 font-semibold">Repositório de Professores</span>
-                  <span className="text-[9px] text-white/30 ml-auto">{totalFormadores} materiais</span>
+                  <span className="text-[9px] text-white/30 ml-auto">{totalFormadoresRec} materiais</span>
                 </div>
               )}
 
-              {/* Cards de área — grelha compacta de 3 colunas, no máximo 2 linhas, sem scroll */}
               <div className="grid grid-cols-3 gap-2">
                 {areasFormadores.slice(0, 6).map(({ area, total }, i) => {
                   const c = areaColors[area] ?? defaultAreaColor;
@@ -747,9 +945,8 @@ export default function HeroSection() {
                 })}
               </div>
 
-              {/* Card Recursos Públicos — clicável, destaque */}
               <motion.a
-                href="/recursos"
+                href="/recursos/publicos"
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
@@ -768,148 +965,112 @@ export default function HeroSection() {
           ),
         };
       }
-      case 6: {
-        const metrics = [
-          {
-            icon: Users,
-            value: telemetry.total_formandos || 0,
-            label: "Formandos activos",
-            color: "from-blue-500/20 to-blue-600/5",
-            border: "border-blue-500/20",
-            iconColor: "text-blue-400",
-            glow: "bg-blue-500/10",
-          },
-          {
-            icon: GraduationCap,
-            value: telemetry.total_formadores || 0,
-            label: "Formadores",
-            color: "from-emerald-500/20 to-emerald-600/5",
-            border: "border-emerald-500/20",
-            iconColor: "text-emerald-400",
-            glow: "bg-emerald-500/10",
-          },
-          {
-            icon: FileText,
-            value: telemetry.total_materials || 0,
-            label: "Materiais pedagógicos",
-            color: "from-amber-500/20 to-amber-600/5",
-            border: "border-amber-500/20",
-            iconColor: "text-amber-400",
-            glow: "bg-amber-500/10",
-          },
-          {
-            icon: BookOpen,
-            value: telemetry.total_turmas || 0,
-            label: "Turmas criadas",
-            color: "from-violet-500/20 to-violet-600/5",
-            border: "border-violet-500/20",
-            iconColor: "text-violet-400",
-            glow: "bg-violet-500/10",
-          },
-        ];
-        // Calcular indicadores de performance
-        const totalFormandos = telemetry.total_formandos || 0;
-        const totalFormadores = telemetry.total_formadores || 0;
-        const totalMateriais = telemetry.total_materials || 0;
-        const totalTurmas = telemetry.total_turmas || 0;
-        const luanda = telemetry.provincias_stats?.luanda ?? { formadores: 0, formandos: 0 };
-        const bie = telemetry.provincias_stats?.bie ?? { formadores: 0, formandos: 0 };
-
-        // Índice de actividade (0-100): pesos baseados nas métricas disponíveis
-        const metaFormandos = 50, metaFormadores = 15, metaMateriais = 30, metaTurmas = 10;
-        const indiceActividade = Math.min(100, Math.round(
-          (Math.min(totalFormandos / metaFormandos, 1) * 40) +
-          (Math.min(totalFormadores / metaFormadores, 1) * 25) +
-          (Math.min(totalMateriais / metaMateriais, 1) * 25) +
-          (Math.min(totalTurmas / metaTurmas, 1) * 10)
-        ));
-
-        // Rácio formador/formando
-        const ratioVal = totalFormadores > 0 ? (totalFormandos / totalFormadores).toFixed(1) : "—";
-        const ratioIdeal = totalFormadores > 0 ? Math.min(100, Math.round((1 / (totalFormandos / Math.max(totalFormadores * 10, 1))) * 100)) : 0;
-
-        // Cobertura geográfica
-        const totalLuanda = luanda.formadores + luanda.formandos;
-        const totalBie = bie.formadores + bie.formandos;
-        const totalGeo = totalLuanda + totalBie || 1;
+      case 5: {
+        const areaSel = areasEventos.find(a => a.area === areaEventoSelecionada);
+        const abrirEvento = (ev: EventoItem) => {
+          if (!ev.agenda_evento_id) return;
+          setSelectedEvento({
+            id: ev.agenda_evento_id,
+            titulo: ev.titulo,
+            local: ev.local,
+            endereco: ev.endereco,
+            imagem_url: ev.imagem_url,
+            data_evento: ev.data_inicio,
+            tipo: ev.tipologia,
+          });
+        };
 
         return {
           ...base,
+          name: "Eventos",
+          subtitle: "Por área de formação",
           description: (
-            <div className="space-y-2 w-full max-w-3xl">
-              <p className={defaultTextClass}>{base.description}</p>
-
-              {/* Layout: 4 métricas + 3 indicadores em 2 colunas expandidas */}
-              <div className="grid grid-cols-2 gap-2">
-
-                {/* Coluna esquerda — 4 métricas 2×2, altura igual à direita */}
-                <div className="grid grid-cols-2 grid-rows-2 gap-1.5">
-                  {metrics.map(({ icon: Icon, value, label, color, border, iconColor, glow }) => (
-                    <motion.div key={label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
-                      className={`relative rounded-lg border ${border} bg-gradient-to-br ${color} backdrop-blur-md px-3 py-3 overflow-hidden flex flex-col justify-between`}>
-                      <div className={`absolute top-0 right-0 w-10 h-10 rounded-full blur-xl ${glow} -translate-y-1/2 translate-x-1/2`} />
-                      <div className="flex items-center gap-1.5">
-                        <Icon size={12} className={iconColor} />
-                        <p className="text-[8px] text-white/50 uppercase tracking-[0.12em] font-medium leading-tight truncate">{label}</p>
-                      </div>
-                      <p className="text-2xl font-bold text-white tabular-nums leading-none">{value}</p>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Coluna direita — 3 indicadores empilhados */}
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-[7px] uppercase tracking-[0.25em] text-white/25 font-semibold">Indicadores de Performance</p>
-
-                  {/* Índice de Actividade */}
-                  <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-                    className="rounded-lg border border-white/10 bg-white/[0.04] backdrop-blur-md px-2.5 py-2 flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-[8px] font-semibold text-white/60 uppercase tracking-wider">Índice de Actividade</p>
-                      <span className={`text-xs font-black tabular-nums ${indiceActividade >= 70 ? "text-emerald-400" : indiceActividade >= 40 ? "text-amber-400" : "text-red-400"}`}>{indiceActividade}%</span>
-                    </div>
-                    <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${indiceActividade}%` }} transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-                        className={`h-full rounded-full ${indiceActividade >= 70 ? "bg-emerald-400" : indiceActividade >= 40 ? "bg-amber-400" : "bg-red-400"}`} />
-                    </div>
-                    <p className="text-[6px] text-white/20 mt-1">Formandos · Formadores · Materiais · Turmas</p>
-                  </motion.div>
-
-                  {/* Rácio */}
-                  <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
-                    className="rounded-lg border border-white/10 bg-white/[0.04] backdrop-blur-md px-2.5 py-2 flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-[8px] font-semibold text-white/60 uppercase tracking-wider">Rácio / Formador</p>
-                      <span className="text-xs font-black tabular-nums text-blue-400">{ratioVal}:1</span>
-                    </div>
-                    <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, totalFormadores > 0 ? (totalFormandos / totalFormadores / 10) * 100 : 0)}%` }}
-                        transition={{ duration: 1, delay: 0.5, ease: "easeOut" }} className="h-full rounded-full bg-blue-400" />
-                    </div>
-                    <p className="text-[6px] text-white/20 mt-1">Meta ideal: ≤ 10 formandos / formador</p>
-                  </motion.div>
-
-                  {/* Cobertura Geográfica */}
-                  <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
-                    className="rounded-lg border border-white/10 bg-white/[0.04] backdrop-blur-md px-2.5 py-2 flex-1">
-                    <p className="text-[8px] font-semibold text-white/60 uppercase tracking-wider mb-1.5">Cobertura Geográfica</p>
-                    {[
-                      { nome: "Luanda", total: totalLuanda, cor: "bg-blue-400" },
-                      { nome: "Bié",    total: totalBie,    cor: "bg-amber-400" },
-                    ].map(({ nome, total, cor }) => (
-                      <div key={nome} className="mb-1.5 last:mb-0">
-                        <div className="flex justify-between mb-0.5">
-                          <span className="text-[7px] text-white/40 uppercase tracking-wider">{nome}</span>
-                          <span className="text-[7px] font-bold text-white/50 tabular-nums">{total} part.</span>
-                        </div>
-                        <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${Math.round((total / totalGeo) * 100)}%` }}
-                            transition={{ duration: 1, delay: 0.6, ease: "easeOut" }} className={`h-full rounded-full ${cor}`} />
-                        </div>
-                      </div>
+            <div className="space-y-3 w-full">
+              {!areaSel ? (
+                <>
+                  <p className={defaultTextClass}>
+                    Navega os eventos por área de formação, ou consulta os eventos abertos ao público em geral.
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[46vh] overflow-y-auto pr-1">
+                    {eventosLoading && <p className="text-sm text-white/40 col-span-full">A carregar…</p>}
+                    {!eventosLoading && areasEventos.length === 0 && (
+                      <p className="text-sm text-white/40 col-span-full">Sem eventos registados.</p>
+                    )}
+                    {areasEventos.map(({ area, total }) => (
+                      <button
+                        key={area}
+                        type="button"
+                        onClick={() => setAreaEventoSelecionada(area)}
+                        className="text-left bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-3 hover:bg-white/[0.08] transition-colors"
+                      >
+                        <p className="text-lg font-black text-white leading-none">{total}</p>
+                        <p className="text-[9px] uppercase tracking-widest text-emerald-400 mt-1.5">{area}</p>
+                      </button>
                     ))}
-                  </motion.div>
-                </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setAreaEventoSelecionada(null)}
+                    className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white/70 transition-colors"
+                  >
+                    ← Todas as áreas
+                  </button>
+                  <p className={defaultTextClass}>{areaSel.area}</p>
+                  <div className="space-y-2 max-h-[46vh] overflow-y-auto pr-1">
+                    {(areaSel.eventos.length ?? 0) === 0 && (
+                      <p className="text-sm text-white/40">Sem eventos nesta área.</p>
+                    )}
+                    {areaSel.eventos.map(ev => (
+                      <EventoRow key={ev.id} ev={ev} onAbrir={() => abrirEvento(ev)} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          ),
+        };
+      }
+      case 6: {
+        const eventos = telemetry.proximos_eventos ?? [];
+        const abrirEventoAgenda = (ev: any) => setSelectedEvento(ev);
+
+        const agora = Date.now();
+        const diasAte = (ev: any) => Math.max(0, Math.ceil((new Date(ev.data_evento).getTime() - agora) / 86400000));
+        const gruposAgenda = [
+          { titulo: "Esta semana", itens: eventos.filter((ev: any) => diasAte(ev) <= 7) },
+          { titulo: "Próximas 2 semanas", itens: eventos.filter((ev: any) => diasAte(ev) > 7 && diasAte(ev) <= 21) },
+          { titulo: "Mais tarde", itens: eventos.filter((ev: any) => diasAte(ev) > 21) },
+        ].filter((g) => g.itens.length > 0);
+
+        return {
+          ...base,
+          name: "Agenda",
+          subtitle: "Próximos Eventos",
+          description: (
+            <div className="space-y-4 w-full">
+              <p className={defaultTextClass}>
+                Consulta os próximos eventos do programa e inscreve-te directamente por aqui.
+              </p>
+              <div className="relative">
+              <div className="space-y-5 max-h-[46vh] overflow-y-auto pr-1">
+                {eventos.length === 0 && (
+                  <p className="text-sm text-white/40">Sem eventos agendados.</p>
+                )}
+                {gruposAgenda.map(({ titulo, itens }) => (
+                  <div key={titulo}>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-2">{titulo}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {itens.map((ev: any, i: number) => (
+                        <AgendaRow key={ev.id ?? i} ev={ev} onAbrir={() => abrirEventoAgenda(ev)} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/70 to-transparent" />
               </div>
             </div>
           ),
@@ -1222,8 +1383,8 @@ export default function HeroSection() {
 
               <div className="hidden md:flex flex-col items-end gap-4 md:gap-8 pointer-events-auto my-auto shrink-0 transform-gpu min-[1000px]:scale-100 scale-90 origin-right">
                 <Suspense fallback={null}><PhaseNavigator goToPhase={goToPhase} /></Suspense>
-                <div id="tour-phases-sidebar"><PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} phases={PROGRAM_PHASES} setIsHovering={setIsHovering} /></div>
-                <div id="tour-navigator"><Navigator activePhaseIndex={activePhaseIndex} goToPhase={goToPhase} setIsHovering={setIsHovering} /></div>
+                <div id="tour-phases-sidebar"><PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={handleMenuClick} phases={REAL_MENU} setIsHovering={setIsHovering} /></div>
+                <div id="tour-navigator"><Navigator activePhaseIndex={activePhaseIndex} goToPhase={handleMenuClick} setIsHovering={setIsHovering} /></div>
               </div>
 
               <div className="pointer-events-auto shrink-0">
@@ -1231,7 +1392,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div id="tour-content" className="absolute top-[14vh] sm:top-[28vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-auto sm:w-[90%] md:w-[540px] z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '75vh'}}>
+            <div id="tour-content" className="absolute top-[14vh] sm:top-[14vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-[240px] md:right-[300px] lg:right-[340px] sm:w-auto md:w-auto z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '82vh'}}>
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
                   <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">

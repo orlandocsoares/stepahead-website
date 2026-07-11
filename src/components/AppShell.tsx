@@ -9,7 +9,7 @@ type AppShellCtx = { mode: SiteMode; changeMode: (m: SiteMode) => void };
 const AppShellContext = createContext<AppShellCtx>({ mode: "escuro", changeMode: () => {} });
 export const useAppMode = () => useContext(AppShellContext);
 
-const ANIMATED_ROUTES = ["/preview"];
+const ANIMATED_ROUTES = ["/"];
 
 function PageTransition({ pathname, children }: { pathname: string; children: React.ReactNode }) {
   if (!ANIMATED_ROUTES.includes(pathname)) return <>{children}</>;
