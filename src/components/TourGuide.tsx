@@ -78,14 +78,18 @@ const TOUR_STEPS = [
   },
 ];
 
+type TourStep = (typeof TOUR_STEPS)[number];
+
 interface TourGuideProps {
   start: boolean;
   onDone: () => void;
+  steps?: TourStep[];
 }
 
-export function TourGuide({ start, onDone }: TourGuideProps) {
+export function TourGuide({ start, onDone, steps }: TourGuideProps) {
   const runTour = useCallback(async () => {
     const { driver } = await import("driver.js");
+    const activeSteps = steps ?? TOUR_STEPS;
 
     const d = driver({
       showProgress: true,
@@ -106,14 +110,14 @@ export function TourGuide({ start, onDone }: TourGuideProps) {
         }
         onDone();
       },
-      steps: TOUR_STEPS.filter((s) => {
+      steps: activeSteps.filter((s) => {
         if (typeof document === "undefined") return true;
         return document.querySelector(s.element) !== null;
       }),
     });
 
     d.drive();
-  }, [onDone]);
+  }, [onDone, steps]);
 
   useEffect(() => {
     if (!start) return;

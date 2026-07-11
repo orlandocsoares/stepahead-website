@@ -747,6 +747,10 @@ jobs:
               -- fica desligado por omissão por sensibilidade com as entidades parceiras
               ALTER TABLE hero_telemetria ADD COLUMN IF NOT EXISTS mostrar_formandos_publico BOOLEAN NOT NULL DEFAULT false;
 
+              -- Tipologia e público-alvo da acção, para a página pública 'Eventos'
+              ALTER TABLE acoes_formacao ADD COLUMN IF NOT EXISTS tipologia TEXT;
+              ALTER TABLE acoes_formacao ADD COLUMN IF NOT EXISTS publico_alvo TEXT;
+
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             echo "==> A construir e reiniciar o container web..."

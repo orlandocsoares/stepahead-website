@@ -17,11 +17,11 @@ export async function GET() {
       ORDER BY first_name ASC
     `)),
     safe(dbQuery(`
-      SELECT titulo, local, endereco, imagem_url, data_evento, tipo
+      SELECT id, titulo, local, endereco, imagem_url, data_evento, tipo
       FROM agenda_atividades
       WHERE data_evento >= NOW()
       ORDER BY data_evento ASC
-      LIMIT 5
+      LIMIT 20
     `)),
     safe(dbQuery(`SELECT COUNT(*) AS total FROM arquivos WHERE visibilidade IN ('publico', 'formadores')`)),
     safe(dbQuery(`SELECT media_radar, formandos_historico_ajuste, mostrar_formandos_publico FROM hero_telemetria LIMIT 1`)),

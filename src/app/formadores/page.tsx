@@ -41,7 +41,11 @@ function FormadorMiniCard({ data }: { data: FormadorData }) {
     <button
       type="button"
       onClick={() => setOpen(v => !v)}
-      className={`text-left bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2.5 hover:bg-white/[0.08] transition-colors ${open ? "col-span-full" : ""}`}
+      className={`text-left backdrop-blur-md border rounded-xl px-3 py-2.5 transition-colors ${
+        open
+          ? "col-span-full bg-slate-950/90 border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+          : "bg-white/5 border-white/10 hover:bg-white/[0.08]"
+      }`}
     >
       <div className="flex items-center gap-2.5">
         {data.avatar_url ? (
@@ -58,10 +62,10 @@ function FormadorMiniCard({ data }: { data: FormadorData }) {
       </div>
       {open && (
         <div className="mt-2.5 pt-2.5 border-t border-white/10 space-y-1">
-          <p className="text-[10px] text-white/70 leading-relaxed">
+          <p className="text-[11px] text-white/85 leading-relaxed">
             {data.biografia || "Formador de excelência no reforço pedagógico do ensino secundário."}
           </p>
-          {data.provincia && <p className="text-[9px] text-white/30">{data.provincia}</p>}
+          {data.provincia && <p className="text-[9px] text-white/40">{data.provincia}</p>}
         </div>
       )}
     </button>
@@ -96,6 +100,16 @@ const REAL_MENU = [
   { id: "menu-4", name: "Recursos", href: "/recursos" },
   { id: "menu-5", name: "Eventos", href: "/eventos" },
   { id: "menu-6", name: "Agenda", href: "/agenda-publica" },
+];
+
+const PAGE_TOUR_STEPS = [
+  { element: "#tour-bandeiras", popover: { title: "Cooperação Bilateral", description: "O Saber Mais é um programa de cooperação entre <strong>Portugal e Angola</strong>, tutelado pelo Camões, I.P. e pelo Ministério da Educação de Angola (INFQE).", side: "bottom" as const, align: "start" as const } },
+  { element: "#tour-logo", popover: { title: "Portal Saber Mais", description: "Este é o portal central do programa. Clique no logótipo para voltar à página Saber Mais.", side: "top" as const, align: "center" as const } },
+  { element: "#tour-content", popover: { title: "Formadores", description: "Conheça a equipa de formação e supervisão, agrupada por área. Clique num cartão para ver a biografia completa de cada formador.", side: "right" as const, align: "start" as const } },
+  { element: "#tour-phases-sidebar", popover: { title: "Menu do site", description: "Navegue pelas páginas do site: Saber Mais, Províncias, Formadores, Recursos, Eventos e Agenda. Clique em qualquer uma para lá ir directamente.", side: "left" as const, align: "center" as const } },
+  { element: "#tour-navigator", popover: { title: "Navegação por Setas", description: "Use as setas <strong>◀ ▶</strong> para percorrer as páginas do menu.", side: "left" as const, align: "center" as const } },
+  { element: "#tour-entrar-btn", popover: { title: "Acesso Restrito", description: "Clique em <strong>Entrar</strong> para aceder à área reservada com as suas credenciais, ou registar-se como Formando ou Formador.", side: "bottom" as const, align: "end" as const } },
+  { element: "#tour-help-btn", popover: { title: "Ajuda Sempre Disponível", description: "Pode repetir este guia a qualquer momento clicando no botão <strong>?</strong>.", side: "bottom" as const, align: "end" as const } },
 ];
 
 const SIMULATED_FORMADORES = [
@@ -1196,7 +1210,7 @@ export default function HeroSection() {
               </DialogContent>
             </Dialog>
 
-            <TourGuide start={tourActive} onDone={() => setTourActive(false)} />
+            <TourGuide start={tourActive} onDone={() => setTourActive(false)} steps={PAGE_TOUR_STEPS} />
 
             <div className="fixed top-0 right-4 sm:right-6 md:right-16 lg:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-5 sm:py-10 pointer-events-none">
               {/* TOPO: Botões de Ação */}

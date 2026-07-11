@@ -127,6 +127,16 @@ const REAL_MENU = [
   { id: "menu-6", name: "Agenda", href: "/agenda-publica" },
 ];
 
+const PAGE_TOUR_STEPS = [
+  { element: "#tour-bandeiras", popover: { title: "Cooperação Bilateral", description: "O Saber Mais é um programa de cooperação entre <strong>Portugal e Angola</strong>, tutelado pelo Camões, I.P. e pelo Ministério da Educação de Angola (INFQE).", side: "bottom" as const, align: "start" as const } },
+  { element: "#tour-logo", popover: { title: "Portal Saber Mais", description: "Este é o portal central do programa. Clique no logótipo para voltar à página Saber Mais.", side: "top" as const, align: "center" as const } },
+  { element: "#tour-content", popover: { title: "Províncias", description: "Bié e Luanda são as províncias de referência do programa. Clique num cartão para ver as ações de formação, formadores associados e recursos disponíveis nessa província.", side: "right" as const, align: "start" as const } },
+  { element: "#tour-phases-sidebar", popover: { title: "Menu do site", description: "Navegue pelas páginas do site: Saber Mais, Províncias, Formadores, Recursos, Eventos e Agenda. Clique em qualquer uma para lá ir directamente.", side: "left" as const, align: "center" as const } },
+  { element: "#tour-navigator", popover: { title: "Navegação por Setas", description: "Use as setas <strong>◀ ▶</strong> para percorrer as páginas do menu.", side: "left" as const, align: "center" as const } },
+  { element: "#tour-entrar-btn", popover: { title: "Acesso Restrito", description: "Clique em <strong>Entrar</strong> para aceder à área reservada com as suas credenciais, ou registar-se como Formando ou Formador.", side: "bottom" as const, align: "end" as const } },
+  { element: "#tour-help-btn", popover: { title: "Ajuda Sempre Disponível", description: "Pode repetir este guia a qualquer momento clicando no botão <strong>?</strong>.", side: "bottom" as const, align: "end" as const } },
+];
+
 const SIMULATED_FORMADORES = [
   { first_name: "Ana", last_name: "Kiala", especialidade: "Matemática e Física", biografia: "Especialista em metodologias de ensino activo para ciências exactas no II Ciclo.", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=AnaKiala&backgroundColor=b6e3f4" },
   { first_name: "Carlos", last_name: "Mendes", especialidade: "Língua Portuguesa", biografia: "Mestre em linguística aplicada, focado na capacitação de leitura e interpretação textual.", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=CarlosMendes&backgroundColor=c0aede" },
@@ -1240,7 +1250,7 @@ export default function HeroSection() {
               </DialogContent>
             </Dialog>
 
-            <TourGuide start={tourActive} onDone={() => setTourActive(false)} />
+            <TourGuide start={tourActive} onDone={() => setTourActive(false)} steps={PAGE_TOUR_STEPS} />
 
             <div className="fixed top-0 right-4 sm:right-6 md:right-16 lg:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-5 sm:py-10 pointer-events-none">
               {/* TOPO: Botões de Ação */}
