@@ -315,7 +315,7 @@ export default function HeroSection() {
 
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
-  const targetFrameValue = useMotionValue(PROGRAM_PHASES[4].focusFrame);
+  const targetFrameValue = useMotionValue(0);
   const isCooldown = useRef(false);
   const scrollIntent = useRef(0);
 
@@ -558,6 +558,14 @@ export default function HeroSection() {
     });
     return () => { unsubscribe(); };
   }, [targetFrameValue]);
+
+  // Scrub inicial das nuvens, do frame 0 até à fase desta página
+  useEffect(() => {
+    const t = setTimeout(() => {
+      animate(targetFrameValue, PROGRAM_PHASES[4].focusFrame, { duration: 1.6, ease: [0.22, 1, 0.36, 1] });
+    }, 200);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     const moveCursor = (e: MouseEvent) => { mouseX.set(e.clientX); mouseY.set(e.clientY); };
