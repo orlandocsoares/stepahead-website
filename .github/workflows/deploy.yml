@@ -739,6 +739,10 @@ jobs:
               INSERT INTO municipios (nome, provincia_id) SELECT 'Mucusso', id FROM provincias WHERE nome = 'Cuando' ON CONFLICT DO NOTHING;
               INSERT INTO municipios (nome, provincia_id) SELECT 'Luengue', id FROM provincias WHERE nome = 'Cuando' ON CONFLICT DO NOTHING;
 
+              -- Ajuste manual de formandos anteriores ao sistema, somado às inscrições reais
+              -- registadas em inscricoes_acao para compor o indicador público 'Formandos'
+              ALTER TABLE hero_telemetria ADD COLUMN IF NOT EXISTS formandos_historico_ajuste INT NOT NULL DEFAULT 0;
+
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             echo "==> A construir e reiniciar o container web..."

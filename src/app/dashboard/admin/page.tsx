@@ -33,6 +33,9 @@ export default function SuperAdminPage() {
   const [approvingFormadorId, setApprovingFormadorId] = useState<string | null>(null);
   const [mediaRadarSaving, setMediaRadarSaving] = useState(false);
   const [mediaRadarSaved, setMediaRadarSaved] = useState(false);
+  const [formandosAjuste, setFormandosAjuste] = useState<string>("");
+  const [formandosAjusteSaving, setFormandosAjusteSaving] = useState(false);
+  const [formandosAjusteSaved, setFormandosAjusteSaved] = useState(false);
   const [userRoleTab, setUserRoleTab] = useState<"admin" | "formador" | "formando">("admin");
 
   // Anúncios
@@ -118,6 +121,23 @@ export default function SuperAdminPage() {
       setTimeout(() => setMediaRadarSaved(false), 2500);
     } finally {
       setMediaRadarSaving(false);
+    }
+  }
+
+  async function saveFormandosAjuste() {
+    const val = parseInt(formandosAjuste);
+    if (isNaN(val) || val < 0) return;
+    setFormandosAjusteSaving(true);
+    try {
+      await fetch("/api/admin/hero-telemetria", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ formandos_historico_ajuste: val }),
+      });
+      setFormandosAjusteSaved(true);
+      setTimeout(() => setFormandosAjusteSaved(false), 2500);
+    } finally {
+      setFormandosAjusteSaving(false);
     }
   }
 
@@ -292,10 +312,13 @@ export default function SuperAdminPage() {
   }, [activeTab, profile]);
 
   useEffect(() => {
-    if (isAdminOrSuper(profile?.role) && activeTab === "stats" && mediaRadar === "") {
+    if (isAdminOrSuper(profile?.role) && activeTab === "stats" && (mediaRadar === "" || formandosAjuste === "")) {
       fetch("/api/public/hero")
         .then(r => r.json())
-        .then(d => { if (d.media_radar != null) setMediaRadar(String(d.media_radar)); })
+        .then(d => {
+          if (d.media_radar != null) setMediaRadar(String(d.media_radar));
+          if (d.formandos_historico_ajuste != null) setFormandosAjuste(String(d.formandos_historico_ajuste));
+        })
         .catch(() => {});
     }
     if (isAdminOrSuper(profile?.role) && activeTab === "stats" && !statsData) {
@@ -622,29 +645,53 @@ export default function SuperAdminPage() {
                           <h3 className="text-sm font-semibold c-tx">Configurações do Site Público</h3>
                           <span className="text-[10px] c-tx4 ml-1">Valores apresentados na página inicial</span>
                         </div>
-                        <div className="flex items-end gap-3 max-w-xs">
-                          <div className="flex-1 space-y-1.5">
-                            <label className="text-[11px] c-tx3 uppercase tracking-wider">Radar de Integração (%)</label>
-                            <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
+                          <div className="flex items-end gap-3 max-w-xs">
+                            <div className="flex-1 space-y-1.5">
+                              <label className="text-[11px] c-tx3 uppercase tracking-wider">Radar de Integração (%)</label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number" min="0" max="100"
+                                  value={mediaRadar}
+                                  onChange={e => setMediaRadar(e.target.value)}
+                                  placeholder="0 – 100"
+                                  className="w-24 c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
+                                />
+                                <span className="c-tx4 text-sm">%</span>
+                              </div>
+                              <p className="text-[10px] c-tx4">Aparece na Fase 2 "Capacitação" do site público</p>
+                            </div>
+                            <button
+                              onClick={saveMediaRadar}
+                              disabled={mediaRadarSaving || mediaRadar === ""}
+                              className="px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-2 bg-blue-600 hover:bg-blue-500 c-tx"
+                            >
+                              {mediaRadarSaving ? <Loader2 size={13} className="animate-spin" /> : mediaRadarSaved ? <CheckCircle2 size={13} className="text-emerald-400" /> : null}
+                              {mediaRadarSaved ? "Guardado!" : "Guardar"}
+                            </button>
+                          </div>
+
+                          <div className="flex items-end gap-3 max-w-xs">
+                            <div className="flex-1 space-y-1.5">
+                              <label className="text-[11px] c-tx3 uppercase tracking-wider">Formandos anteriores ao sistema</label>
                               <input
-                                type="number" min="0" max="100"
-                                value={mediaRadar}
-                                onChange={e => setMediaRadar(e.target.value)}
-                                placeholder="0 – 100"
+                                type="number" min="0"
+                                value={formandosAjuste}
+                                onChange={e => setFormandosAjuste(e.target.value)}
+                                placeholder="0"
                                 className="w-24 c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors"
                               />
-                              <span className="c-tx4 text-sm">%</span>
+                              <p className="text-[10px] c-tx4">Somado aos formandos das acções de formação registadas, na página "Saber Mais"</p>
                             </div>
-                            <p className="text-[10px] c-tx4">Aparece na Fase 2 "Capacitação" do site público</p>
+                            <button
+                              onClick={saveFormandosAjuste}
+                              disabled={formandosAjusteSaving || formandosAjuste === ""}
+                              className="px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-2 bg-blue-600 hover:bg-blue-500 c-tx"
+                            >
+                              {formandosAjusteSaving ? <Loader2 size={13} className="animate-spin" /> : formandosAjusteSaved ? <CheckCircle2 size={13} className="text-emerald-400" /> : null}
+                              {formandosAjusteSaved ? "Guardado!" : "Guardar"}
+                            </button>
                           </div>
-                          <button
-                            onClick={saveMediaRadar}
-                            disabled={mediaRadarSaving || mediaRadar === ""}
-                            className="px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-2 bg-blue-600 hover:bg-blue-500 c-tx"
-                          >
-                            {mediaRadarSaving ? <Loader2 size={13} className="animate-spin" /> : mediaRadarSaved ? <CheckCircle2 size={13} className="text-emerald-400" /> : null}
-                            {mediaRadarSaved ? "Guardado!" : "Guardar"}
-                          </button>
                         </div>
                       </div>
 

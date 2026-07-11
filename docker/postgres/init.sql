@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS hero_telemetria (
   total_alunos INT NOT NULL DEFAULT 0,
   total_formadores INT NOT NULL DEFAULT 0,
   taxa_conclusao NUMERIC(5,2) NOT NULL DEFAULT 0,
+  formandos_historico_ajuste INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
