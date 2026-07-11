@@ -793,20 +793,23 @@ export default function HeroSection() {
               <p className={defaultTextClass}>
                 Consulta os próximos eventos do programa e inscreve-te directamente por aqui.
               </p>
-              <div className="space-y-5 max-h-[58vh] overflow-y-auto pr-1">
+              <div className="relative">
+              <div className="space-y-5 max-h-[46vh] overflow-y-auto pr-1">
                 {eventos.length === 0 && (
                   <p className="text-sm text-white/40">Sem eventos agendados.</p>
                 )}
                 {grupos.map(({ titulo, itens }) => (
                   <div key={titulo}>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-2">{titulo}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                       {itens.map((ev: any, i: number) => (
                         <AgendaRow key={ev.id ?? i} ev={ev} onAbrir={() => abrirEvento(ev)} />
                       ))}
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/70 to-transparent" />
               </div>
             </div>
           ),
