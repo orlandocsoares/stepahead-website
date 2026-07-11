@@ -24,7 +24,7 @@ export async function GET() {
       LIMIT 5
     `)),
     safe(dbQuery(`SELECT COUNT(*) AS total FROM arquivos WHERE visibilidade IN ('publico', 'formadores')`)),
-    safe(dbQuery(`SELECT media_radar, formandos_historico_ajuste FROM hero_telemetria LIMIT 1`)),
+    safe(dbQuery(`SELECT media_radar, formandos_historico_ajuste, mostrar_formandos_publico FROM hero_telemetria LIMIT 1`)),
     safe(dbQuery(`SELECT COUNT(DISTINCT formando_id) AS total FROM inscricoes_acao WHERE status != 'cancelado'`)),
     safe(dbQuery(`
       SELECT COUNT(DISTINCT p.id) AS total
@@ -80,7 +80,10 @@ export async function GET() {
     total_materials: Number(totalMateriais.rows[0]?.total ?? 0) || null,
     media_radar: telemetria.rows[0]?.media_radar ?? null,
     formandos_historico_ajuste: Number(telemetria.rows[0]?.formandos_historico_ajuste ?? 0),
-    total_formandos: Number(totalFormandos.rows[0]?.total ?? 0) + Number(telemetria.rows[0]?.formandos_historico_ajuste ?? 0),
+    mostrar_formandos_publico: telemetria.rows[0]?.mostrar_formandos_publico ?? false,
+    total_formandos: telemetria.rows[0]?.mostrar_formandos_publico
+      ? Number(totalFormandos.rows[0]?.total ?? 0) + Number(telemetria.rows[0]?.formandos_historico_ajuste ?? 0)
+      : null,
     total_provincias: Number(provincias.rows[0]?.total ?? 0),
     total_turmas: Number(turmas.rows[0]?.total ?? 0),
     areas_materiais: areasMateriais.rows.map((r: any) => ({ area: r.area, total: Number(r.total) })),

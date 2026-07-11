@@ -36,6 +36,8 @@ export default function SuperAdminPage() {
   const [formandosAjuste, setFormandosAjuste] = useState<string>("");
   const [formandosAjusteSaving, setFormandosAjusteSaving] = useState(false);
   const [formandosAjusteSaved, setFormandosAjusteSaved] = useState(false);
+  const [mostrarFormandos, setMostrarFormandos] = useState<boolean | null>(null);
+  const [mostrarFormandosSaving, setMostrarFormandosSaving] = useState(false);
   const [userRoleTab, setUserRoleTab] = useState<"admin" | "formador" | "formando">("admin");
 
   // Anúncios
@@ -138,6 +140,21 @@ export default function SuperAdminPage() {
       setTimeout(() => setFormandosAjusteSaved(false), 2500);
     } finally {
       setFormandosAjusteSaving(false);
+    }
+  }
+
+  async function toggleMostrarFormandos() {
+    const next = !mostrarFormandos;
+    setMostrarFormandosSaving(true);
+    try {
+      await fetch("/api/admin/hero-telemetria", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mostrar_formandos_publico: next }),
+      });
+      setMostrarFormandos(next);
+    } finally {
+      setMostrarFormandosSaving(false);
     }
   }
 
@@ -318,6 +335,7 @@ export default function SuperAdminPage() {
         .then(d => {
           if (d.media_radar != null) setMediaRadar(String(d.media_radar));
           if (d.formandos_historico_ajuste != null) setFormandosAjuste(String(d.formandos_historico_ajuste));
+          if (mostrarFormandos === null) setMostrarFormandos(!!d.mostrar_formandos_publico);
         })
         .catch(() => {});
     }
@@ -691,6 +709,23 @@ export default function SuperAdminPage() {
                               {formandosAjusteSaving ? <Loader2 size={13} className="animate-spin" /> : formandosAjusteSaved ? <CheckCircle2 size={13} className="text-emerald-400" /> : null}
                               {formandosAjusteSaved ? "Guardado!" : "Guardar"}
                             </button>
+                          </div>
+
+                          <div className="flex items-end gap-3 max-w-xs">
+                            <div className="flex-1 space-y-1.5">
+                              <label className="text-[11px] c-tx3 uppercase tracking-wider">Publicar nº de Formandos</label>
+                              <button
+                                onClick={toggleMostrarFormandos}
+                                disabled={mostrarFormandosSaving || mostrarFormandos === null}
+                                className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 ${
+                                  mostrarFormandos ? "bg-emerald-600 hover:bg-emerald-500" : "c-s1 border c-br"
+                                } c-tx`}
+                              >
+                                {mostrarFormandosSaving ? <Loader2 size={13} className="animate-spin" /> : null}
+                                {mostrarFormandos ? "Visível no site" : "Oculto no site"}
+                              </button>
+                              <p className="text-[10px] c-tx4">Desligado por sensibilidade com as entidades parceiras, até haver exportação massiva fiável</p>
+                            </div>
                           </div>
                         </div>
                       </div>

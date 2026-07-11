@@ -743,6 +743,10 @@ jobs:
               -- registadas em inscricoes_acao para compor o indicador público 'Formandos'
               ALTER TABLE hero_telemetria ADD COLUMN IF NOT EXISTS formandos_historico_ajuste INT NOT NULL DEFAULT 0;
 
+              -- Interruptor para publicar (ou não) o indicador 'Formandos' no site público —
+              -- fica desligado por omissão por sensibilidade com as entidades parceiras
+              ALTER TABLE hero_telemetria ADD COLUMN IF NOT EXISTS mostrar_formandos_publico BOOLEAN NOT NULL DEFAULT false;
+
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             echo "==> A construir e reiniciar o container web..."

@@ -465,10 +465,13 @@ export default function HeroSection() {
     const len = REAL_MENU.length;
     let idx = ((rawIndex % len) + len) % len;
     if (idx === 0) idx = len - 1;
-    goToPhase(idx);
     const item = REAL_MENU[idx];
-    if (item.href && item.href !== "/saber-mais") router.push(item.href);
-  }, [goToPhase, router]);
+    if (item.href && item.href !== "/saber-mais") {
+      window.location.href = item.href;
+      return;
+    }
+    goToPhase(idx);
+  }, [goToPhase]);
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
@@ -572,7 +575,9 @@ export default function HeroSection() {
                   { icon: MapPin,     value: `${telemetry.total_provincias || 0}`, label: "Províncias" },
                   { icon: Handshake,  value: "2023/2027", label: "Ciclo" },
                   { icon: GraduationCap, value: `${telemetry.total_formadores || 0}`, label: "Formadores" },
-                  { icon: Users,      value: `${telemetry.total_formandos || 0}`,    label: "Formandos" },
+                  ...(telemetry.total_formandos != null
+                    ? [{ icon: Users, value: `${telemetry.total_formandos}`, label: "Formandos" }]
+                    : []),
                 ].map(({ icon: Icon, value, label }) => (
                   <div key={label} className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2">
                     <Icon size={14} className="text-blue-400 shrink-0" />
