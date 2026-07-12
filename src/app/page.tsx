@@ -18,6 +18,7 @@ import { TourGuide, shouldShowTour } from "@/components/TourGuide";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalidades } from "@/hooks/useLocalidades";
 import { QRCodeSVG } from "qrcode.react";
+import { MapaAngola } from "@/components/MapaAngola";
 
 const FRAME_SUFFIX = "_delay-0.033s.webp";
 const TOTAL_FRAMES_COUNT = 280;
@@ -128,7 +129,7 @@ function MiniCalendario({
       </div>
       <div className="grid grid-cols-7 gap-1 text-center mb-1">
         {["D", "S", "T", "Q", "Q", "S", "S"].map((d, i) => (
-          <span key={i} className="text-[8px] uppercase text-white/30 font-semibold">{d}</span>
+          <span key={i} className="text-[8px] uppercase text-white/50 font-semibold">{d}</span>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1">
@@ -147,7 +148,7 @@ function MiniCalendario({
               className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] transition-colors ${
                 isSel ? "bg-blue-500/30 border border-blue-400/50 text-white" :
                 isHoje ? "border border-white/30 text-white" :
-                eventosDia.length ? "hover:bg-white/10 text-white/80 cursor-pointer" : "text-white/20 cursor-default"
+                eventosDia.length ? "hover:bg-white/10 text-white cursor-pointer" : "text-white/60 cursor-default"
               }`}
             >
               <span>{dia}</span>
