@@ -30,12 +30,12 @@ const PROVINCIAS_SVG: { nome: string; d: string }[] = [
 ];
 
 // Rótulos visíveis no mapa (posição aproximada + rotação, do SVG original)
-const ROTULOS: { nome: string; x: number; y: number; rotate?: number; fontSize?: number }[] = [
+const ROTULOS: { nome: string; x: number; y: number; rotate?: number; fontSize?: number; lines?: string[] }[] = [
   { nome: "Cabinda", x: 13.5, y: 34.9, rotate: -46.3, fontSize: 7 },
   { nome: "Zaire", x: 45.3, y: 81.3 },
   { nome: "Uíge", x: 111.6, y: 98.8 },
   { nome: "Bengo", x: 64.6, y: 142.7 },
-  { nome: "Cuanza Norte", x: 86.5, y: 178.6, rotate: -35.29, fontSize: 7 },
+  { nome: "Cuanza Norte", x: 86.5, y: 178.6, rotate: -35.29, fontSize: 5.5 },
   { nome: "Cuanza Sul", x: 86.7, y: 230.8 },
   { nome: "Huambo", x: 115.3, y: 300.9 },
   { nome: "Benguela", x: 57.7, y: 308.3 },
@@ -50,7 +50,7 @@ const ROTULOS: { nome: string; x: number; y: number; rotate?: number; fontSize?:
   { nome: "Lunda Norte", x: 233.3, y: 161.8 },
   { nome: "Lunda Sul", x: 277.6, y: 216.2 },
   { nome: "Bié", x: 175.4, y: 281.7 },
-  { nome: "Icolo e Bengo", x: 64.9, y: 178, rotate: 38.88, fontSize: 6 },
+  { nome: "Icolo e Bengo", x: 61.9, y: 181, rotate: 38.88, fontSize: 4.5 },
   { nome: "Luanda", x: 22.4, y: 167.3 },
 ];
 
@@ -89,21 +89,27 @@ export function MapaAngola({
           </path>
         );
       })}
-      {ROTULOS.map(({ nome, x, y, rotate, fontSize }) => (
+      {ROTULOS.map(({ nome, x, y, rotate, fontSize, lines }) => (
         <text
           key={nome}
           x={x}
           y={y}
           fontSize={fontSize ?? 5.5}
-          fill="#1e293b"
-          stroke="#fff"
-          strokeWidth={0.6}
-          paintOrder="stroke"
+          fill="#fff"
           fontWeight={700}
+          textAnchor={lines ? "middle" : undefined}
           transform={rotate ? `rotate(${rotate} ${x} ${y})` : undefined}
           className="pointer-events-none select-none"
         >
-          {nome}
+          {lines ? (
+            lines.map((linha, i) => (
+              <tspan key={linha} x={x} dy={i === 0 ? 0 : (fontSize ?? 5.5) * 1.1}>
+                {linha}
+              </tspan>
+            ))
+          ) : (
+            nome
+          )}
         </text>
       ))}
     </svg>

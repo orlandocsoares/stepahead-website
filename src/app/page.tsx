@@ -14,7 +14,7 @@ import { PhasesSidebar } from "@/components/PhasesSidebar";
 import { Navigator } from "@/components/Navigator";
 import { CommandCenter } from "@/components/CommandCenter";
 import { HeroBranding } from "@/components/HeroBranding";
-import { TourGuide, shouldShowTour } from "@/components/TourGuide";
+import { HomeTour, shouldShowHomeTour } from "@/components/HomeTour";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalidades } from "@/hooks/useLocalidades";
 import { QRCodeSVG } from "qrcode.react";
@@ -638,12 +638,13 @@ export default function HeroSection() {
     setSessionId(Math.random().toString(36).substring(2, 11) + Date.now().toString(36));
   }, []);
 
-  // Auto-start tour for first-time visitors
+  // Auto-start tour for first-time visitors (para o ecrã actual, se ainda não visto)
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (shouldShowTour()) setTourActive(true);
+      if (shouldShowHomeTour(activePhaseIndex)) setTourActive(true);
     }, 1800);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -910,7 +911,7 @@ export default function HeroSection() {
           description: (
             <div className="space-y-4">
               <p className={defaultTextClass}>{base.description}</p>
-              <div className="flex flex-wrap gap-3 mt-2">
+              <div id="tour-indicadores" className="flex flex-wrap gap-3 mt-2">
                 {[
                   { icon: MapPin,     value: `${telemetry.total_provincias || 0}`, label: "Províncias" },
                   { icon: Handshake,  value: "2023/2027", label: "Ciclo" },
@@ -928,7 +929,7 @@ export default function HeroSection() {
                   </div>
                 ))}
               </div>
-              <div className="mt-1">
+              <div id="tour-areas-formacao" className="mt-1">
                 <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-1.5">Áreas de formação</p>
                 <div className="flex flex-wrap gap-1.5">
                   {(telemetry.areas_formacao?.length ?? 0) === 0 && (
@@ -967,14 +968,14 @@ export default function HeroSection() {
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />Com ações</span>
               </div>
               <div className="flex flex-col md:flex-row-reverse gap-4 items-start">
-                <div className="shrink-0 w-full max-w-[400px] sm:max-w-[460px] md:max-w-[520px] mx-auto md:mx-0 md:-mt-60 md:ml-32">
+                <div id="tour-mapa-provincias" className="shrink-0 w-full max-w-[400px] sm:max-w-[460px] md:max-w-[520px] mx-auto md:mx-0 md:-mt-60 md:ml-56">
                   <MapaAngola
                     provinciasComDados={provinciasComDados}
                     seleccionada={provinciaMapaSel}
                     onSelect={(nome) => setProvinciaMapaSel(v => (v === nome ? null : nome))}
                   />
                 </div>
-                <div className="flex-1 min-w-0 max-h-[56vh] overflow-y-auto pr-1">
+                <div id="tour-provincia-detalhe" className="flex-1 min-w-0 max-h-[56vh] overflow-y-auto pr-1">
                   {!provinciaMapaSel && (
                     <p className="text-sm text-white/40">Selecciona uma província no mapa.</p>
                   )}
@@ -1000,7 +1001,7 @@ export default function HeroSection() {
               <p className={defaultTextClass}>
                 A promoção da formação e supervisão apoia-se em <strong className="text-blue-300">{formadoresData.length}</strong> formador{formadoresData.length === 1 ? "" : "es"} de excelência.
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2.5 max-h-[58vh] overflow-y-auto pr-1">
+              <div id="tour-formadores-grid" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2.5 max-h-[58vh] overflow-y-auto pr-1">
                 {formadoresLoading && <p className="text-sm text-white/40 col-span-full">A carregar…</p>}
                 {!formadoresLoading && formadoresData.length === 0 && (
                   <p className="text-sm text-white/40 col-span-full">Sem formadores activos registados.</p>
@@ -1043,7 +1044,7 @@ export default function HeroSection() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              <div id="tour-recursos-areas" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                 {areasFormadores.slice(0, 6).map(({ area, total }, i) => {
                   const c = areaColors[area] ?? defaultAreaColor;
                   const Icon = c.icon;
@@ -1069,6 +1070,7 @@ export default function HeroSection() {
               </div>
 
               <motion.a
+                id="tour-recursos-publicos-link"
                 href="/recursos/publicos"
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1108,7 +1110,7 @@ export default function HeroSection() {
           : [];
 
         const ToggleVista = (
-          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-0.5 w-fit">
+          <div id="tour-eventos-toggle" className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-0.5 w-fit">
             {(["lista", "calendario"] as const).map(v => (
               <button
                 key={v}
@@ -1161,7 +1163,7 @@ export default function HeroSection() {
                     </p>
                     {ToggleVista}
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 max-h-[46vh] overflow-y-auto pr-1">
+                  <div id="tour-eventos-areas" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 max-h-[46vh] overflow-y-auto pr-1">
                     {eventosLoading && <p className="text-sm text-white/40 col-span-full">A carregar…</p>}
                     {!eventosLoading && areasEventos.length === 0 && (
                       <p className="text-sm text-white/40 col-span-full">Sem eventos registados.</p>
@@ -1224,7 +1226,7 @@ export default function HeroSection() {
           : [];
 
         const ToggleVistaAgenda = (
-          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-0.5 w-fit shrink-0">
+          <div id="tour-agenda-toggle" className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-0.5 w-fit shrink-0">
             {(["lista", "calendario"] as const).map(v => (
               <button
                 key={v}
@@ -1253,7 +1255,7 @@ export default function HeroSection() {
               {vistaAgenda === "calendario" ? (
                 <>
                   <div className="flex flex-col md:flex-row gap-4 items-start">
-                    <div className="shrink-0 w-full max-w-[280px] sm:max-w-[320px]">
+                    <div id="tour-agenda-calendario" className="shrink-0 w-full max-w-[280px] sm:max-w-[320px]">
                       <MiniCalendario
                         itens={eventos}
                         dataKey="data_evento"
@@ -1543,7 +1545,7 @@ export default function HeroSection() {
               </DialogContent>
             </Dialog>
 
-            <TourGuide start={tourActive} onDone={() => setTourActive(false)} />
+            <HomeTour start={tourActive} phaseIndex={activePhaseIndex} onDone={() => setTourActive(false)} />
 
             <div className="fixed top-0 right-4 sm:right-6 md:right-16 lg:right-20 bottom-0 z-50 flex flex-col justify-between items-end py-5 sm:py-10 pointer-events-none">
               {/* TOPO: Botões de Ação */}
