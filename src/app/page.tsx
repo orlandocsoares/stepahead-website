@@ -67,6 +67,105 @@ type ProvinciaData = {
 
 const ESTADO_LABEL: Record<string, string> = { agendada: "Agendada", concluida: "Concluída", cancelada: "Cancelada" };
 
+const AREA_COLORS: Record<string, { bg: string; text: string; border: string; dot: string; icon: React.ElementType }> = {
+  "Matemática":        { bg: "bg-blue-900/60",    text: "text-blue-200",   border: "border-blue-400/40",   dot: "bg-blue-400",    icon: Calculator },
+  "Língua Portuguesa": { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400", icon: Languages },
+  "Português":         { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400", icon: Languages },
+  "Ciências":          { bg: "bg-cyan-900/60",    text: "text-cyan-200",   border: "border-cyan-400/40",   dot: "bg-cyan-400",    icon: FlaskConical },
+  "História":          { bg: "bg-amber-900/60",   text: "text-amber-200",  border: "border-amber-400/40",  dot: "bg-amber-400",   icon: Landmark },
+  "Geografia":         { bg: "bg-lime-900/60",    text: "text-lime-200",   border: "border-lime-400/40",   dot: "bg-lime-400",    icon: Globe },
+  "Biologia":          { bg: "bg-green-900/60",   text: "text-green-200",  border: "border-green-400/40",  dot: "bg-green-400",   icon: Leaf },
+  "Física":            { bg: "bg-violet-900/60",  text: "text-violet-200", border: "border-violet-400/40", dot: "bg-violet-400",  icon: Zap },
+  "Química":           { bg: "bg-pink-900/60",    text: "text-pink-200",   border: "border-pink-400/40",   dot: "bg-pink-400",    icon: TestTube },
+  "Pedagogia":         { bg: "bg-orange-900/60",  text: "text-orange-200", border: "border-orange-400/40", dot: "bg-orange-400",  icon: GraduationCap },
+  "Geral":             { bg: "bg-white/10",       text: "text-white/80",   border: "border-white/20",      dot: "bg-white/50",    icon: FolderOpen },
+};
+const DEFAULT_AREA_COLOR = { bg: "bg-white/10", text: "text-white/80", border: "border-white/20", dot: "bg-white/50", icon: FolderOpen };
+
+function MiniCalendario({
+  itens,
+  dataKey,
+  corPorItem,
+  onDiaClick,
+  diaSeleccionado,
+}: {
+  itens: any[];
+  dataKey: string;
+  corPorItem?: (item: any) => string;
+  onDiaClick: (dataISO: string | null) => void;
+  diaSeleccionado: string | null;
+}) {
+  const hoje = new Date();
+  const [mesRef, setMesRef] = useState(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+
+  const itensPorDia = new Map<string, any[]>();
+  for (const it of itens) {
+    const d = it[dataKey];
+    if (!d) continue;
+    const iso = new Date(d).toISOString().slice(0, 10);
+    if (!itensPorDia.has(iso)) itensPorDia.set(iso, []);
+    itensPorDia.get(iso)!.push(it);
+  }
+
+  const ano = mesRef.getFullYear();
+  const mes = mesRef.getMonth();
+  const primeiroDiaSemana = new Date(ano, mes, 1).getDay();
+  const totalDias = new Date(ano, mes + 1, 0).getDate();
+  const celulas: (number | null)[] = [
+    ...Array(primeiroDiaSemana).fill(null),
+    ...Array.from({ length: totalDias }, (_, i) => i + 1),
+  ];
+  const hojeISO = hoje.toISOString().slice(0, 10);
+
+  return (
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-2">
+        <button type="button" onClick={() => setMesRef(new Date(ano, mes - 1, 1))} className="text-white/40 hover:text-white/80 px-2 py-1 transition-colors">‹</button>
+        <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/70 capitalize">
+          {mesRef.toLocaleDateString("pt-PT", { month: "long", year: "numeric" })}
+        </p>
+        <button type="button" onClick={() => setMesRef(new Date(ano, mes + 1, 1))} className="text-white/40 hover:text-white/80 px-2 py-1 transition-colors">›</button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center mb-1">
+        {["D", "S", "T", "Q", "Q", "S", "S"].map((d, i) => (
+          <span key={i} className="text-[8px] uppercase text-white/30 font-semibold">{d}</span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {celulas.map((dia, i) => {
+          if (dia === null) return <div key={`vazio-${i}`} />;
+          const iso = `${ano}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+          const eventosDia = itensPorDia.get(iso) ?? [];
+          const isHoje = iso === hojeISO;
+          const isSel = iso === diaSeleccionado;
+          return (
+            <button
+              type="button"
+              key={iso}
+              onClick={() => onDiaClick(isSel ? null : (eventosDia.length ? iso : null))}
+              disabled={eventosDia.length === 0}
+              className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] transition-colors ${
+                isSel ? "bg-blue-500/30 border border-blue-400/50 text-white" :
+                isHoje ? "border border-white/30 text-white" :
+                eventosDia.length ? "hover:bg-white/10 text-white/80 cursor-pointer" : "text-white/20 cursor-default"
+              }`}
+            >
+              <span>{dia}</span>
+              {eventosDia.length > 0 && (
+                <span className="flex gap-0.5 mt-0.5">
+                  {eventosDia.slice(0, 3).map((it, idx) => (
+                    <span key={idx} className={`w-1 h-1 rounded-full ${corPorItem ? corPorItem(it) : "bg-blue-400"}`} />
+                  ))}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function fmtDataCurta(d: string | null) {
   if (!d) return null;
   return new Date(d).toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
@@ -488,6 +587,10 @@ export default function HeroSection() {
   const [areasEventos, setAreasEventos] = useState<AreaEventos[]>([]);
   const [eventosLoading, setEventosLoading] = useState(true);
   const [areaEventoSelecionada, setAreaEventoSelecionada] = useState<string | null>(null);
+  const [vistaEventos, setVistaEventos] = useState<"lista" | "calendario">("calendario");
+  const [diaEventoSel, setDiaEventoSel] = useState<string | null>(null);
+  const [vistaAgenda, setVistaAgenda] = useState<"lista" | "calendario">("calendario");
+  const [diaAgendaSel, setDiaAgendaSel] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile?.id) { setMinhasInscricoes(new Set()); return; }
@@ -889,20 +992,8 @@ export default function HeroSection() {
         };
       }
       case 4: {
-        const areaColors: Record<string, { bg: string; text: string; border: string; dot: string; icon: React.ElementType }> = {
-          "Matemática":        { bg: "bg-blue-900/60",    text: "text-blue-200",   border: "border-blue-400/40",   dot: "bg-blue-400",    icon: Calculator },
-          "Língua Portuguesa": { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400", icon: Languages },
-          "Português":         { bg: "bg-emerald-900/60", text: "text-emerald-200",border: "border-emerald-400/40",dot: "bg-emerald-400", icon: Languages },
-          "Ciências":          { bg: "bg-cyan-900/60",    text: "text-cyan-200",   border: "border-cyan-400/40",   dot: "bg-cyan-400",    icon: FlaskConical },
-          "História":          { bg: "bg-amber-900/60",   text: "text-amber-200",  border: "border-amber-400/40",  dot: "bg-amber-400",   icon: Landmark },
-          "Geografia":         { bg: "bg-lime-900/60",    text: "text-lime-200",   border: "border-lime-400/40",   dot: "bg-lime-400",    icon: Globe },
-          "Biologia":          { bg: "bg-green-900/60",   text: "text-green-200",  border: "border-green-400/40",  dot: "bg-green-400",   icon: Leaf },
-          "Física":            { bg: "bg-violet-900/60",  text: "text-violet-200", border: "border-violet-400/40", dot: "bg-violet-400",  icon: Zap },
-          "Química":           { bg: "bg-pink-900/60",    text: "text-pink-200",   border: "border-pink-400/40",   dot: "bg-pink-400",    icon: TestTube },
-          "Pedagogia":         { bg: "bg-orange-900/60",  text: "text-orange-200", border: "border-orange-400/40", dot: "bg-orange-400",  icon: GraduationCap },
-          "Geral":             { bg: "bg-white/10",       text: "text-white/80",   border: "border-white/20",      dot: "bg-white/50",    icon: FolderOpen },
-        };
-        const defaultAreaColor = { bg: "bg-white/10", text: "text-white/80", border: "border-white/20", dot: "bg-white/50", icon: FolderOpen };
+        const areaColors = AREA_COLORS;
+        const defaultAreaColor = DEFAULT_AREA_COLOR;
         const areasFormadores: { area: string; total: number }[] = telemetry.areas_materiais ?? [];
         const totalPublicos: number = telemetry.total_recursos_publicos ?? 0;
         const totalFormadoresRec: number = areasFormadores.reduce((s, a) => s + a.total, 0);
@@ -984,6 +1075,25 @@ export default function HeroSection() {
             tipo: ev.tipologia,
           });
         };
+        const todosEventos = areasEventos.flatMap(a => a.eventos);
+        const eventosDoDia = diaEventoSel
+          ? todosEventos.filter(ev => ev.data_inicio && new Date(ev.data_inicio).toISOString().slice(0, 10) === diaEventoSel)
+          : [];
+
+        const ToggleVista = (
+          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-0.5 w-fit">
+            {(["lista", "calendario"] as const).map(v => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setVistaEventos(v)}
+                className={`text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-md transition-colors ${vistaEventos === v ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"}`}
+              >
+                {v === "lista" ? "Lista" : "Calendário"}
+              </button>
+            ))}
+          </div>
+        );
 
         return {
           ...base,
@@ -991,11 +1101,39 @@ export default function HeroSection() {
           subtitle: "Por área de formação",
           description: (
             <div className="space-y-3 w-full">
-              {!areaSel ? (
+              {vistaEventos === "calendario" ? (
                 <>
-                  <p className={defaultTextClass}>
-                    Navega os eventos por área de formação, ou consulta os eventos abertos ao público em geral.
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className={defaultTextClass}>Eventos coloridos por área de formação.</p>
+                    {ToggleVista}
+                  </div>
+                  <div className="flex flex-col md:flex-row gap-4 items-start">
+                    <div className="shrink-0 w-full max-w-[280px] sm:max-w-[320px]">
+                      <MiniCalendario
+                        itens={todosEventos}
+                        dataKey="data_inicio"
+                        corPorItem={(ev: EventoItem) => (AREA_COLORS[ev.area] ?? DEFAULT_AREA_COLOR).dot}
+                        onDiaClick={setDiaEventoSel}
+                        diaSeleccionado={diaEventoSel}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-2 max-h-[42vh] overflow-y-auto pr-1">
+                      {!diaEventoSel && <p className="text-sm text-white/40">Selecciona um dia para ver os eventos.</p>}
+                      {diaEventoSel && eventosDoDia.length === 0 && <p className="text-sm text-white/40">Sem eventos neste dia.</p>}
+                      {diaEventoSel && eventosDoDia.map(ev => (
+                        <EventoRow key={ev.id} ev={ev} onAbrir={() => abrirEvento(ev)} />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : !areaSel ? (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className={defaultTextClass}>
+                      Navega os eventos por área de formação.
+                    </p>
+                    {ToggleVista}
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 max-h-[46vh] overflow-y-auto pr-1">
                     {eventosLoading && <p className="text-sm text-white/40 col-span-full">A carregar…</p>}
                     {!eventosLoading && areasEventos.length === 0 && (
@@ -1016,13 +1154,16 @@ export default function HeroSection() {
                 </>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => setAreaEventoSelecionada(null)}
-                    className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white/70 transition-colors"
-                  >
-                    ← Todas as áreas
-                  </button>
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAreaEventoSelecionada(null)}
+                      className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white/70 transition-colors"
+                    >
+                      ← Todas as áreas
+                    </button>
+                    {ToggleVista}
+                  </div>
                   <p className={defaultTextClass}>{areaSel.area}</p>
                   <div className="space-y-2 max-h-[46vh] overflow-y-auto pr-1">
                     {(areaSel.eventos.length ?? 0) === 0 && (
@@ -1051,15 +1192,58 @@ export default function HeroSection() {
           grupo.itens.push(ev);
         }
 
+        const eventosDoDiaAgenda = diaAgendaSel
+          ? eventos.filter((ev: any) => ev.data_evento && new Date(ev.data_evento).toISOString().slice(0, 10) === diaAgendaSel)
+          : [];
+
+        const ToggleVistaAgenda = (
+          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-0.5 w-fit shrink-0">
+            {(["lista", "calendario"] as const).map(v => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setVistaAgenda(v)}
+                className={`text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-md transition-colors ${vistaAgenda === v ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"}`}
+              >
+                {v === "lista" ? "Lista" : "Calendário"}
+              </button>
+            ))}
+          </div>
+        );
+
         return {
           ...base,
           name: "Agenda",
           subtitle: "Próximos Eventos",
           description: (
             <div className="space-y-4 w-full">
-              <p className={defaultTextClass}>
-                Consulta os próximos eventos do programa e inscreve-te directamente por aqui.
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className={defaultTextClass}>
+                  Consulta os próximos eventos do programa e inscreve-te directamente por aqui.
+                </p>
+                {ToggleVistaAgenda}
+              </div>
+              {vistaAgenda === "calendario" ? (
+                <>
+                  <div className="flex flex-col md:flex-row gap-4 items-start">
+                    <div className="shrink-0 w-full max-w-[280px] sm:max-w-[320px]">
+                      <MiniCalendario
+                        itens={eventos}
+                        dataKey="data_evento"
+                        onDiaClick={setDiaAgendaSel}
+                        diaSeleccionado={diaAgendaSel}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-2 max-h-[42vh] overflow-y-auto pr-1">
+                      {!diaAgendaSel && <p className="text-sm text-white/40">Selecciona um dia para ver os eventos.</p>}
+                      {diaAgendaSel && eventosDoDiaAgenda.length === 0 && <p className="text-sm text-white/40">Sem eventos neste dia.</p>}
+                      {diaAgendaSel && eventosDoDiaAgenda.map((ev: any, i: number) => (
+                        <AgendaRow key={ev.id ?? i} ev={ev} onAbrir={() => abrirEventoAgenda(ev)} />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
               <div className="relative">
               <div className="space-y-5 max-h-[46vh] overflow-y-auto pr-1">
                 {eventos.length === 0 && (
@@ -1078,6 +1262,7 @@ export default function HeroSection() {
               </div>
               <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/70 to-transparent" />
               </div>
+              )}
             </div>
           ),
         };
