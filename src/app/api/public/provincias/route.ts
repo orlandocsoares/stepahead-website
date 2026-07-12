@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 
-const PROVINCIAS_PROGRAMA = ["Bié", "Luanda"];
-
 export async function GET() {
   const safe = (p: Promise<any>) => p.catch(() => ({ rows: [] }));
 
+  const provinciasComAcoes = await safe(dbQuery(`
+    SELECT DISTINCT provincia FROM acoes_formacao
+    WHERE provincia IS NOT NULL AND TRIM(provincia) != ''
+  `));
+  const nomes: string[] = (provinciasComAcoes.rows as any[]).map(r => r.provincia.trim());
+
   const data = await Promise.all(
-    PROVINCIAS_PROGRAMA.map(async (nome) => {
+    nomes.map(async (nome) => {
       const [acoes, formadores, recursos] = await Promise.all([
         safe(dbQuery(
           `SELECT id, designacao, data_inicio, data_fim, estado

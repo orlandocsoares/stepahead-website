@@ -956,14 +956,18 @@ export default function HeroSection() {
         return {
           ...base,
           name: "Províncias",
-          subtitle: `${provinciasData.length} de 21 províncias`,
+          subtitle: "Bié & Luanda",
           description: (
             <div className="space-y-2 w-full">
               <p className={defaultTextClass}>
-                O projecto está presente em <strong className="text-blue-300">{provinciasData.length}</strong> província{provinciasData.length === 1 ? "" : "s"} — clica no mapa.
+                O projecto está presente em <strong className="text-amber-300">Bié</strong> e <strong className="text-amber-300">Luanda</strong> — clica no mapa para veres detalhes.
               </p>
+              <div className="flex items-center gap-3 text-[9px] uppercase tracking-widest text-white/40">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />Programa</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />Com ações</span>
+              </div>
               <div className="flex flex-col md:flex-row-reverse gap-4 items-start">
-                <div className="shrink-0 w-full max-w-[300px] sm:max-w-[340px] md:max-w-[360px] mx-auto md:mx-0 md:-mt-16">
+                <div className="shrink-0 w-full max-w-[400px] sm:max-w-[460px] md:max-w-[520px] mx-auto md:mx-0 md:-mt-60 md:ml-16">
                   <MapaAngola
                     provinciasComDados={provinciasComDados}
                     seleccionada={provinciaMapaSel}
@@ -972,7 +976,7 @@ export default function HeroSection() {
                 </div>
                 <div className="flex-1 min-w-0 max-h-[56vh] overflow-y-auto pr-1">
                   {!provinciaMapaSel && (
-                    <p className="text-sm text-white/40">Selecciona uma província no mapa (a azul, com ações registadas).</p>
+                    <p className="text-sm text-white/40">Selecciona uma província no mapa.</p>
                   )}
                   {provinciaMapaSel && !provinciaSel && (
                     <p className="text-sm text-white/40">{provinciaMapaSel} — sem ações registadas por agora.</p>
