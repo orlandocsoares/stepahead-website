@@ -171,7 +171,7 @@ export default function SupportPage() {
     <div className="flex gap-3 h-full w-full min-h-0">
 
       {/* ── Coluna esquerda: lista de tickets ── */}
-      <div className={`flex flex-col gap-3 min-h-0 shrink-0 c-bg2 border c-br rounded-xl p-3 ${selectedTicket ? "hidden lg:flex w-72 xl:w-80" : "flex-1 lg:w-80 lg:flex-none"}`}>
+      <div id="tour-suporte-tickets" className={`flex flex-col gap-3 min-h-0 shrink-0 c-bg2 border c-br rounded-xl p-3 ${selectedTicket ? "hidden lg:flex w-72 xl:w-80" : "flex-1 lg:w-80 lg:flex-none"}`}>
         {/* Cabeçalho */}
         <div className="flex items-center justify-between gap-3 shrink-0">
           <div>
@@ -190,7 +190,7 @@ export default function SupportPage() {
         </div>
 
         {/* Filtros */}
-        <div className="flex gap-1.5 flex-wrap shrink-0">
+        <div id="tour-suporte-filtros" className="flex gap-1.5 flex-wrap shrink-0">
           {["Todos", "Pendente", "Em Processo", "Resolvido"].map((st) => (
             <button key={st} onClick={() => setFilterStatus(st)}
               className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${filterStatus === st ? "bg-blue-600 text-white" : "c-s1 c-tx4 border c-br hc-s2 hc-tx"}`}
@@ -238,7 +238,7 @@ export default function SupportPage() {
       </div>
 
       {/* ── Coluna direita: detalhe do ticket (sempre visível) ── */}
-      <div className="flex-1 flex flex-col min-h-0 c-bg2 border c-br rounded-xl overflow-hidden">
+      <div id="tour-suporte-detalhe" className="flex-1 flex flex-col min-h-0 c-bg2 border c-br rounded-xl overflow-hidden">
         {!selectedTicket ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-8">
             <div className="w-16 h-16 rounded-2xl c-s1 border c-br flex items-center justify-center">

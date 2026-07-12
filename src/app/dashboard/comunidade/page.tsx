@@ -218,7 +218,7 @@ export default function ComunidadePage() {
       <aside className="hidden lg:flex flex-col gap-4 w-56 shrink-0">
 
         {/* Categorias */}
-        <div className="c-bg2 border c-br rounded-xl overflow-hidden">
+        <div id="tour-comunidade-categorias" className="c-bg2 border c-br rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b c-br">
             <p className="text-[10px] font-bold uppercase tracking-widest c-tx5">Categorias</p>
           </div>
@@ -283,7 +283,7 @@ export default function ComunidadePage() {
       <div className="flex-1 min-w-0 space-y-4">
 
         {/* Topbar do feed */}
-        <div className="flex items-center gap-3">
+        <div id="tour-comunidade-topbar" className="flex items-center gap-3">
           <div className="relative flex-1">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
             <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Pesquisar tópico..."
@@ -316,6 +316,7 @@ export default function ComunidadePage() {
           </div>
         )}
 
+        <div id="tour-comunidade-feed">
         <AnimatePresence mode="popLayout">
           {filteredPosts.map((post, index) => {
             const displayName = `${post.profiles?.first_name || ""} ${post.profiles?.last_name || ""}`.trim() || "Agente";
@@ -448,6 +449,7 @@ export default function ComunidadePage() {
             );
           })}
         </AnimatePresence>
+        </div>
       </div>
 
       {/* Modal nova publicação */}

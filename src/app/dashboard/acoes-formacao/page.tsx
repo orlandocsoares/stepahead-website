@@ -358,7 +358,7 @@ export default function AcoesFormacaoPage() {
 
   return (
     <div className="space-y-5 w-full">
-      <div className="flex items-center justify-between">
+      <div id="tour-acoes-header" className="flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold c-tx">Acções de Formação</h2>
           <p className="text-[11px] c-tx4 mt-0.5">{acoes.length} acção{acoes.length !== 1 ? "ões" : ""} de formação</p>
@@ -559,7 +559,7 @@ export default function AcoesFormacaoPage() {
           <p className="text-sm c-tx3">Ainda não há acções de formação. Cria a primeira.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
+        <div id="tour-acoes-lista" className="grid grid-cols-1 gap-3">
           {acoes.map(acao => {
             const isOpen = expanded === acao.id;
             const { lista: disponiveis, totalFiltrado, totalGeral } = getFormandosDisponiveis(acao.id);

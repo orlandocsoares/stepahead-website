@@ -207,7 +207,7 @@ export default function AuditLogPage() {
   return (
     <div className="space-y-5 max-w-full">
       {/* Cabeçalho */}
-      <div className="flex items-center justify-between">
+      <div id="tour-audit-header" className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
             <Shield size={16} className="text-amber-400" />
@@ -229,7 +229,7 @@ export default function AuditLogPage() {
 
       {/* VISTA CARTÕES */}
       {view === "cards" && (
-        <div>
+        <div id="tour-audit-cards">
           {userSummaries.length === 0 && loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {Array.from({ length: 10 }).map((_, i) => (

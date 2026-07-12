@@ -546,7 +546,7 @@ export default function SuperAdminPage() {
       <style dangerouslySetInnerHTML={{__html: `.hide-native-scroll::-webkit-scrollbar{width:2px}.hide-native-scroll::-webkit-scrollbar-track{background:transparent}.hide-native-scroll::-webkit-scrollbar-thumb{background:transparent}`}} />
 
       {visibleTabs.length > 1 && (
-        <header className="mb-6 flex justify-end shrink-0">
+        <header id="tour-admin-tabs" className="mb-6 flex justify-end shrink-0">
           <div className="flex bg-black/30 backdrop-blur-sm border border-white/10 p-1 rounded-xl">
             {visibleTabs.map((tab) => (
               <button key={tab} onClick={() => setActiveTab(tab as any)}
@@ -572,7 +572,7 @@ export default function SuperAdminPage() {
       {dbError && <div className="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm shrink-0">Erro: {dbError}</div>}
 
       {activeTab !== "stats" && activeTab !== "config" && (
-        <div className="mb-5 flex gap-3 items-center shrink-0">
+        <div id="tour-admin-toolbar" className="mb-5 flex gap-3 items-center shrink-0">
           <div className="relative flex-1 max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 c-tx4" />
             <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
@@ -925,7 +925,7 @@ export default function SuperAdminPage() {
                 })()}
               </motion.div>
             ) : activeTab === "users" && groupedUsers ? (
-              <motion.div key="users_list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
+              <motion.div id="tour-admin-users-list" key="users_list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
 
                 {/* Formadores pendentes de aprovação */}
                 {isAdminOrSuper(profile?.role) && formadoresPendentes.length > 0 && (

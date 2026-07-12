@@ -309,7 +309,7 @@ export default function TarefasPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b c-br shrink-0">
+      <div id="tour-tarefas-header" className="flex items-center justify-between px-6 py-4 border-b c-br shrink-0">
         <div className="flex items-center gap-2">
           <ClipboardList size={18} className="text-blue-400" />
           <h1 className="text-sm font-semibold c-tx">Tarefas</h1>
@@ -335,7 +335,7 @@ export default function TarefasPage() {
           </div>
         ) : (
           /* ── KANBAN ── */
-          <div className="grid grid-cols-3 gap-3 h-full">
+          <div id="tour-tarefas-kanban" className="grid grid-cols-3 gap-3 h-full">
 
             {/* ── FORMANDO ── */}
             {!isStaff && COLS_FORMANDO.map(col => (

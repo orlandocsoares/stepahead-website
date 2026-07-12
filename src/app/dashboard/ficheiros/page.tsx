@@ -368,7 +368,7 @@ export default function FicheirosPage() {
       {/* ── Sidebar de navegação ── */}
       <aside className="hidden lg:flex flex-col gap-1 w-52 shrink-0 min-h-0">
         {/* Stats */}
-        <div className="c-bg2 border c-br rounded-xl p-3 mb-2 space-y-2">
+        <div id="tour-ficheiros-stats" className="c-bg2 border c-br rounded-xl p-3 mb-2 space-y-2">
           <div className="flex items-center gap-2 c-tx5 text-[10px] font-semibold uppercase tracking-widest">
             <HardDrive size={11} /> Repositório
           </div>
@@ -411,7 +411,7 @@ export default function FicheirosPage() {
       <div className="flex-1 flex flex-col gap-3 min-h-0 min-w-0">
 
         {/* Toolbar */}
-        <div className="flex items-center gap-3 shrink-0 flex-wrap">
+        <div id="tour-ficheiros-toolbar" className="flex items-center gap-3 shrink-0 flex-wrap">
           {/* Categorias — mobile */}
           <div className="flex gap-1.5 flex-wrap lg:hidden w-full">
             {visibleCategories.map(cat => (
@@ -477,7 +477,7 @@ export default function FicheirosPage() {
           </div>
         ) : viewMode === "grid" ? (
           /* ── GRELHA ── */
-          <div className="flex-1 overflow-y-auto">
+          <div id="tour-ficheiros-lista" className="flex-1 overflow-y-auto">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 pb-4">
               <AnimatePresence mode="popLayout">
                 {filtered.map((f, i) => {

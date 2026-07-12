@@ -157,7 +157,7 @@ export default function ConfigPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
           {/* ── Áreas ── */}
-          <div className="c-bg2 border c-br rounded-xl overflow-hidden flex flex-col">
+          <div id="tour-config-areas" className="c-bg2 border c-br rounded-xl overflow-hidden flex flex-col">
             <div className="flex items-center gap-2 px-4 py-3 border-b c-br">
               <BookOpen size={14} className="text-blue-400" />
               <h2 className="text-xs font-semibold c-tx uppercase tracking-wider">Áreas</h2>
@@ -202,7 +202,7 @@ export default function ConfigPage() {
           </div>
 
           {/* ── Grupos de Formação ── */}
-          <div className="c-bg2 border c-br rounded-xl overflow-hidden flex flex-col">
+          <div id="tour-config-grupos" className="c-bg2 border c-br rounded-xl overflow-hidden flex flex-col">
             <div className="flex items-center gap-2 px-4 py-3 border-b c-br">
               <Users2 size={14} className="text-purple-400" />
               <h2 className="text-xs font-semibold c-tx uppercase tracking-wider">Grupos de Formação</h2>

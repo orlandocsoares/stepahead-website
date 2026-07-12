@@ -222,6 +222,210 @@ const TOUR_STEPS: Record<string, TourStep[]> = {
       },
     },
   ],
+
+  "/dashboard/comunidade": [
+    {
+      element: "#tour-comunidade-categorias",
+      popover: {
+        title: "Categorias",
+        description: "Filtre as publicações do fórum por tema — <strong>Metodologia</strong>, <strong>Dúvidas</strong>, entre outras.",
+        side: "right",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-comunidade-topbar",
+      popover: {
+        title: "Pesquisar e Publicar",
+        description: "Pesquise tópicos existentes ou clique em <strong>Nova publicação</strong> para partilhar algo com a comunidade.",
+        side: "bottom",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-comunidade-feed",
+      popover: {
+        title: "Publicações",
+        description: "Aqui vê as publicações da comunidade. Pode <strong>gostar</strong>, <strong>comentar</strong> e, se for administrador, fixar ou eliminar publicações.",
+        side: "top",
+        align: "start",
+      },
+    },
+  ],
+
+  "/dashboard/suporte": [
+    {
+      element: "#tour-suporte-tickets",
+      popover: {
+        title: "Tickets de Suporte",
+        description: "Lista dos seus pedidos de suporte. Clique em <strong>Novo</strong> para abrir um pedido de ajuda.",
+        side: "right",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-suporte-filtros",
+      popover: {
+        title: "Filtrar por Estado",
+        description: "Filtre os tickets por <strong>Pendente</strong>, <strong>Em Processo</strong> ou <strong>Resolvido</strong>.",
+        side: "bottom",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-suporte-detalhe",
+      popover: {
+        title: "Detalhe e Conversa",
+        description: "Seleccione um ticket para ver a descrição e trocar mensagens até o pedido ser resolvido. Administradores podem alterar o estado aqui.",
+        side: "left",
+        align: "start",
+      },
+    },
+  ],
+
+  "/dashboard/admin/audit": [
+    {
+      element: "#tour-audit-header",
+      popover: {
+        title: "Audit Log",
+        description: "Registo de todas as acções realizadas na plataforma, para fins de segurança e transparência.",
+        side: "bottom",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-audit-cards",
+      popover: {
+        title: "Actividade por Utilizador",
+        description: "Cada cartão resume a actividade de um utilizador. Clique num cartão para ver o seu histórico detalhado, ou alterne para a <strong>vista de lista</strong> para filtrar por data e tipo de acção.",
+        side: "top",
+        align: "start",
+      },
+    },
+  ],
+
+  "/dashboard/config": [
+    {
+      element: "#tour-config-areas",
+      popover: {
+        title: "Áreas do Repositório",
+        description: "Active, renomeie, elimine ou adicione novas áreas/disciplinas usadas para organizar os materiais do repositório.",
+        side: "right",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-config-grupos",
+      popover: {
+        title: "Grupos de Formação",
+        description: "Gira os grupos de formação disponíveis na plataforma — active, renomeie, elimine ou adicione novos.",
+        side: "left",
+        align: "start",
+      },
+    },
+  ],
+
+  "/dashboard/tarefas": [
+    {
+      element: "#tour-tarefas-header",
+      popover: {
+        title: "Tarefas",
+        description: "Administradores e formadores podem criar novas tarefas com o botão <strong>Nova tarefa</strong>.",
+        side: "bottom",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-tarefas-kanban",
+      popover: {
+        title: "Quadro de Tarefas",
+        description: "Acompanhe o progresso das tarefas por coluna. Formandos entregam trabalhos e anexam ficheiros; formadores acompanham e avaliam as entregas.",
+        side: "top",
+        align: "start",
+      },
+    },
+  ],
+
+  "/dashboard/ficheiros": [
+    {
+      element: "#tour-ficheiros-stats",
+      popover: {
+        title: "Repositório",
+        description: "Resumo do espaço usado e navegação por disciplina.",
+        side: "right",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-ficheiros-toolbar",
+      popover: {
+        title: "Pesquisa e Upload",
+        description: "Pesquise ficheiros, ordene por data/nome/tamanho, alterne entre grelha e lista, e faça <strong>Upload</strong> de novos materiais.",
+        side: "bottom",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-ficheiros-lista",
+      popover: {
+        title: "Materiais",
+        description: "Lista dos ficheiros do repositório. Pode abrir, editar ou eliminar consoante as suas permissões.",
+        side: "top",
+        align: "start",
+      },
+    },
+  ],
+
+  "/dashboard/acoes-formacao": [
+    {
+      element: "#tour-acoes-header",
+      popover: {
+        title: "Acções de Formação",
+        description: "Clique em <strong>Nova acção de formação</strong> para criar uma acção com data, local e público-alvo.",
+        side: "bottom",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-acoes-lista",
+      popover: {
+        title: "Lista de Acções",
+        description: "Cada cartão é uma acção de formação. Clique para expandir e gerir <strong>formadores responsáveis</strong>, <strong>formandos inscritos</strong> e <strong>materiais de apoio</strong>.",
+        side: "top",
+        align: "start",
+      },
+    },
+  ],
+
+  "/dashboard/admin": [
+    {
+      element: "#tour-admin-tabs",
+      popover: {
+        title: "Administração",
+        description: "Alterne entre <strong>Utilizadores</strong>, <strong>Agenda</strong>, <strong>Estatísticas</strong>, <strong>Anúncios</strong> e <strong>Configurações</strong>.",
+        side: "bottom",
+        align: "end",
+      },
+    },
+    {
+      element: "#tour-admin-toolbar",
+      popover: {
+        title: "Pesquisar e Gerir",
+        description: "Pesquise utilizadores, filtre por província, alterne vista lista/grelha e crie novos utilizadores (com ou sem email).",
+        side: "bottom",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-admin-users-list",
+      popover: {
+        title: "Utilizadores",
+        description: "Lista de todos os utilizadores da plataforma, agrupados por função. Se houver formadores por aprovar, aparecem destacados no topo.",
+        side: "top",
+        align: "start",
+      },
+    },
+  ],
 };
 
 interface DashboardTourProps {
