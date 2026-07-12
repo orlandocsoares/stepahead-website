@@ -74,6 +74,7 @@ export function MapaAngola({
         const isSel = seleccionada === nome;
         const destacada = temPrograma || temDados;
         const cor = isSel ? "#34d399" : temPrograma ? "#f59e0b" : temDados ? "#3b82f6" : "#8b8d96";
+        const comDadosReais = temPrograma && temDados && !isSel;
         return (
           <path
             key={nome}
@@ -81,8 +82,8 @@ export function MapaAngola({
             onClick={() => onSelect(nome)}
             className={`cursor-pointer transition-colors duration-200 ${!destacada && !isSel ? "hover:brightness-90" : "hover:brightness-110"}`}
             fill={cor}
-            stroke={isSel ? "#a7f3d0" : cor}
-            strokeWidth={isSel ? 1.5 : 1.25}
+            stroke={isSel ? "#a7f3d0" : comDadosReais ? "#38bdf8" : cor}
+            strokeWidth={isSel ? 1.5 : comDadosReais ? 2.5 : 1.25}
             strokeLinejoin="round"
           >
             <title>{nome}</title>

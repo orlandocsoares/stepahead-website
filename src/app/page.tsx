@@ -982,7 +982,7 @@ export default function HeroSection() {
               </p>
               <div className="flex items-center gap-3 text-[9px] uppercase tracking-widest text-white/40">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />Programa</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />Com acções</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block ring-2 ring-sky-400" />Programa com acções</span>
               </div>
               <div className="flex flex-col md:flex-row md:items-start gap-6">
                 <div id="tour-mapa-provincias" className="w-full max-w-[300px] lg:max-w-[360px] shrink-0">
