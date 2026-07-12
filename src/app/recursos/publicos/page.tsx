@@ -205,7 +205,7 @@ function RecursosContent() {
               return (
                 <a
                   key={area}
-                  href={`/recursos?area=${encodeURIComponent(area)}`}
+                  href={`/recursos/publicos?area=${encodeURIComponent(area)}`}
                   className="flex flex-col gap-3 rounded-2xl bg-black/40 backdrop-blur-sm border border-white/10 hover:border-white/25 hover:shadow-xl transition-all p-5"
                 >
                   <span className={`self-start px-3 py-1 rounded-full text-xs font-semibold border ${colorClass}`}>{area}</span>
