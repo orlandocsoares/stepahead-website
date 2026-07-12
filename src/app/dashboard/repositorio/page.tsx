@@ -260,7 +260,8 @@ export default function RepositorioPage() {
             </div>
 
             {isAuthorized && (
-              <button 
+              <button
+                id="tour-repo-novo-item"
                 onClick={() => setIsModalOpen(true)}
                 className="flex items-center gap-4 px-8 py-5 bg-white text-black rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl active:scale-95 border-0 shrink-0"
               >

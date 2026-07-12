@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 const TOUR_SEEN_PREFIX = "sabermais_dash_tour_";
@@ -102,6 +102,15 @@ const TOUR_STEPS: Record<string, TourStep[]> = {
         description: "Arquivo central de materiais pedagógicos. Use a <strong>barra de pesquisa</strong> para encontrar qualquer documento por título ou área.",
         side: "bottom",
         align: "start",
+      },
+    },
+    {
+      element: "#tour-repo-novo-item",
+      popover: {
+        title: "Carregar um Novo Material",
+        description: "Clique aqui para registar um novo recurso. No formulário que abre, <strong>clique na zona de upload para escolher o ficheiro</strong> do seu computador (ou arraste-o directamente).",
+        side: "bottom",
+        align: "end",
       },
     },
     {
@@ -435,8 +444,13 @@ interface DashboardTourProps {
 
 export function DashboardTour({ start, onDone }: DashboardTourProps) {
   const pathname = usePathname();
+  const driverRef = useRef<{ destroy: () => void } | null>(null);
 
   const runTour = useCallback(async () => {
+    // Garante que nunca há duas instâncias do tour sobrepostas (ex.: React StrictMode a invocar o efeito 2x em dev)
+    driverRef.current?.destroy();
+    driverRef.current = null;
+
     const steps = TOUR_STEPS[pathname];
     if (!steps || steps.length === 0) { onDone(); return; }
 
@@ -463,6 +477,7 @@ export function DashboardTour({ start, onDone }: DashboardTourProps) {
       stageRadius: 14,
       popoverClass: "sabermais-tour-popover",
       onDestroyed: () => {
+        driverRef.current = null;
         if (typeof window !== "undefined") {
           window.localStorage.setItem(`${TOUR_SEEN_PREFIX}${pathname}`, "true");
         }
@@ -471,12 +486,17 @@ export function DashboardTour({ start, onDone }: DashboardTourProps) {
       steps: validSteps,
     });
 
+    driverRef.current = d;
     d.drive();
   }, [pathname, onDone]);
 
   useEffect(() => {
     if (!start) return;
     runTour();
+    return () => {
+      driverRef.current?.destroy();
+      driverRef.current = null;
+    };
   }, [start, runTour]);
 
   return null;

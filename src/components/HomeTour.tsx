@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import "driver.js/dist/driver.css";
 
 const TOUR_SEEN_PREFIX = "sabermais_home_tour_";
@@ -150,7 +150,12 @@ interface HomeTourProps {
 }
 
 export function HomeTour({ start, phaseIndex, onDone }: HomeTourProps) {
+  const driverRef = useRef<{ destroy: () => void } | null>(null);
+
   const runTour = useCallback(async () => {
+    driverRef.current?.destroy();
+    driverRef.current = null;
+
     const steps = TOUR_STEPS[phaseIndex];
     if (!steps || steps.length === 0) { onDone(); return; }
 
@@ -177,6 +182,7 @@ export function HomeTour({ start, phaseIndex, onDone }: HomeTourProps) {
       stageRadius: 16,
       popoverClass: "sabermais-tour-popover",
       onDestroyed: () => {
+        driverRef.current = null;
         if (typeof window !== "undefined") {
           window.localStorage.setItem(`${TOUR_SEEN_PREFIX}${phaseIndex}`, "true");
         }
@@ -185,12 +191,17 @@ export function HomeTour({ start, phaseIndex, onDone }: HomeTourProps) {
       steps: validSteps,
     });
 
+    driverRef.current = d;
     d.drive();
   }, [phaseIndex, onDone]);
 
   useEffect(() => {
     if (!start) return;
     runTour();
+    return () => {
+      driverRef.current?.destroy();
+      driverRef.current = null;
+    };
   }, [start, runTour]);
 
   return null;
