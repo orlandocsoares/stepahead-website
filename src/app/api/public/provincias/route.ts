@@ -12,7 +12,7 @@ export async function GET() {
 
   const data = await Promise.all(
     nomes.map(async (nome) => {
-      const [acoes, formadores, recursos] = await Promise.all([
+      const [acoes, formadores, recursos, formandos] = await Promise.all([
         safe(dbQuery(
           `SELECT id, designacao, data_inicio, data_fim, estado
            FROM acoes_formacao
@@ -38,6 +38,13 @@ export async function GET() {
            ORDER BY a.label ASC`,
           [nome]
         )),
+        safe(dbQuery(
+          `SELECT COUNT(DISTINCT ia.formando_id) AS total
+           FROM inscricoes_acao ia
+           JOIN acoes_formacao af ON af.id = ia.acao_formacao_id
+           WHERE LOWER(TRIM(af.provincia)) = LOWER($1) AND ia.status != 'cancelado'`,
+          [nome]
+        )),
       ]);
 
       return {
@@ -48,6 +55,7 @@ export async function GET() {
         formadores: formadores.rows,
         total_recursos: recursos.rows.length,
         recursos: recursos.rows,
+        total_formandos: Number(formandos.rows[0]?.total ?? 0),
       };
     })
   );

@@ -65,7 +65,7 @@ const REAL_MENU = [
 
 type AcaoProvincia = { id: string; designacao: string; data_inicio: string | null; estado: string };
 type FormadorProvincia = { id: string; first_name: string; last_name: string };
-type RecursoProvincia = { id: string; label: string };
+type RecursoProvincia = { id: string; label: string; area: string | null };
 type ProvinciaData = {
   nome: string;
   total_acoes: number;
@@ -74,6 +74,7 @@ type ProvinciaData = {
   formadores: FormadorProvincia[];
   total_recursos: number;
   recursos: RecursoProvincia[];
+  total_formandos: number;
 };
 
 const ESTADO_LABEL: Record<string, string> = { agendada: "Agendada", concluida: "Concluída", cancelada: "Cancelada" };
@@ -183,55 +184,59 @@ function fmtDataCurta(d: string | null) {
 }
 
 function ProvinciaMiniCard({ data, loading }: { data: ProvinciaData | undefined; loading: boolean }) {
-  const [open, setOpen] = useState(false);
+  const recursosPorArea = new Map<string, RecursoProvincia[]>();
+  for (const r of data?.recursos ?? []) {
+    const key = r.area || "Geral";
+    if (!recursosPorArea.has(key)) recursosPorArea.set(key, []);
+    recursosPorArea.get(key)!.push(r);
+  }
+
   return (
-    <button
-      type="button"
-      onClick={() => setOpen(v => !v)}
-      className="text-left flex-1 min-w-[220px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3 hover:bg-white/[0.08] transition-colors"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-bold text-white">{data?.nome ?? "—"}</span>
-        <span className="text-white/30 text-[10px]">{open ? "▲" : "▼"}</span>
-      </div>
+    <div className="text-left bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
+      <span className="text-sm font-bold text-white">{data?.nome ?? "—"}</span>
       {!loading && (
         <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-1">
-          {data?.total_acoes ?? 0} ações · {data?.total_formadores ?? 0} formadores · {data?.total_recursos ?? 0} recursos
+          {data?.total_acoes ?? 0} acções · {data?.total_formadores ?? 0} formadores · {data?.total_formandos ?? 0} formandos · {data?.total_recursos ?? 0} materiais
         </p>
       )}
-      {open && (
-        <div className="mt-3 space-y-2.5 text-left">
-          <div>
-            <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Ações previstas/realizadas</p>
-            {(data?.acoes.length ?? 0) === 0 && <p className="text-[10px] text-white/30">Sem ações registadas.</p>}
-            {data?.acoes.map(a => (
-              <p key={a.id} className="text-[10px] text-white/70 flex justify-between gap-2">
-                <span className="truncate">{a.designacao}</span>
-                <span className="text-white/30 shrink-0">{fmtDataCurta(a.data_inicio) ?? ESTADO_LABEL[a.estado]}</span>
-              </p>
+      <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-x-5 gap-y-2.5 text-left">
+        <div>
+          <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Ações previstas/realizadas</p>
+          {(data?.acoes.length ?? 0) === 0 && <p className="text-[10px] text-white/30">Sem acções registadas.</p>}
+          {data?.acoes.map(a => (
+            <p key={a.id} className="text-[10px] text-white/70 flex justify-between gap-2">
+              <span className="truncate">{a.designacao}</span>
+              <span className="text-white/30 shrink-0">{fmtDataCurta(a.data_inicio) ?? ESTADO_LABEL[a.estado]}</span>
+            </p>
+          ))}
+        </div>
+        <div>
+          <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Formadores associados</p>
+          {(data?.formadores.length ?? 0) === 0 && <p className="text-[10px] text-white/30">Sem formadores associados.</p>}
+          <div className="flex flex-wrap gap-1">
+            {data?.formadores.map(f => (
+              <span key={f.id} className="text-[9px] text-white/70 border border-white/10 rounded-full px-2 py-0.5">{f.first_name} {f.last_name}</span>
             ))}
           </div>
-          <div>
-            <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Formadores associados</p>
-            {(data?.formadores.length ?? 0) === 0 && <p className="text-[10px] text-white/30">Sem formadores associados.</p>}
-            <div className="flex flex-wrap gap-1">
-              {data?.formadores.map(f => (
-                <span key={f.id} className="text-[9px] text-white/70 border border-white/10 rounded-full px-2 py-0.5">{f.first_name} {f.last_name}</span>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Recursos disponíveis</p>
-            {(data?.recursos.length ?? 0) === 0 && <p className="text-[10px] text-white/30">Sem recursos disponíveis.</p>}
-            <div className="flex flex-wrap gap-1">
-              {data?.recursos.map(r => (
-                <span key={r.id} className="text-[9px] text-white/70 border border-white/10 rounded-full px-2 py-0.5">{r.label}</span>
-              ))}
-            </div>
+        </div>
+        <div>
+          <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Materiais por disciplina</p>
+          {recursosPorArea.size === 0 && <p className="text-[10px] text-white/30">Sem materiais disponíveis.</p>}
+          <div className="space-y-1.5">
+            {Array.from(recursosPorArea.entries()).map(([area, itens]) => (
+              <div key={area}>
+                <p className="text-[9px] text-emerald-400/80 font-medium">{area} <span className="text-white/30">({itens.length})</span></p>
+                <div className="flex flex-wrap gap-1 mt-0.5">
+                  {itens.map(r => (
+                    <span key={r.id} className="text-[9px] text-white/70 border border-white/10 rounded-full px-2 py-0.5">{r.label}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
-    </button>
+      </div>
+    </div>
   );
 }
 
@@ -977,10 +982,10 @@ export default function HeroSection() {
               </p>
               <div className="flex items-center gap-3 text-[9px] uppercase tracking-widest text-white/40">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />Programa</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />Com ações</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />Com acções</span>
               </div>
-              <div className="flex flex-col md:flex-row md:items-start gap-4">
-                <div id="tour-mapa-provincias" className="w-full max-w-[300px] shrink-0">
+              <div className="flex flex-col md:flex-row md:items-start gap-6">
+                <div id="tour-mapa-provincias" className="w-full max-w-[300px] lg:max-w-[360px] shrink-0">
                   <MapaAngola
                     provinciasComDados={provinciasComDados}
                     seleccionada={provinciaMapaSel}
@@ -992,7 +997,7 @@ export default function HeroSection() {
                     <p className="text-sm text-white/40">Selecciona uma província no mapa.</p>
                   )}
                   {provinciaMapaSel && !provinciaSel && (
-                    <p className="text-sm text-white/40">{provinciaMapaSel} — sem ações registadas por agora.</p>
+                    <p className="text-sm text-white/40">{provinciaMapaSel} — sem acções registadas por agora.</p>
                   )}
                   {provinciaSel && (
                     <ProvinciaMiniCard data={provinciaSel} loading={provinciasLoading} />
