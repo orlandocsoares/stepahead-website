@@ -42,6 +42,16 @@ const PROGRAM_PHASES = [
   { id: "fase-6", focusFrame: 260, subtitle: "Avaliação de Impacto", name: "Monitorização", description: "Acompanhamento rigoroso dos indicadores de sucesso para garantir a eficácia e a sustentabilidade do projecto a longo prazo." }
 ];
 
+// Explicação de cada ecrã público, mostrada no acordeão "Saber Mais" (chave = activePhaseIndex)
+const SOBRE_SECCAO: Record<number, string> = {
+  1: "Este é o ecrã principal do programa: um resumo do Saber Mais, os seus números-chave (províncias, formadores, ciclo) e as áreas de formação abrangidas.",
+  2: "Mapa interactivo das 21 províncias de Angola. Clica numa província para veres as acções, formadores e recursos associados a essa região.",
+  3: "Lista dos formadores activos no programa, organizados por área de formação. Clica num formador para veres mais detalhes sobre o seu percurso.",
+  4: "Materiais didácticos e pedagógicos disponibilizados aos professores, organizados por área. Inclui um link de acesso livre aos recursos públicos.",
+  5: "Calendário e listagem dos eventos de formação — passados e futuros — com filtros por área e alternância entre vista de lista e de calendário.",
+  6: "Agenda de actividades do programa, com vista em lista ou mini-calendário, para acompanhares o que está planeado nos próximos dias.",
+};
+
 // Menu das páginas públicas reais do site — usado nesta pré-visualização em vez das "fases" antigas
 const REAL_MENU = [
   { id: "menu-0", name: "" }, // placeholder — PhasesSidebar ignora o índice 0
@@ -582,6 +592,7 @@ export default function HeroSection() {
   const [sessionId, setSessionId] = useState<string>("");
 
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
+  const [sobreSeccaoAberto, setSobreSeccaoAberto] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [isLogoHovered, setIsLogoHovered] = useState(false);
@@ -800,6 +811,7 @@ export default function HeroSection() {
     setTimeout(() => { isCooldown.current = false; }, 1200); 
 
     setActivePhaseIndex(nextIndex);
+    setSobreSeccaoAberto(false);
     const currentFrame = targetFrameValue.get();
     const targetFocus = PROGRAM_PHASES[nextIndex].focusFrame;
     let diff = targetFocus - (currentFrame % TOTAL_FRAMES_COUNT);
@@ -959,16 +971,16 @@ export default function HeroSection() {
           name: "Províncias",
           subtitle: "Bié & Luanda",
           description: (
-            <div className="space-y-2 w-full">
-              <p className={defaultTextClass}>
+            <div className="space-y-2 w-full max-h-[64vh] overflow-y-auto pr-1 md:max-h-none md:overflow-visible md:pr-0">
+              <p className={`${defaultTextClass} md:pr-[420px] lg:pr-[480px]`}>
                 O projecto está presente em <strong className="text-amber-300">Bié</strong> e <strong className="text-amber-300">Luanda</strong> — clica no mapa para veres detalhes.
               </p>
               <div className="flex items-center gap-3 text-[9px] uppercase tracking-widest text-white/40">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />Programa</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />Com ações</span>
               </div>
-              <div className="flex flex-col md:flex-row-reverse gap-4 items-start">
-                <div id="tour-mapa-provincias" className="shrink-0 w-full max-w-[400px] sm:max-w-[460px] md:max-w-[520px] mx-auto md:mx-0 md:-mt-60 md:ml-56">
+              <div className="flex flex-col md:flex-row-reverse gap-8 items-start">
+                <div id="tour-mapa-provincias" className="shrink-0 w-full max-w-[260px] sm:max-w-[460px] md:max-w-[520px] mx-auto md:mx-0 md:ml-auto md:-mt-60 md:translate-x-10">
                   <MapaAngola
                     provinciasComDados={provinciasComDados}
                     seleccionada={provinciaMapaSel}
@@ -1622,10 +1634,40 @@ export default function HeroSection() {
                     </div>
                     <div className="flex-1 mt-4">{activeData.description}</div>
                     <div className="shrink-0 pt-2 mt-auto">
-                      <button onClick={() => profile ? window.open(DASHBOARD_URL, "_blank") : goToPhase(0)} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group flex items-center gap-4 w-fit outline-none">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white transition-colors" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Saber Mais</span>
-                        <div className="relative w-12 h-[1px] bg-white/50 overflow-hidden"><div className="absolute top-0 left-0 h-[2px] w-0 bg-white group-hover:w-full transition-all duration-500 ease-out" /></div>
-                      </button>
+                      <div className="w-fit max-w-sm">
+                        <button
+                          onClick={() => setSobreSeccaoAberto(v => !v)}
+                          onMouseEnter={() => setIsHovering(true)}
+                          onMouseLeave={() => setIsHovering(false)}
+                          aria-expanded={sobreSeccaoAberto}
+                          className="group flex items-center gap-4 outline-none"
+                        >
+                          <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white transition-colors" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Saber Mais</span>
+                          <div className="relative w-12 h-[1px] bg-white/50 overflow-hidden"><div className={`absolute top-0 left-0 h-[2px] bg-white transition-all duration-500 ease-out ${sobreSeccaoAberto ? "w-full" : "w-0 group-hover:w-full"}`} /></div>
+                        </button>
+                        <button
+                          onClick={() => setSobreSeccaoAberto(v => !v)}
+                          className="text-[8px] font-medium uppercase tracking-[0.2em] text-white/40 hover:text-white/70 transition-colors mt-1 outline-none"
+                          style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}
+                        >
+                          sobre esta secção
+                        </button>
+                        <AnimatePresence initial={false}>
+                          {sobreSeccaoAberto && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                              animate={{ opacity: 1, height: "auto", marginTop: 8 }}
+                              exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                              transition={{ duration: 0.3, ease: "easeOut" }}
+                              className="overflow-hidden"
+                            >
+                              <p className="text-xs leading-relaxed text-white/70 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2.5" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>
+                                {SOBRE_SECCAO[activePhaseIndex] ?? "Informação sobre esta secção do programa Saber Mais."}
+                              </p>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
                   </motion.div>
                 )}
