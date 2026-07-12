@@ -122,14 +122,14 @@ function MiniCalendario({
     <div className="w-full">
       <div className="flex items-center justify-between mb-2">
         <button type="button" onClick={() => setMesRef(new Date(ano, mes - 1, 1))} className="text-white/40 hover:text-white/80 px-2 py-1 transition-colors">‹</button>
-        <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/70 capitalize">
+        <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-white capitalize">
           {mesRef.toLocaleDateString("pt-PT", { month: "long", year: "numeric" })}
         </p>
         <button type="button" onClick={() => setMesRef(new Date(ano, mes + 1, 1))} className="text-white/40 hover:text-white/80 px-2 py-1 transition-colors">›</button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center mb-1">
         {["D", "S", "T", "Q", "Q", "S", "S"].map((d, i) => (
-          <span key={i} className="text-[8px] uppercase text-white/50 font-semibold">{d}</span>
+          <span key={i} className="text-[8px] uppercase text-white/70 font-bold">{d}</span>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1">
@@ -325,11 +325,11 @@ function EventoRow({ ev, onAbrir }: { ev: EventoItem; onAbrir: () => void }) {
           {ev.area}
         </span>
       )}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-white/50">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-white/70 font-medium">
         <span>{fmtDataEvento(ev.data_inicio)}</span>
-        {ev.tipologia && <span className="text-white/30">· {ev.tipologia}</span>}
-        {ev.local && <span className="text-white/30">· {ev.local}</span>}
-        {ev.publico_alvo && <span className="text-white/30">· {ev.publico_alvo}</span>}
+        {ev.tipologia && <span className="text-white/50">· {ev.tipologia}</span>}
+        {ev.local && <span className="text-white/50">· {ev.local}</span>}
+        {ev.publico_alvo && <span className="text-white/50">· {ev.publico_alvo}</span>}
       </div>
     </button>
   );
@@ -967,7 +967,7 @@ export default function HeroSection() {
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />Com ações</span>
               </div>
               <div className="flex flex-col md:flex-row-reverse gap-4 items-start">
-                <div className="shrink-0 w-full max-w-[400px] sm:max-w-[460px] md:max-w-[520px] mx-auto md:mx-0 md:-mt-60 md:ml-16">
+                <div className="shrink-0 w-full max-w-[400px] sm:max-w-[460px] md:max-w-[520px] mx-auto md:mx-0 md:-mt-60 md:ml-32">
                   <MapaAngola
                     provinciasComDados={provinciasComDados}
                     seleccionada={provinciaMapaSel}

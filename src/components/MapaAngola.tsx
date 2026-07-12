@@ -73,13 +73,13 @@ export function MapaAngola({
         const temDados = provinciasComDados.has(nome);
         const isSel = seleccionada === nome;
         const destacada = temPrograma || temDados;
-        const cor = isSel ? "#34d399" : temPrograma ? "#f59e0b" : temDados ? "#3b82f6" : "#2a2a2e";
+        const cor = isSel ? "#34d399" : temPrograma ? "#f59e0b" : temDados ? "#3b82f6" : "#8b8d96";
         return (
           <path
             key={nome}
             d={d}
             onClick={() => onSelect(nome)}
-            className={`cursor-pointer transition-colors duration-200 ${!destacada && !isSel ? "hover:fill-white/15" : "hover:brightness-110"}`}
+            className={`cursor-pointer transition-colors duration-200 ${!destacada && !isSel ? "hover:brightness-90" : "hover:brightness-110"}`}
             fill={cor}
             stroke={isSel ? "#a7f3d0" : cor}
             strokeWidth={isSel ? 1.5 : 1.25}
@@ -95,9 +95,9 @@ export function MapaAngola({
           x={x}
           y={y}
           fontSize={fontSize ?? 5.5}
-          fill="#fff"
-          stroke="#000"
-          strokeWidth={0.5}
+          fill="#1e293b"
+          stroke="#fff"
+          strokeWidth={0.6}
           paintOrder="stroke"
           fontWeight={700}
           transform={rotate ? `rotate(${rotate} ${x} ${y})` : undefined}
