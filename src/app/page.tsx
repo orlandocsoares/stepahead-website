@@ -320,6 +320,11 @@ function EventoRow({ ev, onAbrir }: { ev: EventoItem; onAbrir: () => void }) {
           {ESTADO_EVENTO_LABEL[ev.estado] ?? ev.estado}
         </span>
       </div>
+      {ev.area && (
+        <span className={`inline-block mt-1 text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${(AREA_COLORS[ev.area] ?? DEFAULT_AREA_COLOR).bg} ${(AREA_COLORS[ev.area] ?? DEFAULT_AREA_COLOR).text} ${(AREA_COLORS[ev.area] ?? DEFAULT_AREA_COLOR).border}`}>
+          {ev.area}
+        </span>
+      )}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-white/50">
         <span>{fmtDataEvento(ev.data_inicio)}</span>
         {ev.tipologia && <span className="text-white/30">· {ev.tipologia}</span>}
@@ -346,6 +351,11 @@ function AgendaRow({ ev, onAbrir }: { ev: any; onAbrir: () => void }) {
       <div className="w-px h-8 bg-white/10 shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-semibold text-white/90 leading-tight truncate">{ev.titulo}</p>
+        {ev.tipo && (
+          <span className="inline-block mt-0.5 text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border bg-white/10 text-white/60 border-white/20">
+            {ev.tipo}
+          </span>
+        )}
         {ev.local && <p className="text-[10px] text-white/40 mt-0.5 truncate">{ev.local}{ev.endereco ? ` — ${ev.endereco}` : ""}</p>}
       </div>
       <div className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${dias === 0 ? "bg-emerald-500/20 text-emerald-400" : dias <= 7 ? "bg-amber-500/20 text-amber-400" : "bg-white/10 text-white/40"}`}>
@@ -592,6 +602,7 @@ export default function HeroSection() {
   const [diaEventoSel, setDiaEventoSel] = useState<string | null>(null);
   const [vistaAgenda, setVistaAgenda] = useState<"lista" | "calendario">("calendario");
   const [diaAgendaSel, setDiaAgendaSel] = useState<string | null>(null);
+  const [provinciaMapaSel, setProvinciaMapaSel] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile?.id) { setMinhasInscricoes(new Set()); return; }
@@ -940,26 +951,37 @@ export default function HeroSection() {
           ),
         };
       case 2: {
-        const bie = provinciasData.find(p => p.nome === "Bié");
-        const luanda = provinciasData.find(p => p.nome === "Luanda");
+        const provinciasComDados = new Set(provinciasData.map(p => p.nome));
+        const provinciaSel = provinciasData.find(p => p.nome === provinciaMapaSel);
         return {
           ...base,
           name: "Províncias",
-          subtitle: "Bié & Luanda",
+          subtitle: `${provinciasData.length} de 21 províncias`,
           description: (
-            <div className="space-y-4">
+            <div className="space-y-2 w-full">
               <p className={defaultTextClass}>
-                O projecto está presente em duas províncias: Bié e Luanda, com foco na qualidade do ensino
-                do Subsistema do Ensino Secundário Geral e Pedagógico.
+                O projecto está presente em <strong className="text-blue-300">{provinciasData.length}</strong> província{provinciasData.length === 1 ? "" : "s"} — clica no mapa.
               </p>
-              <div className="flex flex-wrap gap-3">
-                <ProvinciaMiniCard data={bie} loading={provinciasLoading} />
-                <ProvinciaMiniCard data={luanda} loading={provinciasLoading} />
+              <div className="flex flex-col md:flex-row-reverse gap-4 items-start">
+                <div className="shrink-0 w-full max-w-[300px] sm:max-w-[340px] md:max-w-[360px] mx-auto md:mx-0">
+                  <MapaAngola
+                    provinciasComDados={provinciasComDados}
+                    seleccionada={provinciaMapaSel}
+                    onSelect={(nome) => setProvinciaMapaSel(v => (v === nome ? null : nome))}
+                  />
+                </div>
+                <div className="flex-1 min-w-0 max-h-[56vh] overflow-y-auto pr-1">
+                  {!provinciaMapaSel && (
+                    <p className="text-sm text-white/40">Selecciona uma província no mapa (a azul, com ações registadas).</p>
+                  )}
+                  {provinciaMapaSel && !provinciaSel && (
+                    <p className="text-sm text-white/40">{provinciaMapaSel} — sem ações registadas por agora.</p>
+                  )}
+                  {provinciaSel && (
+                    <ProvinciaMiniCard data={provinciaSel} loading={provinciasLoading} />
+                  )}
+                </div>
               </div>
-              <p className="text-[10px] text-white/30 leading-relaxed">
-                Bié e Luanda são as províncias de referência do programa — a plataforma está preparada
-                para adicionar novas províncias no futuro.
-              </p>
             </div>
           ),
         };
