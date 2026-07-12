@@ -971,23 +971,23 @@ export default function HeroSection() {
           name: "Províncias",
           subtitle: "Bié & Luanda",
           description: (
-            <div className="space-y-2 w-full max-h-[64vh] overflow-y-auto pr-1 md:max-h-none md:overflow-visible md:pr-0">
-              <p className={`${defaultTextClass} md:pr-[420px] lg:pr-[480px]`}>
+            <div className="space-y-3 w-full max-h-[68vh] overflow-y-auto pr-1">
+              <p className={defaultTextClass}>
                 O projecto está presente em <strong className="text-amber-300">Bié</strong> e <strong className="text-amber-300">Luanda</strong> — clica no mapa para veres detalhes.
               </p>
               <div className="flex items-center gap-3 text-[9px] uppercase tracking-widest text-white/40">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />Programa</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />Com ações</span>
               </div>
-              <div className="flex flex-col md:flex-row-reverse gap-8 items-start">
-                <div id="tour-mapa-provincias" className="shrink-0 w-full max-w-[260px] sm:max-w-[460px] md:max-w-[520px] mx-auto md:mx-0 md:ml-auto md:-mt-60 md:translate-x-10">
+              <div className="flex flex-col md:flex-row md:items-start gap-4">
+                <div id="tour-mapa-provincias" className="w-full max-w-[300px] shrink-0">
                   <MapaAngola
                     provinciasComDados={provinciasComDados}
                     seleccionada={provinciaMapaSel}
                     onSelect={(nome) => setProvinciaMapaSel(v => (v === nome ? null : nome))}
                   />
                 </div>
-                <div id="tour-provincia-detalhe" className="flex-1 min-w-0 max-h-[56vh] overflow-y-auto pr-1">
+                <div id="tour-provincia-detalhe" className="flex-1 min-w-0 max-h-[24vh] md:max-h-[40vh] overflow-y-auto pr-1">
                   {!provinciaMapaSel && (
                     <p className="text-sm text-white/40">Selecciona uma província no mapa.</p>
                   )}
