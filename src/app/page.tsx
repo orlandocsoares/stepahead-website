@@ -134,14 +134,13 @@ type FormadorData = {
   provincia: string | null;
 };
 
-function FormadorMiniCard({ data }: { data: FormadorData }) {
-  const [open, setOpen] = useState(false);
+function FormadorMiniCard({ data, open, onToggle }: { data: FormadorData; open: boolean; onToggle: () => void }) {
   const iniciais = data.nome.split(" ").filter(Boolean).slice(0, 2).map(s => s[0]).join("").toUpperCase();
 
   return (
     <button
       type="button"
-      onClick={() => setOpen(v => !v)}
+      onClick={onToggle}
       className={`text-left backdrop-blur-md border rounded-xl px-3 py-2.5 transition-colors ${
         open
           ? "col-span-full bg-slate-950/90 border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
@@ -485,6 +484,7 @@ export default function HeroSection() {
   const [provinciasLoading, setProvinciasLoading] = useState(true);
   const [formadoresData, setFormadoresData] = useState<FormadorData[]>([]);
   const [formadoresLoading, setFormadoresLoading] = useState(true);
+  const [formadorAbertoId, setFormadorAbertoId] = useState<string | null>(null);
   const [areasEventos, setAreasEventos] = useState<AreaEventos[]>([]);
   const [eventosLoading, setEventosLoading] = useState(true);
   const [areaEventoSelecionada, setAreaEventoSelecionada] = useState<string | null>(null);
@@ -870,13 +870,18 @@ export default function HeroSection() {
               <p className={defaultTextClass}>
                 A promoção da formação e supervisão apoia-se em <strong className="text-blue-300">{formadoresData.length}</strong> formador{formadoresData.length === 1 ? "" : "es"} de excelência.
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[58vh] overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 max-h-[58vh] overflow-y-auto pr-1">
                 {formadoresLoading && <p className="text-sm text-white/40 col-span-full">A carregar…</p>}
                 {!formadoresLoading && formadoresData.length === 0 && (
                   <p className="text-sm text-white/40 col-span-full">Sem formadores activos registados.</p>
                 )}
                 {formadoresData.map((f) => (
-                  <FormadorMiniCard key={f.id} data={f} />
+                  <FormadorMiniCard
+                    key={f.id}
+                    data={f}
+                    open={formadorAbertoId === f.id}
+                    onToggle={() => setFormadorAbertoId(v => (v === f.id ? null : f.id))}
+                  />
                 ))}
               </div>
             </div>
@@ -907,7 +912,7 @@ export default function HeroSection() {
           name: "Recursos",
           subtitle: "Apoio Contínuo",
           description: (
-            <div className="space-y-3 w-full max-w-sm">
+            <div className="space-y-3 w-full">
               <p className={defaultTextClass}>
                 Disponibilização de materiais didácticos e pedagógicos inovadores para apoio aos professores nas salas diárias.
               </p>
@@ -920,7 +925,7 @@ export default function HeroSection() {
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                 {areasFormadores.slice(0, 6).map(({ area, total }, i) => {
                   const c = areaColors[area] ?? defaultAreaColor;
                   const Icon = c.icon;
@@ -991,7 +996,7 @@ export default function HeroSection() {
                   <p className={defaultTextClass}>
                     Navega os eventos por área de formação, ou consulta os eventos abertos ao público em geral.
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[46vh] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 max-h-[46vh] overflow-y-auto pr-1">
                     {eventosLoading && <p className="text-sm text-white/40 col-span-full">A carregar…</p>}
                     {!eventosLoading && areasEventos.length === 0 && (
                       <p className="text-sm text-white/40 col-span-full">Sem eventos registados.</p>
@@ -1062,7 +1067,7 @@ export default function HeroSection() {
                 {gruposAgenda.map(({ titulo, itens }) => (
                   <div key={titulo}>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-2">{titulo}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                       {itens.map((ev: any, i: number) => (
                         <AgendaRow key={ev.id ?? i} ev={ev} onAbrir={() => abrirEventoAgenda(ev)} />
                       ))}
@@ -1392,7 +1397,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div id="tour-content" className="absolute top-[14vh] sm:top-[14vh] left-5 sm:left-10 lg:left-[160px] right-5 sm:right-[240px] md:right-[300px] lg:right-[340px] sm:w-auto md:w-auto z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '82vh'}}>
+            <div id="tour-content" className="absolute top-[14vh] sm:top-[14vh] left-5 sm:left-10 right-5 sm:right-[280px] md:right-[340px] lg:right-[380px] xl:right-[420px] 2xl:right-[480px] sm:w-auto md:w-auto z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '82vh'}}>
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
                   <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">
