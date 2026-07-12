@@ -4,7 +4,7 @@ import { dbQuery } from "@/lib/db";
 export async function GET() {
   const safe = (p: Promise<any>) => p.catch(() => ({ rows: [] }));
 
-  const [acoes, publicos] = await Promise.all([
+  const [acoes] = await Promise.all([
     safe(dbQuery(`
       SELECT
         af.id, af.designacao AS titulo, af.area, af.tipologia, af.local, af.provincia,
@@ -16,12 +16,6 @@ export async function GET() {
       LEFT JOIN agenda_atividades aa ON aa.acao_formacao_id = af.id
       GROUP BY af.id, aa.id, aa.endereco
       ORDER BY af.data_inicio ASC NULLS LAST
-    `)),
-    safe(dbQuery(`
-      SELECT id, titulo, local, endereco, imagem_url, data_evento
-      FROM agenda_atividades
-      WHERE tipo = 'Global' AND acao_formacao_id IS NULL
-      ORDER BY data_evento ASC
     `)),
   ]);
 
@@ -55,24 +49,6 @@ export async function GET() {
       imagem_url: a.imagem_url,
     });
   }
-
-  eventosPorArea["Públicos"] = (publicos.rows as any[]).map((e) => ({
-    id: e.id,
-    agenda_evento_id: e.id,
-    titulo: e.titulo,
-    area: "Públicos",
-    tipologia: "Outro",
-    local: e.local || null,
-    endereco: e.endereco || null,
-    data_inicio: e.data_evento,
-    data_fim: null,
-    horario: null,
-    publico_alvo: "Público em geral",
-    estado: "agendada",
-    total_inscritos: 0,
-    vagas_max: null,
-    imagem_url: e.imagem_url,
-  }));
 
   const areas = Object.entries(eventosPorArea)
     .filter(([, items]) => items.length > 0)

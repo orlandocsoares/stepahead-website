@@ -870,7 +870,7 @@ export default function HeroSection() {
               <p className={defaultTextClass}>
                 A promoção da formação e supervisão apoia-se em <strong className="text-blue-300">{formadoresData.length}</strong> formador{formadoresData.length === 1 ? "" : "es"} de excelência.
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 max-h-[58vh] overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2.5 max-h-[58vh] overflow-y-auto pr-1">
                 {formadoresLoading && <p className="text-sm text-white/40 col-span-full">A carregar…</p>}
                 {!formadoresLoading && formadoresData.length === 0 && (
                   <p className="text-sm text-white/40 col-span-full">Sem formadores activos registados.</p>
@@ -1042,13 +1042,14 @@ export default function HeroSection() {
         const eventos = telemetry.proximos_eventos ?? [];
         const abrirEventoAgenda = (ev: any) => setSelectedEvento(ev);
 
-        const agora = Date.now();
-        const diasAte = (ev: any) => Math.max(0, Math.ceil((new Date(ev.data_evento).getTime() - agora) / 86400000));
-        const gruposAgenda = [
-          { titulo: "Esta semana", itens: eventos.filter((ev: any) => diasAte(ev) <= 7) },
-          { titulo: "Próximas 2 semanas", itens: eventos.filter((ev: any) => diasAte(ev) > 7 && diasAte(ev) <= 21) },
-          { titulo: "Mais tarde", itens: eventos.filter((ev: any) => diasAte(ev) > 21) },
-        ].filter((g) => g.itens.length > 0);
+        const chaveMes = (ev: any) => new Date(ev.data_evento).toLocaleDateString("pt-PT", { month: "long", year: "numeric" });
+        const gruposAgenda: { titulo: string; itens: any[] }[] = [];
+        for (const ev of eventos) {
+          const chave = chaveMes(ev);
+          let grupo = gruposAgenda.find((g) => g.titulo === chave);
+          if (!grupo) { grupo = { titulo: chave, itens: [] }; gruposAgenda.push(grupo); }
+          grupo.itens.push(ev);
+        }
 
         return {
           ...base,
@@ -1066,8 +1067,8 @@ export default function HeroSection() {
                 )}
                 {gruposAgenda.map(({ titulo, itens }) => (
                   <div key={titulo}>
-                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-2">{titulo}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-2 sticky top-0 capitalize">{titulo}</p>
+                    <div className="space-y-2">
                       {itens.map((ev: any, i: number) => (
                         <AgendaRow key={ev.id ?? i} ev={ev} onAbrir={() => abrirEventoAgenda(ev)} />
                       ))}
