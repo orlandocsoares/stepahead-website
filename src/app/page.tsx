@@ -145,10 +145,10 @@ function MiniCalendario({
               key={iso}
               onClick={() => onDiaClick(isSel ? null : (eventosDia.length ? iso : null))}
               disabled={eventosDia.length === 0}
-              className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] transition-colors ${
+              className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] font-bold transition-colors ${
                 isSel ? "bg-blue-500/30 border border-blue-400/50 text-white" :
                 isHoje ? "border border-white/30 text-white" :
-                eventosDia.length ? "hover:bg-white/10 text-white cursor-pointer" : "text-white/60 cursor-default"
+                eventosDia.length ? "hover:bg-white/10 text-white cursor-pointer" : "text-white/80 cursor-default"
               }`}
             >
               <span>{dia}</span>
@@ -963,7 +963,7 @@ export default function HeroSection() {
                 O projecto está presente em <strong className="text-blue-300">{provinciasData.length}</strong> província{provinciasData.length === 1 ? "" : "s"} — clica no mapa.
               </p>
               <div className="flex flex-col md:flex-row-reverse gap-4 items-start">
-                <div className="shrink-0 w-full max-w-[300px] sm:max-w-[340px] md:max-w-[360px] mx-auto md:mx-0">
+                <div className="shrink-0 w-full max-w-[300px] sm:max-w-[340px] md:max-w-[360px] mx-auto md:mx-0 md:-mt-16">
                   <MapaAngola
                     provinciasComDados={provinciasComDados}
                     seleccionada={provinciaMapaSel}
@@ -1035,7 +1035,7 @@ export default function HeroSection() {
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
                   <span className="text-[9px] uppercase tracking-[0.2em] text-blue-300/80 font-semibold">Repositório de Professores</span>
-                  <span className="text-[9px] text-white/30 ml-auto">{totalFormadoresRec} materiais</span>
+                  <span className="text-[9px] text-white/60 font-semibold ml-auto">{totalFormadoresRec} materiais</span>
                 </div>
               )}
 
