@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FileText, X, BookOpen, Loader2, ExternalLink, LayoutDashboard } from "lucide-react";
 import { HeroBranding } from "@/components/HeroBranding";
 import { isBrandedCapa } from "@/lib/capas";
+
+const PdfViewer = dynamic(() => import("@/components/PdfViewer").then(m => m.PdfViewer), { ssr: false });
 
 type Recurso = {
   id: string;
@@ -347,13 +350,11 @@ function RecursosContent() {
             </button>
           </div>
 
-          {/* PDF via embed — URL directo do storage, sem autenticação para ficheiros públicos */}
+          {/* PDF via pdf.js (canvas) — sem barra de ferramentas nativa do browser, funciona igual em todos (incl. Safari) */}
           {viewing.nome_arquivo ? (
-            <embed
-              src={`/storage/v1/object/public/materiais/${encodeURIComponent(viewing.nome_arquivo)}#toolbar=0&navpanes=0`}
-              type="application/pdf"
-              className="flex-1 w-full"
-            />
+            <div className="flex-1 w-full overflow-y-auto py-6">
+              <PdfViewer url={`/storage/v1/object/public/materiais/${encodeURIComponent(viewing.nome_arquivo)}`} />
+            </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-white/20">
               <FileText size={48} strokeWidth={1} />
