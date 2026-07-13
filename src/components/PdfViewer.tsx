@@ -6,7 +6,7 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut } from "lucide-react";
 
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 export function PdfViewer({ url }: { url: string }) {
   const [numPages, setNumPages] = useState<number>(0);
