@@ -7,7 +7,7 @@ import {
   Calendar as CalendarIcon, MapPin,
   CheckCircle2, Loader2, Plus, X, Laptop, Search,
   Users, ChevronDown, ChevronUp, GraduationCap, BookOpen, ShieldCheck,
-  ImagePlus, Clock
+  ImagePlus, Clock, Trash2
 } from "lucide-react";
 
 const LOCAIS = ["Luanda", "Bié", "Online"];
@@ -139,6 +139,27 @@ export default function AgendaPage() {
     }
   }
 
+  const isAdmin = user?.role === "admin" || user?.role === "super-admin";
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function handleDelete(eventoId: string) {
+    if (!confirm("Eliminar este evento? Esta acção não pode ser desfeita.")) return;
+    setDeletingId(eventoId);
+    const res = await fetch("/api/db/agenda_atividades", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eq: { id: eventoId } }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => null);
+      alert(json?.error?.message ?? "Não foi possível eliminar o evento.");
+      setDeletingId(null);
+      return;
+    }
+    setEvents(prev => prev.filter(e => e.id !== eventoId));
+    setDeletingId(null);
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setIsSubmitting(true);
@@ -161,6 +182,7 @@ export default function AgendaPage() {
         titulo: form.titulo, local, data_evento: form.data_evento, tipo: form.tipo,
         endereco: form.formato === "Presencial" ? (form.endereco || null) : null,
         acao_formacao_id: form.acao_formacao_id || null,
+        criado_por: user?.id ?? null,
         ...(imagem_url ? { imagem_url } : {}),
       }),
     });
@@ -289,6 +311,16 @@ export default function AgendaPage() {
                       <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-medium bg-emerald-500/10 text-emerald-400">
                         <GraduationCap size={10} /> {acoesFormacao.find((a: any) => a.id === item.acao_formacao_id)?.designacao ?? "Acção de Formação"}
                       </span>
+                    )}
+                    {(isAdmin || item.criado_por === user?.id) && (
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        disabled={deletingId === item.id}
+                        title="Eliminar evento"
+                        className="ml-auto p-1.5 rounded-lg text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-40"
+                      >
+                        {deletingId === item.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                      </button>
                     )}
                   </div>
 

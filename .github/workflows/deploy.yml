@@ -322,6 +322,9 @@ jobs:
               -- Ligação opcional de eventos de agenda a uma acção de formação
               ALTER TABLE agenda_atividades ADD COLUMN IF NOT EXISTS acao_formacao_id UUID REFERENCES acoes_formacao(id) ON DELETE SET NULL;
 
+              -- Autor do evento — permite que formadores só eliminem os seus próprios eventos (admin elimina qualquer um)
+              ALTER TABLE agenda_atividades ADD COLUMN IF NOT EXISTS criado_por UUID REFERENCES auth_users(id) ON DELETE SET NULL;
+
               -- Visibilidade de ficheiros passa a poder referenciar uma acção de formação
               ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS acao_formacao_id UUID REFERENCES acoes_formacao(id) ON DELETE SET NULL;
               CREATE INDEX IF NOT EXISTS idx_arquivos_acao_formacao ON arquivos(acao_formacao_id);

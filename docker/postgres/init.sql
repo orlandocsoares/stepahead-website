@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS agenda_atividades (
   imagem_url TEXT,
   data_evento TIMESTAMPTZ NOT NULL,
   tipo TEXT NOT NULL DEFAULT 'Global',
+  acao_formacao_id UUID,
+  criado_por UUID REFERENCES auth_users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
