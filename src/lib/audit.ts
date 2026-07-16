@@ -41,6 +41,7 @@ export type AuditAction =
   | "grupo_formacao_create" | "grupo_formacao_update" | "grupo_formacao_delete"
   // Legado (aprovações via rotas antigas)
   | "approve_formando" | "reject_formando" | "approve_formador" | "reject_formador"
+  | "associate_formando"
   | "role_change";
 
 export async function auditLog(

@@ -39,22 +39,37 @@ export async function GET() {
   const isFormador = role === "formador";
   if (!isFormador && !isAdmin) return NextResponse.json({ formandos: [] });
 
+  // Pendentes "normais" (já escolheram um formador, à espera da aprovação dele)
+  // + formandos "por reclamar" (confirmaram o email mas nunca chegaram a escolher
+  // ninguém — sem isto ficavam invisíveis para sempre, sem admin a monitorizar).
   const result = await dbQuery(
     isAdmin
-      ? `SELECT p.id, p.first_name, p.last_name, p.email, p.escola, p.provincia, p.status,
+      ? `SELECT p.id, p.first_name, p.last_name, p.email, p.escola, p.provincia, p.status, p.created_at,
                ff.formador_id, ff.ano_letivo, ff.status AS ff_status,
                f.first_name || ' ' || COALESCE(f.last_name,'') AS formador_nome
          FROM formando_formadores ff
          JOIN profiles p ON p.id = ff.formando_id
          JOIN profiles f ON f.id = ff.formador_id
          WHERE ff.status = 'pendente' AND p.status = 'email_confirmado'
-         ORDER BY ff.created_at DESC`
-      : `SELECT p.id, p.first_name, p.last_name, p.email, p.escola, p.provincia, p.status,
+         UNION ALL
+         SELECT p.id, p.first_name, p.last_name, p.email, p.escola, p.provincia, p.status, p.created_at,
+                NULL, NULL, 'sem_associacao', NULL
+         FROM profiles p
+         WHERE p.role = 'formando' AND p.status = 'email_confirmado'
+           AND NOT EXISTS (SELECT 1 FROM formando_formadores ff2 WHERE ff2.formando_id = p.id)
+         ORDER BY created_at DESC`
+      : `SELECT p.id, p.first_name, p.last_name, p.email, p.escola, p.provincia, p.status, p.created_at,
                ff.ano_letivo, ff.status AS ff_status
          FROM formando_formadores ff
          JOIN profiles p ON p.id = ff.formando_id
          WHERE ff.formador_id = $1 AND ff.status = 'pendente' AND p.status = 'email_confirmado'
-         ORDER BY ff.created_at DESC`,
+         UNION ALL
+         SELECT p.id, p.first_name, p.last_name, p.email, p.escola, p.provincia, p.status, p.created_at,
+                NULL, 'sem_associacao'
+         FROM profiles p
+         WHERE p.role = 'formando' AND p.status = 'email_confirmado'
+           AND NOT EXISTS (SELECT 1 FROM formando_formadores ff2 WHERE ff2.formando_id = p.id)
+         ORDER BY created_at DESC`,
     isAdmin ? [] : [session.id]
   );
 
@@ -85,14 +100,31 @@ export async function POST(request: Request, ) {
        ON CONFLICT (formando_id, formador_id) DO UPDATE SET status = 'aceite', updated_at = NOW()`,
       [formando_id, formadorId]
     );
-    // Notificar o formando
     const formadorProfile = await dbQuery(`SELECT first_name, last_name FROM profiles WHERE id = $1 LIMIT 1`, [formadorId]);
     const fp = formadorProfile.rows[0];
-    await dbQuery(
-      `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
-       VALUES ($1, 'nova_disciplina', 'Novo formador associado', $2, '/dashboard/perfil')`,
-      [formando_id, `${fp?.first_name} ${fp?.last_name} associou-te como seu formando.`]
+
+    // Se ainda não tinha acesso (primeiro formador a reclamá-lo), dá-lhe acesso agora.
+    const activated = await dbQuery(
+      "UPDATE profiles SET status = 'activo' WHERE id = $1 AND status = 'email_confirmado' RETURNING email, first_name",
+      [formando_id]
     );
+    if (activated.rows[0]) {
+      await dbQuery(
+        `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
+         VALUES ($1, 'aprovacao', 'Conta aprovada!',
+           'O seu formador aprovou o acesso ao portal SaberMais. Pode agora iniciar sessão.', '/')`,
+        [formando_id]
+      );
+      await sendApprovalEmail(activated.rows[0].email, activated.rows[0].first_name);
+    } else {
+      // Já tinha acesso — apenas avisar que ganhou mais um formador.
+      await dbQuery(
+        `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
+         VALUES ($1, 'nova_disciplina', 'Novo formador associado', $2, '/dashboard/perfil')`,
+        [formando_id, `${fp?.first_name} ${fp?.last_name} associou-te como seu formando.`]
+      );
+    }
+
     // Adicionar à turma do formador se existir
     const turma = await dbQuery("SELECT id FROM turmas WHERE formador_id = $1 LIMIT 1", [formadorId]);
     if (turma.rows[0]) {

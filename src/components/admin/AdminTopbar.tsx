@@ -20,6 +20,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/suporte":       "Suporte",
   "/dashboard/mensagens":     "Mensagens",
   "/dashboard/turmas":        "Turmas",
+  "/dashboard/formandos-por-validar": "Formandos por Validar",
   "/dashboard/acoes-formacao": "Acções de Formação",
   "/dashboard/tarefas":       "Tarefas",
   "/dashboard/config":        "Configurações",
@@ -42,6 +43,8 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [msgOpen, setMsgOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [pendingFormandosCount, setPendingFormandosCount] = useState(0);
+  const [pendingFormadoresCount, setPendingFormadoresCount] = useState(0);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HTMLDivElement>(null);
@@ -83,6 +86,26 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
       const { notificacoes, unread: u } = await res.json();
       setNotifs(notificacoes ?? []);
       setUnread(u ?? 0);
+    } catch {}
+  }
+
+  // Contagem "ao vivo" de quem está à espera — ao contrário das notificações (que
+  // desaparecem assim que alguém as marca como lidas), isto reflecte sempre o estado
+  // real da fila, por isso o aviso reaparece a qualquer formador/admin enquanto
+  // houver alguém por aprovar, mesmo que outra pessoa já tenha "visto" a notificação.
+  async function fetchPendingCounts() {
+    try {
+      const isStaff = user?.role === "admin" || user?.role === "super-admin" || user?.role === "formador";
+      if (!isStaff) return;
+      const isAdminUser = user?.role === "admin" || user?.role === "super-admin";
+      const [formandosRes, formadoresRes] = await Promise.all([
+        fetch("/api/formandos-pendentes").then(r => r.ok ? r.json() : { formandos: [] }).catch(() => ({ formandos: [] })),
+        isAdminUser
+          ? fetch("/api/formadores-pendentes").then(r => r.ok ? r.json() : { formadores: [] }).catch(() => ({ formadores: [] }))
+          : Promise.resolve({ formadores: [] }),
+      ]);
+      setPendingFormandosCount((formandosRes.formandos ?? []).length);
+      setPendingFormadoresCount((formadoresRes.formadores ?? []).length);
     } catch {}
   }
 
@@ -138,6 +161,13 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
 
   useEffect(() => {
     if (!user) return;
+    fetchPendingCounts();
+    const i = setInterval(fetchPendingCounts, 20000);
+    return () => clearInterval(i);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
     fetch("/api/mensagens?unread=1").then(r => r.json()).then(d => { setMsgUnread(d.count ?? 0); setFirstSenderId(d.first_sender_id ?? null); }).catch(() => {});
     const i = setInterval(() => {
       fetch("/api/mensagens?unread=1").then(r => r.json()).then(d => { setMsgUnread(d.count ?? 0); setFirstSenderId(d.first_sender_id ?? null); }).catch(() => {});
@@ -169,10 +199,8 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
   }
 
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
-  const pendingFormandos = notifs.filter(n => n.tipo === "novo_formando" && !n.lida);
-  const pendingFormadores = notifs.filter(n => n.tipo === "novo_formador" && !n.lida);
-  const totalPending = pendingFormandos.length + (isAdmin ? pendingFormadores.length : 0);
-  const showBanner = totalPending > 0 && !bannerDismissed && pathname !== "/dashboard/admin";
+  const totalPending = pendingFormandosCount + (isAdmin ? pendingFormadoresCount : 0);
+  const showBanner = totalPending > 0 && !bannerDismissed && pathname !== "/dashboard/formandos-por-validar" && pathname !== "/dashboard/admin";
 
   return (
     <>
@@ -180,15 +208,15 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
       <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 flex items-center gap-3">
         <AlertTriangle size={15} className="text-amber-400 shrink-0" />
         <p className="text-xs text-amber-200 flex-1">
-          {pendingFormandos.length > 0 && (
-            <><span className="font-semibold">{pendingFormandos.length} formando{pendingFormandos.length > 1 ? "s" : ""}</span>{pendingFormandos.length > 1 ? " aguardam" : " aguarda"} aprovação. </>
+          {pendingFormandosCount > 0 && (
+            <><span className="font-semibold">{pendingFormandosCount} formando{pendingFormandosCount > 1 ? "s" : ""}</span>{pendingFormandosCount > 1 ? " aguardam" : " aguarda"} aprovação. </>
           )}
-          {isAdmin && pendingFormadores.length > 0 && (
-            <><span className="font-semibold">{pendingFormadores.length} formador{pendingFormadores.length > 1 ? "es" : ""}</span>{pendingFormadores.length > 1 ? " aguardam" : " aguarda"} validação.</>
+          {isAdmin && pendingFormadoresCount > 0 && (
+            <><span className="font-semibold">{pendingFormadoresCount} formador{pendingFormadoresCount > 1 ? "es" : ""}</span>{pendingFormadoresCount > 1 ? " aguardam" : " aguarda"} validação.</>
           )}
         </p>
         <button
-          onClick={() => { setBannerDismissed(false); router.push("/dashboard/admin"); }}
+          onClick={() => { setBannerDismissed(false); router.push(pendingFormandosCount > 0 ? "/dashboard/formandos-por-validar" : "/dashboard/admin"); }}
           className="flex items-center gap-1 text-[11px] text-amber-400 font-medium hover:text-amber-300 transition-colors shrink-0"
         >
           Ver agora <ArrowRight size={12} />

@@ -17,7 +17,7 @@ export async function GET() {
       ORDER BY first_name ASC
     `)),
     safe(dbQuery(`
-      SELECT id, titulo, local, endereco, imagem_url, data_evento, tipo
+      SELECT id, titulo, local, endereco, imagem_url, data_evento, tipo, acao_formacao_id
       FROM agenda_atividades
       WHERE data_evento >= NOW()
       ORDER BY data_evento ASC

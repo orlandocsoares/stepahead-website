@@ -461,6 +461,7 @@ export default function HeroSection() {
   const [telemetry, setTelemetry] = useState<any>(null);
   const [selectedEvento, setSelectedEvento] = useState<any>(null);
   const [minhasInscricoes, setMinhasInscricoes] = useState<Set<string>>(new Set());
+  const [pedidosPendentes, setPedidosPendentes] = useState<Set<string>>(new Set());
   const [inscrevendo, setInscrevendo] = useState(false);
   const [formadoresData, setFormadoresData] = useState<FormadorData[]>([]);
   const [formadoresLoading, setFormadoresLoading] = useState(true);
@@ -480,16 +481,28 @@ export default function HeroSection() {
       .catch(() => {});
   }, [profile?.id]);
 
-  async function handleInscricaoPublica(eventoId: string) {
+  async function handleInscricaoPublica(eventoId: string, acaoFormacaoId?: string | null) {
     if (!profile?.id) return;
     setInscrevendo(true);
     try {
-      await fetch("/api/db/inscricoes_agenda", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: profile.id, evento_id: eventoId }),
-      });
-      setMinhasInscricoes(prev => new Set(prev).add(eventoId));
+      if (acaoFormacaoId) {
+        // Passa pelo fluxo com aprovação: fica pendente até o formador responsável
+        // pela acção (ou um admin) aceitar — é aí que a inscrição na Agenda é criada.
+        const res = await fetch(`/api/acoes-formacao/${acaoFormacaoId}/inscricoes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (res.ok) setPedidosPendentes(prev => new Set(prev).add(eventoId));
+      } else {
+        // Eventos sem acção de formação associada (ex: anúncios) não têm formador
+        // responsável para aprovar — mantém-se a inscrição directa.
+        await fetch("/api/db/inscricoes_agenda", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: profile.id, evento_id: eventoId }),
+        });
+        setMinhasInscricoes(prev => new Set(prev).add(eventoId));
+      }
     } finally {
       setInscrevendo(false);
     }
@@ -1331,13 +1344,18 @@ export default function HeroSection() {
                               className="w-full py-2.5 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-sm font-medium text-emerald-400 flex items-center justify-center gap-2">
                               <CheckCircle size={15} /> Inscrito
                             </button>
+                          ) : pedidosPendentes.has(selectedEvento.id) ? (
+                            <button disabled
+                              className="w-full py-2.5 rounded-xl bg-amber-600/20 border border-amber-500/30 text-sm font-medium text-amber-400 flex items-center justify-center gap-2">
+                              <Clock size={15} /> Pedido enviado — aguarda aprovação
+                            </button>
                           ) : (
                             <button
-                              onClick={() => handleInscricaoPublica(selectedEvento.id)}
+                              onClick={() => handleInscricaoPublica(selectedEvento.id, selectedEvento.acao_formacao_id)}
                               disabled={inscrevendo}
                               className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white transition-colors disabled:opacity-50"
                             >
-                              {inscrevendo ? "A inscrever..." : "Inscrever-me"}
+                              {inscrevendo ? "A enviar..." : selectedEvento.acao_formacao_id ? "Pedir inscrição" : "Inscrever-me"}
                             </button>
                           )
                         ) : (
@@ -1580,24 +1598,19 @@ export default function HeroSection() {
             {/* Logótipo — versão mobile/tablet: grande e centrado no ecrã na fase inicial,
                 encolhe e sobe para uma miniatura fixa no topo nas restantes fases. */}
             <div
-              className={`lg:hidden fixed left-1/2 z-50 flex flex-col items-center pointer-events-auto transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                activePhaseIndex === 0 ? "top-1/2 -translate-x-1/2 -translate-y-1/2" : "top-16 sm:top-20 -translate-x-1/2 translate-y-0"
+              className={`lg:hidden fixed inset-x-0 z-50 flex justify-center pointer-events-none transition-[top] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                activePhaseIndex === 0 ? "top-[38%]" : "top-16 sm:top-20"
               }`}
             >
               <img
                 src="/logo-sabermais.png"
                 alt="Logotipo Saber Mais"
                 onClick={() => goToPhase(0)}
-                className={`w-auto object-contain cursor-pointer mix-blend-screen contrast-125 brightness-110 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                className={`pointer-events-auto w-auto object-contain cursor-pointer mix-blend-screen contrast-125 brightness-110 transition-[height] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                   activePhaseIndex === 0 ? "h-28 sm:h-36" : "h-8 sm:h-10"
                 }`}
                 style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }}
               />
-              {activePhaseIndex === 0 && (
-                <p className="mt-1 text-[6px] sm:text-[7px] font-bold uppercase tracking-[0.45em] text-white/70 text-center whitespace-nowrap transition-opacity duration-500">
-                  Programa de Apoio ao Reforço do Ensino Secundário em Angola
-                </p>
-              )}
             </div>
 
             {/* Barra de navegação mobile/tablet */}
