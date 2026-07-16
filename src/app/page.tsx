@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen, Facebook, Instagram, Eye, EyeOff } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen, Facebook, Instagram, Eye, EyeOff, Play } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -598,6 +598,7 @@ export default function HeroSection() {
 
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
   const [sobreSeccaoAberto, setSobreSeccaoAberto] = useState(false);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [isLogoHovered, setIsLogoHovered] = useState(false);
@@ -1672,12 +1673,44 @@ export default function HeroSection() {
                             </motion.div>
                           )}
                         </AnimatePresence>
+                        {activePhaseIndex === 1 && (
+                          <button
+                            onClick={() => setIsVideoOpen(true)}
+                            onMouseEnter={() => setIsHovering(true)}
+                            onMouseLeave={() => setIsHovering(false)}
+                            className="group mt-3 flex items-center gap-3 outline-none"
+                          >
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-sm transition-colors group-hover:border-white group-hover:bg-white/20">
+                              <Play size={12} className="text-white ml-0.5" fill="currentColor" />
+                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/80 group-hover:text-white transition-colors" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>
+                              Ver vídeo de apresentação
+                            </span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
+
+            {/* VÍDEO PROMOCIONAL */}
+            <Dialog open={isVideoOpen} onOpenChange={setIsVideoOpen}>
+              <DialogContent className="sm:max-w-3xl bg-black border border-white/10 p-0 overflow-hidden">
+                <DialogHeader className="sr-only">
+                  <DialogTitle>Vídeo de apresentação — Saber Mais</DialogTitle>
+                </DialogHeader>
+                {isVideoOpen && (
+                  <video
+                    src="/video/Video_apresentacao.mp4"
+                    controls
+                    autoPlay
+                    className="w-full aspect-video bg-black"
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
 
             {/* BANDEIRAS DA COOPERAÇÃO */}
             <motion.div
