@@ -144,26 +144,28 @@ export default function AcoesFormacaoPage() {
     }
   }
 
-  async function handleUploadFoto(acaoId: string, file: File | null) {
-    if (!file) return;
+  async function handleUploadFotos(acaoId: string, files: FileList | null) {
+    if (!files || files.length === 0) return;
     setEnviandoFoto(acaoId);
     try {
-      const sanitized = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-      const fileName = `${acaoId}/${Date.now()}_${sanitized}`;
-      const form = new FormData();
-      form.append("bucket", "acoes-formacao-fotos"); form.append("path", fileName); form.append("file", file);
-      const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: form });
-      if (!uploadRes.ok) throw new Error("Erro no upload.");
+      for (const file of Array.from(files)) {
+        const sanitized = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+        const fileName = `${acaoId}/${Date.now()}_${sanitized}`;
+        const form = new FormData();
+        form.append("bucket", "acoes-formacao-fotos"); form.append("path", fileName); form.append("file", file);
+        const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: form });
+        if (!uploadRes.ok) throw new Error(`Erro no upload de "${file.name}".`);
 
-      await fetch(`/api/acoes-formacao/${acaoId}/fotos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label: file.name, nome_arquivo: fileName }),
-      });
+        await fetch(`/api/acoes-formacao/${acaoId}/fotos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ label: file.name, nome_arquivo: fileName }),
+        });
+      }
       const res = await fetch(`/api/acoes-formacao/${acaoId}/fotos`).then(r => r.json());
       setFotos(prev => ({ ...prev, [acaoId]: res.data ?? [] }));
     } catch (err: any) {
-      alert(err.message ?? "Não foi possível enviar a foto.");
+      alert(err.message ?? "Não foi possível enviar as fotos.");
     } finally {
       setEnviandoFoto(null);
     }
@@ -946,7 +948,8 @@ export default function AcoesFormacaoPage() {
                                       />
                                       {podeGerir && (
                                         <button onClick={() => handleDeleteFoto(acao.id, f.id)}
-                                          className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all">
+                                          title="Eliminar foto"
+                                          className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-red-600 transition-all">
                                           <X size={11} />
                                         </button>
                                       )}
@@ -958,10 +961,10 @@ export default function AcoesFormacaoPage() {
                               )}
                               {podeGerir && (
                                 <label className="flex items-center gap-2 border border-dashed c-br rounded-lg px-3 py-2 cursor-pointer hover:border-blue-500/40 transition-colors w-fit">
-                                  <input type="file" accept="image/*" className="sr-only" disabled={enviando}
-                                    onChange={e => { handleUploadFoto(acao.id, e.target.files?.[0] ?? null); e.target.value = ""; }} />
+                                  <input type="file" accept="image/*" multiple className="sr-only" disabled={enviando}
+                                    onChange={e => { handleUploadFotos(acao.id, e.target.files); e.target.value = ""; }} />
                                   {enviando ? <Loader2 size={14} className="animate-spin c-tx5" /> : <ImageIcon size={14} className="c-tx5" />}
-                                  <span className="text-sm c-tx3">{enviando ? "A enviar…" : "Adicionar foto"}</span>
+                                  <span className="text-sm c-tx3">{enviando ? "A enviar…" : "Adicionar fotos"}</span>
                                 </label>
                               )}
                             </div>

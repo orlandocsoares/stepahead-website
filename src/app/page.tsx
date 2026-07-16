@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen, Facebook, Instagram, Linkedin, Eye, EyeOff, Play } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen, Facebook, Instagram, Linkedin, Eye, EyeOff, Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -472,11 +472,12 @@ export default function HeroSection() {
   const [galeriaAcaoAberta, setGaleriaAcaoAberta] = useState<{ id: string; titulo: string } | null>(null);
   const [galeriaFotos, setGaleriaFotos] = useState<{ id: string; label: string; url: string }[]>([]);
   const [galeriaFotosLoading, setGaleriaFotosLoading] = useState(false);
-  const [fotoAmpliada, setFotoAmpliada] = useState<{ url: string; label: string } | null>(null);
+  const [fotoAmpliadaIndex, setFotoAmpliadaIndex] = useState<number | null>(null);
   const [vistaAgenda, setVistaAgenda] = useState<"lista" | "calendario">("calendario");
   const [diaAgendaSel, setDiaAgendaSel] = useState<string | null>(null);
 
   useEffect(() => {
+    setFotoAmpliadaIndex(null);
     if (!galeriaAcaoAberta) { setGaleriaFotos([]); return; }
     setGaleriaFotosLoading(true);
     fetch(`/api/public/acoes-formacao/${galeriaAcaoAberta.id}/fotos`)
@@ -485,6 +486,16 @@ export default function HeroSection() {
       .catch(() => setGaleriaFotos([]))
       .finally(() => setGaleriaFotosLoading(false));
   }, [galeriaAcaoAberta]);
+
+  useEffect(() => {
+    if (fotoAmpliadaIndex === null) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowRight") setFotoAmpliadaIndex(i => i === null ? null : (i + 1) % galeriaFotos.length);
+      if (e.key === "ArrowLeft") setFotoAmpliadaIndex(i => i === null ? null : (i - 1 + galeriaFotos.length) % galeriaFotos.length);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fotoAmpliadaIndex, galeriaFotos.length]);
 
   useEffect(() => {
     if (!profile?.id) { setMinhasInscricoes(new Set()); return; }
@@ -1518,11 +1529,11 @@ export default function HeroSection() {
                         <p className="text-sm text-white/40 py-8 text-center">Ainda sem fotografias nesta acção.</p>
                       ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
-                          {galeriaFotos.map(f => (
+                          {galeriaFotos.map((f, i) => (
                             <button
                               key={f.id}
                               type="button"
-                              onClick={() => setFotoAmpliada(f)}
+                              onClick={() => setFotoAmpliadaIndex(i)}
                               className="group relative rounded-lg overflow-hidden border border-white/10 hover:border-white/25 transition-colors aspect-square bg-black/30"
                             >
                               <img src={f.url} alt={f.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -1536,17 +1547,46 @@ export default function HeroSection() {
               </DialogContent>
             </Dialog>
 
-            {/* LIGHTBOX — foto ampliada */}
-            <Dialog open={!!fotoAmpliada} onOpenChange={(v) => !v && setFotoAmpliada(null)}>
+            {/* LIGHTBOX — foto ampliada, com navegação entre as fotos da acção */}
+            <Dialog open={fotoAmpliadaIndex !== null} onOpenChange={(v) => !v && setFotoAmpliadaIndex(null)}>
               <DialogContent className="sm:max-w-2xl bg-black border border-white/10 p-0 overflow-hidden">
-                {fotoAmpliada && (
-                  <>
-                    <DialogHeader className="sr-only">
-                      <DialogTitle>{fotoAmpliada.label}</DialogTitle>
-                    </DialogHeader>
-                    <img src={fotoAmpliada.url} alt={fotoAmpliada.label} className="w-full max-h-[80vh] object-contain bg-black" />
-                  </>
-                )}
+                {fotoAmpliadaIndex !== null && galeriaFotos[fotoAmpliadaIndex] && (() => {
+                  const foto = galeriaFotos[fotoAmpliadaIndex];
+                  const total = galeriaFotos.length;
+                  return (
+                    <>
+                      <DialogHeader className="sr-only">
+                        <DialogTitle>{foto.label}</DialogTitle>
+                      </DialogHeader>
+                      <div className="relative">
+                        <img src={foto.url} alt={foto.label} className="w-full max-h-[80vh] object-contain bg-black" />
+                        {total > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setFotoAmpliadaIndex((fotoAmpliadaIndex - 1 + total) % total)}
+                              aria-label="Foto anterior"
+                              className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+                            >
+                              <ChevronLeft size={20} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFotoAmpliadaIndex((fotoAmpliadaIndex + 1) % total)}
+                              aria-label="Próxima foto"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+                            >
+                              <ChevronRight size={20} />
+                            </button>
+                            <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/60 text-white text-[11px]">
+                              {fotoAmpliadaIndex + 1} / {total}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </DialogContent>
             </Dialog>
 
