@@ -95,6 +95,20 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
        ON CONFLICT DO NOTHING`,
       [targetFormandoId, id]
     );
+    // Primeira inscrição confirmada activa o acesso ao portal — não há mais
+    // dependência de uma associação directa formando↔formador para isto.
+    const activated = await dbQuery(
+      `UPDATE profiles SET status = 'activo' WHERE id = $1 AND status = 'email_confirmado' RETURNING id`,
+      [targetFormandoId]
+    );
+    if (activated.rows[0]) {
+      await dbQuery(
+        `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
+         VALUES ($1, 'aprovacao', 'Conta aprovada!',
+           'A tua inscrição foi confirmada e já podes aceder a todos os conteúdos.', '/')`,
+        [targetFormandoId]
+      );
+    }
   }
 
   if (status === "pendente") {
@@ -168,6 +182,19 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
        ON CONFLICT DO NOTHING`,
       [formando_id, id]
     );
+    // Primeira inscrição aprovada activa o acesso ao portal.
+    const activated = await dbQuery(
+      `UPDATE profiles SET status = 'activo' WHERE id = $1 AND status = 'email_confirmado' RETURNING id`,
+      [formando_id]
+    );
+    if (activated.rows[0]) {
+      await dbQuery(
+        `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
+         VALUES ($1, 'aprovacao', 'Conta aprovada!',
+           'A tua inscrição foi confirmada e já podes aceder a todos os conteúdos.', '/')`,
+        [formando_id]
+      );
+    }
   }
   if (status === "cancelado") {
     // Mantém a Agenda em sincronia: sem isto, a pessoa continuaria a ver "Inscrito" no evento

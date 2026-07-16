@@ -4,11 +4,10 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   User, ShieldCheck, Save, Loader2, Camera,
   Key, FileText, CheckCircle2, AlertCircle, Activity, Award,
-  GraduationCap, Plus, X, Clock, CheckCheck, XCircle,
+  GraduationCap, Clock, CheckCheck, XCircle,
   IdCard, MapPin, BookOpen, Briefcase, Eye, EyeOff,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { getAnoLetivoActivo, getAnosLetivos } from "@/lib/ano-letivo";
 import { useLocalidades } from "@/hooks/useLocalidades";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,10 +16,8 @@ export default function PerfilPage() {
   const { provincias: PROVINCIAS_ANGOLA, getMunicipios } = useLocalidades();
   const [localProfile, setLocalProfile] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [anoLetivo, setAnoLetivo] = useState(getAnoLetivoActivo());
-  const [associacoes, setAssociacoes] = useState<any[]>([]);
-  const [formadoresDisp, setFormadoresDisp] = useState<any[]>([]);
-  const [addingFormador, setAddingFormador] = useState(false);
+  const [meusFormadores, setMeusFormadores] = useState<any[]>([]);
+  const [minhasAreas, setMinhasAreas] = useState<string[]>([]);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -38,34 +35,12 @@ export default function PerfilPage() {
 
   useEffect(() => {
     if (user?.role === "formando") {
-      fetch(`/api/meus-formadores?ano=${encodeURIComponent(anoLetivo)}`)
+      fetch("/api/meus-formadores")
         .then(r => r.json())
-        .then(d => { setAssociacoes(d.associacoes ?? []); setFormadoresDisp(d.formadores ?? []); })
+        .then(d => { setMeusFormadores(d.formadores ?? []); setMinhasAreas(d.areas ?? []); })
         .catch(() => {});
     }
-  }, [user, anoLetivo]);
-
-  async function handleAddFormador(formador_id: string) {
-    setAddingFormador(true);
-    await fetch("/api/meus-formadores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ formador_id, ano_letivo: anoLetivo }),
-    });
-    const d = await fetch(`/api/meus-formadores?ano=${encodeURIComponent(anoLetivo)}`).then(r => r.json());
-    setAssociacoes(d.associacoes ?? []); setFormadoresDisp(d.formadores ?? []);
-    setAddingFormador(false);
-  }
-
-  async function handleRemoveFormador(formador_id: string) {
-    if (!confirm("Remover este formador? Perderás acesso aos seus conteúdos.")) return;
-    await fetch("/api/meus-formadores", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ formador_id, ano_letivo: anoLetivo }),
-    });
-    setAssociacoes(prev => prev.filter(a => a.formador_id !== formador_id));
-  }
+  }, [user]);
 
   const showMsg = (type: "success" | "error", text: string) => {
     setMessage({ type, text });
@@ -343,19 +318,16 @@ export default function PerfilPage() {
                 <label className="text-[10px] c-tx3 flex items-center justify-between">
                   <span>Áreas</span>
                   <span className="c-tx5 text-[10px]">
-                    {localProfile.role === "formando" ? "definidas pelos teus formadores" : "clica para seleccionar"}
+                    {localProfile.role === "formando" ? "definidas pelas acções em que estás inscrito" : "clica para seleccionar"}
                   </span>
                 </label>
                 {localProfile.role === "formando" ? (() => {
-                  const areasFormandos = Array.from(new Set(
-                    associacoes.filter(a => a.status === "aceite" && a.especialidade).map(a => a.especialidade)
-                  ));
                   return (
                     <div className="flex flex-wrap gap-1.5">
-                      {areasFormandos.length === 0 ? (
-                        <p className="text-[10px] c-tx5 self-center ml-1">Sem área — associa um formador para definir a tua área.</p>
+                      {minhasAreas.length === 0 ? (
+                        <p className="text-[10px] c-tx5 self-center ml-1">Sem área — inscreve-te numa acção de formação para definir a tua área.</p>
                       ) : (
-                        areasFormandos.map(area => (
+                        minhasAreas.map(area => (
                           <span
                             key={area}
                             className="px-2.5 py-1 rounded-lg text-[10px] font-medium border bg-black/30 text-white/70 border-white/15 backdrop-blur-sm"
@@ -614,75 +586,27 @@ export default function PerfilPage() {
       {/* ── Secção de Formadores (só formandos) ── */}
       {localProfile.role === "formando" && (
         <div className="c-bg2 border c-br rounded-xl p-6 space-y-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <GraduationCap size={16} className="text-blue-400" />
-              <h3 className="text-sm font-semibold c-tx">Os meus formadores</h3>
-            </div>
-            <select
-              value={anoLetivo}
-              onChange={e => setAnoLetivo(e.target.value)}
-              className="text-xs c-s1 border c-br rounded-lg px-2 py-1.5 c-tx2 outline-none"
-            >
-              {getAnosLetivos().map(a => (
-                <option key={a} value={a} className="c-bg">{a}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-2">
+            <GraduationCap size={16} className="text-blue-400" />
+            <h3 className="text-sm font-semibold c-tx">Os meus formadores</h3>
           </div>
+          <p className="text-xs c-tx5 -mt-3">Formadores das acções de formação em que estás inscrito.</p>
 
-          {/* Lista de associações */}
-          {associacoes.length === 0 ? (
-            <p className="text-xs c-tx4 text-center py-4">Sem formadores associados neste ano letivo.</p>
+          {meusFormadores.length === 0 ? (
+            <p className="text-xs c-tx4 text-center py-4">Ainda sem formadores — inscreve-te numa acção de formação.</p>
           ) : (
             <div className="space-y-2">
-              {associacoes.map(a => (
-                <div key={a.id} className="flex items-center gap-3 px-4 py-3 bg-black/20 rounded-xl border c-br">
+              {meusFormadores.map(f => (
+                <div key={f.id} className="flex items-center gap-3 px-4 py-3 bg-black/20 rounded-xl border c-br">
                   <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0">
-                    {(a.first_name?.[0] || "?").toUpperCase()}
+                    {(f.first_name?.[0] || "?").toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm c-tx font-medium">{a.first_name} {a.last_name}</p>
-                    {a.especialidade && <p className="text-xs c-tx3">{a.especialidade}</p>}
+                    <p className="text-sm c-tx font-medium">{f.first_name} {f.last_name}</p>
+                    {f.especialidade && <p className="text-xs c-tx3">{f.especialidade}</p>}
                   </div>
-                  <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                    a.status === 'aceite' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
-                    a.status === 'rejeitado' ? 'text-red-400 bg-red-500/10 border-red-500/20' :
-                    'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                  }`}>
-                    {a.status === 'aceite' ? '✓ Aceite' : a.status === 'rejeitado' ? 'Rejeitado' : 'Pendente'}
-                  </span>
-                  <button
-                    onClick={() => handleRemoveFormador(a.formador_id)}
-                    className="p-1.5 rounded-lg c-tx5 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                    title="Remover formador"
-                  >
-                    <X size={13} />
-                  </button>
                 </div>
               ))}
-            </div>
-          )}
-
-          {/* Adicionar formador */}
-          {formadoresDisp.filter(f => !associacoes.some(a => a.formador_id === f.id)).length > 0 && (
-            <div className="space-y-2 pt-2 border-t c-br">
-              <p className="text-xs c-tx4 font-medium">Adicionar formador</p>
-              <div className="space-y-1 max-h-48 overflow-y-auto">
-                {formadoresDisp
-                  .filter(f => !associacoes.some(a => a.formador_id === f.id))
-                  .map(f => (
-                    <button
-                      key={f.id}
-                      onClick={() => handleAddFormador(f.id)}
-                      disabled={addingFormador}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.02] border c-br hover:border-blue-500/30 hover:bg-blue-500/5 transition-all text-left disabled:opacity-50"
-                    >
-                      <Plus size={12} className="text-blue-400 shrink-0" />
-                      <span className="text-xs c-tx2">{f.first_name} {f.last_name}</span>
-                      {f.especialidade && <span className="text-[10px] c-tx4 ml-auto">{f.especialidade}</span>}
-                    </button>
-                  ))}
-              </div>
             </div>
           )}
         </div>

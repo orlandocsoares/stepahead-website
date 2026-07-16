@@ -20,7 +20,6 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/suporte":       "Suporte",
   "/dashboard/mensagens":     "Mensagens",
   "/dashboard/turmas":        "Turmas",
-  "/dashboard/formandos-por-validar": "Formandos por Validar",
   "/dashboard/acoes-formacao": "Acções de Formação",
   "/dashboard/tarefas":       "Tarefas",
   "/dashboard/config":        "Configurações",
@@ -43,7 +42,6 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [msgOpen, setMsgOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [pendingFormandosCount, setPendingFormandosCount] = useState(0);
   const [pendingFormadoresCount, setPendingFormadoresCount] = useState(0);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
@@ -89,22 +87,14 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
     } catch {}
   }
 
-  // Contagem "ao vivo" de quem está à espera — ao contrário das notificações (que
-  // desaparecem assim que alguém as marca como lidas), isto reflecte sempre o estado
-  // real da fila, por isso o aviso reaparece a qualquer formador/admin enquanto
-  // houver alguém por aprovar, mesmo que outra pessoa já tenha "visto" a notificação.
+  // Contagem "ao vivo" de formadores a aguardar aprovação do admin — reflecte sempre
+  // o estado real da fila, por isso o aviso reaparece enquanto houver alguém por aprovar,
+  // mesmo que outra pessoa já tenha "visto" a notificação.
   async function fetchPendingCounts() {
     try {
-      const isStaff = user?.role === "admin" || user?.role === "super-admin" || user?.role === "formador";
-      if (!isStaff) return;
       const isAdminUser = user?.role === "admin" || user?.role === "super-admin";
-      const [formandosRes, formadoresRes] = await Promise.all([
-        fetch("/api/formandos-pendentes").then(r => r.ok ? r.json() : { formandos: [] }).catch(() => ({ formandos: [] })),
-        isAdminUser
-          ? fetch("/api/formadores-pendentes").then(r => r.ok ? r.json() : { formadores: [] }).catch(() => ({ formadores: [] }))
-          : Promise.resolve({ formadores: [] }),
-      ]);
-      setPendingFormandosCount((formandosRes.formandos ?? []).length);
+      if (!isAdminUser) return;
+      const formadoresRes = await fetch("/api/formadores-pendentes").then(r => r.ok ? r.json() : { formadores: [] }).catch(() => ({ formadores: [] }));
       setPendingFormadoresCount((formadoresRes.formadores ?? []).length);
     } catch {}
   }
@@ -199,8 +189,7 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
   }
 
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
-  const totalPending = pendingFormandosCount + (isAdmin ? pendingFormadoresCount : 0);
-  const showBanner = totalPending > 0 && !bannerDismissed && pathname !== "/dashboard/formandos-por-validar" && pathname !== "/dashboard/admin";
+  const showBanner = isAdmin && pendingFormadoresCount > 0 && !bannerDismissed && pathname !== "/dashboard/admin";
 
   return (
     <>
@@ -208,15 +197,10 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
       <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 flex items-center gap-3">
         <AlertTriangle size={15} className="text-amber-400 shrink-0" />
         <p className="text-xs text-amber-200 flex-1">
-          {pendingFormandosCount > 0 && (
-            <><span className="font-semibold">{pendingFormandosCount} formando{pendingFormandosCount > 1 ? "s" : ""}</span>{pendingFormandosCount > 1 ? " aguardam" : " aguarda"} aprovação. </>
-          )}
-          {isAdmin && pendingFormadoresCount > 0 && (
-            <><span className="font-semibold">{pendingFormadoresCount} formador{pendingFormadoresCount > 1 ? "es" : ""}</span>{pendingFormadoresCount > 1 ? " aguardam" : " aguarda"} validação.</>
-          )}
+          <span className="font-semibold">{pendingFormadoresCount} formador{pendingFormadoresCount > 1 ? "es" : ""}</span>{pendingFormadoresCount > 1 ? " aguardam" : " aguarda"} validação.
         </p>
         <button
-          onClick={() => { setBannerDismissed(false); router.push(pendingFormandosCount > 0 ? "/dashboard/formandos-por-validar" : "/dashboard/admin"); }}
+          onClick={() => { setBannerDismissed(false); router.push("/dashboard/admin"); }}
           className="flex items-center gap-1 text-[11px] text-amber-400 font-medium hover:text-amber-300 transition-colors shrink-0"
         >
           Ver agora <ArrowRight size={12} />

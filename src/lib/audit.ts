@@ -21,6 +21,7 @@ export type AuditAction =
   | "acao_formacao_formador_add" | "acao_formacao_formador_remove"
   | "acao_formacao_inscricao_create" | "acao_formacao_inscricao_cancel"
   | "acao_formacao_material_link" | "acao_formacao_material_unlink"
+  | "acao_formacao_foto_upload" | "acao_formacao_foto_delete"
   // Comunidade
   | "post_create" | "post_update" | "post_delete"
   | "comentario_create" | "comentario_delete"

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FolderOpen, Users, Calendar,
   Shield, LogOut, ChevronLeft, ChevronRight, Globe, X, UserCircle, LifeBuoy,
-  MessageSquare, Mail, GraduationCap, ClipboardList, BookOpen, ChevronDown, UserPlus,
+  MessageSquare, Mail, GraduationCap, ClipboardList, BookOpen, ChevronDown,
 } from "lucide-react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { useState, useEffect } from "react";
@@ -24,7 +24,6 @@ const NAV_ACADEMICA = [
   { label: "Repositório",  icon: FolderOpen,    path: "/dashboard/ficheiros" },
   { label: "Tarefas",      icon: ClipboardList, path: "/dashboard/tarefas" },
   { label: "Acções de Formação", icon: GraduationCap, path: "/dashboard/acoes-formacao", staffOnly: true },
-  { label: "Formandos por Validar", icon: UserPlus, path: "/dashboard/formandos-por-validar", staffOnly: true },
 ];
 
 const NAV_BOTTOM = [

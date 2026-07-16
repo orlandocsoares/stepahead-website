@@ -35,12 +35,14 @@ export async function POST(request: Request) {
         const formadorIds = naoFormandos.filter((r: any) => r.role === "formador").map((r: any) => r.id);
         if (formadorIds.length > 0) {
           const assocRes = await dbQuery(
-            `SELECT formador_id FROM formando_formadores WHERE formando_id = $1 AND formador_id = ANY($2) AND status = 'aceite'`,
+            `SELECT DISTINCT af.formador_id FROM acao_formadores af
+             INNER JOIN inscricoes_acao ia ON ia.acao_formacao_id = af.acao_formacao_id
+             WHERE ia.formando_id = $1 AND ia.status = 'inscrito' AND af.formador_id = ANY($2)`,
             [session.id, formadorIds]
           );
           const aceitesIds = new Set(assocRes.rows.map((r: any) => r.formador_id));
           if (formadorIds.some((id: string) => !aceitesIds.has(id))) {
-            return NextResponse.json({ error: "Só podes enviar mensagens aos teus formadores." }, { status: 403 });
+            return NextResponse.json({ error: "Só podes enviar mensagens aos formadores das tuas acções de formação." }, { status: 403 });
           }
         }
       }

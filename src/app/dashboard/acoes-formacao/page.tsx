@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Plus, Trash2, Pencil, ChevronDown, ChevronUp, Loader2, X, UserPlus, GraduationCap, Calendar, MapPin, Users, FileText, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Pencil, ChevronDown, ChevronUp, Loader2, X, UserPlus, GraduationCap, Calendar, MapPin, Users, FileText, AlertTriangle, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocalidades } from "@/hooks/useLocalidades";
 
@@ -39,6 +39,7 @@ type AcaoFormacao = {
 type Pessoa = { id: string; first_name: string; last_name: string; email: string; status?: string; provincia?: string | null };
 type Material = { link_id: string; id: string; label: string; tamanho: string | null; area: string; disponivel_de: string | null; disponivel_ate: string | null; thumbnail_url: string | null };
 type FicheiroRepo = { id: string; label: string; area: string };
+type Foto = { id: string; label: string; nome_arquivo: string; created_at: string };
 
 function InitialAvatar({ name, className = "" }: { name: string; className?: string }) {
   return (
@@ -61,7 +62,7 @@ export default function AcoesFormacaoPage() {
   const [formandos, setFormandos] = useState<Pessoa[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [painelTab, setPainelTab] = useState<"materiais" | "utilizadores">("materiais");
+  const [painelTab, setPainelTab] = useState<"materiais" | "utilizadores" | "fotos">("materiais");
   const [inscritos, setInscritos] = useState<Record<string, Pessoa[]>>({});
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -89,6 +90,8 @@ export default function AcoesFormacaoPage() {
   const [meuRepositorio, setMeuRepositorio] = useState<FicheiroRepo[]>([]);
   const [publicando, setPublicando] = useState(false);
   const [novoMaterial, setNovoMaterial] = useState<Record<string, { arquivo_id: string; de: string; ate: string }>>({});
+  const [fotos, setFotos] = useState<Record<string, Foto[]>>({});
+  const [enviandoFoto, setEnviandoFoto] = useState<string | null>(null);
 
   function handleImagemSelect(file: File | null) {
     setImagemFile(file);
@@ -135,6 +138,41 @@ export default function AcoesFormacaoPage() {
       const res = await fetch(`/api/acoes-formacao/${id}/materiais`).then(r => r.json());
       setMateriais(prev => ({ ...prev, [id]: res.data ?? [] }));
     }
+    if (!fotos[id]) {
+      const res = await fetch(`/api/acoes-formacao/${id}/fotos`).then(r => r.json());
+      setFotos(prev => ({ ...prev, [id]: res.data ?? [] }));
+    }
+  }
+
+  async function handleUploadFoto(acaoId: string, file: File | null) {
+    if (!file) return;
+    setEnviandoFoto(acaoId);
+    try {
+      const sanitized = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const fileName = `${acaoId}/${Date.now()}_${sanitized}`;
+      const form = new FormData();
+      form.append("bucket", "acoes-formacao-fotos"); form.append("path", fileName); form.append("file", file);
+      const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: form });
+      if (!uploadRes.ok) throw new Error("Erro no upload.");
+
+      await fetch(`/api/acoes-formacao/${acaoId}/fotos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: file.name, nome_arquivo: fileName }),
+      });
+      const res = await fetch(`/api/acoes-formacao/${acaoId}/fotos`).then(r => r.json());
+      setFotos(prev => ({ ...prev, [acaoId]: res.data ?? [] }));
+    } catch (err: any) {
+      alert(err.message ?? "Não foi possível enviar a foto.");
+    } finally {
+      setEnviandoFoto(null);
+    }
+  }
+
+  async function handleDeleteFoto(acaoId: string, fotoId: string) {
+    if (!confirm("Remover esta foto da galeria?")) return;
+    await fetch(`/api/acoes-formacao/${acaoId}/fotos?foto_id=${fotoId}`, { method: "DELETE" });
+    setFotos(prev => ({ ...prev, [acaoId]: (prev[acaoId] ?? []).filter(f => f.id !== fotoId) }));
   }
 
   function getFicheirosDisponiveisParaPublicar(acao: AcaoFormacao) {
@@ -632,6 +670,10 @@ export default function AcoesFormacaoPage() {
                             className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${painelTab === "utilizadores" ? "bg-blue-600 text-white" : "c-tx4 hc-tx"}`}>
                             Utilizadores {acao.total_inscritos > 0 ? `(${acao.total_inscritos})` : ""}
                           </button>
+                          <button onClick={() => setPainelTab("fotos")}
+                            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${painelTab === "fotos" ? "bg-blue-600 text-white" : "c-tx4 hc-tx"}`}>
+                            Fotos {(fotos[acao.id] ?? []).length > 0 ? `(${(fotos[acao.id] ?? []).length})` : ""}
+                          </button>
                         </div>
 
                         {painelTab === "utilizadores" && (
@@ -881,6 +923,47 @@ export default function AcoesFormacaoPage() {
                                 )
                               )}
                               </div>
+                            </div>
+                          );
+                        })()}
+
+                        {painelTab === "fotos" && (() => {
+                          const podeGerir = isAdmin || (acao.formadores ?? []).some(f => f.id === user?.id);
+                          const enviando = enviandoFoto === acao.id;
+                          return (
+                            <div className="space-y-3">
+                              <p className="text-[10px] font-semibold uppercase tracking-wider c-tx5">
+                                Galeria — visível publicamente no site
+                              </p>
+                              {(fotos[acao.id] ?? []).length > 0 ? (
+                                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                                  {(fotos[acao.id] ?? []).map(f => (
+                                    <div key={f.id} className="group relative aspect-square rounded-lg overflow-hidden border c-br bg-black/20">
+                                      <img
+                                        src={`/storage/v1/object/public/acoes-formacao-fotos/${encodeURIComponent(f.nome_arquivo)}`}
+                                        alt={f.label}
+                                        className="w-full h-full object-cover"
+                                      />
+                                      {podeGerir && (
+                                        <button onClick={() => handleDeleteFoto(acao.id, f.id)}
+                                          className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all">
+                                          <X size={11} />
+                                        </button>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs c-tx5 italic">Ainda sem fotos nesta acção.</p>
+                              )}
+                              {podeGerir && (
+                                <label className="flex items-center gap-2 border border-dashed c-br rounded-lg px-3 py-2 cursor-pointer hover:border-blue-500/40 transition-colors w-fit">
+                                  <input type="file" accept="image/*" className="sr-only" disabled={enviando}
+                                    onChange={e => { handleUploadFoto(acao.id, e.target.files?.[0] ?? null); e.target.value = ""; }} />
+                                  {enviando ? <Loader2 size={14} className="animate-spin c-tx5" /> : <ImageIcon size={14} className="c-tx5" />}
+                                  <span className="text-sm c-tx3">{enviando ? "A enviar…" : "Adicionar foto"}</span>
+                                </label>
+                              )}
                             </div>
                           );
                         })()}

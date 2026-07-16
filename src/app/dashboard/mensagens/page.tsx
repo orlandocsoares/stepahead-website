@@ -153,10 +153,7 @@ function MensagensInner() {
     if (user?.role !== "formando") return;
     fetch("/api/meus-formadores")
       .then(r => r.json())
-      .then(d => {
-        const aceites = (d.associacoes ?? []).filter((a: any) => a.status === "aceite").map((a: any) => a.formador_id);
-        setMeusFormadoresIds(new Set(aceites));
-      })
+      .then(d => setMeusFormadoresIds(new Set((d.formadores ?? []).map((f: any) => f.id))))
       .catch(() => {});
   }, [user]);
 

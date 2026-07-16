@@ -147,11 +147,13 @@ export async function POST(request: Request) {
       }
       if (recipientRole === "formador") {
         const assoc = await db.query(
-          `SELECT id FROM formando_formadores WHERE formando_id = $1 AND formador_id = $2 AND status = 'aceite' LIMIT 1`,
-          [session.id, to_user_id]
+          `SELECT 1 FROM acao_formadores af
+           INNER JOIN inscricoes_acao ia ON ia.acao_formacao_id = af.acao_formacao_id
+           WHERE af.formador_id = $1 AND ia.formando_id = $2 AND ia.status = 'inscrito' LIMIT 1`,
+          [to_user_id, session.id]
         );
         if (!assoc.rows[0]) {
-          return NextResponse.json({ error: "Só podes enviar mensagens aos teus formadores." }, { status: 403 });
+          return NextResponse.json({ error: "Só podes enviar mensagens aos formadores das tuas acções de formação." }, { status: 403 });
         }
       }
     }

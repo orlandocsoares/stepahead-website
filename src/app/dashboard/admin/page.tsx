@@ -1093,49 +1093,6 @@ export default function SuperAdminPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 flex-wrap">
-                                {/* Controlos para formadores */}
-                                {isFormador && (
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    {/* Sem associação — botão para associar */}
-                                    {!item.ff_status || item.ff_status === 'removido' ? (
-                                      <button
-                                        onClick={() => fetch("/api/formandos-pendentes", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ formando_id: item.id, acao: "associar" }) }).then(() => fetchData())}
-                                        className="px-2 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] hover:bg-blue-500/20 transition-colors"
-                                      >+ Associar</button>
-                                    ) : (
-                                      <>
-                                        {/* Badge de estado */}
-                                        <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full border ${
-                                          item.ff_status === 'aceite'    ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
-                                          item.ff_status === 'rejeitado' ? 'text-red-400 bg-red-500/10 border-red-500/20' :
-                                          'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                                        }`}>
-                                          {item.ff_status === 'aceite' ? '✓ Aceite' : item.ff_status === 'rejeitado' ? 'Rejeitado' : 'Pendente'}
-                                        </span>
-                                        {/* Aprovar/Rejeitar se pendente */}
-                                        {item.ff_status === 'pendente' && (
-                                          <>
-                                            <button
-                                              onClick={() => fetch("/api/formandos-pendentes", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ formando_id: item.id, acao: "aprovar" }) }).then(() => fetchData())}
-                                              className="px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] hover:bg-emerald-500/20 transition-colors"
-                                            >Aprovar</button>
-                                            <button
-                                              onClick={() => fetch("/api/formandos-pendentes", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ formando_id: item.id, acao: "rejeitar" }) }).then(() => fetchData())}
-                                              className="px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] hover:bg-red-500/20 transition-colors"
-                                            >Rejeitar</button>
-                                          </>
-                                        )}
-                                        {/* Remover se aceite */}
-                                        {item.ff_status === 'aceite' && (
-                                          <button
-                                            onClick={() => { if (confirm(`Remover ${item.first_name} ${item.last_name} como seu formando?`)) fetch("/api/formandos-pendentes", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ formando_id: item.id, acao: "remover" }) }).then(() => fetchData()); }}
-                                            className="px-2 py-1 rounded-lg c-s1 border c-br c-tx4 text-[10px] hover:text-red-400 hover:border-red-500/20 transition-colors"
-                                          >Remover</button>
-                                        )}
-                                      </>
-                                    )}
-                                  </div>
-                                )}
                                 {/* Controlos de admin */}
                                 {isAdminOrSuper(profile?.role) && (
                                   <>

@@ -66,13 +66,11 @@ export async function GET() {
   } else {
     // Formador vê todos os formandos activos da plataforma
     const result = await dbQuery(`
-      SELECT p.*,
-        ff.status AS ff_status, ff.ano_letivo, ff.id AS ff_id
+      SELECT p.*
       FROM profiles p
-      LEFT JOIN formando_formadores ff ON ff.formando_id = p.id AND ff.formador_id = $1
       WHERE p.role = 'formando' AND p.status = 'activo'
       ORDER BY p.first_name ASC, p.last_name ASC
-    `, [sessionUser.id]);
+    `);
     return NextResponse.json({ data: result.rows });
   }
 }

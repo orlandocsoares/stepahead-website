@@ -469,9 +469,22 @@ export default function HeroSection() {
   const [areasEventos, setAreasEventos] = useState<AreaEventos[]>([]);
   const [eventosLoading, setEventosLoading] = useState(true);
   const [areaEventoSelecionada, setAreaEventoSelecionada] = useState<string | null>(null);
-  const [fotoGaleriaAberta, setFotoGaleriaAberta] = useState<EventoItem | null>(null);
+  const [galeriaAcaoAberta, setGaleriaAcaoAberta] = useState<{ id: string; titulo: string } | null>(null);
+  const [galeriaFotos, setGaleriaFotos] = useState<{ id: string; label: string; url: string }[]>([]);
+  const [galeriaFotosLoading, setGaleriaFotosLoading] = useState(false);
+  const [fotoAmpliada, setFotoAmpliada] = useState<{ url: string; label: string } | null>(null);
   const [vistaAgenda, setVistaAgenda] = useState<"lista" | "calendario">("calendario");
   const [diaAgendaSel, setDiaAgendaSel] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!galeriaAcaoAberta) { setGaleriaFotos([]); return; }
+    setGaleriaFotosLoading(true);
+    fetch(`/api/public/acoes-formacao/${galeriaAcaoAberta.id}/fotos`)
+      .then(r => r.ok ? r.json() : { data: [] })
+      .then(d => setGaleriaFotos(d.data ?? []))
+      .catch(() => setGaleriaFotos([]))
+      .finally(() => setGaleriaFotosLoading(false));
+  }, [galeriaAcaoAberta]);
 
   useEffect(() => {
     if (!profile?.id) { setMinhasInscricoes(new Set()); return; }
@@ -1015,7 +1028,7 @@ export default function HeroSection() {
                       <button
                         key={ev.id}
                         type="button"
-                        onClick={() => setFotoGaleriaAberta(ev)}
+                        onClick={() => setGaleriaAcaoAberta({ id: ev.id, titulo: ev.titulo })}
                         className="group relative rounded-xl overflow-hidden border border-white/10 hover:border-white/25 transition-colors aspect-square bg-black/30"
                       >
                         <img src={ev.imagem_url!} alt={ev.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -1490,16 +1503,48 @@ export default function HeroSection() {
               </DialogContent>
             </Dialog>
 
-            {/* LIGHTBOX DA GALERIA */}
-            <Dialog open={!!fotoGaleriaAberta} onOpenChange={(v) => !v && setFotoGaleriaAberta(null)}>
+            {/* GALERIA DE FOTOS DE UMA ACÇÃO */}
+            <Dialog open={!!galeriaAcaoAberta} onOpenChange={(v) => !v && setGaleriaAcaoAberta(null)}>
+              <DialogContent className="sm:max-w-3xl bg-black border border-white/10 p-0 overflow-hidden">
+                {galeriaAcaoAberta && (
+                  <>
+                    <DialogHeader className="px-5 pt-5">
+                      <DialogTitle className="text-white">{galeriaAcaoAberta.titulo}</DialogTitle>
+                    </DialogHeader>
+                    <div className="p-5 pt-3 max-h-[70vh] overflow-y-auto">
+                      {galeriaFotosLoading ? (
+                        <p className="text-sm text-white/40 py-8 text-center">A carregar…</p>
+                      ) : galeriaFotos.length === 0 ? (
+                        <p className="text-sm text-white/40 py-8 text-center">Ainda sem fotografias nesta acção.</p>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                          {galeriaFotos.map(f => (
+                            <button
+                              key={f.id}
+                              type="button"
+                              onClick={() => setFotoAmpliada(f)}
+                              className="group relative rounded-lg overflow-hidden border border-white/10 hover:border-white/25 transition-colors aspect-square bg-black/30"
+                            >
+                              <img src={f.url} alt={f.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            {/* LIGHTBOX — foto ampliada */}
+            <Dialog open={!!fotoAmpliada} onOpenChange={(v) => !v && setFotoAmpliada(null)}>
               <DialogContent className="sm:max-w-2xl bg-black border border-white/10 p-0 overflow-hidden">
-                {fotoGaleriaAberta && (
+                {fotoAmpliada && (
                   <>
                     <DialogHeader className="sr-only">
-                      <DialogTitle>{fotoGaleriaAberta.titulo}</DialogTitle>
+                      <DialogTitle>{fotoAmpliada.label}</DialogTitle>
                     </DialogHeader>
-                    <img src={fotoGaleriaAberta.imagem_url!} alt={fotoGaleriaAberta.titulo} className="w-full max-h-[80vh] object-contain bg-black" />
-                    <p className="text-sm text-white/85 px-4 py-3">{fotoGaleriaAberta.titulo}</p>
+                    <img src={fotoAmpliada.url} alt={fotoAmpliada.label} className="w-full max-h-[80vh] object-contain bg-black" />
                   </>
                 )}
               </DialogContent>
