@@ -1411,7 +1411,7 @@ export default function HeroSection() {
                 </button>
               </div>
 
-              <div className="hidden md:flex flex-col items-end gap-4 md:gap-8 pointer-events-auto my-auto shrink-0 transform-gpu min-[1000px]:scale-100 scale-90 origin-right">
+              <div className="hidden lg:flex flex-col items-end gap-4 md:gap-8 pointer-events-auto my-auto shrink-0 transform-gpu min-[1000px]:scale-100 scale-90 origin-right">
                 <Suspense fallback={null}><PhaseNavigator goToPhase={goToPhase} /></Suspense>
                 <div id="tour-phases-sidebar"><PhasesSidebar activePhaseIndex={activePhaseIndex} goToPhase={handleMenuClick} phases={REAL_MENU} setIsHovering={setIsHovering} /></div>
                 <div id="tour-navigator"><Navigator activePhaseIndex={activePhaseIndex} goToPhase={handleMenuClick} setIsHovering={setIsHovering} /></div>
@@ -1422,7 +1422,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div id="tour-content" className="absolute top-[14vh] sm:top-[14vh] left-5 sm:left-10 right-5 sm:right-[280px] md:right-[340px] lg:right-[380px] xl:right-[420px] 2xl:right-[480px] sm:w-auto md:w-auto z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0 overflow-y-auto md:overflow-visible overscroll-contain touch-pan-y" style={{minHeight: '60vh', maxHeight: '82dvh'}}>
+            <div id="tour-content" className="absolute top-[14vh] sm:top-[14vh] left-5 sm:left-10 right-5 lg:right-[380px] xl:right-[420px] 2xl:right-[480px] sm:w-auto md:w-auto z-40 pointer-events-auto flex flex-col justify-between pb-20 lg:pb-0 overflow-y-auto lg:overflow-visible overscroll-contain touch-pan-y" style={{minHeight: '60vh', maxHeight: '82dvh'}}>
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
                   <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">
@@ -1545,8 +1545,8 @@ export default function HeroSection() {
 
 
 
-            {/* Logótipo — versão desktop/tablet (fixa em baixo, como sempre foi). No mobile usa-se o bloco dedicado mais abaixo. */}
-            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute left-1/2 z-50 hidden md:flex flex-col items-center group pointer-events-auto bottom-12 md:bottom-16 w-fit md:w-full md:max-w-[750px]" >
+            {/* Logótipo — versão desktop (fixa em baixo, como sempre foi). Em mobile/tablet usa-se o bloco dedicado mais abaixo. */}
+            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute left-1/2 z-50 hidden lg:flex flex-col items-center group pointer-events-auto bottom-16 w-full max-w-[750px]" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>
@@ -1572,16 +1572,16 @@ export default function HeroSection() {
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110 h-40 md:h-52" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
+                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110 h-52" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
                 </motion.div>
               </div>
             </motion.div>
 
-            {/* Logótipo — versão mobile: grande e centrado no ecrã na fase inicial,
+            {/* Logótipo — versão mobile/tablet: grande e centrado no ecrã na fase inicial,
                 encolhe e sobe para uma miniatura fixa no topo nas restantes fases. */}
             <div
-              className={`md:hidden fixed left-1/2 z-50 flex flex-col items-center pointer-events-auto transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                activePhaseIndex === 0 ? "top-1/2 -translate-x-1/2 -translate-y-1/2" : "top-4 -translate-x-1/2 translate-y-0"
+              className={`lg:hidden fixed left-1/2 z-50 flex flex-col items-center pointer-events-auto transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                activePhaseIndex === 0 ? "top-1/2 -translate-x-1/2 -translate-y-1/2" : "top-16 sm:top-20 -translate-x-1/2 translate-y-0"
               }`}
             >
               <img
@@ -1589,19 +1589,19 @@ export default function HeroSection() {
                 alt="Logotipo Saber Mais"
                 onClick={() => goToPhase(0)}
                 className={`w-auto object-contain cursor-pointer mix-blend-screen contrast-125 brightness-110 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                  activePhaseIndex === 0 ? "h-28" : "h-8"
+                  activePhaseIndex === 0 ? "h-28 sm:h-36" : "h-8 sm:h-10"
                 }`}
                 style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }}
               />
               {activePhaseIndex === 0 && (
-                <p className="mt-1 text-[6px] font-bold uppercase tracking-[0.45em] text-white/70 text-center whitespace-nowrap transition-opacity duration-500">
+                <p className="mt-1 text-[6px] sm:text-[7px] font-bold uppercase tracking-[0.45em] text-white/70 text-center whitespace-nowrap transition-opacity duration-500">
                   Programa de Apoio ao Reforço do Ensino Secundário em Angola
                 </p>
               )}
             </div>
 
-            {/* Barra de navegação mobile */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden pointer-events-auto">
+            {/* Barra de navegação mobile/tablet */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden pointer-events-auto">
               <div className="flex items-stretch bg-black/60 backdrop-blur-2xl border-t border-white/[0.08]">
                 {/* Fase anterior */}
                 <button
