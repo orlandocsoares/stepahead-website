@@ -604,7 +604,7 @@ export default function AcoesFormacaoPage() {
             const inscritosLista = inscritos[acao.id] ?? [];
 
             return (
-              <motion.div key={acao.id} layout className="c-bg2 border c-br rounded-xl overflow-hidden">
+              <motion.div key={acao.id} layout="position" className="c-bg2 border c-br rounded-xl overflow-hidden">
                 <div className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-white/[0.015] transition-colors"
                   onClick={() => toggleExpand(acao.id)}>
                   {acao.imagem_url ? (
