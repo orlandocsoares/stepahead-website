@@ -237,9 +237,6 @@ function RecursosContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {items.map(r => {
                       const accent = AREA_ACCENT[r.area] ?? "#6b7280";
-                      const fileUrl = r.nome_arquivo
-                        ? `/storage/v1/object/public/materiais/${encodeURIComponent(r.nome_arquivo)}`
-                        : null;
                       return (
                         <button
                           key={r.id}
@@ -260,8 +257,6 @@ function RecursosContent() {
                                   </p>
                                 )}
                               </>
-                            ) : fileUrl ? (
-                              <embed src={fileUrl} type="application/pdf" className="w-full h-full pointer-events-none" />
                             ) : (
                               <div className="flex flex-col items-center gap-2 opacity-25">
                                 <FileText size={36} strokeWidth={1} className="text-red-400" />
@@ -309,7 +304,7 @@ function RecursosContent() {
             { name: "Províncias",  href: "/provincias" },
             { name: "Formadores",  href: "/formadores" },
             { name: "Recursos",    href: "/recursos", active: true },
-            { name: "Eventos",     href: "/eventos" },
+            { name: "Galeria",     href: "/eventos" },
             { name: "Agenda",      href: "/agenda-publica" },
           ].map((item) => (
             <a

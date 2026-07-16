@@ -48,19 +48,10 @@ const TOUR_STEPS: Record<number, TourStep[]> = {
 
   2: [
     {
-      element: "#tour-mapa-provincias",
-      popover: {
-        title: "Mapa das 21 Províncias",
-        description: "<strong>A âmbar</strong>: províncias onde o programa já actua (Bié e Luanda). <strong>A azul</strong>: províncias com acções de formação registadas. Clique em qualquer província para ver detalhes.",
-        side: "left",
-        align: "start",
-      },
-    },
-    {
       element: "#tour-provincia-detalhe",
       popover: {
-        title: "Detalhe da Província",
-        description: "Depois de clicar numa província, aqui aparecem as acções de formação, formadores associados e recursos partilhados nessa província.",
+        title: "Bié e Luanda",
+        description: "O programa actua nestas duas províncias, cada uma com um Centro de Recursos sediado numa Escola de Magistério, criado para apoiar a comunidade docente.",
         side: "left",
         align: "start",
       },
@@ -102,19 +93,10 @@ const TOUR_STEPS: Record<number, TourStep[]> = {
 
   5: [
     {
-      element: "#tour-eventos-toggle",
-      popover: {
-        title: "Lista ou Calendário",
-        description: "Alterne entre ver os eventos numa <strong>lista por área de formação</strong> ou num <strong>calendário mensal</strong> colorido por área.",
-        side: "bottom",
-        align: "end",
-      },
-    },
-    {
       element: "#tour-eventos-areas",
       popover: {
-        title: "Eventos por Área",
-        description: "Cada cartão é uma área de formação. Clique para ver as acções de formação agendadas, em curso ou concluídas nessa área.",
+        title: "Galeria por Pasta",
+        description: "Cada cartão é uma pasta — a pasta <strong>Geral</strong> reúne todas as fotografias, e as restantes organizam-nas por área de formação. Clique para ver as fotografias dessa pasta.",
         side: "top",
         align: "start",
       },

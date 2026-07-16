@@ -34,7 +34,7 @@ export function Navigator({ activePhaseIndex, goToPhase, setIsHovering }: Naviga
         onMouseLeave={() => setIsHovering(false)} 
         className="flex items-center justify-center h-full group/btn cursor-none border-r border-white/5 hover:bg-white/[0.02] transition-all"
       >
-        <ChevronLeft size={18} className="text-white/20 group-hover/btn:text-white transition-colors" />
+        <ChevronLeft size={18} className="text-white/60 group-hover/btn:text-white transition-colors" />
       </button>
 
       <div className="relative flex items-center justify-center w-16 h-full px-4">
@@ -50,7 +50,7 @@ export function Navigator({ activePhaseIndex, goToPhase, setIsHovering }: Naviga
         </svg>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="absolute top-2 w-[1.5px] h-3 bg-white shadow-[0_0_10px_white] rounded-full z-20" />
-          <div className="w-1 h-1 bg-white/20 rounded-full" />
+          <div className="w-1 h-1 bg-white/50 rounded-full" />
         </div>
       </div>
 
@@ -60,7 +60,7 @@ export function Navigator({ activePhaseIndex, goToPhase, setIsHovering }: Naviga
         onMouseLeave={() => setIsHovering(false)} 
         className="flex items-center justify-center h-full group/btn cursor-none border-l border-white/5 hover:bg-white/[0.02] transition-all"
       >
-        <ChevronRight size={18} className="text-white/20 group-hover/btn:text-white transition-colors" />
+        <ChevronRight size={18} className="text-white/60 group-hover/btn:text-white transition-colors" />
       </button>
     </motion.div>
   );

@@ -18,7 +18,6 @@ import { HomeTour, shouldShowHomeTour } from "@/components/HomeTour";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocalidades } from "@/hooks/useLocalidades";
 import { QRCodeSVG } from "qrcode.react";
-import { MapaAngola } from "@/components/MapaAngola";
 
 const FRAME_SUFFIX = "_delay-0.033s.webp";
 const TOTAL_FRAMES_COUNT = 280;
@@ -49,25 +48,9 @@ const REAL_MENU = [
   { id: "menu-2", name: "Províncias", href: "/provincias" },
   { id: "menu-3", name: "Formadores", href: "/formadores" },
   { id: "menu-4", name: "Recursos", href: "/recursos" },
-  { id: "menu-5", name: "Eventos", href: "/eventos" },
+  { id: "menu-5", name: "Galeria", href: "/eventos" },
   { id: "menu-6", name: "Agenda", href: "/agenda-publica" },
 ];
-
-type AcaoProvincia = { id: string; designacao: string; data_inicio: string | null; estado: string };
-type FormadorProvincia = { id: string; first_name: string; last_name: string };
-type RecursoProvincia = { id: string; label: string; area: string | null };
-type ProvinciaData = {
-  nome: string;
-  total_acoes: number;
-  acoes: AcaoProvincia[];
-  total_formadores: number;
-  formadores: FormadorProvincia[];
-  total_recursos: number;
-  recursos: RecursoProvincia[];
-  total_formandos: number;
-};
-
-const ESTADO_LABEL: Record<string, string> = { agendada: "Agendada", concluida: "Concluída", cancelada: "Cancelada" };
 
 const AREA_COLORS: Record<string, { bg: string; text: string; border: string; dot: string; icon: React.ElementType }> = {
   "Matemática":        { bg: "bg-blue-900/60",    text: "text-blue-200",   border: "border-blue-400/40",   dot: "bg-blue-400",    icon: Calculator },
@@ -147,9 +130,10 @@ function MiniCalendario({
               onClick={() => onDiaClick(isSel ? null : (eventosDia.length ? iso : null))}
               disabled={eventosDia.length === 0}
               className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] font-bold transition-colors ${
-                isSel ? "bg-blue-500/30 border border-blue-400/50 text-white" :
+                isSel ? "bg-blue-500/40 border border-blue-400/60 text-white" :
+                eventosDia.length ? "bg-blue-500/20 border border-blue-400/30 text-white hover:bg-blue-500/30 cursor-pointer" :
                 isHoje ? "border border-white/30 text-white" :
-                eventosDia.length ? "hover:bg-white/10 text-white cursor-pointer" : "text-white/80 cursor-default"
+                "text-white/80 cursor-default"
               }`}
             >
               <span>{dia}</span>
@@ -168,68 +152,6 @@ function MiniCalendario({
   );
 }
 
-function fmtDataCurta(d: string | null) {
-  if (!d) return null;
-  return new Date(d).toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
-}
-
-function ProvinciaMiniCard({ data, loading }: { data: ProvinciaData | undefined; loading: boolean }) {
-  const recursosPorArea = new Map<string, RecursoProvincia[]>();
-  for (const r of data?.recursos ?? []) {
-    const key = r.area || "Geral";
-    if (!recursosPorArea.has(key)) recursosPorArea.set(key, []);
-    recursosPorArea.get(key)!.push(r);
-  }
-
-  return (
-    <div className="text-left bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
-      <span className="text-sm font-bold text-white">{data?.nome ?? "—"}</span>
-      {!loading && (
-        <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mt-1">
-          {data?.total_acoes ?? 0} acções · {data?.total_formadores ?? 0} formadores · {data?.total_formandos ?? 0} formandos · {data?.total_recursos ?? 0} materiais
-        </p>
-      )}
-      <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-x-5 gap-y-2.5 text-left">
-        <div>
-          <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Ações previstas/realizadas</p>
-          {(data?.acoes.length ?? 0) === 0 && <p className="text-[10px] text-white/30">Sem acções registadas.</p>}
-          {data?.acoes.map(a => (
-            <p key={a.id} className="text-[10px] text-white/70 flex justify-between gap-2">
-              <span className="truncate">{a.designacao}</span>
-              <span className="text-white/30 shrink-0">{fmtDataCurta(a.data_inicio) ?? ESTADO_LABEL[a.estado]}</span>
-            </p>
-          ))}
-        </div>
-        <div>
-          <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Formadores associados</p>
-          {(data?.formadores.length ?? 0) === 0 && <p className="text-[10px] text-white/30">Sem formadores associados.</p>}
-          <div className="flex flex-wrap gap-1">
-            {data?.formadores.map(f => (
-              <span key={f.id} className="text-[9px] text-white/70 border border-white/10 rounded-full px-2 py-0.5">{f.first_name} {f.last_name}</span>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 mb-1">Materiais por disciplina</p>
-          {recursosPorArea.size === 0 && <p className="text-[10px] text-white/30">Sem materiais disponíveis.</p>}
-          <div className="space-y-1.5">
-            {Array.from(recursosPorArea.entries()).map(([area, itens]) => (
-              <div key={area}>
-                <p className="text-[9px] text-emerald-400/80 font-medium">{area} <span className="text-white/30">({itens.length})</span></p>
-                <div className="flex flex-wrap gap-1 mt-0.5">
-                  {itens.map(r => (
-                    <span key={r.id} className="text-[9px] text-white/70 border border-white/10 rounded-full px-2 py-0.5">{r.label}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 type FormadorData = {
   id: string;
   nome: string;
@@ -239,18 +161,14 @@ type FormadorData = {
   provincia: string | null;
 };
 
-function FormadorMiniCard({ data, open, onToggle }: { data: FormadorData; open: boolean; onToggle: () => void }) {
+function FormadorMiniCard({ data, onOpen }: { data: FormadorData; onOpen: () => void }) {
   const iniciais = data.nome.split(" ").filter(Boolean).slice(0, 2).map(s => s[0]).join("").toUpperCase();
 
   return (
     <button
       type="button"
-      onClick={onToggle}
-      className={`text-left backdrop-blur-md border rounded-xl px-3 py-2.5 transition-colors ${
-        open
-          ? "col-span-full bg-slate-950/90 border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
-          : "bg-white/5 border-white/10 hover:bg-white/[0.08]"
-      }`}
+      onClick={onOpen}
+      className="text-left backdrop-blur-md border rounded-xl px-3 py-2.5 transition-colors bg-white/5 border-white/10 hover:bg-white/[0.08]"
     >
       <div className="flex items-center gap-2.5">
         {data.avatar_url ? (
@@ -265,27 +183,9 @@ function FormadorMiniCard({ data, open, onToggle }: { data: FormadorData; open: 
           <p className="text-[9px] text-emerald-400 uppercase tracking-widest truncate">{data.area}</p>
         </div>
       </div>
-      {open && (
-        <div className="mt-2.5 pt-2.5 border-t border-white/10 space-y-1">
-          <p className="text-[11px] text-white/85 leading-relaxed">
-            {data.biografia || "Formador de excelência no reforço pedagógico do ensino secundário."}
-          </p>
-          {data.provincia && <p className="text-[9px] text-white/40">{data.provincia}</p>}
-        </div>
-      )}
     </button>
   );
 }
-
-const ESTADO_EVENTO_LABEL: Record<string, string> = {
-  agendada: "Aberto", concluida: "Concluído", cancelada: "Cancelado", esgotado: "Esgotado",
-};
-const ESTADO_EVENTO_COLOR: Record<string, string> = {
-  agendada: "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
-  concluida: "text-white/50 border-white/10 bg-white/5",
-  cancelada: "text-red-400 border-red-500/20 bg-red-500/10",
-  esgotado: "text-amber-400 border-amber-500/20 bg-amber-500/10",
-};
 
 type EventoItem = {
   id: string;
@@ -305,40 +205,6 @@ type EventoItem = {
   imagem_url: string | null;
 };
 type AreaEventos = { area: string; total: number; eventos: EventoItem[] };
-
-function fmtDataEvento(d: string | null) {
-  if (!d) return "Data a confirmar";
-  return new Date(d).toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
-}
-
-function EventoRow({ ev, onAbrir }: { ev: EventoItem; onAbrir: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onAbrir}
-      disabled={!ev.agenda_evento_id}
-      className="w-full text-left bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3.5 py-3 hover:bg-white/[0.08] transition-colors disabled:opacity-60 disabled:cursor-default"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[12px] font-bold text-white truncate">{ev.titulo}</p>
-        <span className={`shrink-0 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border ${ESTADO_EVENTO_COLOR[ev.estado] ?? ESTADO_EVENTO_COLOR.agendada}`}>
-          {ESTADO_EVENTO_LABEL[ev.estado] ?? ev.estado}
-        </span>
-      </div>
-      {ev.area && (
-        <span className={`inline-block mt-1 text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${(AREA_COLORS[ev.area] ?? DEFAULT_AREA_COLOR).bg} ${(AREA_COLORS[ev.area] ?? DEFAULT_AREA_COLOR).text} ${(AREA_COLORS[ev.area] ?? DEFAULT_AREA_COLOR).border}`}>
-          {ev.area}
-        </span>
-      )}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-white/70 font-medium">
-        <span>{fmtDataEvento(ev.data_inicio)}</span>
-        {ev.tipologia && <span className="text-white/50">· {ev.tipologia}</span>}
-        {ev.local && <span className="text-white/50">· {ev.local}</span>}
-        {ev.publico_alvo && <span className="text-white/50">· {ev.publico_alvo}</span>}
-      </div>
-    </button>
-  );
-}
 
 function AgendaRow({ ev, onAbrir }: { ev: any; onAbrir: () => void }) {
   const d = new Date(ev.data_evento);
@@ -596,19 +462,15 @@ export default function HeroSection() {
   const [selectedEvento, setSelectedEvento] = useState<any>(null);
   const [minhasInscricoes, setMinhasInscricoes] = useState<Set<string>>(new Set());
   const [inscrevendo, setInscrevendo] = useState(false);
-  const [provinciasData, setProvinciasData] = useState<ProvinciaData[]>([]);
-  const [provinciasLoading, setProvinciasLoading] = useState(true);
   const [formadoresData, setFormadoresData] = useState<FormadorData[]>([]);
   const [formadoresLoading, setFormadoresLoading] = useState(true);
   const [formadorAbertoId, setFormadorAbertoId] = useState<string | null>(null);
   const [areasEventos, setAreasEventos] = useState<AreaEventos[]>([]);
   const [eventosLoading, setEventosLoading] = useState(true);
   const [areaEventoSelecionada, setAreaEventoSelecionada] = useState<string | null>(null);
-  const [vistaEventos, setVistaEventos] = useState<"lista" | "calendario">("calendario");
-  const [diaEventoSel, setDiaEventoSel] = useState<string | null>(null);
+  const [fotoGaleriaAberta, setFotoGaleriaAberta] = useState<EventoItem | null>(null);
   const [vistaAgenda, setVistaAgenda] = useState<"lista" | "calendario">("calendario");
   const [diaAgendaSel, setDiaAgendaSel] = useState<string | null>(null);
-  const [provinciaMapaSel, setProvinciaMapaSel] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile?.id) { setMinhasInscricoes(new Set()); return; }
@@ -680,13 +542,6 @@ export default function HeroSection() {
       .then(data => { setTelemetry(data); })
       .catch(() => {});
   }, [isDashboardView]);
-
-  useEffect(() => {
-    fetch("/api/public/provincias")
-      .then(r => r.json())
-      .then(d => setProvinciasData(d.provincias ?? []))
-      .finally(() => setProvinciasLoading(false));
-  }, []);
 
   useEffect(() => {
     fetch("/api/public/formadores")
@@ -962,40 +817,32 @@ export default function HeroSection() {
           ),
         };
       case 2: {
-        const provinciasComDados = new Set(provinciasData.map(p => p.nome));
-        const provinciaSel = provinciasData.find(p => p.nome === provinciaMapaSel);
+        const PROVINCIAS_INFO = [
+          {
+            nome: "Bié",
+            texto: "Abrange todos os Municípios. Sediado na Escola de Magistério Cândida Celeste da Silva (Cuito), onde consta o Centro de Recursos, criado para a comunidade docente.",
+          },
+          {
+            nome: "Luanda",
+            texto: "Abrange todos os Municípios. Sediado na Escola de Magistério Mutu-Ya-Kevela (Ingombota), onde consta o Centro de Recursos, criado para a comunidade docente.",
+          },
+        ];
         return {
           ...base,
           name: "Províncias",
           subtitle: "Bié & Luanda",
           description: (
-            <div className="space-y-3 w-full max-h-[68vh] overflow-y-auto pr-1">
+            <div className="space-y-3 w-full">
               <p className={defaultTextClass}>
-                O projecto está presente em <strong className="text-amber-300">Bié</strong> e <strong className="text-amber-300">Luanda</strong> — clica no mapa para veres detalhes.
+                O projecto está presente em <strong className="text-amber-300">Bié</strong> e <strong className="text-amber-300">Luanda</strong>.
               </p>
-              <div className="flex items-center gap-3 text-[9px] uppercase tracking-widest text-white/40">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />Programa</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block ring-2 ring-sky-400" />Programa com acções</span>
-              </div>
-              <div className="flex flex-col md:flex-row md:items-start gap-6">
-                <div id="tour-mapa-provincias" className="w-full max-w-[300px] lg:max-w-[360px] shrink-0">
-                  <MapaAngola
-                    provinciasComDados={provinciasComDados}
-                    seleccionada={provinciaMapaSel}
-                    onSelect={(nome) => setProvinciaMapaSel(v => (v === nome ? null : nome))}
-                  />
-                </div>
-                <div id="tour-provincia-detalhe" className="flex-1 min-w-0 max-h-[24vh] md:max-h-[40vh] overflow-y-auto pr-1">
-                  {!provinciaMapaSel && (
-                    <p className="text-sm text-white/40">Selecciona uma província no mapa.</p>
-                  )}
-                  {provinciaMapaSel && !provinciaSel && (
-                    <p className="text-sm text-white/40">{provinciaMapaSel} — sem acções registadas por agora.</p>
-                  )}
-                  {provinciaSel && (
-                    <ProvinciaMiniCard data={provinciaSel} loading={provinciasLoading} />
-                  )}
-                </div>
+              <div id="tour-provincia-detalhe" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {PROVINCIAS_INFO.map(({ nome, texto }) => (
+                  <div key={nome} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3.5">
+                    <p className="text-base font-bold text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.9)]">{nome}</p>
+                    <p className="text-xs leading-relaxed text-white/80 mt-1.5 [text-shadow:0_1px_6px_rgba(0,0,0,0.9)]">{texto}</p>
+                  </div>
+                ))}
               </div>
             </div>
           ),
@@ -1020,8 +867,7 @@ export default function HeroSection() {
                   <FormadorMiniCard
                     key={f.id}
                     data={f}
-                    open={formadorAbertoId === f.id}
-                    onToggle={() => setFormadorAbertoId(v => (v === f.id ? null : f.id))}
+                    onOpen={() => setFormadorAbertoId(f.id)}
                   />
                 ))}
               </div>
@@ -1101,84 +947,29 @@ export default function HeroSection() {
         };
       }
       case 5: {
-        const areaSel = areasEventos.find(a => a.area === areaEventoSelecionada);
-        const abrirEvento = (ev: EventoItem) => {
-          if (!ev.agenda_evento_id) return;
-          setSelectedEvento({
-            id: ev.agenda_evento_id,
-            titulo: ev.titulo,
-            local: ev.local,
-            endereco: ev.endereco,
-            imagem_url: ev.imagem_url,
-            data_evento: ev.data_inicio,
-            tipo: ev.tipologia,
-          });
-        };
         const todosEventos = areasEventos.flatMap(a => a.eventos);
-        const eventosDoDia = diaEventoSel
-          ? todosEventos.filter(ev => ev.data_inicio && new Date(ev.data_inicio).toISOString().slice(0, 10) === diaEventoSel)
-          : [];
-
-        const ToggleVista = (
-          <div id="tour-eventos-toggle" className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-0.5 w-fit">
-            {(["lista", "calendario"] as const).map(v => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setVistaEventos(v)}
-                className={`text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-md transition-colors ${vistaEventos === v ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"}`}
-              >
-                {v === "lista" ? "Lista" : "Calendário"}
-              </button>
-            ))}
-          </div>
-        );
+        const GERAL: AreaEventos = { area: "Geral", total: todosEventos.length, eventos: todosEventos };
+        const pastas = [GERAL, ...areasEventos];
+        const pastaSel = pastas.find(a => a.area === areaEventoSelecionada);
+        const fotosDaPasta = (pastaSel?.eventos ?? []).filter(ev => !!ev.imagem_url);
 
         return {
           ...base,
-          name: "Eventos",
-          subtitle: "Por área de formação",
+          name: "Galeria",
+          subtitle: "Registo Fotográfico",
           description: (
             <div className="space-y-3 w-full">
-              {vistaEventos === "calendario" ? (
+              {!pastaSel ? (
                 <>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className={defaultTextClass}>Eventos coloridos por área de formação.</p>
-                    {ToggleVista}
-                  </div>
-                  <div className="flex flex-col md:flex-row gap-4 items-start">
-                    <div className="shrink-0 w-full max-w-[280px] sm:max-w-[320px]">
-                      <MiniCalendario
-                        itens={todosEventos}
-                        dataKey="data_inicio"
-                        corPorItem={(ev: EventoItem) => (AREA_COLORS[ev.area] ?? DEFAULT_AREA_COLOR).dot}
-                        onDiaClick={setDiaEventoSel}
-                        diaSeleccionado={diaEventoSel}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-2 max-h-[42vh] overflow-y-auto pr-1">
-                      {!diaEventoSel && <p className="text-sm text-white/40">Selecciona um dia para ver os eventos.</p>}
-                      {diaEventoSel && eventosDoDia.length === 0 && <p className="text-sm text-white/40">Sem eventos neste dia.</p>}
-                      {diaEventoSel && eventosDoDia.map(ev => (
-                        <EventoRow key={ev.id} ev={ev} onAbrir={() => abrirEvento(ev)} />
-                      ))}
-                    </div>
-                  </div>
-                </>
-              ) : !areaSel ? (
-                <>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className={defaultTextClass}>
-                      Navega os eventos por área de formação.
-                    </p>
-                    {ToggleVista}
-                  </div>
+                  <p className={defaultTextClass}>
+                    Fotografias e evidências das actividades organizadas por área e no geral.
+                  </p>
                   <div id="tour-eventos-areas" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 max-h-[46vh] overflow-y-auto pr-1">
                     {eventosLoading && <p className="text-sm text-white/40 col-span-full">A carregar…</p>}
-                    {!eventosLoading && areasEventos.length === 0 && (
-                      <p className="text-sm text-white/40 col-span-full">Sem eventos registados.</p>
+                    {!eventosLoading && GERAL.total === 0 && (
+                      <p className="text-sm text-white/40 col-span-full">Sem fotografias disponíveis.</p>
                     )}
-                    {areasEventos.map(({ area, total }) => (
+                    {pastas.map(({ area, total }) => (
                       <button
                         key={area}
                         type="button"
@@ -1199,17 +990,26 @@ export default function HeroSection() {
                       onClick={() => setAreaEventoSelecionada(null)}
                       className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white/70 transition-colors"
                     >
-                      ← Todas as áreas
+                      ← Todas as pastas
                     </button>
-                    {ToggleVista}
                   </div>
-                  <p className={defaultTextClass}>{areaSel.area}</p>
-                  <div className="space-y-2 max-h-[46vh] overflow-y-auto pr-1">
-                    {(areaSel.eventos.length ?? 0) === 0 && (
-                      <p className="text-sm text-white/40">Sem eventos nesta área.</p>
+                  <p className={defaultTextClass}>{pastaSel.area}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-[46vh] overflow-y-auto pr-1">
+                    {fotosDaPasta.length === 0 && (
+                      <p className="text-sm text-white/40 col-span-full">Sem fotografias nesta pasta.</p>
                     )}
-                    {areaSel.eventos.map(ev => (
-                      <EventoRow key={ev.id} ev={ev} onAbrir={() => abrirEvento(ev)} />
+                    {fotosDaPasta.map(ev => (
+                      <button
+                        key={ev.id}
+                        type="button"
+                        onClick={() => setFotoGaleriaAberta(ev)}
+                        className="group relative rounded-xl overflow-hidden border border-white/10 hover:border-white/25 transition-colors aspect-square bg-black/30"
+                      >
+                        <img src={ev.imagem_url!} alt={ev.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/0 flex items-end p-2">
+                          <p className="text-[10px] font-medium text-white leading-tight line-clamp-2 [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">{ev.titulo}</p>
+                        </div>
+                      </button>
                     ))}
                   </div>
                 </>
@@ -1672,6 +1472,56 @@ export default function HeroSection() {
               </DialogContent>
             </Dialog>
 
+            {/* LIGHTBOX DA GALERIA */}
+            <Dialog open={!!fotoGaleriaAberta} onOpenChange={(v) => !v && setFotoGaleriaAberta(null)}>
+              <DialogContent className="sm:max-w-2xl bg-black border border-white/10 p-0 overflow-hidden">
+                {fotoGaleriaAberta && (
+                  <>
+                    <DialogHeader className="sr-only">
+                      <DialogTitle>{fotoGaleriaAberta.titulo}</DialogTitle>
+                    </DialogHeader>
+                    <img src={fotoGaleriaAberta.imagem_url!} alt={fotoGaleriaAberta.titulo} className="w-full max-h-[80vh] object-contain bg-black" />
+                    <p className="text-sm text-white/85 px-4 py-3">{fotoGaleriaAberta.titulo}</p>
+                  </>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            {/* DETALHE DO FORMADOR — sempre em primeiro plano, independente da posição na grelha */}
+            <Dialog open={!!formadorAbertoId} onOpenChange={(v) => !v && setFormadorAbertoId(null)}>
+              <DialogContent className="sm:max-w-md bg-slate-950/95 border border-white/15 text-white">
+                {(() => {
+                  const f = formadoresData.find(d => d.id === formadorAbertoId);
+                  if (!f) return null;
+                  const iniciais = f.nome.split(" ").filter(Boolean).slice(0, 2).map(s => s[0]).join("").toUpperCase();
+                  return (
+                    <>
+                      <DialogHeader>
+                        <DialogTitle className="sr-only">{f.nome}</DialogTitle>
+                      </DialogHeader>
+                      <div className="flex items-center gap-3">
+                        {f.avatar_url ? (
+                          <img src={f.avatar_url} alt={f.nome} className="w-14 h-14 rounded-xl object-cover shrink-0 border border-white/10" />
+                        ) : (
+                          <div className="w-14 h-14 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0 text-sm font-bold text-blue-300">
+                            {iniciais}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-base font-bold text-white truncate">{f.nome}</p>
+                          <p className="text-[10px] text-emerald-400 uppercase tracking-widest truncate">{f.area}</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-white/85 leading-relaxed mt-2">
+                        {f.biografia || "Formador de excelência no reforço pedagógico do ensino secundário."}
+                      </p>
+                      {f.provincia && <p className="text-xs text-white/40 mt-2">{f.provincia}</p>}
+                    </>
+                  );
+                })()}
+              </DialogContent>
+            </Dialog>
+
             {/* BANDEIRAS DA COOPERAÇÃO */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -1695,7 +1545,7 @@ export default function HeroSection() {
 
 
 
-            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute bottom-[72px] sm:bottom-12 md:bottom-16 left-1/2 z-50 flex flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto" >
+            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className={`absolute bottom-[72px] sm:bottom-12 md:bottom-16 left-1/2 z-50 flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto ${activePhaseIndex !== 0 ? "hidden md:flex" : "flex"}`} >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>
