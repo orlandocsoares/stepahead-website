@@ -34,23 +34,13 @@ const EDUCATIONAL_ELEMENTS = [
 
 const PROGRAM_PHASES = [
   { id: "fase-0", focusFrame: 8, subtitle: "Acesso à Plataforma", name: "Login", description: "Aceda à área reservada para professores e agentes educativos. Faça login para explorar os módulos, materiais didácticos e progresso." },
-  { id: "fase-1", focusFrame: 39, subtitle: "III Ciclo - Angola", name: "Saber Mais", description: "Programa de Cooperação Bilateral entre Portugal e Angola, tutelado pelo Camões, I.P. e pelo Ministério da Educação de Angola-INFQE." },
+  { id: "fase-1", focusFrame: 39, subtitle: "III Ciclo - Angola", name: "Saber Mais", description: "Programa de Cooperação Bilateral entre Angola e Portugal, tutelado pelo Ministério de Educação de Angola (INFQE) e Camões, I.P." },
   { id: "fase-2", focusFrame: 66, subtitle: "Objectivo Geral", name: "Capacitação", description: "Capacitar e valorizar os recursos humanos do sistema educativo angolano, priorizando os agentes do Ensino Secundário Pedagógico." },
   { id: "fase-3", focusFrame: 86, subtitle: "Modelo de Supervisão", name: "Par Pedagógico", description: "Promoção da supervisão em modelo de par pedagógico e a institucionalização de Centros de Recursos nas comunidades." },
   { id: "fase-4", focusFrame: 151, subtitle: "Impacto Regional", name: "Luanda & Bié", description: "O projecto está presente em duas províncias chave: Bié e Luanda, com foco na elevação da qualidade do ensino no 2º ciclo." },
   { id: "fase-5", focusFrame: 210, subtitle: "Apoio Contínuo", name: "Recursos", description: "Disponibilização de materiais pedagógicos inovadores e guias práticos para apoiar os professores nas salas diárias." },
   { id: "fase-6", focusFrame: 260, subtitle: "Avaliação de Impacto", name: "Monitorização", description: "Acompanhamento rigoroso dos indicadores de sucesso para garantir a eficácia e a sustentabilidade do projecto a longo prazo." }
 ];
-
-// Explicação de cada ecrã público, mostrada no acordeão "Saber Mais" (chave = activePhaseIndex)
-const SOBRE_SECCAO: Record<number, string> = {
-  1: "Este é o ecrã principal do programa: um resumo do Saber Mais, os seus números-chave (províncias, formadores, ciclo) e as áreas de formação abrangidas.",
-  2: "Mapa interactivo das 21 províncias de Angola. Clica numa província para veres as acções, formadores e recursos associados a essa região.",
-  3: "Lista dos formadores activos no programa, organizados por área de formação. Clica num formador para veres mais detalhes sobre o seu percurso.",
-  4: "Materiais didácticos e pedagógicos disponibilizados aos professores, organizados por área. Inclui um link de acesso livre aos recursos públicos.",
-  5: "Calendário e listagem dos eventos de formação — passados e futuros — com filtros por área e alternância entre vista de lista e de calendário.",
-  6: "Agenda de actividades do programa, com vista em lista ou mini-calendário, para acompanhares o que está planeado nos próximos dias.",
-};
 
 // Menu das páginas públicas reais do site — usado nesta pré-visualização em vez das "fases" antigas
 const REAL_MENU = [
@@ -597,7 +587,6 @@ export default function HeroSection() {
   const [sessionId, setSessionId] = useState<string>("");
 
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
-  const [sobreSeccaoAberto, setSobreSeccaoAberto] = useState(false);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
@@ -817,7 +806,6 @@ export default function HeroSection() {
     setTimeout(() => { isCooldown.current = false; }, 1200); 
 
     setActivePhaseIndex(nextIndex);
-    setSobreSeccaoAberto(false);
     const currentFrame = targetFrameValue.get();
     const targetFocus = PROGRAM_PHASES[nextIndex].focusFrame;
     let diff = targetFocus - (currentFrame % TOTAL_FRAMES_COUNT);
@@ -852,9 +840,13 @@ export default function HeroSection() {
     const el = containerRef.current;
     if (!el) return;
     let startY = 0;
-    const onTouchStart = (e: TouchEvent) => { startY = e.touches[0].clientY; };
+    let startInsideContent = false;
+    const onTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+      startInsideContent = !!(e.target as HTMLElement)?.closest?.("#tour-content");
+    };
     const onTouchEnd = (e: TouchEvent) => {
-      if (isDashboardView || isCooldown.current) return;
+      if (isDashboardView || isCooldown.current || startInsideContent) return;
       const delta = startY - e.changedTouches[0].clientY;
       if (Math.abs(delta) < 40) return;
       if (delta > 0) handleMenuClick(activePhaseIndex + 1);
@@ -931,7 +923,7 @@ export default function HeroSection() {
               <p className={defaultTextClass}>{base.description}</p>
               <div id="tour-indicadores" className="flex flex-wrap gap-3 mt-2">
                 {[
-                  { icon: MapPin,     value: `${telemetry.total_provincias || 0}`, label: "Províncias" },
+                  { icon: MapPin,     value: "2", label: "Províncias" },
                   { icon: Handshake,  value: "2023/2027", label: "Ciclo" },
                   { icon: GraduationCap, value: `${telemetry.total_formadores || 0}`, label: "Formadores" },
                   ...(telemetry.total_formandos != null
@@ -948,21 +940,21 @@ export default function HeroSection() {
                 ))}
               </div>
               <div id="tour-areas-formacao" className="mt-1">
-                <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-1.5">Áreas de formação</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-blue-300 mb-1.5 [text-shadow:0_1px_6px_rgba(0,0,0,0.9)]">Áreas de formação</p>
                 <div className="flex flex-wrap gap-1.5">
                   {(telemetry.areas_formacao?.length ?? 0) === 0 && (
                     <span className="text-[10px] text-white/30">Sem áreas registadas.</span>
                   )}
                   {telemetry.areas_formacao?.map((area: string) => (
-                    <span key={area} className="text-[10px] font-medium text-white/80 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-2.5 py-1">
+                    <span key={area} className="text-[11px] font-bold text-white bg-white/10 backdrop-blur-sm border border-white/25 rounded-full px-2.5 py-1 [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">
                       {area}
                     </span>
                   ))}
                 </div>
               </div>
               <div className="mt-1">
-                <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-1.5">Objectivo</p>
-                <p className="text-sm font-bold text-white/90 leading-relaxed [text-shadow:0_1px_8px_rgba(0,0,0,0.95)]">
+                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-blue-300 mb-1.5 [text-shadow:0_1px_6px_rgba(0,0,0,0.9)]">Objectivo</p>
+                <p className="text-sm font-bold text-white leading-relaxed bg-black/25 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2.5 [text-shadow:0_1px_8px_rgba(0,0,0,0.95)]">
                   Capacitar e valorizar os recursos humanos, com foco no Ensino Secundário Geral e Pedagógico.
                 </p>
               </div>
@@ -1630,7 +1622,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div id="tour-content" className="absolute top-[14vh] sm:top-[14vh] left-5 sm:left-10 right-5 sm:right-[280px] md:right-[340px] lg:right-[380px] xl:right-[420px] 2xl:right-[480px] sm:w-auto md:w-auto z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0" style={{minHeight: '60vh', maxHeight: '82vh'}}>
+            <div id="tour-content" className="absolute top-[14vh] sm:top-[14vh] left-5 sm:left-10 right-5 sm:right-[280px] md:right-[340px] lg:right-[380px] xl:right-[420px] 2xl:right-[480px] sm:w-auto md:w-auto z-40 pointer-events-auto flex flex-col justify-between pb-20 md:pb-0 overflow-y-auto md:overflow-visible overscroll-contain touch-pan-y" style={{minHeight: '60vh', maxHeight: '82dvh'}}>
               <AnimatePresence mode="wait">
                 {activePhaseIndex !== 0 && (
                   <motion.div key={activePhaseIndex} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} className="relative flex flex-col w-full h-full">
@@ -1641,38 +1633,6 @@ export default function HeroSection() {
                     <div className="flex-1 mt-4">{activeData.description}</div>
                     <div className="shrink-0 pt-2 mt-auto">
                       <div className="w-fit max-w-sm">
-                        <button
-                          onClick={() => setSobreSeccaoAberto(v => !v)}
-                          onMouseEnter={() => setIsHovering(true)}
-                          onMouseLeave={() => setIsHovering(false)}
-                          aria-expanded={sobreSeccaoAberto}
-                          className="group flex items-center gap-4 outline-none"
-                        >
-                          <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white transition-colors" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>Saber Mais</span>
-                          <div className="relative w-12 h-[1px] bg-white/50 overflow-hidden"><div className={`absolute top-0 left-0 h-[2px] bg-white transition-all duration-500 ease-out ${sobreSeccaoAberto ? "w-full" : "w-0 group-hover:w-full"}`} /></div>
-                        </button>
-                        <button
-                          onClick={() => setSobreSeccaoAberto(v => !v)}
-                          className="text-[8px] font-medium uppercase tracking-[0.2em] text-white/40 hover:text-white/70 transition-colors mt-1 outline-none"
-                          style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}
-                        >
-                          sobre esta secção
-                        </button>
-                        <AnimatePresence initial={false}>
-                          {sobreSeccaoAberto && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                              animate={{ opacity: 1, height: "auto", marginTop: 8 }}
-                              exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                              transition={{ duration: 0.3, ease: "easeOut" }}
-                              className="overflow-hidden"
-                            >
-                              <p className="text-xs leading-relaxed text-white/70 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2.5" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>
-                                {SOBRE_SECCAO[activePhaseIndex] ?? "Informação sobre esta secção do programa Saber Mais."}
-                              </p>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
                         {activePhaseIndex === 1 && (
                           <button
                             onClick={() => setIsVideoOpen(true)}
