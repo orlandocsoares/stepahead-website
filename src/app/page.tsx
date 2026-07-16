@@ -469,6 +469,7 @@ export default function HeroSection() {
   const [eventosLoading, setEventosLoading] = useState(true);
   const [areaEventoSelecionada, setAreaEventoSelecionada] = useState<string | null>(null);
   const [fotoGaleriaAberta, setFotoGaleriaAberta] = useState<EventoItem | null>(null);
+  const [logoOcultoPorColisao, setLogoOcultoPorColisao] = useState(false);
   const [vistaAgenda, setVistaAgenda] = useState<"lista" | "calendario">("calendario");
   const [diaAgendaSel, setDiaAgendaSel] = useState<string | null>(null);
 
@@ -758,6 +759,40 @@ export default function HeroSection() {
     window.addEventListener("mousemove", moveCursor);
     return () => window.removeEventListener("mousemove", moveCursor);
   }, [mouseX, mouseY]);
+
+  // No mobile, esconder automaticamente o logótipo se o conteúdo da fase (ex: uma lista
+  // que cresce) chegar visualmente perto/por cima da sua posição, para nunca o tapar.
+  useEffect(() => {
+    if (typeof window === "undefined" || isDashboardView) return;
+
+    function checarColisao() {
+      if (window.innerWidth >= 768) { setLogoOcultoPorColisao(false); return; }
+      const logo = document.getElementById("tour-logo");
+      const corpo = document.getElementById("tour-content-body");
+      if (!logo || !corpo) { setLogoOcultoPorColisao(false); return; }
+      const logoRect = logo.getBoundingClientRect();
+      const corpoRect = corpo.getBoundingClientRect();
+      setLogoOcultoPorColisao(corpoRect.bottom > logoRect.top - 8);
+    }
+
+    checarColisao();
+    const raf = requestAnimationFrame(checarColisao);
+
+    const corpo = document.getElementById("tour-content-body");
+    const conteudoEl = document.getElementById("tour-content");
+    const ro = new ResizeObserver(checarColisao);
+    if (corpo) ro.observe(corpo);
+
+    window.addEventListener("resize", checarColisao);
+    conteudoEl?.addEventListener("scroll", checarColisao);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener("resize", checarColisao);
+      conteudoEl?.removeEventListener("scroll", checarColisao);
+    };
+  }, [activePhaseIndex, isDashboardView]);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const qrCodeUrl = `${origin}/camera/${sessionId}`;
@@ -1430,7 +1465,7 @@ export default function HeroSection() {
                       <p className="text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.6em] text-white/90 uppercase font-medium truncate" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{activeData.subtitle}</p>
                       <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold uppercase tracking-tight text-white mt-2" style={{textShadow:"0 2px 12px rgba(0,0,0,0.9)"}}>{activeData.name}</h1>
                     </div>
-                    <div className="flex-1 mt-4">{activeData.description}</div>
+                    <div className="flex-1 mt-4"><div id="tour-content-body">{activeData.description}</div></div>
                     <div className="shrink-0 pt-2 mt-auto">
                       <div className="w-fit max-w-sm">
                         {activePhaseIndex === 1 && (
@@ -1545,7 +1580,7 @@ export default function HeroSection() {
 
 
 
-            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className={`absolute left-1/2 z-50 flex flex-col items-center group pointer-events-auto ${activePhaseIndex !== 0 ? "bottom-3 w-fit" : "bottom-[72px] sm:bottom-12 md:bottom-16 w-fit md:w-full md:max-w-[750px]"}`} >
+            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className={`absolute left-1/2 z-50 flex flex-col items-center group transition-opacity duration-200 ${logoOcultoPorColisao ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"} ${activePhaseIndex !== 0 ? "bottom-3 w-fit" : "bottom-[72px] sm:bottom-12 md:bottom-16 w-fit md:w-full md:max-w-[750px]"}`} >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>
@@ -1571,7 +1606,7 @@ export default function HeroSection() {
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className={`relative w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110 ${activePhaseIndex !== 0 ? "h-6 sm:h-40 md:h-52" : "h-16 sm:h-40 md:h-52"}`} style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
+                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110 h-[54px] sm:h-40 md:h-52" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
                 </motion.div>
               </div>
             </motion.div>

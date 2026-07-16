@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CalendarClock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CAPA_GERAL, AREA_COVERS, getAreaCover, isBrandedCapa } from "@/lib/capas";
+import { gerarMiniaturaPdf } from "@/lib/pdfThumbnail";
 
 const CATEGORIES_FALLBACK = ["Geral", "Matemática", "Língua Portuguesa", "Física", "Química", "Pedagogia"];
 
@@ -143,6 +144,8 @@ export default function FicheirosPage() {
   const [sortCol, setSortCol] = useState<"nome" | "area" | "tamanho" | "data" | "visibilidade">("data");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
+  const [gerandoMiniatura, setGerandoMiniatura] = useState(false);
   const [selectedCapa, setSelectedCapa] = useState<string | null>(null);
   const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
   const [sitePublico, setSitePublico] = useState(false);
@@ -184,13 +187,28 @@ export default function FicheirosPage() {
   function openUploadModal(prefillFile?: File) {
     setTitle(prefillFile ? prefillFile.name.replace(/\.[^.]+$/, "").replace(/_/g, " ") : "");
     setUploadFile(prefillFile ?? null);
-    setThumbnailPreview(prefillFile?.type === "application/pdf" ? URL.createObjectURL(prefillFile) : null);
+    setThumbnailPreview(null);
+    setThumbnailBlob(null);
     setVisibilidade("publico");
     setAcaoFormacaoId(minhasAcoes[0]?.id ?? "");
     setUploadCategory(uploadAreas?.[0] ?? activeCategory);
     setSitePublico(false);
     setSelectedCapa(null);
     setIsModalOpen(true);
+    if (prefillFile?.type === "application/pdf") gerarPreviewPdf(prefillFile);
+  }
+
+  async function gerarPreviewPdf(file: File) {
+    setGerandoMiniatura(true);
+    try {
+      const blob = await gerarMiniaturaPdf(file);
+      if (blob) {
+        setThumbnailBlob(blob);
+        setThumbnailPreview(URL.createObjectURL(blob));
+      }
+    } finally {
+      setGerandoMiniatura(false);
+    }
   }
 
   const capaOptions = useMemo(() => {
@@ -207,8 +225,10 @@ export default function FicheirosPage() {
 
   function handleFileSelect(file: File) {
     setUploadFile(file);
-    setThumbnailPreview(file.type === "application/pdf" ? URL.createObjectURL(file) : null);
+    setThumbnailPreview(null);
+    setThumbnailBlob(null);
     if (!title) setTitle(file.name.replace(/\.[^.]+$/, "").replace(/_/g, " "));
+    if (file.type === "application/pdf") gerarPreviewPdf(file);
   }
 
   // Drag & drop global
@@ -299,6 +319,17 @@ export default function FicheirosPage() {
       form.append("bucket", "materiais"); form.append("path", fileName); form.append("file", uploadFile);
       const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: form });
       if (!uploadRes.ok) throw new Error("Erro no upload.");
+
+      // Se ninguém escolheu uma capa manual, usar a miniatura gerada automaticamente a partir da 1ª página do PDF.
+      let miniaturaAutoUrl: string | undefined;
+      if (!selectedCapa && thumbnailBlob) {
+        const capaPath = `capas/${fileName.replace(/\.[^.]+$/, "")}.jpg`;
+        const capaForm = new FormData();
+        capaForm.append("bucket", "materiais"); capaForm.append("path", capaPath); capaForm.append("file", thumbnailBlob, "capa.jpg");
+        const capaRes = await fetch("/api/storage/upload", { method: "POST", body: capaForm });
+        if (capaRes.ok) miniaturaAutoUrl = `/storage/v1/object/public/materiais/${capaPath}`;
+      }
+
       const areaFinal = uploadAreas && !uploadAreas.includes(uploadCategory) ? uploadAreas[0] : uploadCategory;
       const dbRes = await fetch("/api/db/arquivos", {
         method: "POST",
@@ -309,12 +340,12 @@ export default function FicheirosPage() {
           tipo: uploadFile.type.includes("video") ? "video" : "pdf",
           visibilidade,
           ...((visibilidade === "acao_formacao" || visibilidade === "formadores_acao") && acaoFormacaoId ? { acao_formacao_id: acaoFormacaoId } : {}),
-          ...(selectedCapa ? { thumbnail_url: selectedCapa } : {}),
+          ...(selectedCapa ? { thumbnail_url: selectedCapa } : miniaturaAutoUrl ? { thumbnail_url: miniaturaAutoUrl } : {}),
           site_publico: sitePublico && visibilidade === "publico",
         }),
       });
       if (!dbRes.ok) throw new Error("Erro ao registar.");
-      setIsModalOpen(false); setThumbnailPreview(null); fetchFiles();
+      setIsModalOpen(false); setThumbnailPreview(null); setThumbnailBlob(null); fetchFiles();
     } catch (err: any) { alert(err.message ?? "Erro."); }
     finally { setIsUploading(false); }
   }
@@ -663,7 +694,8 @@ export default function FicheirosPage() {
                   <Upload size={14} className="c-tx5 shrink-0" />
                   <p className="text-sm c-tx3 truncate">{uploadFile ? uploadFile.name : "Seleccionar ficheiro"}</p>
                 </label>
-                {thumbnailPreview && <embed src={thumbnailPreview} type="application/pdf" className="w-full h-16 rounded pointer-events-none mt-1" />}
+                {gerandoMiniatura && <p className="text-[10px] c-tx5 mt-1">A gerar pré-visualização da capa…</p>}
+                {thumbnailPreview && <img src={thumbnailPreview} alt="Pré-visualização da capa" className="w-24 h-auto rounded border c-br mt-1" />}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">

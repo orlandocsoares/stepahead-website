@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { FileText, X, BookOpen, Loader2, ExternalLink, LayoutDashboard } from "lucide-react";
 import { HeroBranding } from "@/components/HeroBranding";
 import { isBrandedCapa } from "@/lib/capas";
+import { gerarMiniaturaPdf } from "@/lib/pdfThumbnail";
 
 const PdfViewer = dynamic(() => import("@/components/PdfViewer").then(m => m.PdfViewer), { ssr: false });
 
@@ -48,6 +49,40 @@ const AREA_ACCENT: Record<string, string> = {
 const DEFAULT_COLOR = "bg-white/5 text-white/60 border-white/10";
 
 type Profile = { first_name?: string; last_name?: string; avatar_url?: string };
+
+// Cache em memória (por sessão de navegação) das capas geradas automaticamente,
+// para não voltar a renderizar o PDF sempre que o utilizador navega entre áreas.
+const capaAutoCache = new Map<string, string>();
+
+// Quando um documento não tem capa definida, gera-se uma miniatura da 1ª página
+// do PDF via <canvas> (pdf.js) — nunca via <embed>, que dispara downloads automáticos.
+function CapaAutomatica({ nomeArquivo, label }: { nomeArquivo: string; label: string }) {
+  const [url, setUrl] = useState<string | null>(capaAutoCache.get(nomeArquivo) ?? null);
+
+  useEffect(() => {
+    if (url) return;
+    let cancelado = false;
+    const fileUrl = `/storage/v1/object/public/materiais/${encodeURIComponent(nomeArquivo)}`;
+    gerarMiniaturaPdf(fileUrl).then((blob) => {
+      if (cancelado || !blob) return;
+      const objUrl = URL.createObjectURL(blob);
+      capaAutoCache.set(nomeArquivo, objUrl);
+      setUrl(objUrl);
+    });
+    return () => { cancelado = true; };
+  }, [nomeArquivo, url]);
+
+  if (!url) {
+    return (
+      <div className="flex flex-col items-center gap-2 opacity-25">
+        <FileText size={36} strokeWidth={1} className="text-red-400" />
+        <span className="text-[10px] text-white/50 uppercase tracking-widest">PDF</span>
+      </div>
+    );
+  }
+
+  return <img src={url} alt={label} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />;
+}
 
 function RecursosContent() {
   const searchParams = useSearchParams();
@@ -257,6 +292,8 @@ function RecursosContent() {
                                   </p>
                                 )}
                               </>
+                            ) : r.nome_arquivo ? (
+                              <CapaAutomatica nomeArquivo={r.nome_arquivo} label={r.label} />
                             ) : (
                               <div className="flex flex-col items-center gap-2 opacity-25">
                                 <FileText size={36} strokeWidth={1} className="text-red-400" />
