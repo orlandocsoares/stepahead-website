@@ -60,7 +60,7 @@ export default function FormandosPorValidarPage() {
       <div>
         <h1 className="text-xl font-bold c-tx">Formandos por Validar</h1>
         <p className="text-sm c-tx3 mt-1">
-          Formandos que confirmaram o email e estão à espera de acesso. Qualquer formador pode aprovar — a associação a um formador específico só acontece depois, quando o formando se inscrever numa acção de formação.
+          Formandos que já confirmaram o endereço de e-mail e aguardam aprovação de acesso ao sistema. Nesta fase, não estão associados a qualquer formador. A associação a um formador ocorre apenas quando o formando é inscrito numa acção de formação.
         </p>
       </div>
 
