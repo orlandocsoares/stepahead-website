@@ -469,7 +469,6 @@ export default function HeroSection() {
   const [eventosLoading, setEventosLoading] = useState(true);
   const [areaEventoSelecionada, setAreaEventoSelecionada] = useState<string | null>(null);
   const [fotoGaleriaAberta, setFotoGaleriaAberta] = useState<EventoItem | null>(null);
-  const [logoOcultoPorColisao, setLogoOcultoPorColisao] = useState(false);
   const [vistaAgenda, setVistaAgenda] = useState<"lista" | "calendario">("calendario");
   const [diaAgendaSel, setDiaAgendaSel] = useState<string | null>(null);
 
@@ -760,49 +759,6 @@ export default function HeroSection() {
     return () => window.removeEventListener("mousemove", moveCursor);
   }, [mouseX, mouseY]);
 
-  // No mobile, esconder automaticamente o logótipo se o conteúdo da fase (ex: uma lista
-  // que cresce) chegar visualmente perto/por cima da sua posição, para nunca o tapar.
-  useEffect(() => {
-    if (typeof window === "undefined" || isDashboardView) return;
-
-    function checarColisao() {
-      if (window.innerWidth >= 768) { setLogoOcultoPorColisao(false); return; }
-      const logo = document.getElementById("tour-logo");
-      const corpo = document.getElementById("tour-content-body");
-      if (!logo || !corpo) { setLogoOcultoPorColisao(false); return; }
-      const logoRect = logo.getBoundingClientRect();
-      const corpoRect = corpo.getBoundingClientRect();
-      setLogoOcultoPorColisao(corpoRect.bottom > logoRect.top - 8);
-    }
-
-    checarColisao();
-    const raf = requestAnimationFrame(checarColisao);
-
-    const corpo = document.getElementById("tour-content-body");
-    const conteudoEl = document.getElementById("tour-content");
-    const ro = new ResizeObserver(checarColisao);
-    if (corpo) ro.observe(corpo);
-
-    window.addEventListener("resize", checarColisao);
-    conteudoEl?.addEventListener("scroll", checarColisao);
-    // Nem o Safari (iOS) nem o Chrome (Android) disparam sempre "resize" quando a
-    // barra de endereço do browser aparece/desaparece — usar visualViewport (quando
-    // existe) e, como rede de segurança universal, reavaliar periodicamente.
-    window.visualViewport?.addEventListener("resize", checarColisao);
-    window.visualViewport?.addEventListener("scroll", checarColisao);
-    const intervalo = window.setInterval(checarColisao, 500);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      window.removeEventListener("resize", checarColisao);
-      conteudoEl?.removeEventListener("scroll", checarColisao);
-      window.visualViewport?.removeEventListener("resize", checarColisao);
-      window.visualViewport?.removeEventListener("scroll", checarColisao);
-      window.clearInterval(intervalo);
-    };
-  }, [activePhaseIndex, isDashboardView]);
-
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const qrCodeUrl = `${origin}/camera/${sessionId}`;
   const finalFullName = `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim() || profile?.email;
@@ -1080,13 +1036,13 @@ export default function HeroSection() {
           : [];
 
         const ToggleVistaAgenda = (
-          <div id="tour-agenda-toggle" className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-0.5 w-fit shrink-0">
+          <div id="tour-agenda-toggle" className="flex items-center gap-1 bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg p-0.5 w-fit shrink-0 shadow-lg">
             {(["lista", "calendario"] as const).map(v => (
               <button
                 key={v}
                 type="button"
                 onClick={() => setVistaAgenda(v)}
-                className={`text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-md transition-colors ${vistaAgenda === v ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"}`}
+                className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-md transition-colors ${vistaAgenda === v ? "bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.5)]" : "text-white/70 hover:text-white hover:bg-white/10"}`}
               >
                 {v === "lista" ? "Lista" : "Calendário"}
               </button>
@@ -1474,7 +1430,7 @@ export default function HeroSection() {
                       <p className="text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.6em] text-white/90 uppercase font-medium truncate" style={{textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{activeData.subtitle}</p>
                       <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold uppercase tracking-tight text-white mt-2" style={{textShadow:"0 2px 12px rgba(0,0,0,0.9)"}}>{activeData.name}</h1>
                     </div>
-                    <div className="flex-1 mt-4"><div id="tour-content-body">{activeData.description}</div></div>
+                    <div className="flex-1 mt-4">{activeData.description}</div>
                     <div className="shrink-0 pt-2 mt-auto">
                       <div className="w-fit max-w-sm">
                         {activePhaseIndex === 1 && (
@@ -1589,7 +1545,8 @@ export default function HeroSection() {
 
 
 
-            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className={`absolute left-1/2 z-50 flex flex-col items-center group transition-opacity duration-200 ${logoOcultoPorColisao ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"} ${activePhaseIndex !== 0 ? "bottom-3 w-fit" : "bottom-[72px] sm:bottom-12 md:bottom-16 w-fit md:w-full md:max-w-[750px]"}`} >
+            {/* Logótipo — versão desktop/tablet (fixa em baixo, como sempre foi). No mobile usa-se o bloco dedicado mais abaixo. */}
+            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute left-1/2 z-50 hidden md:flex flex-col items-center group pointer-events-auto bottom-12 md:bottom-16 w-fit md:w-full md:max-w-[750px]" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>
@@ -1615,10 +1572,33 @@ export default function HeroSection() {
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110 h-[54px] sm:h-40 md:h-52" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
+                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110 h-40 md:h-52" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
                 </motion.div>
               </div>
             </motion.div>
+
+            {/* Logótipo — versão mobile: grande e centrado no ecrã na fase inicial,
+                encolhe e sobe para uma miniatura fixa no topo nas restantes fases. */}
+            <div
+              className={`md:hidden fixed left-1/2 z-50 flex flex-col items-center pointer-events-auto transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                activePhaseIndex === 0 ? "top-1/2 -translate-x-1/2 -translate-y-1/2" : "top-4 -translate-x-1/2 translate-y-0"
+              }`}
+            >
+              <img
+                src="/logo-sabermais.png"
+                alt="Logotipo Saber Mais"
+                onClick={() => goToPhase(0)}
+                className={`w-auto object-contain cursor-pointer mix-blend-screen contrast-125 brightness-110 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  activePhaseIndex === 0 ? "h-28" : "h-8"
+                }`}
+                style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }}
+              />
+              {activePhaseIndex === 0 && (
+                <p className="mt-1 text-[6px] font-bold uppercase tracking-[0.45em] text-white/70 text-center whitespace-nowrap transition-opacity duration-500">
+                  Programa de Apoio ao Reforço do Ensino Secundário em Angola
+                </p>
+              )}
+            </div>
 
             {/* Barra de navegação mobile */}
             <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden pointer-events-auto">
