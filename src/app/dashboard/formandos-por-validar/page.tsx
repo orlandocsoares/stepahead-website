@@ -47,11 +47,12 @@ export default function FormandosPorValidarPage() {
   async function agir(formando_id: string, acao: "associar" | "aprovar" | "rejeitar") {
     setActingId(formando_id);
     try {
-      await fetch("/api/formandos-pendentes", {
+      const res = await fetch("/api/formandos-pendentes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ formando_id, acao }),
       });
+      if (!res.ok) { alert("Não foi possível concluir a acção. Tenta novamente."); return; }
       setPendentes(prev => prev.filter(p => p.id !== formando_id));
     } finally {
       setActingId(null);

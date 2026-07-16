@@ -97,7 +97,7 @@ export async function POST(request: Request, ) {
     await dbQuery(
       `INSERT INTO formando_formadores (formando_id, formador_id, status, ano_letivo)
        VALUES ($1, $2, 'aceite', (SELECT ano_letivo FROM anos_letivos WHERE activo = true LIMIT 1))
-       ON CONFLICT (formando_id, formador_id) DO UPDATE SET status = 'aceite', updated_at = NOW()`,
+       ON CONFLICT (formando_id, formador_id, ano_letivo) DO UPDATE SET status = 'aceite', updated_at = NOW()`,
       [formando_id, formadorId]
     );
     const formadorProfile = await dbQuery(`SELECT first_name, last_name FROM profiles WHERE id = $1 LIMIT 1`, [formadorId]);
@@ -187,6 +187,7 @@ export async function POST(request: Request, ) {
            $2, '/dashboard/ficheiros')`,
         [formando_id, `${fp?.first_name} ${fp?.last_name} aceitou-te como aluno${fp?.specialization ? ' em ' + fp.specialization : ''}.`]
       );
+      await auditLog("approve_formando", { actorId: session.id, targetId: formando_id, ip, details: { nova_disciplina: true } });
     }
 
     // Adicionar à turma do formador se existir
