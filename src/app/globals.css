@@ -312,23 +312,24 @@ html.light       .dashboard-root header { background: rgba(200,222,244,0.80) !im
   NÃO adicionar regras *::-webkit-scrollbar aqui — afectariam o dashboard também.
 */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.65);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(59, 130, 246, 0.15); /* Azul néon muito suave */
+  background: rgba(96, 165, 250, 0.75); /* Azul néon bem visível mesmo sobre fundos claros */
   border-radius: 50px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+  background: rgba(96, 165, 250, 0.95);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
 }
 
 /* Seleção de Texto combinando com o Radar */

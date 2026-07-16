@@ -1545,7 +1545,7 @@ export default function HeroSection() {
 
 
 
-            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className={`absolute bottom-[72px] sm:bottom-12 md:bottom-16 left-1/2 z-50 flex-col items-center group w-full max-w-[90vw] md:max-w-[750px] pointer-events-auto ${activePhaseIndex !== 0 ? "hidden md:flex" : "flex"}`} >
+            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className={`absolute left-1/2 z-50 flex flex-col items-center group pointer-events-auto ${activePhaseIndex !== 0 ? "bottom-3 w-fit" : "bottom-[72px] sm:bottom-12 md:bottom-16 w-fit md:w-full md:max-w-[750px]"}`} >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>
@@ -1571,7 +1571,7 @@ export default function HeroSection() {
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative h-16 sm:h-40 md:h-52 w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
+                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className={`relative w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110 ${activePhaseIndex !== 0 ? "h-6 sm:h-40 md:h-52" : "h-16 sm:h-40 md:h-52"}`} style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
                 </motion.div>
               </div>
             </motion.div>
