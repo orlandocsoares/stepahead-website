@@ -756,13 +756,27 @@ jobs:
 
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
+            # docker rm -f devolve o controlo antes do daemon terminar mesmo a remoção
+            # (limpeza de rede/overlay continua em segundo plano); sem esperar por isso,
+            # o "up --force-recreate" a seguir tenta recriar o mesmo nome enquanto essa
+            # remoção ainda está em curso e falha com "removal ... is already in progress".
+            wait_removed() {
+              for i in $(seq 1 30); do
+                docker inspect "$1" >/dev/null 2>&1 || return 0
+                sleep 1
+              done
+              echo "Aviso: $1 ainda visível ao fim de 30s, a continuar mesmo assim"
+            }
+
             echo "==> A construir e reiniciar o container web..."
             docker compose --env-file .env.production -f docker-compose.prod.yml build web
             docker rm -f sabermais-next 2>/dev/null || true
+            wait_removed sabermais-next
             docker compose --env-file .env.production -f docker-compose.prod.yml up -d --force-recreate --no-deps web
 
             echo "==> A recarregar o nginx (config + volumes)..."
             docker rm -f sabermais-nginx 2>/dev/null || true
+            wait_removed sabermais-nginx
             docker compose --env-file .env.production -f docker-compose.prod.yml up -d --force-recreate --no-deps nginx
 
             echo "==> A limpar imagens e cache antigas..."
