@@ -785,12 +785,21 @@ export default function HeroSection() {
 
     window.addEventListener("resize", checarColisao);
     conteudoEl?.addEventListener("scroll", checarColisao);
+    // Nem o Safari (iOS) nem o Chrome (Android) disparam sempre "resize" quando a
+    // barra de endereço do browser aparece/desaparece — usar visualViewport (quando
+    // existe) e, como rede de segurança universal, reavaliar periodicamente.
+    window.visualViewport?.addEventListener("resize", checarColisao);
+    window.visualViewport?.addEventListener("scroll", checarColisao);
+    const intervalo = window.setInterval(checarColisao, 500);
 
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener("resize", checarColisao);
       conteudoEl?.removeEventListener("scroll", checarColisao);
+      window.visualViewport?.removeEventListener("resize", checarColisao);
+      window.visualViewport?.removeEventListener("scroll", checarColisao);
+      window.clearInterval(intervalo);
     };
   }, [activePhaseIndex, isDashboardView]);
 
