@@ -949,7 +949,7 @@ export default function AcoesFormacaoPage() {
                                       {podeGerir && (
                                         <button onClick={() => handleDeleteFoto(acao.id, f.id)}
                                           title="Eliminar foto"
-                                          className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-red-600 transition-all">
+                                          className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-white hover:bg-red-600 transition-colors">
                                           <X size={11} />
                                         </button>
                                       )}
