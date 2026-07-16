@@ -50,9 +50,23 @@ export async function GET(req: NextRequest) {
       return redirect("/confirm-email?sucesso=formador");
     }
 
-    // Formando: o acesso ao portal só é activado quando a sua primeira inscrição
-    // numa acção de formação for aprovada (ver /api/acoes-formacao/[id]/inscricoes).
-    // Aqui basta confirmar o email; a pessoa já pode inscrever-se em acções.
+    // Formando: entra numa caixa de entrada genérica — qualquer formador activo
+    // pode aprovar (activa a conta, sem ligação a formador nenhum). A associação
+    // formando↔formador só existe depois, através da inscrição numa acção de formação.
+    if (p) {
+      const todosFormadores = await dbQuery<{ id: string }>(
+        `SELECT id FROM profiles WHERE role = 'formador' AND status = 'activo'`
+      );
+      for (const { id: formador_id } of todosFormadores.rows) {
+        await dbQuery(
+          `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
+           VALUES ($1, 'novo_formando', 'Novo formando aguarda aprovação',
+             $2, '/dashboard/formandos-por-validar')`,
+          [formador_id, `${p.first_name} ${p.last_name ?? ""} (${p.email}) confirmou o email e aguarda aprovação.`]
+        );
+      }
+    }
+
     return redirect("/confirm-email?sucesso=1");
   } catch {
     return redirect("/confirm-email?erro=server");
