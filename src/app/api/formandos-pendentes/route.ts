@@ -27,7 +27,7 @@ export async function GET() {
   return NextResponse.json({ formandos: result.rows });
 }
 
-// POST — aprovar (activa a conta) ou recusar (bloqueia, só admin) um registo
+// POST — aprovar (activa a conta) ou recusar (bloqueia) um registo — qualquer formador ou admin
 export async function POST(request: Request) {
   const ip = getClientIp(request);
   const session = await getSessionUser();
@@ -63,7 +63,6 @@ export async function POST(request: Request) {
   }
 
   if (acao === "recusar") {
-    if (!isAdmin) return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     await dbQuery(`UPDATE profiles SET status = 'rejeitado' WHERE id = $1`, [formando_id]);
     await auditLog("reject_formando", { actorId: session.id, targetId: formando_id, ip });
     return NextResponse.json({ ok: true });

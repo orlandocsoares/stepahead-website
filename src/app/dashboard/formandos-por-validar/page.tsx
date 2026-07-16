@@ -28,8 +28,6 @@ export default function FormandosPorValidarPage() {
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState<string | null>(null);
 
-  const isAdmin = user?.role === "admin" || user?.role === "super-admin";
-
   async function fetchPendentes() {
     setLoading(true);
     try {
@@ -97,15 +95,13 @@ export default function FormandosPorValidarPage() {
                   >
                     {acting ? <Loader2 size={13} className="animate-spin" /> : <UserCheck size={13} />} Aprovar
                   </button>
-                  {isAdmin && (
-                    <button
-                      onClick={() => { if (confirm(`Recusar definitivamente o registo de ${nome}? A conta fica bloqueada.`)) agir(p.id, "recusar"); }}
-                      disabled={acting}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border c-br c-tx3 text-xs font-medium hover:bg-red-500/10 hover:text-red-400 transition-colors disabled:opacity-50"
-                    >
-                      <UserX size={13} /> Recusar
-                    </button>
-                  )}
+                  <button
+                    onClick={() => { if (confirm(`Recusar definitivamente o registo de ${nome}? A conta fica bloqueada.`)) agir(p.id, "recusar"); }}
+                    disabled={acting}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border c-br c-tx3 text-xs font-medium hover:bg-red-500/10 hover:text-red-400 transition-colors disabled:opacity-50"
+                  >
+                    <UserX size={13} /> Recusar
+                  </button>
                 </div>
               </div>
             );
