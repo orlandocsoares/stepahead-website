@@ -22,6 +22,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/turmas":        "Turmas",
   "/dashboard/acoes-formacao": "Acções de Formação",
   "/dashboard/formandos-por-validar": "Formandos por Validar",
+  "/dashboard/manual":        "Manual",
   "/dashboard/tarefas":       "Tarefas",
   "/dashboard/config":        "Configurações",
   "/dashboard/admin/audit":   "Audit Log",

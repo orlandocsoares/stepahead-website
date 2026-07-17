@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FolderOpen, Users, Calendar,
   Shield, LogOut, ChevronLeft, ChevronRight, Globe, X, UserCircle, LifeBuoy,
-  MessageSquare, Mail, GraduationCap, ClipboardList, BookOpen, ChevronDown, UserPlus,
+  MessageSquare, Mail, GraduationCap, ClipboardList, BookOpen, ChevronDown, UserPlus, HelpCircle,
 } from "lucide-react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { useState, useEffect } from "react";
@@ -30,6 +30,7 @@ const NAV_ACADEMICA = [
 const NAV_BOTTOM = [
   { label: "Utilizadores", icon: Users,       path: "/dashboard/admin",       staffOnly: true },
   { label: "Suporte",      icon: LifeBuoy,    path: "/dashboard/suporte" },
+  { label: "Manual",       icon: HelpCircle,  path: "/dashboard/manual" },
   { label: "Perfil",       icon: UserCircle,  path: "/dashboard/perfil" },
   { label: "Audit Log",    icon: Shield,      path: "/dashboard/admin/audit", adminOnly: true },
 ];

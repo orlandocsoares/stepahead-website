@@ -1,6 +1,7 @@
 "use client";
 
 import { useAdminUser } from "@/hooks/useAdminUser";
+import Link from "next/link";
 import {
   User, ShieldCheck, Save, Loader2, Camera,
   Key, FileText, CheckCircle2, AlertCircle, Activity, Award,
@@ -231,6 +232,13 @@ export default function PerfilPage() {
             <p className="text-[10px] c-tx5">Guia Pedagógico III</p>
           </div>
         </div>
+
+        <Link href="/dashboard/manual"
+          className="mt-5 flex items-center gap-2.5 c-s1 border c-br rounded-lg px-3.5 py-2.5 hover:border-blue-500/30 transition-colors group">
+          <BookOpen size={14} className="text-blue-400 shrink-0" />
+          <span className="text-xs c-tx3 flex-1">Dúvidas sobre como usar a plataforma? Consulta o <span className="c-tx2 font-medium">Manual do Backoffice</span>.</span>
+          <span className="text-[10px] text-blue-400 font-medium group-hover:translate-x-0.5 transition-transform">Abrir →</span>
+        </Link>
       </div>
 
       {/* ── Segurança ── */}
