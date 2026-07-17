@@ -323,15 +323,6 @@ const TOUR_STEPS: Record<string, TourStep[]> = {
         align: "start",
       },
     },
-    {
-      element: "#tour-config-grupos",
-      popover: {
-        title: "Grupos de Formação",
-        description: "Gira os grupos de formação disponíveis na plataforma — active, renomeie, elimine ou adicione novos.",
-        side: "left",
-        align: "start",
-      },
-    },
   ],
 
   "/dashboard/tarefas": [
