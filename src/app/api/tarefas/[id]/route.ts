@@ -14,12 +14,17 @@ export async function GET(_req: Request, { params }: Params) {
   const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
   const role = profileRes.rows[0]?.role;
 
+  // Garantir que as colunas nota/feedback existem (migração automática)
+  await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS nota VARCHAR(20)`, []);
+  await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS feedback TEXT`, []);
+
   if (role === "formando") {
     const res = await dbQuery(
       `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
               t.anexo_url, t.anexo_nome,
               p.first_name AS criador_nome, p.last_name AS criador_apelido,
-              td.estado, td.entregue_at, td.resposta_url, td.resposta_nome
+              td.estado, td.entregue_at, td.resposta_url, td.resposta_nome,
+              td.nota, td.feedback
        FROM tarefa_destinatarios td
        JOIN tarefas t ON t.id = td.tarefa_id
        JOIN profiles p ON p.id = t.criador_id
@@ -44,10 +49,6 @@ export async function GET(_req: Request, { params }: Params) {
     [id, isAdmin, sessionUser.id]
   );
   if (!tarefaRes.rows.length) return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
-
-  // Garantir que as colunas nota/feedback existem (migração automática)
-  await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS nota VARCHAR(20)`, []);
-  await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS feedback TEXT`, []);
 
   const entregasRes = await dbQuery(
     `SELECT p.id, p.first_name, p.last_name, p.email, td.estado, td.entregue_at,
@@ -108,6 +109,14 @@ export async function PATCH(request: Request, { params }: Params) {
     await dbQuery(
       `UPDATE tarefa_destinatarios SET estado = $1, nota = $2, feedback = $3 WHERE tarefa_id = $4 AND formando_id = $5`,
       [estado, nota ?? null, feedback ?? null, id, formando_id]
+    );
+    const tarefaInfo = await dbQuery(`SELECT titulo FROM tarefas WHERE id = $1 LIMIT 1`, [id]);
+    const titulo = tarefaInfo.rows[0]?.titulo ?? "uma tarefa";
+    await dbQuery(
+      `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
+       VALUES ($1, 'tarefa_avaliada', 'Tarefa avaliada',
+         $2, '/dashboard/tarefas')`,
+      [formando_id, `A tua entrega de "${titulo}" foi avaliada${nota ? ` — nota: ${nota}` : ""}.`]
     );
   } else {
     await dbQuery(

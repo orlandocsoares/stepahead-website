@@ -13,6 +13,8 @@ export async function GET() {
   await dbQuery(`ALTER TABLE tarefas ADD COLUMN IF NOT EXISTS anexo_nome TEXT`).catch(() => {});
   await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS resposta_url TEXT`).catch(() => {});
   await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS resposta_nome TEXT`).catch(() => {});
+  await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS nota VARCHAR(20)`).catch(() => {});
+  await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS feedback TEXT`).catch(() => {});
 
   const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
   const role = profileRes.rows[0]?.role;
@@ -22,7 +24,8 @@ export async function GET() {
       `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
               t.anexo_url, t.anexo_nome,
               p.first_name AS criador_nome, p.last_name AS criador_apelido,
-              td.estado, td.entregue_at, td.resposta_url, td.resposta_nome
+              td.estado, td.entregue_at, td.resposta_url, td.resposta_nome,
+              td.nota, td.feedback
        FROM tarefa_destinatarios td
        JOIN tarefas t ON t.id = td.tarefa_id
        JOIN profiles p ON p.id = t.criador_id

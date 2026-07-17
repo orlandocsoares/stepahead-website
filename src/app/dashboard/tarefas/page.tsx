@@ -25,6 +25,8 @@ type Tarefa = {
   entregue_at?: string;
   resposta_url?: string;
   resposta_nome?: string;
+  nota?: string;
+  feedback?: string;
   // formador view
   total?: number;
   entregues?: number;
@@ -397,9 +399,17 @@ export default function TarefasPage() {
                         </div>
                       )}
                       {col.key === "avaliado" && (
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                           {t.resposta_url && <AnexoLink url={t.resposta_url} nome={t.resposta_nome} />}
-                          <span className="flex items-center gap-1 text-[10px] text-blue-400/70"><CheckCheck size={10} /> Avaliado</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="flex items-center gap-1 text-[10px] text-blue-400/70"><CheckCheck size={10} /> Avaliado</span>
+                            {t.nota && (
+                              <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">{t.nota}</span>
+                            )}
+                          </div>
+                          {t.feedback && (
+                            <p className="text-[10px] c-tx3 bg-white/[0.03] border c-br rounded px-2 py-1.5 leading-snug">{t.feedback}</p>
+                          )}
                         </div>
                       )}
                     </motion.div>
