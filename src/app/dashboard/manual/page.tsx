@@ -286,21 +286,20 @@ export default function ManualPage() {
             <h2 className="text-base font-semibold c-tx">Registo e primeiro acesso</h2>
             <RoleTag role="todos" />
           </div>
-          <p className="text-sm c-tx3">O registo é público, em <code className="text-[11px] c-s1 border c-br rounded px-1.5 py-0.5 text-blue-400">/register</code>, começando por escolher entre "Sou Formando" ou "Sou Formador" — os formulários pedem dados diferentes.</p>
+          <p className="text-sm c-tx3">O registo faz-se num modal na própria página principal do site (botão "Registe-se"), começando por escolher entre "Formando" ou "Formador" — os formulários pedem dados diferentes.</p>
 
           <h3 className="text-xs font-semibold c-tx2 uppercase tracking-wide mt-4">Formando</h3>
           <ul className="list-disc list-inside text-xs c-tx3 space-y-1">
             <li>Nome, apelido, email e palavra-passe</li>
-            <li>Número de Bilhete de Identidade</li>
-            <li>Escola ou instituição parceira e província</li>
-            <li>Uma breve motivação para participar no programa</li>
+            <li>Província e município</li>
+            <li>Instituição / escola</li>
           </ul>
 
           <h3 className="text-xs font-semibold c-tx2 uppercase tracking-wide mt-4">Formador</h3>
           <ul className="list-disc list-inside text-xs c-tx3 space-y-1">
             <li>Nome, apelido, email e palavra-passe</li>
-            <li>Fotografia de perfil (obrigatória) — do computador ou por QR code com o telemóvel</li>
-            <li>Género, especialidade / área pedagógica e síntese biográfica</li>
+            <li>Fotografia de perfil (obrigatória) — via webcam/ficheiro ou por QR code com o telemóvel</li>
+            <li>Especialidade e síntese biográfica (obrigatórias)</li>
           </ul>
 
           <Callout>
