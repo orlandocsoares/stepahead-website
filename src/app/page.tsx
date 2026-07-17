@@ -985,8 +985,7 @@ export default function HeroSection() {
       }
       case 5: {
         const todosEventos = areasEventos.flatMap(a => a.eventos);
-        const GERAL: AreaEventos = { area: "Geral", total: todosEventos.length, eventos: todosEventos };
-        const pastas = [GERAL, ...areasEventos];
+        const pastas = areasEventos;
         const pastaSel = pastas.find(a => a.area === areaEventoSelecionada);
         const fotosDaPasta = (pastaSel?.eventos ?? []).filter(ev => !!ev.imagem_url);
 
@@ -999,11 +998,11 @@ export default function HeroSection() {
               {!pastaSel ? (
                 <>
                   <p className={defaultTextClass}>
-                    Fotografias e evidências das actividades organizadas por área e no geral.
+                    Fotografias e evidências das actividades organizadas por área.
                   </p>
                   <div id="tour-eventos-areas" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 max-h-[46vh] overflow-y-auto pr-1">
                     {eventosLoading && <p className="text-sm text-white/40 col-span-full">A carregar…</p>}
-                    {!eventosLoading && GERAL.total === 0 && (
+                    {!eventosLoading && todosEventos.length === 0 && (
                       <p className="text-sm text-white/40 col-span-full">Sem fotografias disponíveis.</p>
                     )}
                     {pastas.map(({ area, total }) => (
