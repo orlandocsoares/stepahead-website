@@ -258,7 +258,7 @@ export default function ManualPage() {
       </nav>
 
       {/* Conteúdo */}
-      <div className="flex-1 min-w-0 max-w-3xl space-y-8 pb-16 c-bg2 border c-br rounded-xl p-6 sm:p-8">
+      <div className="flex-1 min-w-0 max-w-5xl space-y-8 pb-16 c-bg2 border c-br rounded-xl p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
             <BookOpen size={18} className="text-blue-400" />
