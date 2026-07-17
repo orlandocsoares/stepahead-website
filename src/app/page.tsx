@@ -455,6 +455,8 @@ export default function HeroSection() {
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [triedPrevNav, setTriedPrevNav] = useState(false);
+  const [triedNextNav, setTriedNextNav] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [isLogoHovered, setIsLogoHovered] = useState(false);
 
@@ -1655,8 +1657,10 @@ export default function HeroSection() {
 
 
 
-            {/* Logótipo — versão desktop (fixa em baixo, como sempre foi). Em mobile/tablet usa-se o bloco dedicado mais abaixo. */}
-            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute left-1/2 z-50 hidden lg:flex flex-col items-center group pointer-events-auto bottom-16 w-full max-w-[750px]" >
+            {/* Logótipo — versão desktop (fixa em baixo, como sempre foi). Em mobile/tablet usa-se o bloco dedicado mais abaixo.
+                Em portáteis de ecrã baixo (ex. 14", altura efectiva curta com escala do SO), encolhe e sobe um pouco para não
+                sobrepor o conteúdo por cima — mesma ideia do encolher mobile, mas accionada por altura, não por fase. */}
+            <motion.div id="tour-logo" initial={{ opacity: 0, x: "-50%", y: 50 }} animate={{ opacity: 1, x: "-50%", y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="absolute left-1/2 z-50 hidden lg:flex flex-col items-center group pointer-events-auto bottom-16 [@media(max-height:820px)]:bottom-6 w-full max-w-[750px]" >
               <div className="relative flex flex-col justify-center items-center py-0 cursor-none" onMouseEnter={() => { setIsLogoHovered(true); setIsHovering(true); }} onMouseLeave={() => { setIsLogoHovered(false); setIsHovering(false); }}>
                 
                 <AnimatePresence>
@@ -1682,7 +1686,7 @@ export default function HeroSection() {
                 </AnimatePresence>
 
                 <motion.div onClick={() => goToPhase(0)} className="relative z-10 flex justify-center items-center flex-col animate-float outline-none" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110 h-52" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
+                  <img src="/logo-sabermais.png" alt="Logotipo Saber Mais" className="relative w-auto object-contain transition-transform duration-1000 group-hover:scale-105 pointer-events-auto cursor-pointer mix-blend-screen contrast-125 brightness-110 h-52 [@media(max-height:820px)]:h-28" style={{ filter: "drop-shadow(0 0 18px rgba(120,200,255,0.55)) drop-shadow(0 0 6px rgba(255,255,255,0.4)) contrast(1.25) brightness(1.1)" }} />
                 </motion.div>
               </div>
             </motion.div>
@@ -1707,10 +1711,53 @@ export default function HeroSection() {
 
             {/* Barra de navegação mobile/tablet */}
             <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden pointer-events-auto">
+              {/* Dicas de navegação — cada uma até o respectivo botão ser usado pela 1ª vez */}
+              <AnimatePresence>
+                {!triedPrevNav && activePhaseIndex > 1 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ delay: 0.6, duration: 0.4 }}
+                    className="absolute -top-11 left-3 flex items-center gap-1.5 pointer-events-none"
+                  >
+                    <motion.span
+                      animate={{ x: [0, -6, 0] }}
+                      transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                      className="text-blue-400 drop-shadow-[0_0_6px_rgba(96,165,250,0.8)]"
+                    >
+                      <ChevronLeft size={16} />
+                    </motion.span>
+                    <span className="px-2.5 py-1.5 rounded-full bg-blue-500/90 text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg whitespace-nowrap">
+                      Toca para voltar
+                    </span>
+                  </motion.div>
+                )}
+                {!triedNextNav && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ delay: 1.2, duration: 0.4 }}
+                    className="absolute -top-11 right-3 flex items-center gap-1.5 pointer-events-none"
+                  >
+                    <span className="px-2.5 py-1.5 rounded-full bg-blue-500/90 text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg whitespace-nowrap">
+                      Toca para navegar
+                    </span>
+                    <motion.span
+                      animate={{ x: [0, 6, 0] }}
+                      transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                      className="text-blue-400 drop-shadow-[0_0_6px_rgba(96,165,250,0.8)]"
+                    >
+                      <ChevronRight size={16} />
+                    </motion.span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div className="flex items-stretch bg-black/60 backdrop-blur-2xl border-t border-white/[0.08]">
                 {/* Fase anterior */}
                 <button
-                  onClick={() => handleMenuClick(activePhaseIndex - 1)}
+                  onClick={() => { setTriedPrevNav(true); handleMenuClick(activePhaseIndex - 1); }}
                   disabled={activePhaseIndex <= 1}
                   className="flex-1 flex flex-col items-start justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
                 >
@@ -1750,7 +1797,7 @@ export default function HeroSection() {
 
                 {/* Fase seguinte */}
                 <button
-                  onClick={() => handleMenuClick(activePhaseIndex + 1)}
+                  onClick={() => { setTriedNextNav(true); handleMenuClick(activePhaseIndex + 1); }}
                   disabled={activePhaseIndex >= REAL_MENU.length - 1}
                   className="flex-1 flex flex-col items-end justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
                 >
