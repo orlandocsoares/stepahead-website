@@ -29,9 +29,9 @@ function RoleTag({ role }: { role: Role }) {
 
 function Callout({ children, warn }: { children: React.ReactNode; warn?: boolean }) {
   return (
-    <div className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-3 my-3 ${warn ? "bg-amber-500/5 border-amber-500/20" : "c-s1 border c-br"}`}>
+    <div className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-3 my-3 ${warn ? "bg-amber-500/10 border-amber-500/20" : "c-s1 border c-br"}`}>
       {warn ? <AlertTriangle size={14} className="text-amber-400 shrink-0 mt-0.5" /> : <Info size={14} className="text-blue-400 shrink-0 mt-0.5" />}
-      <div className={`text-xs leading-relaxed ${warn ? "text-amber-200/90" : "c-tx3"}`}>{children}</div>
+      <div className={`text-xs leading-relaxed ${warn ? "text-amber-400" : "c-tx3"}`}>{children}</div>
     </div>
   );
 }
