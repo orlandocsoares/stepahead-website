@@ -1760,7 +1760,7 @@ export default function HeroSection() {
                   onClick={() => { setTriedPrevNav(true); handleMenuClick(activePhaseIndex - 1); }}
                   disabled={activePhaseIndex <= 1}
                   animate={!triedPrevNav && activePhaseIndex > 1 ? { backgroundColor: ["rgba(59,130,246,0)", "rgba(59,130,246,0.18)", "rgba(59,130,246,0)"] } : { backgroundColor: "rgba(59,130,246,0)" }}
-                  transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                  transition={{ duration: 1.6, repeat: Infinity, repeatDelay: 1.8, ease: "easeInOut" }}
                   className="flex-1 flex flex-col items-start justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
                 >
                   <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">anterior</span>
@@ -1802,7 +1802,7 @@ export default function HeroSection() {
                   onClick={() => { setTriedNextNav(true); handleMenuClick(activePhaseIndex + 1); }}
                   disabled={activePhaseIndex >= REAL_MENU.length - 1}
                   animate={!triedNextNav ? { backgroundColor: ["rgba(59,130,246,0)", "rgba(59,130,246,0.18)", "rgba(59,130,246,0)"] } : { backgroundColor: "rgba(59,130,246,0)" }}
-                  transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                  transition={{ duration: 1.6, repeat: Infinity, repeatDelay: 1.8, ease: "easeInOut" }}
                   className="flex-1 flex flex-col items-end justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
                 >
                   <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">seguinte</span>
