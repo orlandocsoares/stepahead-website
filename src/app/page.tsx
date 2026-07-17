@@ -1764,7 +1764,7 @@ export default function HeroSection() {
                   className="flex-1 flex flex-col items-start justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
                 >
                   <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">anterior</span>
-                  <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wide truncate max-w-[90px]">
+                  <span className="text-[11px] font-semibold text-white uppercase tracking-wide truncate max-w-[90px]">
                     {activePhaseIndex > 1 ? REAL_MENU[activePhaseIndex - 1]?.name : ''}
                   </span>
                 </motion.button>
@@ -1806,7 +1806,7 @@ export default function HeroSection() {
                   className="flex-1 flex flex-col items-end justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
                 >
                   <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">seguinte</span>
-                  <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wide truncate max-w-[90px] text-right">
+                  <span className="text-[11px] font-semibold text-white uppercase tracking-wide truncate max-w-[90px] text-right">
                     {activePhaseIndex < REAL_MENU.length - 1 ? REAL_MENU[activePhaseIndex + 1]?.name : ''}
                   </span>
                 </motion.button>
