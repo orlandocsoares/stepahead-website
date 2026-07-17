@@ -1263,11 +1263,11 @@ export default function HeroSection() {
               <img src="/flags/Flag_of_Portugal.svg.webp" alt="Bandeira de Portugal" className="h-5 w-auto rounded-sm shadow-lg" />
               <div className="w-px h-4 bg-white/20 mx-1" />
               <a href="https://www.facebook.com/profile.php?id=100091617683484" target="_blank" rel="noopener noreferrer" title="Facebook"
-                className="w-7 h-7 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 transition-colors">
-                <Facebook size={13} />
+                className="w-7 h-7 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 flex items-center justify-center text-[#1877F2] hover:brightness-125 hover:border-white/40 transition-all">
+                <Facebook size={13} fill="currentColor" strokeWidth={0} />
               </a>
               <a href="https://www.instagram.com/sabermais.angola/" target="_blank" rel="noopener noreferrer" title="Instagram"
-                className="w-7 h-7 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 transition-colors">
+                className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#FEDA75] via-[#D62976] to-[#4F5BD5] border border-white/10 flex items-center justify-center text-white hover:brightness-110 hover:border-white/40 transition-all">
                 <Instagram size={13} />
               </a>
             </motion.div>
