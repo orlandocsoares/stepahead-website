@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   BookOpen, GraduationCap, UserPlus, FolderOpen, ClipboardList, Calendar,
   MessageSquare, Mail, LifeBuoy, UserCircle, Users, Shield, AlertTriangle,
-  Info, ChevronRight,
+  Info, ChevronRight, Search, Image as ImageIcon, FileText, Star,
 } from "lucide-react";
 
 type Role = "formando" | "formador" | "admin" | "todos";
@@ -51,30 +51,174 @@ function Steps({ items }: { items: React.ReactNode[] }) {
   );
 }
 
+/** Esquema ilustrativo (maqueta, não é uma captura de ecrã real) */
+function Schema({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="my-4 rounded-xl border c-br overflow-hidden">
+      <div className="c-s2 p-4">{children}</div>
+      <div className="flex items-center gap-1.5 px-3 py-1.5 border-t c-br bg-black/10">
+        <ImageIcon size={10} className="c-tx5 shrink-0" />
+        <span className="text-[9px] c-tx5 uppercase tracking-wider">Esquema ilustrativo — {label}</span>
+      </div>
+    </div>
+  );
+}
+
+function SchemaAcoesFormacao() {
+  return (
+    <Schema label="painel de uma acção de formação">
+      <div className="c-bg2 border c-br rounded-lg overflow-hidden">
+        <div className="flex items-center gap-3 px-3 py-2.5 border-b c-br">
+          <div className="w-7 h-7 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
+            <GraduationCap size={13} className="text-blue-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="h-2 w-40 rounded c-s1" />
+            <div className="h-1.5 w-24 rounded c-s1 mt-1.5 opacity-60" />
+          </div>
+          <span className="text-[9px] px-2 py-0.5 rounded-full border border-blue-500/20 text-blue-400 bg-blue-500/10 shrink-0">Agendada</span>
+        </div>
+        <div className="flex items-center gap-1 p-2">
+          <span className="text-[10px] px-2.5 py-1 rounded bg-blue-600 text-white font-medium">Materiais</span>
+          <span className="text-[10px] px-2.5 py-1 rounded c-tx4">Utilizadores</span>
+          <span className="text-[10px] px-2.5 py-1 rounded c-tx4">Fotos</span>
+        </div>
+        <div className="px-3 pb-3 space-y-1.5">
+          <div className="flex items-center gap-2 c-s1 border c-br rounded px-2 py-1.5">
+            <FileText size={11} className="text-blue-400 shrink-0" />
+            <div className="h-1.5 w-32 rounded c-s2" />
+          </div>
+          <div className="flex items-center gap-2 c-s1 border c-br rounded px-2 py-1.5">
+            <FileText size={11} className="text-blue-400 shrink-0" />
+            <div className="h-1.5 w-24 rounded c-s2" />
+          </div>
+        </div>
+      </div>
+    </Schema>
+  );
+}
+
+function SchemaFormandosPorValidar() {
+  return (
+    <Schema label="fila de aprovação">
+      <div className="space-y-1.5">
+        {[0, 1].map(i => (
+          <div key={i} className="flex items-center gap-2.5 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2">
+            <div className="w-6 h-6 rounded-full bg-blue-500/15 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="h-2 w-28 rounded c-s1" />
+              <div className="h-1.5 w-36 rounded c-s1 mt-1 opacity-50" />
+            </div>
+            <span className="text-[9px] px-2 py-1 rounded bg-emerald-600 text-white shrink-0">Aprovar</span>
+            <span className="text-[9px] px-2 py-1 rounded border c-br c-tx4 shrink-0">Recusar</span>
+          </div>
+        ))}
+      </div>
+    </Schema>
+  );
+}
+
+function SchemaRepositorio() {
+  return (
+    <Schema label="grelha do repositório">
+      <div className="grid grid-cols-3 gap-2">
+        {[FileText, ImageIcon, FileText].map((Icon, i) => (
+          <div key={i} className="c-bg2 border c-br rounded-lg p-2.5 space-y-1.5">
+            <div className="w-full aspect-[4/3] rounded c-s1 flex items-center justify-center">
+              <Icon size={16} className="text-blue-400" />
+            </div>
+            <div className="h-1.5 w-full rounded c-s1 opacity-70" />
+          </div>
+        ))}
+      </div>
+    </Schema>
+  );
+}
+
+function SchemaTarefas() {
+  const cols = [
+    { label: "A fazer", color: "bg-amber-500" },
+    { label: "Entregue", color: "bg-emerald-500" },
+    { label: "Avaliado", color: "bg-blue-500" },
+  ];
+  return (
+    <Schema label="quadro de tarefas do formando">
+      <div className="grid grid-cols-3 gap-2">
+        {cols.map(c => (
+          <div key={c.label} className="c-bg2 border c-br rounded-lg overflow-hidden">
+            <div className={`h-1 ${c.color}`} />
+            <div className="px-2 py-1.5 border-b c-br">
+              <span className="text-[9px] font-bold uppercase tracking-wider c-tx4">{c.label}</span>
+            </div>
+            <div className="p-1.5">
+              <div className="c-s1 border c-br rounded p-1.5 space-y-1">
+                <div className="h-1.5 w-full rounded c-s2" />
+                <div className="h-1.5 w-2/3 rounded c-s2 opacity-60" />
+                {c.label === "Avaliado" && (
+                  <span className="inline-flex items-center gap-0.5 text-[8px] text-blue-400 mt-0.5">
+                    <Star size={8} /> 18 val.
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Schema>
+  );
+}
+
 type Section = {
   id: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
-  roles: Role[];
+  keywords: string;
 };
 
 const SECTIONS: Section[] = [
-  { id: "registo",               icon: UserPlus,     label: "Registo e primeiro acesso", roles: ["todos"] },
-  { id: "acoes-formacao",        icon: GraduationCap,label: "Acções de Formação",         roles: ["formador", "admin"] },
-  { id: "formandos-por-validar", icon: UserPlus,     label: "Formandos por Validar",       roles: ["formador", "admin"] },
-  { id: "repositorio",           icon: FolderOpen,   label: "Repositório",                 roles: ["todos"] },
-  { id: "tarefas",               icon: ClipboardList,label: "Tarefas",                      roles: ["todos"] },
-  { id: "agenda",                icon: Calendar,     label: "Agenda",                       roles: ["todos"] },
-  { id: "comunidade",            icon: MessageSquare,label: "Comunidade",                   roles: ["todos"] },
-  { id: "mensagens",             icon: Mail,         label: "Mensagens",                    roles: ["todos"] },
-  { id: "suporte",               icon: LifeBuoy,     label: "Suporte",                      roles: ["todos"] },
-  { id: "perfil",                icon: UserCircle,   label: "Perfil",                       roles: ["todos"] },
-  { id: "utilizadores",          icon: Users,        label: "Utilizadores",                 roles: ["formador", "admin"] },
-  { id: "audit-log",             icon: Shield,       label: "Audit Log",                    roles: ["admin"] },
+  { id: "registo",               icon: UserPlus,      label: "Registo e primeiro acesso", keywords: "registo conta criar email confirmar aprovar formando formador password bilhete identidade escola provincia foto qr" },
+  { id: "acoes-formacao",        icon: GraduationCap,  label: "Acções de Formação",         keywords: "acções formação curso designação materiais utilizadores fotos galeria inscrição vagas horario local data" },
+  { id: "formandos-por-validar", icon: UserPlus,       label: "Formandos por Validar",       keywords: "formandos validar aprovar recusar fila caixa entrada pendente activar conta" },
+  { id: "repositorio",           icon: FolderOpen,     label: "Repositório",                 keywords: "repositório ficheiros upload disciplina visibilidade capa pdf miniatura download" },
+  { id: "tarefas",               icon: ClipboardList,  label: "Tarefas",                      keywords: "tarefas entregar avaliar nota observações feedback prazo anexo kanban" },
+  { id: "agenda",                icon: Calendar,       label: "Agenda",                       keywords: "agenda eventos evento inscrição presencial online arquivo calendario" },
+  { id: "comunidade",            icon: MessageSquare,  label: "Comunidade",                   keywords: "comunidade publicação post comentário gosto fixar categoria mural" },
+  { id: "mensagens",             icon: Mail,           label: "Mensagens",                    keywords: "mensagens privadas conversa contactar formador" },
+  { id: "suporte",               icon: LifeBuoy,       label: "Suporte",                      keywords: "suporte ticket pendente resolvido categoria ajuda problema" },
+  { id: "perfil",                icon: UserCircle,     label: "Perfil",                       keywords: "perfil dados pessoais identificação residência habilitações profissional password avatar foto" },
+  { id: "utilizadores",          icon: Users,          label: "Utilizadores",                 keywords: "utilizadores admin cargo estado password csv estatísticas anúncios configurações" },
+  { id: "audit-log",             icon: Shield,         label: "Audit Log",                    keywords: "audit log auditoria registo acções segurança historico" },
+  { id: "turmas",                icon: Info,           label: "Nota — Turmas",                keywords: "turmas legado antigo" },
 ];
+
+const ACCENT_MAP: Record<string, string> = {
+  á: "a", à: "a", â: "a", ã: "a", ä: "a",
+  é: "e", è: "e", ê: "e", ë: "e",
+  í: "i", ì: "i", î: "i", ï: "i",
+  ó: "o", ò: "o", ô: "o", õ: "o", ö: "o",
+  ú: "u", ù: "u", û: "u", ü: "u",
+  ç: "c",
+};
+
+function normalize(s: string) {
+  return s
+    .toLowerCase()
+    .split("")
+    .map(ch => ACCENT_MAP[ch] ?? ch)
+    .join("");
+}
 
 export default function ManualPage() {
   const [active, setActive] = useState("registo");
+  const [query, setQuery] = useState("");
+
+  const filteredIds = useMemo(() => {
+    const q = normalize(query.trim());
+    if (!q) return null;
+    return new Set(
+      SECTIONS.filter(s => normalize(s.label + " " + s.keywords).includes(q)).map(s => s.id)
+    );
+  }, [query]);
 
   function scrollTo(id: string) {
     setActive(id);
@@ -84,24 +228,37 @@ export default function ManualPage() {
   return (
     <div className="flex gap-6 items-start w-full">
       {/* Navegação lateral do manual */}
-      <nav className="hidden lg:block w-56 shrink-0 sticky top-4 space-y-0.5">
-        <p className="text-[10px] font-semibold uppercase tracking-wider c-tx5 px-2 mb-2">Neste manual</p>
-        {SECTIONS.map(s => (
-          <button
-            key={s.id}
-            onClick={() => scrollTo(s.id)}
-            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors ${
-              active === s.id ? "bg-blue-500/10 text-blue-400" : "c-tx4 hc-tx hc-s2"
-            }`}
-          >
-            <s.icon size={13} className="shrink-0" />
-            <span className="truncate">{s.label}</span>
-          </button>
-        ))}
+      <nav className="hidden lg:block w-56 shrink-0 sticky top-4 space-y-3 c-bg2 border c-br rounded-xl p-3">
+        <div className="relative">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 c-tx5" />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Pesquisar tópico..."
+            className="w-full c-s1 border c-br rounded-lg pl-8 pr-2.5 py-1.5 text-xs c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors"
+          />
+        </div>
+        <div className="space-y-0.5">
+          {SECTIONS.filter(s => !filteredIds || filteredIds.has(s.id)).map(s => (
+            <button
+              key={s.id}
+              onClick={() => scrollTo(s.id)}
+              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors ${
+                active === s.id ? "bg-blue-500/10 text-blue-400" : "c-tx4 hc-tx hc-s2"
+              }`}
+            >
+              <s.icon size={13} className="shrink-0" />
+              <span className="truncate">{s.label}</span>
+            </button>
+          ))}
+          {filteredIds && filteredIds.size === 0 && (
+            <p className="text-[11px] c-tx5 px-2.5 py-2">Sem resultados para "{query}".</p>
+          )}
+        </div>
       </nav>
 
       {/* Conteúdo */}
-      <div className="flex-1 min-w-0 max-w-3xl space-y-10 pb-16">
+      <div className="flex-1 min-w-0 max-w-3xl space-y-8 pb-16 c-bg2 border c-br rounded-xl p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
             <BookOpen size={18} className="text-blue-400" />
@@ -112,8 +269,19 @@ export default function ManualPage() {
           </div>
         </div>
 
+        {/* pesquisa em ecrãs pequenos, onde a nav lateral fica escondida */}
+        <div className="lg:hidden relative">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 c-tx5" />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Pesquisar tópico..."
+            className="w-full c-s1 border c-br rounded-lg pl-8 pr-2.5 py-2 text-xs c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 transition-colors"
+          />
+        </div>
+
         {/* Registo */}
-        <section id="registo" className="scroll-mt-4 space-y-3">
+        <section id="registo" hidden={!!filteredIds && !filteredIds.has("registo")} className="scroll-mt-4 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Registo e primeiro acesso</h2>
             <RoleTag role="todos" />
@@ -152,12 +320,14 @@ export default function ManualPage() {
         </section>
 
         {/* Acções de Formação */}
-        <section id="acoes-formacao" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="acoes-formacao" hidden={!!filteredIds && !filteredIds.has("acoes-formacao")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Acções de Formação</h2>
             <RoleTag role="formador" /><RoleTag role="admin" />
           </div>
           <p className="text-sm c-tx3">O coração da plataforma: cada edição concreta de um curso, com datas, formandos inscritos, materiais e galeria de fotos.</p>
+
+          <SchemaAcoesFormacao />
 
           <h3 className="text-xs font-semibold c-tx2 uppercase tracking-wide mt-4">Criar uma acção</h3>
           <Steps items={[
@@ -189,12 +359,15 @@ export default function ManualPage() {
         </section>
 
         {/* Formandos por Validar */}
-        <section id="formandos-por-validar" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="formandos-por-validar" hidden={!!filteredIds && !filteredIds.has("formandos-por-validar")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Formandos por Validar</h2>
             <RoleTag role="formador" /><RoleTag role="admin" />
           </div>
           <p className="text-sm c-tx3">Uma caixa de entrada única e partilhada — todos os formadores e administradores vêem a mesma fila de formandos à espera de acesso.</p>
+
+          <SchemaFormandosPorValidar />
+
           <ul className="list-disc list-inside text-xs c-tx3 space-y-1">
             <li><strong className="c-tx2">Aprovar</strong> — qualquer formador ou admin. Activa a conta; não associa a esse formador específico.</li>
             <li><strong className="c-tx2">Recusar</strong> — qualquer formador ou admin. Bloqueia a conta em definitivo (pede confirmação).</li>
@@ -205,12 +378,14 @@ export default function ManualPage() {
         </section>
 
         {/* Repositório */}
-        <section id="repositorio" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="repositorio" hidden={!!filteredIds && !filteredIds.has("repositorio")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Repositório</h2>
             <RoleTag role="todos" />
           </div>
           <p className="text-sm c-tx3">Biblioteca de ficheiros organizada por disciplina, com upload por arrastar-e-largar.</p>
+
+          <SchemaRepositorio />
 
           <Steps items={[
             <>Botão <strong className="c-tx2">"Upload"</strong> ou arrastar o ficheiro para a janela.</>,
@@ -242,12 +417,15 @@ export default function ManualPage() {
         </section>
 
         {/* Tarefas */}
-        <section id="tarefas" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="tarefas" hidden={!!filteredIds && !filteredIds.has("tarefas")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Tarefas</h2>
             <RoleTag role="todos" />
           </div>
           <p className="text-sm c-tx3">Um quadro em três colunas, com sentido diferente conforme o papel de quem o vê.</p>
+
+          <SchemaTarefas />
+
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="c-s1 border c-br rounded-lg p-3">
               <p className="font-semibold c-tx2 mb-1">Formador / Admin</p>
@@ -262,7 +440,7 @@ export default function ManualPage() {
         </section>
 
         {/* Agenda */}
-        <section id="agenda" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="agenda" hidden={!!filteredIds && !filteredIds.has("agenda")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Agenda</h2>
             <RoleTag role="todos" />
@@ -272,7 +450,7 @@ export default function ManualPage() {
         </section>
 
         {/* Comunidade */}
-        <section id="comunidade" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="comunidade" hidden={!!filteredIds && !filteredIds.has("comunidade")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Comunidade</h2>
             <RoleTag role="todos" />
@@ -286,7 +464,7 @@ export default function ManualPage() {
         </section>
 
         {/* Mensagens */}
-        <section id="mensagens" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="mensagens" hidden={!!filteredIds && !filteredIds.has("mensagens")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Mensagens</h2>
             <RoleTag role="todos" />
@@ -298,7 +476,7 @@ export default function ManualPage() {
         </section>
 
         {/* Suporte */}
-        <section id="suporte" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="suporte" hidden={!!filteredIds && !filteredIds.has("suporte")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Suporte</h2>
             <RoleTag role="todos" />
@@ -313,7 +491,7 @@ export default function ManualPage() {
         </section>
 
         {/* Perfil */}
-        <section id="perfil" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="perfil" hidden={!!filteredIds && !filteredIds.has("perfil")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Perfil</h2>
             <RoleTag role="todos" />
@@ -323,7 +501,7 @@ export default function ManualPage() {
         </section>
 
         {/* Utilizadores */}
-        <section id="utilizadores" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="utilizadores" hidden={!!filteredIds && !filteredIds.has("utilizadores")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Utilizadores</h2>
             <RoleTag role="formador" /><RoleTag role="admin" />
@@ -339,7 +517,7 @@ export default function ManualPage() {
         </section>
 
         {/* Audit Log */}
-        <section id="audit-log" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="audit-log" hidden={!!filteredIds && !filteredIds.has("audit-log")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Audit Log</h2>
             <RoleTag role="admin" />
@@ -349,7 +527,7 @@ export default function ManualPage() {
         </section>
 
         {/* Turmas */}
-        <section id="turmas" className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="turmas" hidden={!!filteredIds && !filteredIds.has("turmas")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Nota — Turmas</h2>
             <RoleTag role="formador" /><RoleTag role="admin" />
