@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, AnimatePresence, animate } from "framer-motion";
-import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen, Facebook, Instagram, Linkedin, Eye, EyeOff, Play, ChevronLeft, ChevronRight } from "lucide-react";
+import { LogIn, User, Camera, GraduationCap, UserCheck, Calendar, FileText, LogOut, Loader2, QrCode, Mail, ShieldCheck, Users, BarChart3, MapPin, BookOpen, LayoutDashboard, Handshake, Clock, CheckCircle, Languages, Calculator, FlaskConical, Globe, Landmark, Leaf, Zap, TestTube, FolderOpen, Facebook, Instagram, Linkedin, Eye, EyeOff, Play, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1719,18 +1719,18 @@ export default function HeroSection() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
                     transition={{ delay: 0.6, duration: 0.4 }}
-                    className="absolute -top-11 left-3 flex items-center gap-1.5 pointer-events-none"
+                    className="absolute -top-16 left-3 flex flex-col items-center gap-0.5 pointer-events-none"
                   >
-                    <motion.span
-                      animate={{ x: [0, -6, 0] }}
-                      transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
-                      className="text-blue-400 drop-shadow-[0_0_6px_rgba(96,165,250,0.8)]"
-                    >
-                      <ChevronLeft size={16} />
-                    </motion.span>
                     <span className="px-2.5 py-1.5 rounded-full bg-blue-500/90 text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg whitespace-nowrap">
                       Toca para voltar
                     </span>
+                    <motion.span
+                      animate={{ y: [0, 5, 0] }}
+                      transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                      className="text-blue-400 drop-shadow-[0_0_6px_rgba(96,165,250,0.8)]"
+                    >
+                      <ChevronDown size={16} />
+                    </motion.span>
                   </motion.div>
                 )}
                 {!triedNextNav && (
@@ -1739,33 +1739,35 @@ export default function HeroSection() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
                     transition={{ delay: 1.2, duration: 0.4 }}
-                    className="absolute -top-11 right-3 flex items-center gap-1.5 pointer-events-none"
+                    className="absolute -top-16 right-3 flex flex-col items-center gap-0.5 pointer-events-none"
                   >
                     <span className="px-2.5 py-1.5 rounded-full bg-blue-500/90 text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg whitespace-nowrap">
                       Toca para navegar
                     </span>
                     <motion.span
-                      animate={{ x: [0, 6, 0] }}
+                      animate={{ y: [0, 5, 0] }}
                       transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
                       className="text-blue-400 drop-shadow-[0_0_6px_rgba(96,165,250,0.8)]"
                     >
-                      <ChevronRight size={16} />
+                      <ChevronDown size={16} />
                     </motion.span>
                   </motion.div>
                 )}
               </AnimatePresence>
               <div className="flex items-stretch bg-black/60 backdrop-blur-2xl border-t border-white/[0.08]">
                 {/* Fase anterior */}
-                <button
+                <motion.button
                   onClick={() => { setTriedPrevNav(true); handleMenuClick(activePhaseIndex - 1); }}
                   disabled={activePhaseIndex <= 1}
+                  animate={!triedPrevNav && activePhaseIndex > 1 ? { backgroundColor: ["rgba(59,130,246,0)", "rgba(59,130,246,0.18)", "rgba(59,130,246,0)"] } : { backgroundColor: "rgba(59,130,246,0)" }}
+                  transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
                   className="flex-1 flex flex-col items-start justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
                 >
                   <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">anterior</span>
                   <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wide truncate max-w-[90px]">
                     {activePhaseIndex > 1 ? REAL_MENU[activePhaseIndex - 1]?.name : ''}
                   </span>
-                </button>
+                </motion.button>
 
                 {/* Fase actual — centro */}
                 <div className="flex flex-col items-center justify-center px-3 py-2 border-x border-white/[0.08] min-w-[110px]">
@@ -1796,16 +1798,18 @@ export default function HeroSection() {
                 </div>
 
                 {/* Fase seguinte */}
-                <button
+                <motion.button
                   onClick={() => { setTriedNextNav(true); handleMenuClick(activePhaseIndex + 1); }}
                   disabled={activePhaseIndex >= REAL_MENU.length - 1}
+                  animate={!triedNextNav ? { backgroundColor: ["rgba(59,130,246,0)", "rgba(59,130,246,0.18)", "rgba(59,130,246,0)"] } : { backgroundColor: "rgba(59,130,246,0)" }}
+                  transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
                   className="flex-1 flex flex-col items-end justify-center px-4 py-3 gap-0.5 disabled:opacity-0 active:bg-white/[0.05] transition-colors"
                 >
                   <span className="text-[8px] uppercase tracking-[0.3em] text-white/30 font-medium">seguinte</span>
                   <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wide truncate max-w-[90px] text-right">
                     {activePhaseIndex < REAL_MENU.length - 1 ? REAL_MENU[activePhaseIndex + 1]?.name : ''}
                   </span>
-                </button>
+                </motion.button>
               </div>
             </div>
 
