@@ -1565,7 +1565,7 @@ export default function HeroSection() {
                               type="button"
                               onClick={() => setFotoAmpliadaIndex((fotoAmpliadaIndex - 1 + total) % total)}
                               aria-label="Foto anterior"
-                              className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+                              className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors animate-nav-pulse sm:animate-none"
                             >
                               <ChevronLeft size={20} />
                             </button>
@@ -1573,7 +1573,7 @@ export default function HeroSection() {
                               type="button"
                               onClick={() => setFotoAmpliadaIndex((fotoAmpliadaIndex + 1) % total)}
                               aria-label="Próxima foto"
-                              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors animate-nav-pulse sm:animate-none"
                             >
                               <ChevronRight size={20} />
                             </button>
