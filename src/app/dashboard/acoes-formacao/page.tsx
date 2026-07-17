@@ -92,6 +92,7 @@ export default function AcoesFormacaoPage() {
   const [novoMaterial, setNovoMaterial] = useState<Record<string, { arquivo_id: string; de: string; ate: string }>>({});
   const [fotos, setFotos] = useState<Record<string, Foto[]>>({});
   const [enviandoFoto, setEnviandoFoto] = useState<string | null>(null);
+  const [confirmDeleteFoto, setConfirmDeleteFoto] = useState<{ acaoId: string; fotoId: string } | null>(null);
 
   function handleImagemSelect(file: File | null) {
     setImagemFile(file);
@@ -172,9 +173,9 @@ export default function AcoesFormacaoPage() {
   }
 
   async function handleDeleteFoto(acaoId: string, fotoId: string) {
-    if (!confirm("Remover esta foto da galeria?")) return;
     await fetch(`/api/acoes-formacao/${acaoId}/fotos?foto_id=${fotoId}`, { method: "DELETE" });
     setFotos(prev => ({ ...prev, [acaoId]: (prev[acaoId] ?? []).filter(f => f.id !== fotoId) }));
+    setConfirmDeleteFoto(null);
   }
 
   function getFicheirosDisponiveisParaPublicar(acao: AcaoFormacao) {
@@ -591,6 +592,29 @@ export default function AcoesFormacaoPage() {
         </div>
       )}
 
+      {confirmDeleteFoto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDeleteFoto(null)} />
+          <div className="relative w-full max-w-sm c-bg border c-br rounded-2xl p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
+                <Trash2 size={16} className="text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold c-tx">Eliminar foto</h3>
+                <p className="text-xs c-tx4 mt-0.5">Esta acção não pode ser desfeita.</p>
+              </div>
+            </div>
+            <div className="flex gap-3 pt-1">
+              <button onClick={() => setConfirmDeleteFoto(null)}
+                className="flex-1 py-2.5 rounded-xl border c-br text-sm c-tx3 hc-tx transition-colors">Cancelar</button>
+              <button onClick={() => handleDeleteFoto(confirmDeleteFoto.acaoId, confirmDeleteFoto.fotoId)}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 text-sm text-white font-medium hover:bg-red-500 transition-colors">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 size={22} className="animate-spin text-blue-500" /></div>
       ) : acoes.length === 0 ? (
@@ -947,10 +971,10 @@ export default function AcoesFormacaoPage() {
                                         className="w-full h-full object-cover"
                                       />
                                       {podeGerir && (
-                                        <button onClick={() => handleDeleteFoto(acao.id, f.id)}
+                                        <button onClick={() => setConfirmDeleteFoto({ acaoId: acao.id, fotoId: f.id })}
                                           title="Eliminar foto"
-                                          className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-white hover:bg-red-600 transition-colors">
-                                          <X size={11} />
+                                          className="absolute top-1 right-1 p-1.5 rounded-full bg-black/70 text-white hover:bg-red-600 transition-colors">
+                                          <Trash2 size={12} />
                                         </button>
                                       )}
                                     </div>
