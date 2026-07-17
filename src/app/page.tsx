@@ -1565,17 +1565,21 @@ export default function HeroSection() {
                               type="button"
                               onClick={() => setFotoAmpliadaIndex((fotoAmpliadaIndex - 1 + total) % total)}
                               aria-label="Foto anterior"
-                              className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors animate-nav-pulse sm:animate-none"
+                              className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
                             >
-                              <ChevronLeft size={20} />
+                              <span className="flex items-center justify-center w-full h-full rounded-full animate-nav-pulse sm:animate-none">
+                                <ChevronLeft size={20} />
+                              </span>
                             </button>
                             <button
                               type="button"
                               onClick={() => setFotoAmpliadaIndex((fotoAmpliadaIndex + 1) % total)}
                               aria-label="Próxima foto"
-                              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors animate-nav-pulse sm:animate-none"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
                             >
-                              <ChevronRight size={20} />
+                              <span className="flex items-center justify-center w-full h-full rounded-full animate-nav-pulse sm:animate-none">
+                                <ChevronRight size={20} />
+                              </span>
                             </button>
                             <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/60 text-white text-[11px]">
                               {fotoAmpliadaIndex + 1} / {total}
