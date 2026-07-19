@@ -734,14 +734,20 @@ export default function HeroSection() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
       avatarStreamRef.current = stream;
       setCameraOpen(true);
-      if (avatarVideoRef.current) {
-        avatarVideoRef.current.srcObject = stream;
-        await avatarVideoRef.current.play();
-      }
+      // O <video> só é montado depois deste render (cameraOpen ainda estava false),
+      // por isso o stream é ligado no useEffect abaixo, não aqui.
     } catch {
       setCameraError("Não foi possível aceder à câmara. Verifica as permissões do browser, ou escolhe uma foto da galeria.");
     }
   }
+
+  // Liga o stream ao <video> só depois de este estar mesmo montado no DOM.
+  useEffect(() => {
+    if (cameraOpen && avatarStreamRef.current && avatarVideoRef.current) {
+      avatarVideoRef.current.srcObject = avatarStreamRef.current;
+      avatarVideoRef.current.play().catch(() => {});
+    }
+  }, [cameraOpen]);
 
   function capturePhoto() {
     const video = avatarVideoRef.current;
@@ -1364,7 +1370,7 @@ export default function HeroSection() {
                                     {cameraOpen ? (
                                       <div className="space-y-2">
                                         <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-black">
-                                          <video ref={avatarVideoRef} playsInline muted className="w-full h-full object-cover" />
+                                          <video ref={avatarVideoRef} playsInline autoPlay muted className="w-full h-full object-cover" />
                                         </div>
                                         <canvas ref={avatarCanvasRef} className="hidden" />
                                         <div className="flex gap-2">
