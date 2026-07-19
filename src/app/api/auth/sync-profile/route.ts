@@ -7,7 +7,7 @@ import { randomBytes } from "crypto";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, first_name, last_name, role, provincia, municipio, escola, especialidade, biografia, avatar_url } = body;
+    const { email, password, first_name, last_name, role, provincia, municipio, escola, nivel_ensino, especialidade, biografia, avatar_url } = body;
 
     if (!email || !role) return NextResponse.json({ error: "Email e role obrigatórios" }, { status: 400 });
 
@@ -42,8 +42,8 @@ export async function POST(request: Request) {
 
     // Criar ou actualizar profiles
     await dbQuery(
-      `INSERT INTO profiles (id, email, first_name, last_name, role, status, provincia, municipio_residencia, escola, especialidade, biografia, avatar_url)
-       VALUES ($1,$2,$3,$4,$5,'pendente',$6,$7,$8,$9,$10,$11)
+      `INSERT INTO profiles (id, email, first_name, last_name, role, status, provincia, municipio_residencia, escola, nivel_ensino, especialidade, biografia, avatar_url)
+       VALUES ($1,$2,$3,$4,$5,'pendente',$6,$7,$8,$9,$10,$11,$12)
        ON CONFLICT (email) DO UPDATE SET
          role                  = EXCLUDED.role,
          first_name            = COALESCE(EXCLUDED.first_name,            profiles.first_name),
@@ -51,11 +51,12 @@ export async function POST(request: Request) {
          provincia             = COALESCE(EXCLUDED.provincia,             profiles.provincia),
          municipio_residencia  = COALESCE(EXCLUDED.municipio_residencia,  profiles.municipio_residencia),
          escola                = COALESCE(EXCLUDED.escola,                profiles.escola),
+         nivel_ensino          = COALESCE(EXCLUDED.nivel_ensino,          profiles.nivel_ensino),
          especialidade         = COALESCE(EXCLUDED.especialidade,         profiles.especialidade),
          biografia             = COALESCE(EXCLUDED.biografia,             profiles.biografia),
          avatar_url            = COALESCE(EXCLUDED.avatar_url,            profiles.avatar_url)`,
       [userId, clean, first_name || null, last_name || null, role,
-       provincia || null, municipio || null, escola || null, especialidade || null, biografia || null, avatar_url || null]
+       provincia || null, municipio || null, escola || null, nivel_ensino || null, especialidade || null, biografia || null, avatar_url || null]
     );
 
     // Enviar email de confirmação (novo utilizador OU re-envio se ainda pendente)

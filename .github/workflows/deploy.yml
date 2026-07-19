@@ -754,6 +754,11 @@ jobs:
               ALTER TABLE acoes_formacao ADD COLUMN IF NOT EXISTS tipologia TEXT;
               ALTER TABLE acoes_formacao ADD COLUMN IF NOT EXISTS publico_alvo TEXT;
 
+              -- Nível de ensino em que o formando lecciona (Pré-Escolar/Primário/Secundário),
+              -- pedido no registo — distinto de 'ciclo_ensino' (sub-ciclos do ensino secundário,
+              -- usado na ficha profissional do formador)
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS nivel_ensino TEXT;
+
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             # docker rm -f devolve o controlo antes do daemon terminar mesmo a remoção

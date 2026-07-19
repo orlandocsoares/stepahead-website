@@ -437,6 +437,7 @@ export default function HeroSection() {
   const [provincia, setProvincia] = useState('');
   const [municipio, setMunicipio] = useState('');
   const [escola, setEscola] = useState('');
+  const [nivelEnsino, setNivelEnsino] = useState('');
   const [especialidade, setEspecialidade] = useState('');
   const [bio, setBio] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -644,6 +645,12 @@ export default function HeroSection() {
       if (!bio.trim()) { setError("Síntese Biográfica é obrigatória."); return; }
     }
 
+    // Validação do Formando
+    if (userRole === 'formando' && !nivelEnsino) {
+      setError("Selecciona o nível de ensino em que leccionas.");
+      return;
+    }
+
     setLoading(true);
 
     // Registo na nossa API local
@@ -656,7 +663,7 @@ export default function HeroSection() {
         first_name: firstName,
         last_name: lastName,
         role: userRole,
-        ...(userRole === 'formando' ? { provincia, municipio, escola } : { especialidade, biografia: bio }),
+        ...(userRole === 'formando' ? { provincia, municipio, escola, nivel_ensino: nivelEnsino } : { especialidade, biografia: bio }),
       }),
     });
     const syncData = await syncRes.json();
@@ -1265,6 +1272,23 @@ export default function HeroSection() {
                                 </div>
                               </div>
                               <div className="space-y-1"><Label className="text-[8px] uppercase tracking-widest text-blue-400">Instituição</Label><Input placeholder="Nome da Escola" required value={escola} onChange={(e) => setEscola(e.target.value)} className="h-8 bg-transparent border-0 border-b border-white/20 rounded-none focus-visible:ring-0 text-xs"/></div>
+                              <div className="space-y-1.5">
+                                <Label className="text-[8px] uppercase tracking-widest text-blue-400">Ciclo de Ensino</Label>
+                                <div className="grid grid-cols-3 gap-1.5">
+                                  {["Pré-Escolar", "Primário", "Secundário"].map(nivel => (
+                                    <button
+                                      key={nivel}
+                                      type="button"
+                                      onClick={() => setNivelEnsino(nivel)}
+                                      className={`py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wide border transition-all ${
+                                        nivelEnsino === nivel ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white/5 border-white/10 text-white/40 hover:text-white/70'
+                                      }`}
+                                    >
+                                      {nivel}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           ) : (
                             <div className="space-y-6 pt-2">
