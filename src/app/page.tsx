@@ -449,6 +449,7 @@ export default function HeroSection() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [remoteImageUrl, setRemoteImageUrl] = useState<string | null>(null);
   const [uploadMode, setUploadMode] = useState<"local" | "qr">("local");
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourActive, setTourActive] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
@@ -478,6 +479,13 @@ export default function HeroSection() {
   const [fotoAmpliadaIndex, setFotoAmpliadaIndex] = useState<number | null>(null);
   const [vistaAgenda, setVistaAgenda] = useState<"lista" | "calendario">("calendario");
   const [diaAgendaSel, setDiaAgendaSel] = useState<string | null>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobileDevice(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     setFotoAmpliadaIndex(null);
@@ -1300,16 +1308,22 @@ export default function HeroSection() {
                                     {avatarPreview ? <img src={avatarPreview} className="w-full h-full object-cover" /> : <Camera size={16} className="text-white/30" />}
                                   </div>
                                   <div className="flex flex-col gap-2 w-full">
-                                    <button type="button" onClick={() => setUploadMode("local")} className={`text-[8px] py-1.5 rounded uppercase tracking-widest border transition-all ${uploadMode === 'local' ? 'bg-white text-black border-white' : 'border-white/20 text-white/50'}`}>Webcam / Ficheiro</button>
-                                    <button type="button" onClick={() => setUploadMode("qr")} className={`text-[8px] py-1.5 rounded uppercase tracking-widest border transition-all ${uploadMode === 'qr' ? 'bg-emerald-500 text-black border-emerald-500' : 'border-white/20 text-white/50'}`}>Usar Telemóvel</button>
+                                    {isMobileDevice ? (
+                                      <p className="text-[8px] text-white/40 uppercase tracking-widest leading-relaxed">Tira uma foto ou escolhe da galeria</p>
+                                    ) : (
+                                      <>
+                                        <button type="button" onClick={() => setUploadMode("local")} className={`text-[8px] py-1.5 rounded uppercase tracking-widest border transition-all ${uploadMode === 'local' ? 'bg-white text-black border-white' : 'border-white/20 text-white/50'}`}>Ficheiro</button>
+                                        <button type="button" onClick={() => setUploadMode("qr")} className={`text-[8px] py-1.5 rounded uppercase tracking-widest border transition-all ${uploadMode === 'qr' ? 'bg-emerald-500 text-black border-emerald-500' : 'border-white/20 text-white/50'}`}>Usar Telemóvel</button>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
 
-                                {uploadMode === 'local' && (
+                                {(isMobileDevice || uploadMode === 'local') && (
                                   <input type="file" accept="image/*" capture="user" onChange={handleAvatarChange} className="text-[9px] w-full text-white/50 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[8px] file:uppercase file:tracking-widest file:bg-white/10 file:text-white" />
                                 )}
 
-                                {uploadMode === 'qr' && (
+                                {!isMobileDevice && uploadMode === 'qr' && (
                                   <div className="flex items-center gap-4 bg-black/40 p-3 rounded-xl border border-white/5">
                                     <div className="bg-white p-1 rounded shrink-0"><QRCodeSVG value={qrCodeUrl} size={50} /></div>
                                     <p className="text-[8px] text-white/50 leading-relaxed uppercase tracking-widest">Aponte a câmara do telemóvel para capturar a foto.</p>
