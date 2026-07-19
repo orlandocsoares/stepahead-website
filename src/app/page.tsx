@@ -450,6 +450,13 @@ export default function HeroSection() {
   const [remoteImageUrl, setRemoteImageUrl] = useState<string | null>(null);
   const [uploadMode, setUploadMode] = useState<"local" | "qr">("local");
   const [isMobileDevice, setIsMobileDevice] = useState(false);
+
+  // Câmara própria (mobile) — captura directa em vez de depender do <input capture>
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const avatarVideoRef = useRef<HTMLVideoElement>(null);
+  const avatarCanvasRef = useRef<HTMLCanvasElement>(null);
+  const avatarStreamRef = useRef<MediaStream | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourActive, setTourActive] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
@@ -486,6 +493,14 @@ export default function HeroSection() {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Desliga a câmara sempre que deixa de fazer sentido tê-la ligada — evita
+  // ficar com a luz da câmara acesa em segundo plano depois de fechar o modal.
+  useEffect(() => {
+    if (!isLoginOpen || userRole !== 'formador' || authMode !== 'register') stopCamera();
+  }, [isLoginOpen, userRole, authMode]);
+
+  useEffect(() => () => stopCamera(), []);
 
   useEffect(() => {
     setFotoAmpliadaIndex(null);
@@ -705,6 +720,46 @@ export default function HeroSection() {
       setAvatarPreview(URL.createObjectURL(file));
       setRemoteImageUrl(null);
     }
+  };
+
+  function stopCamera() {
+    avatarStreamRef.current?.getTracks().forEach(t => t.stop());
+    avatarStreamRef.current = null;
+    setCameraOpen(false);
+  }
+
+  async function openCamera() {
+    setCameraError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      avatarStreamRef.current = stream;
+      setCameraOpen(true);
+      if (avatarVideoRef.current) {
+        avatarVideoRef.current.srcObject = stream;
+        await avatarVideoRef.current.play();
+      }
+    } catch {
+      setCameraError("Não foi possível aceder à câmara. Verifica as permissões do browser, ou escolhe uma foto da galeria.");
+    }
+  }
+
+  function capturePhoto() {
+    const video = avatarVideoRef.current;
+    const canvas = avatarCanvasRef.current;
+    if (!video || !canvas) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(blob => {
+      if (!blob) return;
+      const file = new File([blob], `selfie-${Date.now()}.jpg`, { type: "image/jpeg" });
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(blob));
+      setRemoteImageUrl(null);
+      stopCamera();
+    }, "image/jpeg", 0.92);
   };
 
   const goToPhase = useCallback((index: number) => {
@@ -1303,31 +1358,59 @@ export default function HeroSection() {
                               {/* ZONA DO FORMADOR (FOTO + QR + ESPEC + BIO) */}
                               <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-4">
                                 <Label className="text-[8px] uppercase tracking-widest text-emerald-400 block mb-2">Fotografia (Obrigatório)</Label>
-                                <div className="flex gap-4 items-center">
-                                  <div className="w-14 h-14 rounded-full border border-white/20 flex shrink-0 items-center justify-center overflow-hidden bg-black/50">
-                                    {avatarPreview ? <img src={avatarPreview} className="w-full h-full object-cover" /> : <Camera size={16} className="text-white/30" />}
-                                  </div>
-                                  <div className="flex flex-col gap-2 w-full">
-                                    {isMobileDevice ? (
-                                      <p className="text-[8px] text-white/40 uppercase tracking-widest leading-relaxed">Tira uma foto ou escolhe da galeria</p>
+
+                                {isMobileDevice ? (
+                                  <div className="space-y-3">
+                                    {cameraOpen ? (
+                                      <div className="space-y-2">
+                                        <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-black">
+                                          <video ref={avatarVideoRef} playsInline muted className="w-full h-full object-cover" />
+                                        </div>
+                                        <canvas ref={avatarCanvasRef} className="hidden" />
+                                        <div className="flex gap-2">
+                                          <button type="button" onClick={stopCamera} className="flex-1 py-2 rounded-lg border border-white/20 text-white/60 text-[9px] uppercase tracking-widest">Cancelar</button>
+                                          <button type="button" onClick={capturePhoto} className="flex-1 py-2 rounded-lg bg-emerald-500 text-black text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5"><Camera size={12} /> Tirar foto</button>
+                                        </div>
+                                      </div>
                                     ) : (
-                                      <>
+                                      <div className="flex gap-4 items-center">
+                                        <div className="w-14 h-14 rounded-full border border-white/20 flex shrink-0 items-center justify-center overflow-hidden bg-black/50">
+                                          {avatarPreview ? <img src={avatarPreview} className="w-full h-full object-cover" /> : <Camera size={16} className="text-white/30" />}
+                                        </div>
+                                        <div className="flex flex-col gap-2 w-full">
+                                          <button type="button" onClick={openCamera} className="py-1.5 rounded bg-emerald-500 text-black text-[8px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5"><Camera size={11} /> Tirar foto</button>
+                                          <label className="py-1.5 rounded border border-white/20 text-white/50 text-[8px] uppercase tracking-widest text-center cursor-pointer">
+                                            Escolher da galeria
+                                            <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+                                          </label>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {cameraError && <p className="text-[8px] text-red-400 leading-relaxed">{cameraError}</p>}
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="flex gap-4 items-center">
+                                      <div className="w-14 h-14 rounded-full border border-white/20 flex shrink-0 items-center justify-center overflow-hidden bg-black/50">
+                                        {avatarPreview ? <img src={avatarPreview} className="w-full h-full object-cover" /> : <Camera size={16} className="text-white/30" />}
+                                      </div>
+                                      <div className="flex flex-col gap-2 w-full">
                                         <button type="button" onClick={() => setUploadMode("local")} className={`text-[8px] py-1.5 rounded uppercase tracking-widest border transition-all ${uploadMode === 'local' ? 'bg-white text-black border-white' : 'border-white/20 text-white/50'}`}>Ficheiro</button>
                                         <button type="button" onClick={() => setUploadMode("qr")} className={`text-[8px] py-1.5 rounded uppercase tracking-widest border transition-all ${uploadMode === 'qr' ? 'bg-emerald-500 text-black border-emerald-500' : 'border-white/20 text-white/50'}`}>Usar Telemóvel</button>
-                                      </>
+                                      </div>
+                                    </div>
+
+                                    {uploadMode === 'local' && (
+                                      <input type="file" accept="image/*" onChange={handleAvatarChange} className="text-[9px] w-full text-white/50 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[8px] file:uppercase file:tracking-widest file:bg-white/10 file:text-white" />
                                     )}
-                                  </div>
-                                </div>
 
-                                {(isMobileDevice || uploadMode === 'local') && (
-                                  <input type="file" accept="image/*" capture="user" onChange={handleAvatarChange} className="text-[9px] w-full text-white/50 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[8px] file:uppercase file:tracking-widest file:bg-white/10 file:text-white" />
-                                )}
-
-                                {!isMobileDevice && uploadMode === 'qr' && (
-                                  <div className="flex items-center gap-4 bg-black/40 p-3 rounded-xl border border-white/5">
-                                    <div className="bg-white p-1 rounded shrink-0"><QRCodeSVG value={qrCodeUrl} size={50} /></div>
-                                    <p className="text-[8px] text-white/50 leading-relaxed uppercase tracking-widest">Aponte a câmara do telemóvel para capturar a foto.</p>
-                                  </div>
+                                    {uploadMode === 'qr' && (
+                                      <div className="flex items-center gap-4 bg-black/40 p-3 rounded-xl border border-white/5">
+                                        <div className="bg-white p-1 rounded shrink-0"><QRCodeSVG value={qrCodeUrl} size={50} /></div>
+                                        <p className="text-[8px] text-white/50 leading-relaxed uppercase tracking-widest">Aponte a câmara do telemóvel para capturar a foto.</p>
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
 
