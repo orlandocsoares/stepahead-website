@@ -173,6 +173,9 @@ export default function RegisterPage() {
               ? "Após confirmar o email, a sua conta será analisada pelo administrador. Receberá uma notificação quando o acesso for aprovado."
               : "Após confirmar o email, o seu formador receberá uma notificação e poderá aprovar o seu acesso ao portal."}
           </p>
+          <p className="text-amber-400/70 text-[11px] leading-relaxed mt-4 border-t border-white/10 pt-4">
+            Não encontrou o email? Verifique a pasta de <span className="font-semibold">Spam / Lixo</span> ou "Promoções" — por vezes o primeiro email de um remetente novo cai lá.
+          </p>
         </motion.div>
       </div>
     );

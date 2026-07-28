@@ -26,9 +26,14 @@ function ResendConfirmForm() {
   }
 
   if (state === "done") return (
-    <p className="text-emerald-400/80 text-xs pt-2">
-      Se existir uma conta pendente com este email, foi enviado um novo link de confirmação.
-    </p>
+    <div className="pt-2 space-y-2">
+      <p className="text-emerald-400/80 text-xs">
+        Se existir uma conta pendente com este email, foi enviado um novo link de confirmação.
+      </p>
+      <p className="text-amber-400/70 text-[11px] leading-relaxed">
+        Não encontrou o email? Verifique a pasta de Spam / Lixo ou "Promoções".
+      </p>
+    </div>
   );
 
   return (
