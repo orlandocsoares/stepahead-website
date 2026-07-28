@@ -24,6 +24,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/formandos-por-validar": "Formandos por Validar",
   "/dashboard/manual":        "Manual",
   "/dashboard/tarefas":       "Tarefas",
+  "/dashboard/notificacoes":  "Notificações",
   "/dashboard/config":        "Configurações",
   "/dashboard/admin/audit":   "Audit Log",
 };
@@ -429,6 +430,12 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
                   );
                 })}
               </div>
+              <button
+                onClick={() => { setNotifOpen(false); router.push("/dashboard/notificacoes"); }}
+                className="px-5 py-3 border-t c-br text-xs font-medium text-blue-400 hc-s2 transition-colors text-center"
+              >
+                Ver todas as notificações
+              </button>
             </div>
           , document.body)}
         </div>

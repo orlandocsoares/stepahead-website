@@ -1,16 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getSessionUser();
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+
+  const limitParam = Number(req.nextUrl.searchParams.get("limit"));
+  const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : 20;
 
   const result = await dbQuery(
     `SELECT id, tipo, titulo, mensagem, lida, link, created_at
      FROM notificacoes WHERE user_id = $1
-     ORDER BY created_at DESC LIMIT 20`,
-    [session.id]
+     ORDER BY created_at DESC LIMIT $2`,
+    [session.id, limit]
   );
 
   const unread = result.rows.filter((n: any) => !n.lida).length;
