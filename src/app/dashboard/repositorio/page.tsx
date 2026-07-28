@@ -20,10 +20,11 @@ export default function RepositorioPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Estados do formulário de upload
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  // Estados do formulário de upload — suporta seleccionar vários ficheiros de uma vez
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Geral");
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   
   // Novos estados para o controlo de partilha e filtros
   const [docStatus, setDocStatus] = useState("publicado");
@@ -186,38 +187,47 @@ export default function RepositorioPage() {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadFile || !title) return;
+    if (uploadFiles.length === 0) return;
+    // Título só é obrigatório quando é um único ficheiro — com vários, cada um usa o
+    // próprio nome de ficheiro como título (mais rápido do que ter de preencher um a um).
+    if (uploadFiles.length === 1 && !title) return;
 
     setIsUploading(true);
+    setUploadProgress({ done: 0, total: uploadFiles.length });
     try {
-      // Encode URI Component para garantir que ficheiros com espaços não quebram a URL
-      const sanitizedName = uploadFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-      const fileName = `${Date.now()}_${sanitizedName}`;
-      
-      const fd = new FormData();
-      fd.append("bucket", "materiais");
-      fd.append("path", fileName);
-      fd.append("file", uploadFile);
-      const upRes = await fetch("/api/storage/upload", { method: "POST", body: fd });
-      const upJson = await upRes.json();
-      if (!upRes.ok || upJson.error) throw new Error(upJson.error?.message ?? "Erro no upload.");
+      for (const file of uploadFiles) {
+        // Encode URI Component para garantir que ficheiros com espaços não quebram a URL
+        const sanitizedName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+        const fileName = `${Date.now()}_${sanitizedName}`;
+        const label = uploadFiles.length === 1 ? title : file.name.replace(/\.[^/.]+$/, "");
 
-      const dbRes = await fetch("/api/db/arquivos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          label: title,
-          nome_arquivo: fileName,
-          area: category,
-          tamanho: (uploadFile.size / (1024 * 1024)).toFixed(2) + " MB",
-          tipo: uploadFile.type.includes("video") ? "video" : "pdf",
-          visibilidade: visibilidade,
-          destinatario_email: visibilidade === "especifico" ? destinatarioEmail : null,
-          pasta_id: selectedPasta !== "todas" && selectedPasta !== "soltos" ? selectedPasta : null,
-        }),
-      });
-      const dbJson = await dbRes.json();
-      if (!dbRes.ok || dbJson.error) throw new Error(dbJson.error?.message ?? "Erro ao guardar.");
+        const fd = new FormData();
+        fd.append("bucket", "materiais");
+        fd.append("path", fileName);
+        fd.append("file", file);
+        const upRes = await fetch("/api/storage/upload", { method: "POST", body: fd });
+        const upJson = await upRes.json();
+        if (!upRes.ok || upJson.error) throw new Error(upJson.error?.message ?? `Erro no upload de "${file.name}".`);
+
+        const dbRes = await fetch("/api/db/arquivos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            label,
+            nome_arquivo: fileName,
+            area: category,
+            tamanho: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+            tipo: file.type.includes("video") ? "video" : "pdf",
+            visibilidade: visibilidade,
+            destinatario_email: visibilidade === "especifico" ? destinatarioEmail : null,
+            pasta_id: selectedPasta !== "todas" && selectedPasta !== "soltos" ? selectedPasta : null,
+          }),
+        });
+        const dbJson = await dbRes.json();
+        if (!dbRes.ok || dbJson.error) throw new Error(dbJson.error?.message ?? `Erro ao guardar "${file.name}".`);
+
+        setUploadProgress(p => p ? { ...p, done: p.done + 1 } : p);
+      }
 
       setIsModalOpen(false);
       resetForm();
@@ -232,7 +242,8 @@ export default function RepositorioPage() {
 
   const resetForm = () => {
     setTitle("");
-    setUploadFile(null);
+    setUploadFiles([]);
+    setUploadProgress(null);
     setDocStatus("publicado");
     setVisibilidade("publico");
     setDestinatarioEmail("");
@@ -745,8 +756,16 @@ export default function RepositorioPage() {
           
           <form onSubmit={handleUpload} className="space-y-6 mt-8 text-left">
             <div className="space-y-2">
-              <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Título do Material</label>
-              <input required value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-white/5 border-0 border-b border-white/10 py-4 px-4 text-sm focus:ring-0 focus:border-blue-500 outline-none transition-all" placeholder="EX: GUIA PEDAGÓGICO III" />
+              <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">
+                Título do Material {uploadFiles.length > 1 && <span className="opacity-40 normal-case">(vários ficheiros usam o próprio nome)</span>}
+              </label>
+              <input
+                required={uploadFiles.length <= 1}
+                disabled={uploadFiles.length > 1}
+                value={title} onChange={e => setTitle(e.target.value)}
+                className="w-full bg-white/5 border-0 border-b border-white/10 py-4 px-4 text-sm focus:ring-0 focus:border-blue-500 outline-none transition-all disabled:opacity-30"
+                placeholder="EX: GUIA PEDAGÓGICO III"
+              />
             </div>
 
             <div className="space-y-2">
@@ -804,19 +823,36 @@ export default function RepositorioPage() {
             )}
 
             <div className="space-y-2">
-              <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Ficheiro Técnico</label>
+              <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Ficheiro(s) Técnico(s)</label>
               <div className="relative border-2 border-dashed border-white/5 p-8 text-center rounded-3xl hover:border-blue-500/30 transition-all">
-                <input type="file" required onChange={e => setUploadFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                <input type="file" multiple required onChange={e => setUploadFiles(Array.from(e.target.files ?? []))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                 <Download className="mx-auto text-white/10 mb-4" />
-                <p className="text-[8px] uppercase tracking-widest text-white/40">{uploadFile ? uploadFile.name : "Arraste ou clique para seleccionar"}</p>
+                <p className="text-[8px] uppercase tracking-widest text-white/40">
+                  {uploadFiles.length === 0 ? "Arraste ou clique para seleccionar (podes escolher vários)" :
+                   uploadFiles.length === 1 ? uploadFiles[0].name : `${uploadFiles.length} ficheiros seleccionados`}
+                </p>
               </div>
+              {uploadFiles.length > 1 && (
+                <div className="max-h-28 overflow-y-auto space-y-1 pt-1">
+                  {uploadFiles.map((f, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-white/[0.02] rounded-lg">
+                      <span className="text-[8px] text-white/40 truncate">{f.name}</span>
+                      <button type="button" onClick={() => setUploadFiles(prev => prev.filter((_, x) => x !== i))} className="text-white/20 hover:text-red-400 shrink-0">
+                        <Trash2 size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <button 
-              disabled={isUploading}
-              className="w-full bg-blue-600 text-white py-6 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all flex justify-center items-center gap-4 shadow-2xl border-0"
+            <button
+              disabled={isUploading || uploadFiles.length === 0}
+              className="w-full bg-blue-600 text-white py-6 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all flex justify-center items-center gap-4 shadow-2xl border-0 disabled:opacity-40"
              >
-              {isUploading ? <><Loader2 className="animate-spin" size={16} /> A Processar...</> : "Finalizar Registo"}
+              {isUploading
+                ? <><Loader2 className="animate-spin" size={16} /> A Processar {uploadProgress ? `${uploadProgress.done}/${uploadProgress.total}` : "..."}</>
+                : uploadFiles.length > 1 ? `Finalizar Registo (${uploadFiles.length})` : "Finalizar Registo"}
             </button>
           </form>
         </DialogContent>
