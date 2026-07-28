@@ -162,6 +162,21 @@ export async function POST(request: Request) {
       `INSERT INTO mensagens (from_user_id, to_user_id, content, anexo_url, anexo_nome) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [session.id, to_user_id, content?.trim() || null, anexo_url || null, anexo_nome || null]
     );
+
+    // Aviso agregado no Centro de Notificações — uma entrada por destinatário
+    // enquanto tiver mensagens por ler, em vez de uma por mensagem (o badge de
+    // Mensagens já mostra a contagem exacta; aqui só sinalizamos "tens novidades").
+    const existing = await db.query(
+      `SELECT id FROM notificacoes WHERE user_id = $1 AND tipo = 'mensagem' AND lida = FALSE LIMIT 1`,
+      [to_user_id]
+    );
+    if (!existing.rows[0]) {
+      await db.query(
+        `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link) VALUES ($1, 'mensagem', 'Novas mensagens', 'Tens mensagens por ler.', '/dashboard/mensagens')`,
+        [to_user_id]
+      );
+    }
+
     // Mensagens privadas não são auditadas — conteúdo pessoal
     return NextResponse.json({ data: result.rows[0] }, { status: 201 });
   } catch (error: unknown) {

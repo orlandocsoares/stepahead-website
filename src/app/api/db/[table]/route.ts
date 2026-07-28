@@ -313,6 +313,37 @@ export async function POST(request: Request, context: { params: Promise<{ table:
       insertedRows.push(result.rows[0]);
     }
 
+    // Notifica os formandos com acesso ao documento acabado de publicar — mesma
+    // audiência que já pode vê-lo (a visibilidade em "arquivos" já define isso),
+    // não notificamos rascunhos nem alargamos o alcance além do que é visível.
+    if (table === "arquivos") {
+      for (const row of insertedRows) {
+        if (!row || row.visibilidade === "rascunho") continue;
+
+        if (row.visibilidade === "especifico" && row.destinatario_email) {
+          const rec = await dbQuery(`SELECT id FROM profiles WHERE email = $1 LIMIT 1`, [row.destinatario_email]);
+          const recId = rec.rows[0]?.id;
+          if (recId && recId !== sessionUser.id) {
+            await dbQuery(
+              `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link) VALUES ($1, 'documento', 'Novo documento partilhado consigo', $2, '/dashboard/repositorio')`,
+              [recId, `"${row.label}" foi partilhado consigo.`]
+            );
+          }
+        } else if (row.visibilidade === "publico") {
+          const dest = await dbQuery(`SELECT id FROM profiles WHERE role = 'formando' AND status = 'activo' AND id != $1`, [sessionUser.id]);
+          if (dest.rows.length) {
+            const values: unknown[] = [];
+            const placeholders = dest.rows.map((r: any, i: number) => {
+              const base = i * 5;
+              values.push(r.id, "documento", "Novo documento no repositório", `"${row.label}" foi adicionado ao repositório.`, "/dashboard/repositorio");
+              return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`;
+            }).join(", ");
+            await dbQuery(`INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link) VALUES ${placeholders}`, values);
+          }
+        }
+      }
+    }
+
     // Audit log — regista tudo o que o utilizador faz, exceto mensagens/telemetria.
     if (CREATE_AUDIT_MAP[table]) {
       const first = insertedRows[0];

@@ -79,6 +79,22 @@ export async function POST(request: Request) {
       params
     );
 
+    // Aviso agregado — só para quem ainda não tem um por ler (ver /api/mensagens POST)
+    const semAviso = await db.query(
+      `SELECT id FROM profiles p WHERE p.id = ANY($1)
+       AND NOT EXISTS (SELECT 1 FROM notificacoes n WHERE n.user_id = p.id AND n.tipo = 'mensagem' AND n.lida = FALSE)`,
+      [recipientIds]
+    );
+    if (semAviso.rows.length > 0) {
+      const notifValues = semAviso.rows
+        .map((_: any, i: number) => `($${i + 1}, 'mensagem', 'Novas mensagens', 'Tens mensagens por ler.', '/dashboard/mensagens')`)
+        .join(", ");
+      await db.query(
+        `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link) VALUES ${notifValues}`,
+        semAviso.rows.map((r: any) => r.id)
+      );
+    }
+
     await auditLog("mensagem_broadcast", {
       actorId: session.id,
       details: { destinatario, sent: recipientIds.length },

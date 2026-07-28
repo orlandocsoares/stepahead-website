@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
-import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut, ShieldCheck, Megaphone, ClipboardList, User, Trash2 } from "lucide-react";
+import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle, ArrowRight, X, LogOut, ShieldCheck, Megaphone, ClipboardList, User, Trash2, FileText } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { BrightnessSlider } from "@/components/BrightnessSlider";
@@ -385,8 +385,8 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
                   </div>
                 ) : notifs.map(n => {
                   const isExpanded = expandedId === n.id;
-                  const iconBg = n.tipo === "novo_formando" ? "bg-emerald-500/10" : n.tipo === "novo_formador" ? "bg-amber-500/10" : n.tipo === "anuncio" ? "bg-purple-500/10" : "bg-blue-500/10";
-                  const icon = n.tipo === "novo_formando" ? <UserCheck size={16} className="text-emerald-400" /> : n.tipo === "novo_formador" ? <ShieldCheck size={16} className="text-amber-400" /> : n.tipo === "anuncio" ? <Megaphone size={16} className="text-purple-400" /> : n.tipo === "tarefa" ? <ClipboardList size={16} className="text-blue-400" /> : <Bell size={16} className="text-blue-400" />;
+                  const iconBg = n.tipo === "novo_formando" ? "bg-emerald-500/10" : n.tipo === "novo_formador" ? "bg-amber-500/10" : n.tipo === "anuncio" ? "bg-purple-500/10" : n.tipo === "documento" ? "bg-teal-500/10" : n.tipo === "mensagem" ? "bg-pink-500/10" : "bg-blue-500/10";
+                  const icon = n.tipo === "novo_formando" ? <UserCheck size={16} className="text-emerald-400" /> : n.tipo === "novo_formador" ? <ShieldCheck size={16} className="text-amber-400" /> : n.tipo === "anuncio" ? <Megaphone size={16} className="text-purple-400" /> : n.tipo === "tarefa" ? <ClipboardList size={16} className="text-blue-400" /> : n.tipo === "documento" ? <FileText size={16} className="text-teal-400" /> : n.tipo === "mensagem" ? <MessageSquare size={16} className="text-pink-400" /> : <Bell size={16} className="text-blue-400" />;
                   const destino = n.link ?? (
                     n.tipo === "novo_formando" || n.tipo === "novo_formador" ? "/dashboard/admin" :
                     n.tipo === "tarefa" ? "/dashboard/tarefas" :
