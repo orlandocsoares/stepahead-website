@@ -5,6 +5,7 @@ import {
   BookOpen, GraduationCap, UserPlus, FolderOpen, ClipboardList, Calendar,
   MessageSquare, Mail, LifeBuoy, UserCircle, Users, Shield, AlertTriangle,
   Info, ChevronRight, Search, Image as ImageIcon, FileText, Star,
+  LayoutDashboard, Bell, Folder,
 } from "lucide-react";
 
 type Role = "formando" | "formador" | "admin" | "todos";
@@ -176,14 +177,18 @@ type Section = {
 };
 
 const SECTIONS: Section[] = [
-  { id: "registo",               icon: UserPlus,      label: "Registo e primeiro acesso", keywords: "registo conta criar email confirmar aprovar formando formador password bilhete identidade escola provincia foto qr" },
+  { id: "registo",               icon: UserPlus,      label: "Registo e primeiro acesso", keywords: "registo conta criar email confirmar reenviar aprovar formando formador password bilhete identidade escola provincia foto qr spam" },
+  { id: "dashboard",             icon: LayoutDashboard, label: "Dashboard",                 keywords: "dashboard inicio painel modo neutro claro escuro fundo tema perfil" },
+  { id: "pesquisa-global",       icon: Search,         label: "Pesquisa Global",             keywords: "pesquisa global procurar ctrl k atalho acções documentos tarefas utilizadores" },
+  { id: "minhas-formacoes",      icon: BookOpen,       label: "As Minhas Formações",          keywords: "minhas formações acção inscrito lecciona tarefas materiais atalho" },
   { id: "acoes-formacao",        icon: GraduationCap,  label: "Acções de Formação",         keywords: "acções formação curso designação materiais utilizadores fotos galeria inscrição vagas horario local data" },
   { id: "formandos-por-validar", icon: UserPlus,       label: "Formandos por Validar",       keywords: "formandos validar aprovar recusar fila caixa entrada pendente activar conta" },
-  { id: "repositorio",           icon: FolderOpen,     label: "Repositório",                 keywords: "repositório ficheiros upload disciplina visibilidade capa pdf miniatura download" },
-  { id: "tarefas",               icon: ClipboardList,  label: "Tarefas",                      keywords: "tarefas entregar avaliar nota observações feedback prazo anexo kanban" },
-  { id: "agenda",                icon: Calendar,       label: "Agenda",                       keywords: "agenda eventos evento inscrição presencial online arquivo calendario" },
+  { id: "repositorio",           icon: FolderOpen,     label: "Repositório",                 keywords: "repositório ficheiros upload disciplina visibilidade capa pdf miniatura download pastas pasta anexar clonar multiplo varios" },
+  { id: "tarefas",               icon: ClipboardList,  label: "Tarefas",                      keywords: "tarefas entregar avaliar nota observações feedback prazo anexo kanban acção formação filtro etiqueta" },
+  { id: "agenda",                icon: Calendar,       label: "Agenda",                       keywords: "agenda eventos evento inscrição presencial online arquivo calendario cancelar confirmação inscrito" },
   { id: "comunidade",            icon: MessageSquare,  label: "Comunidade",                   keywords: "comunidade publicação post comentário gosto fixar categoria mural" },
   { id: "mensagens",             icon: Mail,           label: "Mensagens",                    keywords: "mensagens privadas conversa contactar formador" },
+  { id: "notificacoes",          icon: Bell,           label: "Notificações",                 keywords: "notificações centro sino aviso tarefa documento mensagem anúncio lidas" },
   { id: "suporte",               icon: LifeBuoy,       label: "Suporte",                      keywords: "suporte ticket pendente resolvido categoria ajuda problema" },
   { id: "perfil",                icon: UserCircle,     label: "Perfil",                       keywords: "perfil dados pessoais identificação residência habilitações profissional password avatar foto" },
   { id: "utilizadores",          icon: Users,          label: "Utilizadores",                 keywords: "utilizadores admin cargo estado password csv estatísticas anúncios configurações" },
@@ -303,7 +308,10 @@ export default function ManualPage() {
           </ul>
 
           <Callout>
-            Depois de submeter, chega um email de confirmação (válido 24h). A conta só fica activa depois de <strong className="c-tx2">confirmar o email</strong> e depois <strong className="c-tx2">ser aprovada</strong>.
+            Depois de submeter, chega um email de confirmação (válido 48h). A conta só fica activa depois de <strong className="c-tx2">confirmar o email</strong> e depois <strong className="c-tx2">ser aprovada</strong>.
+          </Callout>
+          <Callout>
+            Se o link expirar, ou o email não chegar, a página de confirmação tem um campo para <strong className="c-tx2">reenviar</strong> um novo link — não é preciso registar-se de novo. Se não encontrar o email, vale a pena verificar a pasta de <strong className="c-tx2">Spam / Lixo</strong> ou "Promoções".
           </Callout>
 
           <div className="grid grid-cols-2 gap-3 text-xs">
@@ -316,6 +324,42 @@ export default function ManualPage() {
               <p className="c-tx4">Aprovado por um administrador, em "Utilizadores".</p>
             </div>
           </div>
+        </section>
+
+        {/* Dashboard */}
+        <section id="dashboard" hidden={!!filteredIds && !filteredIds.has("dashboard")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-base font-semibold c-tx">Dashboard</h2>
+            <RoleTag role="todos" />
+          </div>
+          <p className="text-sm c-tx3">Página inicial ao entrar na plataforma — mostra só o que é relevante para o perfil de quem a vê.</p>
+          <ul className="list-disc list-inside text-xs c-tx3 space-y-1">
+            <li><strong className="c-tx2">Formando</strong> vê ficheiros, eventos e publicações — sem rankings nem estatísticas de gestão.</li>
+            <li><strong className="c-tx2">Formador / Admin</strong> vê também os rankings de contribuição e o armazenamento usado.</li>
+          </ul>
+          <p className="text-xs c-tx3">O selector de modo (canto superior direito) tem várias opções de fundo — o modo por defeito é <strong className="c-tx2">Neutro</strong> (fundo sólido, sem imagem), mas pode trocar-se a qualquer momento; a escolha fica guardada no dispositivo.</p>
+        </section>
+
+        {/* Pesquisa Global */}
+        <section id="pesquisa-global" hidden={!!filteredIds && !filteredIds.has("pesquisa-global")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-base font-semibold c-tx">Pesquisa Global</h2>
+            <RoleTag role="todos" />
+          </div>
+          <p className="text-sm c-tx3">Ícone de lupa na barra superior (ou atalho <strong className="c-tx2">Ctrl/Cmd+K</strong>) — pesquisa ao mesmo tempo em acções de formação, documentos e tarefas; formador/admin também pesquisam utilizadores.</p>
+          <Callout>
+            Os resultados respeitam sempre a mesma visibilidade de cada página — um formando não encontra na pesquisa nada que já não pudesse ver na Agenda, no Repositório ou nas Tarefas.
+          </Callout>
+        </section>
+
+        {/* As Minhas Formações */}
+        <section id="minhas-formacoes" hidden={!!filteredIds && !filteredIds.has("minhas-formacoes")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-base font-semibold c-tx">As Minhas Formações</h2>
+            <RoleTag role="formando" /><RoleTag role="formador" />
+          </div>
+          <p className="text-sm c-tx3">Um único sítio com todas as acções de formação em que está inscrito (formando) ou que lecciona (formador), sem ter de andar de página em página.</p>
+          <p className="text-xs c-tx3">Cada acção mostra quantas tarefas há por entregar/receber (com atalho já filtrado para essa acção em Tarefas) e um botão "Materiais" que expande a lista de documentos publicados nessa acção.</p>
         </section>
 
         {/* Acções de Formação */}
@@ -387,11 +431,22 @@ export default function ManualPage() {
           <SchemaRepositorio />
 
           <Steps items={[
-            <>Botão <strong className="c-tx2">"Upload"</strong> ou arrastar o ficheiro para a janela.</>,
-            <>Dar título e escolher a disciplina.</>,
-            <>Escolher capa, ou deixar em branco (PDFs geram miniatura automática).</>,
+            <>Botão <strong className="c-tx2">"Upload"</strong> ou arrastar o(s) ficheiro(s) para a janela — pode seleccionar vários de uma vez; com mais de um, cada ficheiro usa o próprio nome como título.</>,
+            <>Dar título (só obrigatório com um único ficheiro) e escolher a disciplina.</>,
+            <>Escolher capa, ou deixar em branco (PDFs geram miniatura automática — só com um único ficheiro).</>,
             <>Escolher visibilidade e, se aplicável, "Partilhar no site público".</>,
           ]} />
+
+          <h3 className="text-xs font-semibold c-tx2 uppercase tracking-wide mt-4 flex items-center gap-1.5"><Folder size={12} className="text-blue-400" /> Pastas</h3>
+          <p className="text-xs c-tx3">Dentro de cada disciplina, formador/admin podem criar <strong className="c-tx2">pastas</strong> para organizar por sessão, tema ou acção de formação — botão "Nova Pasta". Um ficheiro em upload fica automaticamente dentro da pasta que estiver aberta no momento.</p>
+          <Steps items={[
+            <>Seleccionar a pasta (fica destacada) para ver só os ficheiros lá dentro.</>,
+            <><strong className="c-tx2">Anexar tudo a uma Acção</strong> — publica todos os documentos da pasta numa acção de formação, de uma só vez.</>,
+            <><strong className="c-tx2">Clonar para nova Acção</strong> — cria uma cópia da pasta e dos seus documentos já publicada noutra acção, sem duplicar o espaço de armazenamento.</>,
+          ]} />
+          <Callout>
+            Eliminar uma pasta não apaga os ficheiros lá dentro — ficam soltos na disciplina.
+          </Callout>
 
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div className="c-s1 border c-br rounded-lg p-2.5">
@@ -436,6 +491,7 @@ export default function ManualPage() {
             </div>
           </div>
           <p className="text-xs c-tx3">O formador atribui nota e observações a cada entrega — o formando vê ambas assim que passa a "Avaliado", e recebe uma notificação a avisar.</p>
+          <p className="text-xs c-tx3">Uma tarefa criada para uma acção de formação específica mostra uma etiqueta com o nome dessa acção em cada cartão, e aparece um filtro "Acção de formação" por cima do quadro para consultar só as tarefas dessa acção.</p>
         </section>
 
         {/* Agenda */}
@@ -446,6 +502,7 @@ export default function ManualPage() {
           </div>
           <p className="text-sm c-tx3">Grelha de eventos, com pesquisa e filtros por formato e âmbito. Eventos passados ficam arquivados.</p>
           <p className="text-xs c-tx3">Um evento pode ser associado a uma acção de formação — inscrever-se no evento inscreve automaticamente na acção (e vice-versa ao cancelar).</p>
+          <p className="text-xs c-tx3">Um evento em que já está inscrito fica destacado com um selo "Inscrito" e um contorno colorido no cartão. Cancelar uma inscrição pede sempre confirmação antes de remover.</p>
         </section>
 
         {/* Comunidade */}
@@ -472,6 +529,21 @@ export default function ManualPage() {
           <Callout warn>
             Um <strong>formando</strong> só pode escrever a formadores das acções em que está inscrito, ou a administradores.
           </Callout>
+        </section>
+
+        {/* Notificações */}
+        <section id="notificacoes" hidden={!!filteredIds && !filteredIds.has("notificacoes")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-base font-semibold c-tx">Notificações</h2>
+            <RoleTag role="todos" />
+          </div>
+          <p className="text-sm c-tx3">Espaço único com todas as notificações — tarefas novas, documentos novos, mensagens por ler e anúncios/avisos — acessível pela sidebar ("Notificações") ou pelo sino no topo → "Ver todas".</p>
+          <ul className="list-disc list-inside text-xs c-tx3 space-y-1">
+            <li>Agrupadas por data (Hoje, Ontem, Esta semana, Anteriores)</li>
+            <li>Filtro "Todas" / "Não lidas", marcar todas como lidas, limpar tudo</li>
+            <li>Documentos: só notifica quem já tem acesso ao ficheiro (mesma visibilidade do Repositório)</li>
+            <li>Mensagens: um único aviso "Tens mensagens por ler" em vez de um por mensagem — o contador exacto continua no ícone de Mensagens</li>
+          </ul>
         </section>
 
         {/* Suporte */}
