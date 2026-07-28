@@ -789,16 +789,33 @@ jobs:
               echo "Aviso: $1 ainda visível ao fim de 30s, a continuar mesmo assim"
             }
 
+            # O docker compose por vezes ainda tem em memória o ID do container que
+            # acabámos de remover manualmente (corrida entre a remoção e o estado
+            # interno do compose) e falha com "No such container: <id>". Repetir
+            # resolve — na 2ª tentativa o compose já não conhece esse ID antigo.
+            up_with_retry() {
+              local service="$1"
+              for i in 1 2 3; do
+                if docker compose --env-file .env.production -f docker-compose.prod.yml up -d --force-recreate --no-deps "$service"; then
+                  return 0
+                fi
+                echo "Aviso: falha ao (re)criar '$service' (tentativa $i/3), a tentar novamente em 5s..."
+                sleep 5
+              done
+              echo "Erro: não foi possível (re)criar '$service' após 3 tentativas."
+              return 1
+            }
+
             echo "==> A construir e reiniciar o container web..."
             docker compose --env-file .env.production -f docker-compose.prod.yml build web
             docker rm -f sabermais-next 2>/dev/null || true
             wait_removed sabermais-next
-            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --force-recreate --no-deps web
+            up_with_retry web
 
             echo "==> A recarregar o nginx (config + volumes)..."
             docker rm -f sabermais-nginx 2>/dev/null || true
             wait_removed sabermais-nginx
-            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --force-recreate --no-deps nginx
+            up_with_retry nginx
 
             echo "==> A limpar imagens e cache antigas..."
             docker image prune -af

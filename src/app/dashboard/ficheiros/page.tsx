@@ -6,7 +6,7 @@ import {
   FileText, Search, Download, Loader2, Plus, FolderOpen, Lock,
   Globe, Users, GraduationCap, LayoutGrid, List, ExternalLink,
   FileImage, FileVideo, FileArchive, File, Trash2, ImagePlus, Pencil, Settings,
-  ChevronRight, Upload, Folder, HardDrive, ArrowUpDown
+  ChevronRight, Upload, Folder, HardDrive, ArrowUpDown, FolderPlus, Link2, Copy, X
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CalendarClock } from "lucide-react";
@@ -133,7 +133,6 @@ export default function FicheirosPage() {
   const [activeCategory, setActiveCategory] = useState("Geral");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [uploadCategory, setUploadCategory] = useState("Geral");
   const [visibilidade, setVisibilidade] = useState("publico");
@@ -150,6 +149,20 @@ export default function FicheirosPage() {
   const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
   const [sitePublico, setSitePublico] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Pastas — organizar ficheiros por sessão/Acção de Formação/tema, dentro da disciplina activa
+  const [pastas, setPastas] = useState<any[]>([]);
+  const [selectedPasta, setSelectedPasta] = useState<string>("todas"); // 'todas' | 'soltos' | <pasta_id>
+  const [novaPastaOpen, setNovaPastaOpen] = useState(false);
+  const [novaPastaNome, setNovaPastaNome] = useState("");
+  const [criandoPasta, setCriandoPasta] = useState(false);
+  const [acaoModal, setAcaoModal] = useState<{ modo: "anexar" | "clonar"; pastaId: string } | null>(null);
+  const [acaoSelecionada, setAcaoSelecionada] = useState("");
+  const [processandoAcao, setProcessandoAcao] = useState(false);
+
+  // Upload múltiplo — quando há mais de um ficheiro, cada um usa o próprio nome como título
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
 
   const [editingFile, setEditingFile] = useState<any>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -186,7 +199,8 @@ export default function FicheirosPage() {
 
   function openUploadModal(prefillFile?: File) {
     setTitle(prefillFile ? prefillFile.name.replace(/\.[^.]+$/, "").replace(/_/g, " ") : "");
-    setUploadFile(prefillFile ?? null);
+    setUploadFiles(prefillFile ? [prefillFile] : []);
+    setUploadProgress(null);
     setThumbnailPreview(null);
     setThumbnailBlob(null);
     setVisibilidade("publico");
@@ -223,12 +237,15 @@ export default function FicheirosPage() {
     if (selectedCapa && !capaOptions.some(o => o.url === selectedCapa)) setSelectedCapa(null);
   }, [capaOptions]);
 
-  function handleFileSelect(file: File) {
-    setUploadFile(file);
+  function handleFilesSelect(fileList: FileList | null) {
+    const arr = Array.from(fileList ?? []);
+    setUploadFiles(arr);
     setThumbnailPreview(null);
     setThumbnailBlob(null);
-    if (!title) setTitle(file.name.replace(/\.[^.]+$/, "").replace(/_/g, " "));
-    if (file.type === "application/pdf") gerarPreviewPdf(file);
+    if (arr.length === 1) {
+      if (!title) setTitle(arr[0].name.replace(/\.[^.]+$/, "").replace(/_/g, " "));
+      if (arr[0].type === "application/pdf") gerarPreviewPdf(arr[0]);
+    }
   }
 
   // Drag & drop global
@@ -256,6 +273,14 @@ export default function FicheirosPage() {
     finally { setLoading(false); }
   }
 
+  async function fetchPastas() {
+    try {
+      const res = await fetch(`/api/pastas?area=${encodeURIComponent(activeCategory)}`);
+      const json = await res.json();
+      setPastas(json.data ?? []);
+    } catch { setPastas([]); }
+  }
+
   useEffect(() => {
     fetchFiles();
     fetch("/api/admin/disciplinas").then(r => r.json()).then(j => setDisciplinas(j.disciplinas?.filter((d: any) => d.activo) ?? []));
@@ -270,6 +295,68 @@ export default function FicheirosPage() {
       });
     }
   }, [user?.id, user?.role]);
+
+  useEffect(() => {
+    setSelectedPasta("todas");
+    fetchPastas();
+  }, [activeCategory]);
+
+  async function handleCriarPasta(e: React.FormEvent) {
+    e.preventDefault();
+    if (!novaPastaNome.trim()) return;
+    setCriandoPasta(true);
+    try {
+      const res = await fetch("/api/pastas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: novaPastaNome.trim(), area: activeCategory }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro ao criar pasta.");
+      setNovaPastaNome("");
+      setNovaPastaOpen(false);
+      fetchPastas();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setCriandoPasta(false);
+    }
+  }
+
+  async function handleEliminarPasta(pastaId: string, nome: string) {
+    if (!confirm(`Eliminar a pasta "${nome}"? Os ficheiros dentro dela não são apagados, ficam soltos em "${activeCategory}".`)) return;
+    await fetch(`/api/pastas?id=${pastaId}`, { method: "DELETE" });
+    if (selectedPasta === pastaId) setSelectedPasta("todas");
+    fetchPastas();
+    fetchFiles();
+  }
+
+  async function confirmarAcaoPasta() {
+    if (!acaoModal || !acaoSelecionada) return;
+    setProcessandoAcao(true);
+    try {
+      const endpoint = acaoModal.modo === "anexar" ? "anexar-acao" : "clonar";
+      const res = await fetch(`/api/pastas/${acaoModal.pastaId}/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ acao_formacao_id: acaoSelecionada }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro na operação.");
+      alert(
+        acaoModal.modo === "anexar"
+          ? `${json.total} documento(s) publicado(s) na acção de formação.`
+          : `Pasta clonada com ${json.total_ficheiros} documento(s) para a nova acção.`
+      );
+      setAcaoModal(null);
+      setAcaoSelecionada("");
+      fetchFiles();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setProcessandoAcao(false);
+    }
+  }
 
   const totalSizeMB = useMemo(() => {
     let total = 0;
@@ -292,6 +379,8 @@ export default function FicheirosPage() {
       if (!visibleCategories.includes(f.area)) return false;
       if (activeCategory !== "Geral" && f.area !== activeCategory) return false;
       if (search && !f.label?.toLowerCase().includes(search.toLowerCase())) return false;
+      if (selectedPasta === "soltos" && f.pasta_id) return false;
+      if (selectedPasta !== "todas" && selectedPasta !== "soltos" && f.pasta_id !== selectedPasta) return false;
       return true;
     }).sort((a, b) => {
       let cmp = 0;
@@ -301,7 +390,7 @@ export default function FicheirosPage() {
       else if (sortCol === "data") cmp = new Date(a.criado_em ?? 0).getTime() - new Date(b.criado_em ?? 0).getTime();
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [files, search, activeCategory, visibleCategories, user, sortCol, sortDir]);
+  }, [files, search, activeCategory, visibleCategories, user, sortCol, sortDir, selectedPasta]);
 
   function toggleSort(col: typeof sortCol) {
     if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -310,42 +399,52 @@ export default function FicheirosPage() {
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
-    if (!uploadFile || !title) return;
+    if (uploadFiles.length === 0) return;
+    if (uploadFiles.length === 1 && !title) return;
     setIsUploading(true);
+    setUploadProgress({ done: 0, total: uploadFiles.length });
+    const areaFinal = uploadAreas && !uploadAreas.includes(uploadCategory) ? uploadAreas[0] : uploadCategory;
+    const pastaAtribuida = selectedPasta !== "todas" && selectedPasta !== "soltos" ? selectedPasta : null;
     try {
-      const sanitized = uploadFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-      const fileName = `${Date.now()}_${sanitized}`;
-      const form = new FormData();
-      form.append("bucket", "materiais"); form.append("path", fileName); form.append("file", uploadFile);
-      const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: form });
-      if (!uploadRes.ok) throw new Error("Erro no upload.");
+      for (const file of uploadFiles) {
+        const sanitized = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+        const fileName = `${Date.now()}_${sanitized}`;
+        const label = uploadFiles.length === 1 ? title : file.name.replace(/\.[^/.]+$/, "");
 
-      // Se ninguém escolheu uma capa manual, usar a miniatura gerada automaticamente a partir da 1ª página do PDF.
-      let miniaturaAutoUrl: string | undefined;
-      if (!selectedCapa && thumbnailBlob) {
-        const capaPath = `capas/${fileName.replace(/\.[^.]+$/, "")}.jpg`;
-        const capaForm = new FormData();
-        capaForm.append("bucket", "materiais"); capaForm.append("path", capaPath); capaForm.append("file", thumbnailBlob, "capa.jpg");
-        const capaRes = await fetch("/api/storage/upload", { method: "POST", body: capaForm });
-        if (capaRes.ok) miniaturaAutoUrl = `/storage/v1/object/public/materiais/${capaPath}`;
+        const form = new FormData();
+        form.append("bucket", "materiais"); form.append("path", fileName); form.append("file", file);
+        const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: form });
+        if (!uploadRes.ok) throw new Error(`Erro no upload de "${file.name}".`);
+
+        // Se ninguém escolheu uma capa manual, usar a miniatura gerada automaticamente a partir da 1ª página do PDF
+        // (só se aplicável ao caso de um único ficheiro — com vários, não há pré-visualização individual).
+        let miniaturaAutoUrl: string | undefined;
+        if (uploadFiles.length === 1 && !selectedCapa && thumbnailBlob) {
+          const capaPath = `capas/${fileName.replace(/\.[^.]+$/, "")}.jpg`;
+          const capaForm = new FormData();
+          capaForm.append("bucket", "materiais"); capaForm.append("path", capaPath); capaForm.append("file", thumbnailBlob, "capa.jpg");
+          const capaRes = await fetch("/api/storage/upload", { method: "POST", body: capaForm });
+          if (capaRes.ok) miniaturaAutoUrl = `/storage/v1/object/public/materiais/${capaPath}`;
+        }
+
+        const dbRes = await fetch("/api/db/arquivos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            label, nome_arquivo: fileName, area: areaFinal,
+            tamanho: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+            tipo: file.type.includes("video") ? "video" : "pdf",
+            visibilidade,
+            pasta_id: pastaAtribuida,
+            ...((visibilidade === "acao_formacao" || visibilidade === "formadores_acao") && acaoFormacaoId ? { acao_formacao_id: acaoFormacaoId } : {}),
+            ...(selectedCapa ? { thumbnail_url: selectedCapa } : miniaturaAutoUrl ? { thumbnail_url: miniaturaAutoUrl } : {}),
+            site_publico: sitePublico && visibilidade === "publico",
+          }),
+        });
+        if (!dbRes.ok) throw new Error(`Erro ao registar "${file.name}".`);
+        setUploadProgress(p => p ? { ...p, done: p.done + 1 } : p);
       }
-
-      const areaFinal = uploadAreas && !uploadAreas.includes(uploadCategory) ? uploadAreas[0] : uploadCategory;
-      const dbRes = await fetch("/api/db/arquivos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          label: title, nome_arquivo: fileName, area: areaFinal,
-          tamanho: (uploadFile.size / (1024 * 1024)).toFixed(2) + " MB",
-          tipo: uploadFile.type.includes("video") ? "video" : "pdf",
-          visibilidade,
-          ...((visibilidade === "acao_formacao" || visibilidade === "formadores_acao") && acaoFormacaoId ? { acao_formacao_id: acaoFormacaoId } : {}),
-          ...(selectedCapa ? { thumbnail_url: selectedCapa } : miniaturaAutoUrl ? { thumbnail_url: miniaturaAutoUrl } : {}),
-          site_publico: sitePublico && visibilidade === "publico",
-        }),
-      });
-      if (!dbRes.ok) throw new Error("Erro ao registar.");
-      setIsModalOpen(false); setThumbnailPreview(null); setThumbnailBlob(null); fetchFiles();
+      setIsModalOpen(false); setThumbnailPreview(null); setThumbnailBlob(null); fetchFiles(); fetchPastas();
     } catch (err: any) { alert(err.message ?? "Erro."); }
     finally { setIsUploading(false); }
   }
@@ -483,6 +582,55 @@ export default function FicheirosPage() {
           )}
           {isAdmin && (
             <a href="/dashboard/config" className="p-2 rounded-lg c-s1 border c-br c-tx4 hover:c-tx transition-colors" title="Configurações"><Settings size={16} /></a>
+          )}
+        </div>
+
+        {/* Pastas da disciplina activa */}
+        <div id="tour-pastas" className="shrink-0">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-bold uppercase tracking-widest c-tx5 flex items-center gap-1.5">
+              <Folder size={11} className="text-blue-400" /> Pastas em {activeCategory}
+            </p>
+            {canUpload && (
+              <button onClick={() => setNovaPastaOpen(true)} className="flex items-center gap-1.5 text-[10px] c-tx4 hover:c-tx2 transition-colors">
+                <FolderPlus size={12} /> Nova Pasta
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => setSelectedPasta("todas")}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-colors ${selectedPasta === "todas" ? "bg-blue-600 text-white border-blue-500" : "c-s1 c-tx4 c-br hc-s2"}`}>
+              Tudo
+            </button>
+            <button onClick={() => setSelectedPasta("soltos")}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-colors ${selectedPasta === "soltos" ? "bg-blue-600 text-white border-blue-500" : "c-s1 c-tx4 c-br hc-s2"}`}>
+              Soltos
+            </button>
+            {pastas.map(p => (
+              <button key={p.id} onClick={() => setSelectedPasta(p.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-colors ${selectedPasta === p.id ? "bg-blue-600 text-white border-blue-500" : "c-s1 c-tx4 c-br hc-s2"}`}>
+                <Folder size={11} /> {p.nome} <span className="opacity-60">({p.total_ficheiros})</span>
+              </button>
+            ))}
+            {pastas.length === 0 && <p className="text-[11px] c-tx5 py-1.5">Sem pastas nesta disciplina.</p>}
+          </div>
+
+          {canUpload && selectedPasta !== "todas" && selectedPasta !== "soltos" && (
+            <div className="flex items-center gap-2 mt-2.5 pt-2.5 border-t c-br">
+              <button onClick={() => setAcaoModal({ modo: "anexar", pastaId: selectedPasta })}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] hover:bg-emerald-500/20 transition-colors">
+                <Link2 size={11} /> Anexar tudo a uma Acção
+              </button>
+              <button onClick={() => setAcaoModal({ modo: "clonar", pastaId: selectedPasta })}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] hover:bg-purple-500/20 transition-colors">
+                <Copy size={11} /> Clonar para nova Acção
+              </button>
+              <button
+                onClick={() => { const p = pastas.find(x => x.id === selectedPasta); if (p) handleEliminarPasta(p.id, p.nome); }}
+                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-red-500/60 hover:text-red-400 hover:bg-red-500/10 text-[10px] transition-colors">
+                <Trash2 size={11} /> Eliminar pasta
+              </button>
+            </div>
           )}
         </div>
 
@@ -683,17 +831,36 @@ export default function FicheirosPage() {
           <form onSubmit={handleUpload} className="px-6 py-5 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Título *</label>
-                <input required value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Guia Pedagógico III"
-                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx4 outline-none focus:border-blue-500/50 transition-colors" />
+                <label className="text-xs c-tx3">
+                  Título {uploadFiles.length <= 1 ? "*" : <span className="opacity-50 normal-case">(vários ficheiros usam o próprio nome)</span>}
+                </label>
+                <input
+                  required={uploadFiles.length <= 1}
+                  disabled={uploadFiles.length > 1}
+                  value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Guia Pedagógico III"
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx4 outline-none focus:border-blue-500/50 transition-colors disabled:opacity-30" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Ficheiro *</label>
+                <label className="text-xs c-tx3">Ficheiro(s) * <span className="opacity-50 normal-case">(podes escolher vários)</span></label>
                 <label className="flex items-center gap-2 border border-dashed c-br rounded-lg px-3 py-2 cursor-pointer hover:border-blue-500/40 transition-colors">
-                  <input type="file" required onChange={e => { const file = e.target.files?.[0]; if (file) handleFileSelect(file); }} className="sr-only" />
+                  <input type="file" multiple required onChange={e => handleFilesSelect(e.target.files)} className="sr-only" />
                   <Upload size={14} className="c-tx5 shrink-0" />
-                  <p className="text-sm c-tx3 truncate">{uploadFile ? uploadFile.name : "Seleccionar ficheiro"}</p>
+                  <p className="text-sm c-tx3 truncate">
+                    {uploadFiles.length === 0 ? "Seleccionar ficheiro(s)" : uploadFiles.length === 1 ? uploadFiles[0].name : `${uploadFiles.length} ficheiros seleccionados`}
+                  </p>
                 </label>
+                {uploadFiles.length > 1 && (
+                  <div className="max-h-20 overflow-y-auto space-y-1">
+                    {uploadFiles.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between gap-2 px-2 py-1 c-s1 rounded-md">
+                        <span className="text-[10px] c-tx4 truncate">{f.name}</span>
+                        <button type="button" onClick={() => setUploadFiles(prev => prev.filter((_, x) => x !== i))} className="c-tx5 hover:text-red-400 shrink-0">
+                          <X size={11} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {gerandoMiniatura && <p className="text-[10px] c-tx5 mt-1">A gerar pré-visualização da capa…</p>}
                 {thumbnailPreview && <img src={thumbnailPreview} alt="Pré-visualização da capa" className="w-24 h-auto rounded border c-br mt-1" />}
               </div>
@@ -766,8 +933,10 @@ export default function FicheirosPage() {
             )}
             <div className="flex gap-3 pt-1">
               <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-xl border c-br text-sm c-tx3 hc-tx transition-colors">Cancelar</button>
-              <button type="submit" disabled={isUploading} className="flex-1 py-2.5 rounded-xl bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-                {isUploading ? <><Loader2 size={14} className="animate-spin" /> A enviar...</> : <><Upload size={13} /> Guardar</>}
+              <button type="submit" disabled={isUploading || uploadFiles.length === 0} className="flex-1 py-2.5 rounded-xl bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                {isUploading
+                  ? <><Loader2 size={14} className="animate-spin" /> A enviar {uploadProgress ? `${uploadProgress.done}/${uploadProgress.total}` : "..."}</>
+                  : <><Upload size={13} /> {uploadFiles.length > 1 ? `Guardar (${uploadFiles.length})` : "Guardar"}</>}
               </button>
             </div>
           </form>
@@ -850,6 +1019,62 @@ export default function FicheirosPage() {
               </button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Modal Nova Pasta ── */}
+      <Dialog open={novaPastaOpen} onOpenChange={setNovaPastaOpen}>
+        <DialogContent className="c-bg border c-br c-tx max-w-md rounded-2xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-5 pb-4 border-b c-br">
+            <DialogTitle className="text-sm font-semibold flex items-center gap-2"><FolderPlus size={15} className="text-blue-400" /> Nova Pasta</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCriarPasta} className="px-6 py-5 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs c-tx3">Nome da Pasta</label>
+              <input required autoFocus value={novaPastaNome} onChange={e => setNovaPastaNome(e.target.value)}
+                placeholder="Ex: Sessão 1 — Diagnóstico"
+                className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx placeholder:c-tx4 outline-none focus:border-blue-500/50 transition-colors" />
+              <p className="text-[10px] c-tx5">Vai ficar dentro de "{activeCategory}". Podes organizar por sessão, acção de formação ou tema.</p>
+            </div>
+            <button disabled={criandoPasta} className="w-full py-2.5 rounded-xl bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              {criandoPasta ? <><Loader2 size={14} className="animate-spin" /> A criar...</> : "Criar Pasta"}
+            </button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Modal Anexar/Clonar pasta para Acção de Formação ── */}
+      <Dialog open={!!acaoModal} onOpenChange={(open) => { if (!open) { setAcaoModal(null); setAcaoSelecionada(""); } }}>
+        <DialogContent className="c-bg border c-br c-tx max-w-md rounded-2xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-5 pb-4 border-b c-br">
+            <DialogTitle className="text-sm font-semibold flex items-center gap-2">
+              {acaoModal?.modo === "anexar" ? <Link2 size={15} className="text-emerald-400" /> : <Copy size={15} className="text-purple-400" />}
+              {acaoModal?.modo === "anexar" ? "Anexar Pasta a uma Acção" : "Clonar Pasta para nova Acção"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 py-5 space-y-4">
+            <p className="text-xs c-tx4 leading-relaxed">
+              {acaoModal?.modo === "anexar"
+                ? "Publica todos os documentos desta pasta na acção de formação escolhida, de uma só vez."
+                : "Cria uma cópia desta pasta (com os respectivos documentos) já publicada na acção de formação escolhida — sem duplicar o espaço de armazenamento."}
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-xs c-tx3">Acção de Formação</label>
+              <select value={acaoSelecionada} onChange={e => setAcaoSelecionada(e.target.value)}
+                className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none">
+                <option value="" className="c-bg">Seleccionar...</option>
+                {minhasAcoes.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao}</option>)}
+              </select>
+              {minhasAcoes.length === 0 && <p className="text-[10px] text-amber-400/70">Não lecciona nenhuma acção de formação.</p>}
+            </div>
+            <button
+              disabled={!acaoSelecionada || processandoAcao}
+              onClick={confirmarAcaoPasta}
+              className="w-full py-2.5 rounded-xl bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {processandoAcao ? <><Loader2 size={14} className="animate-spin" /> A processar...</> : acaoModal?.modo === "anexar" ? "Anexar Tudo" : "Clonar Pasta"}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
