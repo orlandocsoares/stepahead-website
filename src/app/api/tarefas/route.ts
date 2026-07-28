@@ -15,6 +15,7 @@ export async function GET() {
   await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS resposta_nome TEXT`).catch(() => {});
   await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS nota VARCHAR(20)`).catch(() => {});
   await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS feedback TEXT`).catch(() => {});
+  await dbQuery(`ALTER TABLE tarefas ADD COLUMN IF NOT EXISTS acao_formacao_id UUID REFERENCES acoes_formacao(id) ON DELETE SET NULL`).catch(() => {});
 
   const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
   const role = profileRes.rows[0]?.role;
@@ -22,13 +23,14 @@ export async function GET() {
   if (role === "formando") {
     const res = await dbQuery(
       `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
-              t.anexo_url, t.anexo_nome,
+              t.anexo_url, t.anexo_nome, t.acao_formacao_id, af.designacao AS acao_designacao,
               p.first_name AS criador_nome, p.last_name AS criador_apelido,
               td.estado, td.entregue_at, td.resposta_url, td.resposta_nome,
               td.nota, td.feedback
        FROM tarefa_destinatarios td
        JOIN tarefas t ON t.id = td.tarefa_id
        JOIN profiles p ON p.id = t.criador_id
+       LEFT JOIN acoes_formacao af ON af.id = t.acao_formacao_id
        WHERE td.formando_id = $1
        ORDER BY t.prazo ASC NULLS LAST, t.created_at DESC`,
       [sessionUser.id]
@@ -38,15 +40,16 @@ export async function GET() {
     const isAdmin = role === "admin" || role === "super-admin";
     const res = await dbQuery(
       `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
-              t.anexo_url, t.anexo_nome,
+              t.anexo_url, t.anexo_nome, t.acao_formacao_id, af.designacao AS acao_designacao,
               p.first_name AS criador_nome, p.last_name AS criador_apelido,
               COUNT(td.formando_id)                                         AS total,
               COUNT(td.formando_id) FILTER (WHERE td.estado != 'pendente') AS entregues
        FROM tarefas t
        JOIN profiles p ON p.id = t.criador_id
        LEFT JOIN tarefa_destinatarios td ON td.tarefa_id = t.id
+       LEFT JOIN acoes_formacao af ON af.id = t.acao_formacao_id
        WHERE ($1::boolean OR t.criador_id = $2)
-       GROUP BY t.id, p.first_name, p.last_name
+       GROUP BY t.id, p.first_name, p.last_name, af.designacao
        ORDER BY t.created_at DESC`,
       [isAdmin, sessionUser.id]
     );
@@ -68,9 +71,15 @@ export async function POST(request: Request) {
   const { titulo, descricao, prazo, destinatarios, anexo_url, anexo_nome } = await request.json();
   if (!titulo?.trim()) return NextResponse.json({ error: "Título obrigatório." }, { status: 400 });
 
+  // Regista a acção de formação associada quando o destino é "acao:<id>" — permite
+  // agrupar/identificar tarefas por acção de formação na interface.
+  const acaoFormacaoId = typeof destinatarios === "string" && destinatarios.startsWith("acao:")
+    ? destinatarios.slice(5)
+    : null;
+
   const tarefaRes = await dbQuery(
-    `INSERT INTO tarefas (titulo, descricao, prazo, criador_id, anexo_url, anexo_nome) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-    [titulo.trim(), descricao?.trim() || null, prazo || null, sessionUser.id, anexo_url ?? null, anexo_nome ?? null]
+    `INSERT INTO tarefas (titulo, descricao, prazo, criador_id, anexo_url, anexo_nome, acao_formacao_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+    [titulo.trim(), descricao?.trim() || null, prazo || null, sessionUser.id, anexo_url ?? null, anexo_nome ?? null, acaoFormacaoId]
   );
   const tarefaId = tarefaRes.rows[0].id;
 

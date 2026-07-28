@@ -18,6 +18,8 @@ type Tarefa = {
   created_at: string;
   anexo_url?: string;
   anexo_nome?: string;
+  acao_formacao_id?: string;
+  acao_designacao?: string;
   // formando view
   criador_nome?: string;
   criador_apelido?: string;
@@ -146,6 +148,7 @@ export default function TarefasPage() {
   const [error, setError] = useState<string | null>(null);
   const [acoesFormacao, setAcoesFormacao] = useState<{ id: string; designacao: string; total_inscritos: number }[]>([]);
   const [todosFormandos, setTodosFormandos] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
+  const [filtroAcao, setFiltroAcao] = useState<string>("todas");
 
   async function fetchTarefas() {
     setLoading(true);
@@ -281,20 +284,33 @@ export default function TarefasPage() {
     }
   }
 
+  // Acções de formação presentes nas tarefas actuais — para o filtro acima do kanban
+  const acoesNasTarefas = useMemo(() => {
+    const map = new Map<string, string>();
+    tarefas.forEach(t => { if (t.acao_formacao_id && t.acao_designacao) map.set(t.acao_formacao_id, t.acao_designacao); });
+    return Array.from(map, ([id, designacao]) => ({ id, designacao }));
+  }, [tarefas]);
+
+  const tarefasFiltradas = useMemo(() => {
+    if (filtroAcao === "todas") return tarefas;
+    if (filtroAcao === "sem-acao") return tarefas.filter(t => !t.acao_formacao_id);
+    return tarefas.filter(t => t.acao_formacao_id === filtroAcao);
+  }, [tarefas, filtroAcao]);
+
   // Formando: kanban por estado pessoal
   const colFormando = useMemo(() => ({
-    pendente:   tarefas.filter(t => t.estado === "pendente" || !t.estado),
-    entregue:   tarefas.filter(t => t.estado === "entregue"),
-    avaliado:   tarefas.filter(t => t.estado === "avaliado"),
-  }), [tarefas]);
+    pendente:   tarefasFiltradas.filter(t => t.estado === "pendente" || !t.estado),
+    entregue:   tarefasFiltradas.filter(t => t.estado === "entregue"),
+    avaliado:   tarefasFiltradas.filter(t => t.estado === "avaliado"),
+  }), [tarefasFiltradas]);
 
   // Formador: kanban por progresso de entrega
   // COUNT() vem como string do driver pg — forçar Number()
   const colFormador = useMemo(() => ({
-    semEntregas: tarefas.filter(t => Number(t.entregues ?? 0) === 0),
-    emProgresso: tarefas.filter(t => Number(t.entregues ?? 0) > 0 && Number(t.entregues ?? 0) < Number(t.total ?? 1)),
-    completas:   tarefas.filter(t => Number(t.total ?? 0) > 0 && Number(t.entregues ?? 0) >= Number(t.total ?? 1)),
-  }), [tarefas]);
+    semEntregas: tarefasFiltradas.filter(t => Number(t.entregues ?? 0) === 0),
+    emProgresso: tarefasFiltradas.filter(t => Number(t.entregues ?? 0) > 0 && Number(t.entregues ?? 0) < Number(t.total ?? 1)),
+    completas:   tarefasFiltradas.filter(t => Number(t.total ?? 0) > 0 && Number(t.entregues ?? 0) >= Number(t.total ?? 1)),
+  }), [tarefasFiltradas]);
 
   const COLS_FORMANDO = [
     { key: "pendente",  label: "A fazer",   color: "text-amber-400",   bar: "bg-amber-500",   empty: "Nenhuma tarefa por fazer." },
@@ -324,6 +340,18 @@ export default function TarefasPage() {
           </button>
         )}
       </div>
+
+      {!loading && tarefas.length > 0 && acoesNasTarefas.length > 0 && (
+        <div className="flex items-center gap-2 px-6 py-2.5 border-b c-br shrink-0">
+          <span className="text-[10px] font-medium c-tx5 uppercase tracking-wide">Acção de formação</span>
+          <select value={filtroAcao} onChange={e => setFiltroAcao(e.target.value)}
+            className="text-xs c-s1 border c-br rounded-lg px-2 py-1 c-tx3 outline-none">
+            <option value="todas">Todas</option>
+            {acoesNasTarefas.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao}</option>)}
+            <option value="sem-acao">Sem acção associada</option>
+          </select>
+        </div>
+      )}
 
       <div className="flex-1 overflow-hidden px-4 py-4">
         {loading ? (
@@ -357,6 +385,11 @@ export default function TarefasPage() {
                         <p className="text-xs font-medium c-tx leading-snug">{t.titulo}</p>
                         <PrazoBadge prazo={t.prazo} />
                       </div>
+                      {t.acao_designacao && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-1.5 py-0.5">
+                          {t.acao_designacao}
+                        </span>
+                      )}
                       {t.criador_nome && (
                         <p className="text-[10px] c-tx4 flex items-center gap-1"><User size={9} /> {t.criador_nome} {t.criador_apelido}</p>
                       )}
@@ -439,6 +472,11 @@ export default function TarefasPage() {
                           <Trash2 size={11} />
                         </button>
                       </div>
+                      {t.acao_designacao && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-1.5 py-0.5">
+                          {t.acao_designacao}
+                        </span>
+                      )}
                       {t.criador_nome && (
                         <p className="text-[10px] c-tx4 flex items-center gap-1"><User size={9} /> {t.criador_nome} {t.criador_apelido}</p>
                       )}
