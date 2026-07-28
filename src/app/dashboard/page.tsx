@@ -4,13 +4,9 @@ import { useEffect, useState } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   Users, FolderOpen, Calendar, Loader2, HardDrive,
-  Trophy, TrendingUp, Upload, BarChart3, MessageSquare, LifeBuoy
+  TrendingUp, Upload, BarChart3, MessageSquare, LifeBuoy
 } from "lucide-react";
 import Link from "next/link";
-
-const ROLE_LABEL: Record<string, string> = {
-  "super-admin": "Super Admin", admin: "Admin", formador: "Formador", formando: "Formando",
-};
 
 const AREA_COLORS = [
   "bg-blue-500", "bg-emerald-500", "bg-purple-500",
@@ -59,7 +55,6 @@ export default function DashboardPage() {
   const t = analytics?.totals ?? {};
   const topUploaders: any[] = analytics?.topUploaders ?? [];
   const topAreas: any[] = analytics?.topAreas ?? [];
-  const topContrib: any[] = analytics?.recentLogins ?? [];
   const eventos: any[] = analytics?.eventosRecentes ?? [];
   const maxArea = topAreas[0]?.total ? Number(topAreas[0].total) : 1;
   const maxUpload = topUploaders[0]?.total ? Number(topUploaders[0].total) : 1;
@@ -98,7 +93,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Linha 2: Rankings */}
-      <div id="tour-rankings" className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div id="tour-rankings" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Top Uploaders */}
         <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
@@ -152,42 +147,6 @@ export default function DashboardPage() {
                   </div>
                 </li>
               ))}
-            </ol>
-          )}
-        </div>
-
-        {/* Utilizadores mais activos (contribuições) */}
-        <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Trophy size={14} className="text-amber-400" />
-            <h3 className="text-sm font-semibold c-tx">Mais activos na plataforma</h3>
-          </div>
-          {topContrib.length === 0 ? (
-            <p className="text-xs c-tx4 py-4 text-center">Sem dados ainda.</p>
-          ) : (
-            <ol className="space-y-3">
-              {topContrib.map((u, i) => {
-                const maxC = Number(topContrib[0]?.contribuicoes) || 1;
-                return (
-                  <li key={i} className="flex items-center gap-3">
-                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i === 0 ? "text-amber-400" : i === 1 ? "c-tx3" : i === 2 ? "text-amber-700" : "c-tx4"}`}>
-                      {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i+1}.`}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div>
-                          <span className="text-xs c-tx2 truncate">{u.first_name} {u.last_name}</span>
-                          <span className="text-[9px] c-tx4 ml-1.5">{ROLE_LABEL[u.role] ?? u.role}</span>
-                        </div>
-                        <span className="text-xs c-tx3 shrink-0 ml-2">{u.contribuicoes}</span>
-                      </div>
-                      <div className="h-1.5 c-s2 rounded-full overflow-hidden">
-                        <div className="h-full bg-amber-500/60 rounded-full" style={{ width: `${(Number(u.contribuicoes) / maxC) * 100}%` }} />
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
             </ol>
           )}
         </div>
