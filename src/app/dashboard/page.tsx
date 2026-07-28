@@ -31,6 +31,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
+  // Formando não gere a plataforma — rankings, armazenamento e a listagem de
+  // utilizadores não fazem parte do seu trabalho diário, só acrescentam ruído.
+  const isStaff = isAdmin || user?.role === "formador";
 
   useEffect(() => {
     async function load() {
@@ -71,9 +74,9 @@ export default function DashboardPage() {
       </div>
 
       {/* KPIs */}
-      <div id="tour-kpi-cards" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div id="tour-kpi-cards" className={`grid grid-cols-2 gap-3 ${isStaff ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         {[
-          { label: "Utilizadores", value: t.total_users ?? "—", icon: Users, color: "text-blue-400 bg-blue-500/10", href: "/dashboard/admin" },
+          ...(isStaff ? [{ label: "Utilizadores", value: t.total_users ?? "—", icon: Users, color: "text-blue-400 bg-blue-500/10", href: "/dashboard/admin" }] : []),
           { label: "Ficheiros", value: t.total_ficheiros ?? "—", icon: FolderOpen, color: "text-emerald-400 bg-emerald-500/10", href: "/dashboard/ficheiros" },
           { label: "Eventos este mês", value: t.eventos_mes ?? "—", icon: Calendar, color: "text-purple-400 bg-purple-500/10", href: "/dashboard/agenda" },
           { label: "Publicações", value: t.total_posts ?? "—", icon: MessageSquare, color: "text-amber-400 bg-amber-500/10", href: "/dashboard/comunidade" },
@@ -92,7 +95,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Linha 2: Rankings */}
+      {/* Linha 2: Rankings — só relevante para quem gere conteúdo/plataforma */}
+      {isStaff && (
       <div id="tour-rankings" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Top Uploaders */}
@@ -151,9 +155,10 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+      )}
 
       {/* Linha 3: Próximos eventos + tickets + disco */}
-      <div id="tour-dash-stats" className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div id="tour-dash-stats" className={`grid grid-cols-1 gap-4 ${isStaff ? "lg:grid-cols-3" : ""}`}>
 
         {/* Próximos eventos */}
         <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
@@ -204,8 +209,8 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Disco */}
-        {disk && (
+        {/* Disco — preocupação de infraestrutura, só faz sentido para quem administra */}
+        {isStaff && disk && (
           <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
             <div className="flex items-center gap-2">
               <HardDrive size={14} className="text-slate-400" />
