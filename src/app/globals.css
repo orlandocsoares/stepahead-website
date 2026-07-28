@@ -183,6 +183,11 @@ html.light .dashboard-root textarea {
   color: #0f1f3d !important;
 }
 
+/* NEUTRO — variação do Claro sem foto de fundo: fundo sólido cinza muito claro */
+html.neutro { --dash-bg-image: none; }
+html.neutro .dashboard-root { background-color: #eef1f5 !important; }
+html.neutro .dashboard-overlay { background: none !important; }
+
 /* ─── Utility classes ────────────────────────────────────────────────────── */
 /* Backgrounds */
 .c-bg  { background-color: var(--c-bg)  !important; }

@@ -98,6 +98,7 @@ export default function AgendaPage() {
     if (!user?.id) return;
     const evento = events.find(e => e.id === eventoId);
     if (myInscriptions.includes(eventoId)) {
+      if (!confirm("Cancelar a sua inscrição neste evento?")) return;
       await fetch("/api/db/inscricoes_agenda", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },

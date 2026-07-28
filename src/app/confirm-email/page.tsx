@@ -1,10 +1,57 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, XCircle, Clock, Loader2, ShieldCheck, ArrowRight } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Loader2, ShieldCheck, ArrowRight, Send } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+
+function ResendConfirmForm() {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState<"idle" | "loading" | "done">("idle");
+
+  async function handleResend(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setState("loading");
+    try {
+      await fetch("/api/auth/resend-confirm-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+    } finally {
+      setState("done");
+    }
+  }
+
+  if (state === "done") return (
+    <p className="text-emerald-400/80 text-xs pt-2">
+      Se existir uma conta pendente com este email, foi enviado um novo link de confirmação.
+    </p>
+  );
+
+  return (
+    <form onSubmit={handleResend} className="flex flex-col gap-2 pt-2">
+      <input
+        type="email"
+        required
+        placeholder="O seu email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="w-full px-4 py-2.5 rounded-full bg-white/[0.06] border border-white/[0.08] text-white text-xs placeholder:text-white/30 outline-none focus:border-blue-400/40"
+      />
+      <button
+        type="submit"
+        disabled={state === "loading"}
+        className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-blue-500 text-white text-xs font-bold uppercase tracking-widest hover:bg-blue-400 transition-colors disabled:opacity-50"
+      >
+        {state === "loading" ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+        Reenviar link de confirmação
+      </button>
+    </form>
+  );
+}
 
 function ConfirmEmailContent() {
   const params = useSearchParams();
@@ -45,11 +92,14 @@ function ConfirmEmailContent() {
       <div className="space-y-2">
         <h1 className="text-white font-semibold text-base">Link expirado</h1>
         <p className="text-white/50 text-sm leading-relaxed max-w-xs mx-auto">
-          O link de confirmação é válido durante 24 horas e já expirou.
+          O link de confirmação é válido durante 48 horas e já expirou.
         </p>
         <p className="text-white/30 text-xs leading-relaxed max-w-xs mx-auto">
-          Registe-se novamente para receber um novo link de verificação.
+          Introduza o seu email para receber um novo link, sem precisar de se registar novamente.
         </p>
+      </div>
+      <div className="max-w-xs mx-auto">
+        <ResendConfirmForm />
       </div>
       <Link
         href="/"

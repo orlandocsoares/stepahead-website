@@ -22,15 +22,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     var mode = localStorage.getItem('sabermais-mode') || 'escuro';
     var html = document.documentElement;
     if (mode === 'claro') html.classList.add('light');
+    else if (mode === 'neutro') html.classList.add('light', 'neutro');
     else if (mode === 'meio-escuro') html.classList.add('meio-escuro');
     else if (mode === 'meio-claro') html.classList.add('meio-claro');
     var thumbs = {
       'escuro': '/modos/escuro.png',
       'meio-escuro': '/modos/meio-escuro.webp',
       'meio-claro': '/modos/meio-claro.webp',
-      'claro': '/modos/claro.webp'
+      'claro': '/modos/claro.webp',
+      'neutro': null
     };
-    html.style.setProperty('--dash-bg-image', "url('" + (thumbs[mode] || thumbs['escuro']) + "')");
+    var bg = thumbs[mode] !== undefined ? thumbs[mode] : thumbs['escuro'];
+    html.style.setProperty('--dash-bg-image', bg ? "url('" + bg + "')" : 'none');
   } catch(e) {}
 })();
         ` }} />
