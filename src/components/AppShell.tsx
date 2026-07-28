@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { getSavedMode, applyMode, saveMode, MODES, type SiteMode } from "@/lib/site-mode";
 
 type AppShellCtx = { mode: SiteMode; changeMode: (m: SiteMode) => void };
-const AppShellContext = createContext<AppShellCtx>({ mode: "escuro", changeMode: () => {} });
+const AppShellContext = createContext<AppShellCtx>({ mode: "neutro", changeMode: () => {} });
 export const useAppMode = () => useContext(AppShellContext);
 
 const ANIMATED_ROUTES = ["/"];
@@ -31,7 +31,7 @@ function PageTransition({ pathname, children }: { pathname: string; children: Re
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [mode, setMode] = useState<SiteMode>("escuro");
+  const [mode, setMode] = useState<SiteMode>("neutro");
 
   const isCleanPage = pathname === "/recursos" || pathname?.startsWith("/recursos/");
 

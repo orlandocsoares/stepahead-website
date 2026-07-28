@@ -49,8 +49,8 @@ export const MODES: { id: SiteMode; label: string; thumb: string; overlay: strin
 const KEY = "sabermais-mode";
 
 export function getSavedMode(): SiteMode {
-  if (typeof window === "undefined") return "escuro";
-  return (localStorage.getItem(KEY) as SiteMode) ?? "escuro";
+  if (typeof window === "undefined") return "neutro";
+  return (localStorage.getItem(KEY) as SiteMode) ?? "neutro";
 }
 
 export function saveMode(mode: SiteMode) {

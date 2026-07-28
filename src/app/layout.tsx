@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: `
 (function(){
   try {
-    var mode = localStorage.getItem('sabermais-mode') || 'escuro';
+    var mode = localStorage.getItem('sabermais-mode') || 'neutro';
     var html = document.documentElement;
     if (mode === 'claro') html.classList.add('light');
     else if (mode === 'neutro') html.classList.add('light', 'neutro');
@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       'claro': '/modos/claro.webp',
       'neutro': null
     };
-    var bg = thumbs[mode] !== undefined ? thumbs[mode] : thumbs['escuro'];
+    var bg = thumbs[mode] !== undefined ? thumbs[mode] : thumbs['neutro'];
     html.style.setProperty('--dash-bg-image', bg ? "url('" + bg + "')" : 'none');
   } catch(e) {}
 })();
