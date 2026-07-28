@@ -592,8 +592,9 @@ export default function FicheirosPage() {
               <Folder size={11} className="text-blue-400" /> Pastas em {activeCategory}
             </p>
             {canUpload && (
-              <button onClick={() => setNovaPastaOpen(true)} className="flex items-center gap-1.5 text-[10px] c-tx4 hover:c-tx2 transition-colors">
-                <FolderPlus size={12} /> Nova Pasta
+              <button onClick={() => setNovaPastaOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-medium hover:bg-blue-500/20 hover:border-blue-500/50 transition-colors">
+                <FolderPlus size={13} /> Nova Pasta
               </button>
             )}
           </div>

@@ -96,9 +96,9 @@ export default function NotificacoesPage() {
   }, [visible]);
 
   return (
-    <div className="max-w-2xl mx-auto w-full py-2">
+    <div className="w-full py-2">
       {/* Cabeçalho */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/10 border c-br flex items-center justify-center shrink-0">
             <Bell size={19} className="text-blue-400" />
@@ -110,7 +110,19 @@ export default function NotificacoesPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1 p-1 rounded-lg c-s1 border c-br">
+            {(["todas", "nao-lidas"] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filter === f ? "c-bg2 c-tx shadow-sm" : "c-tx4 hc-tx3"}`}
+              >
+                {f === "todas" ? "Todas" : "Não lidas"}
+              </button>
+            ))}
+          </div>
           {unread > 0 && (
             <button onClick={markAllRead} className="flex items-center gap-1.5 text-xs c-tx3 hc-tx transition-colors">
               <CheckCheck size={14} /> Marcar lidas
@@ -124,35 +136,22 @@ export default function NotificacoesPage() {
         </div>
       </div>
 
-      {/* Filtro */}
-      <div className="flex items-center gap-1 p-1 rounded-lg c-s1 border c-br w-fit mb-5">
-        {(["todas", "nao-lidas"] as const).map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filter === f ? "c-bg2 c-tx shadow-sm" : "c-tx4 hc-tx3"}`}
-          >
-            {f === "todas" ? "Todas" : "Não lidas"}
-          </button>
-        ))}
-      </div>
-
       {/* Lista */}
       {loading ? (
         <div className="py-16 text-center c-tx4 text-sm">A carregar...</div>
       ) : visible.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3 c-bg2 border c-br rounded-2xl">
-          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center">
-            <Inbox size={24} className="text-blue-400/70" />
+        <div className="flex flex-col items-center justify-center py-24 gap-3 c-bg2 border c-br rounded-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center">
+            <Inbox size={28} className="text-blue-400/70" />
           </div>
           <p className="text-sm c-tx4">{filter === "nao-lidas" ? "Sem notificações por ler" : "Sem notificações"}</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-7">
           {groups.map(group => (
             <div key={group.label}>
-              <p className="text-[10px] font-bold uppercase tracking-widest c-tx5 mb-2 px-1">{group.label}</p>
-              <div className="space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-widest c-tx5 mb-3 px-1">{group.label} <span className="c-tx5 opacity-60 font-normal normal-case">({group.items.length})</span></p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {group.items.map(n => {
                   const isExpanded = expandedId === n.id;
                   const style = TIPO_STYLE[n.tipo] ?? DEFAULT_STYLE;
@@ -169,11 +168,11 @@ export default function NotificacoesPage() {
                         if (destino) { router.push(destino); return; }
                         setExpandedId(isExpanded ? null : n.id);
                       }}
-                      className={`relative flex gap-3.5 px-4 py-3.5 rounded-xl border border-l-4 c-br ${style.border} c-bg2 hover:shadow-md hc-s2 transition-all cursor-pointer ${!n.lida ? "shadow-sm" : "opacity-80"}`}
+                      className={`relative flex gap-4 px-5 py-4 rounded-2xl border border-l-4 c-br ${style.border} c-bg2 hover:shadow-md hc-s2 transition-all cursor-pointer ${!n.lida ? "shadow-sm" : "opacity-80"}`}
                     >
-                      {!n.lida && <span className={`absolute top-3 right-3 w-2 h-2 rounded-full ${style.dot}`} />}
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${style.bg}`}>
-                        <Icon size={16} className={style.text} />
+                      {!n.lida && <span className={`absolute top-4 right-4 w-2 h-2 rounded-full ${style.dot}`} />}
+                      <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${style.bg}`}>
+                        <Icon size={19} className={style.text} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
@@ -181,14 +180,14 @@ export default function NotificacoesPage() {
                           <span className="text-[10px] c-tx5 shrink-0 mt-0.5">{timeAgo(n.created_at)}</span>
                         </div>
                         {n.mensagem && (
-                          <p className={`text-xs c-tx4 mt-1 leading-relaxed whitespace-pre-wrap ${isExpanded ? "" : "line-clamp-2"}`}>
+                          <p className={`text-xs c-tx4 mt-1.5 leading-relaxed whitespace-pre-wrap ${isExpanded ? "" : "line-clamp-2"}`}>
                             {n.mensagem}
                           </p>
                         )}
                         {destino ? (
-                          <span className={`text-xs mt-1.5 inline-block font-semibold ${style.text}`}>Abrir →</span>
+                          <span className={`text-xs mt-2 inline-block font-semibold ${style.text}`}>Abrir →</span>
                         ) : n.mensagem && n.mensagem.length > 80 && (
-                          <span className="text-xs text-blue-400/60 mt-1.5 inline-block">
+                          <span className="text-xs text-blue-400/60 mt-2 inline-block">
                             {isExpanded ? "▲ Recolher" : "▼ Ver tudo"}
                           </span>
                         )}

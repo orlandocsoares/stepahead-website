@@ -4,9 +4,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import {
-  GraduationCap, Loader2, Calendar, MapPin, Laptop, User,
+  GraduationCap, Loader2, Calendar, MapPin, Laptop, User, Users,
   ClipboardList, FileText, ChevronDown, ChevronUp, ExternalLink,
 } from "lucide-react";
+
+const ESTADO_LABEL: Record<string, string> = {
+  agendada: "Agendada", em_curso: "Em curso", concluida: "Concluída", cancelada: "Cancelada",
+};
+const ESTADO_COLOR: Record<string, string> = {
+  agendada: "border-blue-500/20 text-blue-400 bg-blue-500/10",
+  em_curso: "border-emerald-500/20 text-emerald-400 bg-emerald-500/10",
+  concluida: "border-slate-500/20 text-slate-400 bg-slate-500/10",
+  cancelada: "border-red-500/20 text-red-400 bg-red-500/10",
+};
 
 type Acao = {
   id: string;
@@ -15,8 +25,13 @@ type Acao = {
   data_fim?: string;
   horario?: string;
   local?: string;
+  provincia?: string;
   modalidade?: string;
   estado?: string;
+  area?: string;
+  imagem_url?: string | null;
+  total_inscritos?: number;
+  vagas_max?: number | null;
   formadores: { id: string; nome: string }[];
 };
 
@@ -121,7 +136,7 @@ export default function MinhasFormacoesPage() {
             <Link href="/dashboard/agenda" className="text-xs text-blue-400 hover:text-blue-300">Ver acções disponíveis na Agenda →</Link>
           </div>
         ) : (
-          <div className="space-y-3 max-w-3xl mx-auto">
+          <div className="space-y-3">
             {acoes.map(a => {
               const nPendentes = pendentes(a.id);
               const nTarefas = tarefasDaAcao(a.id).length;
@@ -130,15 +145,37 @@ export default function MinhasFormacoesPage() {
               return (
                 <div key={a.id} className="c-bg2 border c-br rounded-xl overflow-hidden">
                   <div className="p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold c-tx leading-snug">{a.designacao}</p>
+                    <div className="flex items-start gap-4">
+                      {a.imagem_url ? (
+                        <img src={a.imagem_url} alt={a.designacao} className="w-10 h-10 rounded-xl object-cover shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                          <GraduationCap size={18} className="text-blue-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold c-tx leading-snug">{a.designacao}</p>
+                          {a.estado && (
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${ESTADO_COLOR[a.estado] ?? ESTADO_COLOR.agendada}`}>
+                              {ESTADO_LABEL[a.estado] ?? a.estado}
+                            </span>
+                          )}
+                          {a.area && (
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-emerald-500/20 text-emerald-400 bg-emerald-500/10">
+                              {a.area}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-3 mt-1 text-xs c-tx4 flex-wrap">
                           <span className="flex items-center gap-1"><Calendar size={11} /> {formatPeriodo(a)}</span>
                           <span className="flex items-center gap-1">
                             {a.modalidade === "online" ? <Laptop size={11} /> : <MapPin size={11} />}
-                            {a.local || (a.modalidade === "online" ? "Online" : "A definir")}
+                            {[a.provincia, a.local].filter(Boolean).join(" — ") || (a.modalidade === "online" ? "Online" : "A definir")}
                           </span>
+                          {typeof a.total_inscritos === "number" && (
+                            <span className="flex items-center gap-1"><Users size={11} /> {a.total_inscritos}{a.vagas_max ? `/${a.vagas_max}` : ""} inscritos</span>
+                          )}
                         </div>
                         {a.formadores?.length > 0 && (
                           <p className="text-xs c-tx4 flex items-center gap-1 mt-1">
@@ -146,9 +183,6 @@ export default function MinhasFormacoesPage() {
                           </p>
                         )}
                       </div>
-                      {a.estado && (
-                        <span className="text-[10px] px-2 py-0.5 rounded font-medium bg-blue-500/10 text-blue-400 shrink-0">{a.estado}</span>
-                      )}
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap pt-1">
