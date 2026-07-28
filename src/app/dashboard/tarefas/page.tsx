@@ -639,13 +639,16 @@ export default function TarefasPage() {
                 </div>
 
                 {destMode === "acao" && (
-                  <select value={destAcao} onChange={e => setDestAcao(e.target.value)}
-                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
-                    {acoesFormacao.length === 0
-                      ? <option value="">Sem acções de formação criadas</option>
-                      : acoesFormacao.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao} ({a.total_inscritos} inscritos)</option>)
-                    }
-                  </select>
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-xs c-tx3">Selecciona a acção de formação</label>
+                    <select value={destAcao} onChange={e => setDestAcao(e.target.value)}
+                      className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                      {acoesFormacao.length === 0
+                        ? <option value="">Sem acções de formação criadas</option>
+                        : acoesFormacao.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao} ({a.total_inscritos} inscritos)</option>)
+                      }
+                    </select>
+                  </div>
                 )}
 
                 {destMode === "individual" && (
