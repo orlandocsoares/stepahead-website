@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText, Video, Search, Download,
   Loader2, Sparkles, Plus, BookOpen, Shield, HelpCircle,
-  Globe, Lock, Mail, GraduationCap, UserCheck, EyeOff, Check, User, Trash2
+  Globe, Lock, Mail, GraduationCap, UserCheck, EyeOff, Check, User, Trash2,
+  Folder, FolderPlus, Link2, Copy
 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -30,6 +31,17 @@ export default function RepositorioPage() {
   const [destinatarioEmail, setDestinatarioEmail] = useState("");
   const [activeShareFilter, setActiveShareFilter] = useState("todos"); // 'todos', 'meus', 'partilhados'
 
+  // Pastas — organização de documentos por disciplina/sessão/Acção de Formação
+  const [pastas, setPastas] = useState<any[]>([]);
+  const [selectedPasta, setSelectedPasta] = useState<string>("todas"); // 'todas' | 'soltos' | <pasta_id>
+  const [novaPastaOpen, setNovaPastaOpen] = useState(false);
+  const [novaPastaNome, setNovaPastaNome] = useState("");
+  const [criandoPasta, setCriandoPasta] = useState(false);
+  const [acaoModal, setAcaoModal] = useState<{ modo: "anexar" | "clonar"; pastaId: string } | null>(null);
+  const [acoesFormacao, setAcoesFormacao] = useState<any[]>([]);
+  const [acaoSelecionada, setAcaoSelecionada] = useState("");
+  const [processandoAcao, setProcessandoAcao] = useState(false);
+
   // REFINAMENTO UNIFORME: Rastreador de Direcção para a Calha de Néon (O Cometa)
   const [scrollDirection, setScrollDirection] = useState<'down' | 'up'>('down');
   const lastScrollY = useRef(0);
@@ -50,6 +62,84 @@ export default function RepositorioPage() {
   useEffect(() => {
     fetchFiles();
   }, []);
+
+  useEffect(() => {
+    setSelectedPasta("todas");
+    fetchPastas();
+  }, [activeCategory]);
+
+  useEffect(() => {
+    if (isAuthorized) {
+      fetch("/api/acoes-formacao?minhas=1").then(r => r.json()).then(j => setAcoesFormacao(j.data ?? []));
+    }
+  }, [isAuthorized]);
+
+  async function fetchPastas() {
+    try {
+      const res = await fetch(`/api/pastas?area=${encodeURIComponent(activeCategory)}`);
+      const json = await res.json();
+      setPastas(json.data ?? []);
+    } catch (err) {
+      console.error("Erro ao carregar pastas:", err);
+    }
+  }
+
+  async function handleCriarPasta(e: React.FormEvent) {
+    e.preventDefault();
+    if (!novaPastaNome.trim()) return;
+    setCriandoPasta(true);
+    try {
+      const res = await fetch("/api/pastas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: novaPastaNome.trim(), area: activeCategory }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro ao criar pasta.");
+      setNovaPastaNome("");
+      setNovaPastaOpen(false);
+      fetchPastas();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setCriandoPasta(false);
+    }
+  }
+
+  async function handleEliminarPasta(pastaId: string, nome: string) {
+    if (!confirm(`Eliminar a pasta "${nome}"? Os ficheiros dentro dela não são apagados, ficam soltos em "${activeCategory}".`)) return;
+    await fetch(`/api/pastas?id=${pastaId}`, { method: "DELETE" });
+    if (selectedPasta === pastaId) setSelectedPasta("todas");
+    fetchPastas();
+    fetchFiles();
+  }
+
+  async function confirmarAcaoPasta() {
+    if (!acaoModal || !acaoSelecionada) return;
+    setProcessandoAcao(true);
+    try {
+      const endpoint = acaoModal.modo === "anexar" ? "anexar-acao" : "clonar";
+      const res = await fetch(`/api/pastas/${acaoModal.pastaId}/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ acao_formacao_id: acaoSelecionada }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro na operação.");
+      alert(
+        acaoModal.modo === "anexar"
+          ? `${json.total} documento(s) publicado(s) na acção de formação.`
+          : `Pasta clonada com ${json.total_ficheiros} documento(s) para a nova acção.`
+      );
+      setAcaoModal(null);
+      setAcaoSelecionada("");
+      fetchFiles();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setProcessandoAcao(false);
+    }
+  }
 
   async function fetchFiles() {
     try {
@@ -123,6 +213,7 @@ export default function RepositorioPage() {
           tipo: uploadFile.type.includes("video") ? "video" : "pdf",
           visibilidade: visibilidade,
           destinatario_email: visibilidade === "especifico" ? destinatarioEmail : null,
+          pasta_id: selectedPasta !== "todas" && selectedPasta !== "soltos" ? selectedPasta : null,
         }),
       });
       const dbJson = await dbRes.json();
@@ -208,9 +299,13 @@ export default function RepositorioPage() {
         );
       }
       
-      return matchesCat && matchesSearch && matchesShare;
+      let matchesPasta = true;
+      if (selectedPasta === "soltos") matchesPasta = !f.pasta_id;
+      else if (selectedPasta !== "todas") matchesPasta = f.pasta_id === selectedPasta;
+
+      return matchesCat && matchesSearch && matchesShare && matchesPasta;
     });
-  }, [files, activeCategory, searchQuery, activeShareFilter, profile]);
+  }, [files, activeCategory, searchQuery, activeShareFilter, profile, selectedPasta]);
 
   if (loading && files.length === 0) return (
     <div className="h-screen flex flex-col items-center justify-center bg-transparent">
@@ -374,6 +469,84 @@ export default function RepositorioPage() {
               </div>
             </div>
           </motion.section>
+
+          {/* PASTAS DA DISCIPLINA ACTIVA */}
+          <div id="tour-pastas" className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[10px] uppercase tracking-[0.4em] text-white/30 font-black flex items-center gap-2">
+                <Folder size={13} className="text-blue-500" /> Pastas em {activeCategory}
+              </h3>
+              {isAuthorized && (
+                <button
+                  onClick={() => setNovaPastaOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-[8px] uppercase tracking-widest text-white/50 hover:text-white hover:border-blue-500/30 transition-all"
+                >
+                  <FolderPlus size={12} /> Nova Pasta
+                </button>
+              )}
+            </div>
+
+            <div className="flex gap-3 flex-wrap">
+              <button
+                onClick={() => setSelectedPasta("todas")}
+                className={`px-5 py-2.5 rounded-xl text-[9px] uppercase tracking-widest font-bold border transition-all ${
+                  selectedPasta === "todas" ? "bg-white text-black border-white" : "bg-white/[0.02] text-white/40 border-white/5 hover:border-white/20"
+                }`}
+              >
+                Tudo
+              </button>
+              <button
+                onClick={() => setSelectedPasta("soltos")}
+                className={`px-5 py-2.5 rounded-xl text-[9px] uppercase tracking-widest font-bold border transition-all ${
+                  selectedPasta === "soltos" ? "bg-white text-black border-white" : "bg-white/[0.02] text-white/40 border-white/5 hover:border-white/20"
+                }`}
+              >
+                Soltos
+              </button>
+              {pastas.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setSelectedPasta(p.id)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[9px] uppercase tracking-widest font-bold border transition-all ${
+                    selectedPasta === p.id ? "bg-blue-600 text-white border-blue-500" : "bg-white/[0.02] text-white/40 border-white/5 hover:border-white/20"
+                  }`}
+                >
+                  <Folder size={11} /> {p.nome}
+                  <span className="opacity-50">({p.total_ficheiros})</span>
+                </button>
+              ))}
+              {pastas.length === 0 && (
+                <p className="text-[9px] uppercase tracking-widest text-white/15 py-2.5">Sem pastas criadas nesta disciplina ainda.</p>
+              )}
+            </div>
+
+            {/* Acções sobre a pasta seleccionada */}
+            {isAuthorized && selectedPasta !== "todas" && selectedPasta !== "soltos" && (
+              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/5">
+                <button
+                  onClick={() => setAcaoModal({ modo: "anexar", pastaId: selectedPasta })}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[8px] uppercase tracking-widest hover:bg-emerald-500/20 transition-all"
+                >
+                  <Link2 size={12} /> Anexar tudo a uma Acção
+                </button>
+                <button
+                  onClick={() => setAcaoModal({ modo: "clonar", pastaId: selectedPasta })}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[8px] uppercase tracking-widest hover:bg-purple-500/20 transition-all"
+                >
+                  <Copy size={12} /> Clonar para nova Acção
+                </button>
+                <button
+                  onClick={() => {
+                    const p = pastas.find(x => x.id === selectedPasta);
+                    if (p) handleEliminarPasta(p.id, p.nome);
+                  }}
+                  className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/5 border border-red-500/10 text-red-500/60 text-[8px] uppercase tracking-widest hover:bg-red-500/15 hover:text-red-400 transition-all"
+                >
+                  <Trash2 size={12} /> Eliminar pasta
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* GRELHA DE MATERIAIS - CARTÕES INTELIGENTES */}
           <div id="tour-materials-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -646,6 +819,72 @@ export default function RepositorioPage() {
               {isUploading ? <><Loader2 className="animate-spin" size={16} /> A Processar...</> : "Finalizar Registo"}
             </button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: Nova Pasta */}
+      <Dialog open={novaPastaOpen} onOpenChange={setNovaPastaOpen}>
+        <DialogContent className="bg-black/95 border border-white/10 text-white backdrop-blur-3xl p-10 rounded-none max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-light uppercase tracking-[0.3em] flex items-center gap-4">
+              <FolderPlus className="text-blue-500" /> Nova Pasta
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCriarPasta} className="space-y-6 mt-8 text-left">
+            <div className="space-y-2">
+              <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Nome da Pasta</label>
+              <input
+                required autoFocus value={novaPastaNome} onChange={e => setNovaPastaNome(e.target.value)}
+                className="w-full bg-white/5 border-0 border-b border-white/10 py-4 px-4 text-sm focus:ring-0 focus:border-blue-500 outline-none transition-all"
+                placeholder="EX: SESSÃO 1 — DIAGNÓSTICO"
+              />
+              <p className="text-[8px] uppercase tracking-widest text-white/20 ml-2 pt-1">
+                Vai ficar dentro de "{activeCategory}". Podes organizar por sessão, acção de formação ou tema.
+              </p>
+            </div>
+            <button disabled={criandoPasta}
+              className="w-full bg-blue-600 text-white py-5 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all flex justify-center items-center gap-4 shadow-2xl border-0"
+            >
+              {criandoPasta ? <><Loader2 className="animate-spin" size={16} /> A criar...</> : "Criar Pasta"}
+            </button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: Anexar/Clonar pasta para Acção de Formação */}
+      <Dialog open={!!acaoModal} onOpenChange={(open) => { if (!open) { setAcaoModal(null); setAcaoSelecionada(""); } }}>
+        <DialogContent className="bg-black/95 border border-white/10 text-white backdrop-blur-3xl p-10 rounded-none max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-light uppercase tracking-[0.3em] flex items-center gap-4">
+              {acaoModal?.modo === "anexar" ? <Link2 className="text-emerald-500" /> : <Copy className="text-purple-500" />}
+              {acaoModal?.modo === "anexar" ? "Anexar Pasta" : "Clonar Pasta"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 mt-8 text-left">
+            <p className="text-[9px] uppercase tracking-widest text-white/40 leading-relaxed">
+              {acaoModal?.modo === "anexar"
+                ? "Publica todos os documentos desta pasta na acção de formação escolhida, de uma só vez."
+                : "Cria uma cópia desta pasta (com os respectivos documentos) já publicada na acção de formação escolhida — sem duplicar o espaço de armazenamento."}
+            </p>
+            <div className="space-y-2">
+              <label className="text-[9px] uppercase tracking-widest text-white/30 ml-2">Acção de Formação</label>
+              <select value={acaoSelecionada} onChange={e => setAcaoSelecionada(e.target.value)}
+                className="w-full bg-white/5 border-0 border-b border-white/10 py-4 px-4 text-[10px] uppercase tracking-widest outline-none">
+                <option value="" className="bg-black">Seleccionar...</option>
+                {acoesFormacao.map((a: any) => <option key={a.id} value={a.id} className="bg-black">{a.designacao}</option>)}
+              </select>
+              {acoesFormacao.length === 0 && (
+                <p className="text-[8px] uppercase tracking-widest text-amber-400/60 ml-2 pt-1">Não lecciona nenhuma acção de formação.</p>
+              )}
+            </div>
+            <button
+              disabled={!acaoSelecionada || processandoAcao}
+              onClick={confirmarAcaoPasta}
+              className="w-full bg-blue-600 text-white py-5 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all flex justify-center items-center gap-4 shadow-2xl border-0 disabled:opacity-40"
+            >
+              {processandoAcao ? <><Loader2 className="animate-spin" size={16} /> A processar...</> : acaoModal?.modo === "anexar" ? "Anexar Tudo" : "Clonar Pasta"}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

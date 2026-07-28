@@ -37,6 +37,8 @@ export type AuditAction =
   | "profile_update"
   // Anúncios
   | "anuncio_create" | "anuncio_delete"
+  // Pastas do Repositório
+  | "pasta_create" | "pasta_delete" | "pasta_anexar_acao" | "pasta_clonar"
   // Config
   | "disciplina_create" | "disciplina_update" | "disciplina_delete"
   | "grupo_formacao_create" | "grupo_formacao_update" | "grupo_formacao_delete"

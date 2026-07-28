@@ -11,6 +11,19 @@ async function initializeDatabase(pool: Pool) {
     await pool.query(`ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS destinatario_email TEXT DEFAULT NULL`);
     await pool.query(`ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS thumbnail_url TEXT DEFAULT NULL`);
 
+    // --- pastas: organização de documentos do Repositório ---
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pastas (
+        id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        nome              TEXT        NOT NULL,
+        area              TEXT        NOT NULL,
+        acao_formacao_id  UUID        REFERENCES acoes_formacao(id) ON DELETE SET NULL,
+        criado_por        UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+        created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS pasta_id UUID REFERENCES pastas(id) ON DELETE SET NULL`);
+
     // --- audit_logs: registo de acções críticas ---
     await pool.query(`
       CREATE TABLE IF NOT EXISTS audit_logs (

@@ -759,6 +759,22 @@ jobs:
               -- usado na ficha profissional do formador)
               ALTER TABLE profiles ADD COLUMN IF NOT EXISTS nivel_ensino TEXT;
 
+              -- Pastas para organizar documentos do Repositório por disciplina, sessão,
+              -- Acção de Formação ou tema (pedido do cliente: parar de ter tudo solto)
+              CREATE TABLE IF NOT EXISTS pastas (
+                id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+                nome              TEXT        NOT NULL,
+                area              TEXT        NOT NULL,
+                acao_formacao_id  UUID        REFERENCES acoes_formacao(id) ON DELETE SET NULL,
+                criado_por        UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+                created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              );
+              CREATE INDEX IF NOT EXISTS idx_pastas_area ON pastas(area);
+
+              -- Ficheiro pode viver dentro de uma pasta (fica solto/"Geral" se não tiver)
+              ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS pasta_id UUID REFERENCES pastas(id) ON DELETE SET NULL;
+              CREATE INDEX IF NOT EXISTS idx_arquivos_pasta ON arquivos(pasta_id);
+
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             # docker rm -f devolve o controlo antes do daemon terminar mesmo a remoção
