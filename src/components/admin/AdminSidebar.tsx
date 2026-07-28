@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FolderOpen, Users, Calendar,
   Shield, LogOut, ChevronLeft, ChevronRight, Globe, X, UserCircle, LifeBuoy,
-  MessageSquare, Mail, GraduationCap, ClipboardList, BookOpen, ChevronDown, UserPlus, HelpCircle,
+  MessageSquare, Mail, GraduationCap, ClipboardList, BookOpen, ChevronDown, UserPlus, HelpCircle, Bell,
 } from "lucide-react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { useState, useEffect } from "react";
@@ -15,9 +15,10 @@ const NAV_TOP = [
 ];
 
 const NAV_GERAL = [
-  { label: "Agenda",     icon: Calendar,      path: "/dashboard/agenda" },
-  { label: "Comunidade", icon: MessageSquare, path: "/dashboard/comunidade" },
-  { label: "Mensagens",  icon: Mail,          path: "/dashboard/mensagens" },
+  { label: "Agenda",         icon: Calendar,      path: "/dashboard/agenda" },
+  { label: "Comunidade",     icon: MessageSquare, path: "/dashboard/comunidade" },
+  { label: "Mensagens",      icon: Mail,          path: "/dashboard/mensagens" },
+  { label: "Notificações",   icon: Bell,          path: "/dashboard/notificacoes" },
 ];
 
 const NAV_ACADEMICA = [
