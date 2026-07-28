@@ -6,6 +6,7 @@ import { Menu, MessageSquare, Globe, Bell, CheckCheck, UserCheck, AlertTriangle,
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { BrightnessSlider } from "@/components/BrightnessSlider";
+import { GlobalSearch } from "@/components/admin/GlobalSearch";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard":               "Dashboard",
@@ -239,6 +240,7 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
       <h1 className="flex-1 text-sm md:text-base font-semibold c-tx text-center md:text-left">{title}</h1>
 
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
+        <GlobalSearch />
         <BrightnessSlider />
 
         {onStartTour && (
