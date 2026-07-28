@@ -4,9 +4,28 @@ import { getSessionUser } from "@/lib/server-auth";
 import { auditLog } from "@/lib/audit";
 
 // GET /api/acoes-formacao — lista acções de formação com formação, formadores e nº de inscritos
-export async function GET() {
+// GET /api/acoes-formacao?minhas=1 — restringe às acções em que o utilizador está envolvido
+// (formando: inscrito; formador: lecciona; admin: sem filtro, já vê tudo)
+export async function GET(req: Request) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+
+  const minhas = new URL(req.url).searchParams.get("minhas");
+  let whereSql = "";
+  const values: unknown[] = [];
+
+  if (minhas) {
+    const roleRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
+    const role = roleRes.rows[0]?.role;
+    if (role === "formando") {
+      whereSql = `WHERE EXISTS (SELECT 1 FROM inscricoes_acao ia WHERE ia.acao_formacao_id = a.id AND ia.formando_id = $1 AND ia.status = 'inscrito')`;
+      values.push(sessionUser.id);
+    } else if (role === "formador") {
+      whereSql = `WHERE EXISTS (SELECT 1 FROM acao_formadores acf WHERE acf.acao_formacao_id = a.id AND acf.formador_id = $1)`;
+      values.push(sessionUser.id);
+    }
+    // admin/super-admin: sem filtro adicional
+  }
 
   const result = await dbQuery(`
     SELECT
@@ -24,9 +43,10 @@ export async function GET() {
     LEFT JOIN acao_formadores af ON af.acao_formacao_id = a.id
     LEFT JOIN profiles p ON p.id = af.formador_id
     LEFT JOIN inscricoes_acao i ON i.acao_formacao_id = a.id
+    ${whereSql}
     GROUP BY a.id, f.id, f.nome, f.area
     ORDER BY a.data_inicio DESC NULLS LAST, a.created_at DESC
-  `);
+  `, values);
 
   return NextResponse.json({ data: result.rows });
 }

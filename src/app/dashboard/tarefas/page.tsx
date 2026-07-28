@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -95,8 +96,17 @@ async function uploadFicheiro(file: File, bucket: string, path: string): Promise
 }
 
 export default function TarefasPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 size={24} className="animate-spin text-blue-500" /></div>}>
+      <TarefasPageInner />
+    </Suspense>
+  );
+}
+
+function TarefasPageInner() {
   const { user } = useAdminUser();
   const isStaff = user?.role === "formador" || user?.role === "admin" || user?.role === "super-admin";
+  const searchParams = useSearchParams();
 
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,7 +158,7 @@ export default function TarefasPage() {
   const [error, setError] = useState<string | null>(null);
   const [acoesFormacao, setAcoesFormacao] = useState<{ id: string; designacao: string; total_inscritos: number }[]>([]);
   const [todosFormandos, setTodosFormandos] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
-  const [filtroAcao, setFiltroAcao] = useState<string>("todas");
+  const [filtroAcao, setFiltroAcao] = useState<string>(() => searchParams.get("acao") ?? "todas");
 
   async function fetchTarefas() {
     setLoading(true);

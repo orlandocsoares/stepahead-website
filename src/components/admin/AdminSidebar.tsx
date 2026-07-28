@@ -22,6 +22,7 @@ const NAV_GERAL = [
 ];
 
 const NAV_ACADEMICA = [
+  { label: "As Minhas Formações", icon: BookOpen, path: "/dashboard/minhas-formacoes" },
   { label: "Repositório",  icon: FolderOpen,    path: "/dashboard/ficheiros" },
   { label: "Tarefas",      icon: ClipboardList, path: "/dashboard/tarefas" },
   { label: "Acções de Formação", icon: GraduationCap, path: "/dashboard/acoes-formacao", staffOnly: true },
