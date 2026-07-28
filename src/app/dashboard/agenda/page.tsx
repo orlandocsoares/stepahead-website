@@ -294,7 +294,7 @@ export default function AgendaPage() {
 
             return (
               <motion.div key={item.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: index * 0.04 }}
-                className={`c-bg2 border ${borderClass} rounded-xl overflow-hidden flex flex-col hover:border-white/[0.15] transition-colors`}
+                className={`c-bg2 border ${borderClass} rounded-xl overflow-hidden flex flex-col hover:border-white/[0.15] transition-colors ${isRegistered ? "ring-1 ring-emerald-500/50" : ""}`}
               >
                 {/* Cartaz do evento (se existir) */}
                 {item.imagem_url ? (
@@ -306,6 +306,11 @@ export default function AgendaPage() {
                 )}
                 <div className="p-5 flex flex-col gap-4 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
+                    {isRegistered && (
+                      <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        <CheckCircle2 size={10} /> Inscrito
+                      </span>
+                    )}
                     <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${item.tipo === "Restrito" ? "bg-amber-500/10 text-amber-400" : "bg-blue-500/10 text-blue-400"}`}>{item.tipo}</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${isOnline ? "bg-purple-500/10 text-purple-400" : "bg-emerald-500/10 text-emerald-400"}`}>{isOnline ? "Online" : "Presencial"}</span>
                     {item.acao_formacao_id && (
