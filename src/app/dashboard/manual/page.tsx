@@ -198,7 +198,6 @@ const SECTIONS: Section[] = [
   { id: "perfil",                icon: UserCircle,     label: "Perfil",                       roles: ["todos"], keywords: "perfil dados pessoais identificação residência habilitações profissional password avatar foto" },
   { id: "utilizadores",          icon: Users,          label: "Utilizadores",                 roles: ["formador", "admin"], keywords: "utilizadores admin cargo estado password csv estatísticas anúncios configurações" },
   { id: "audit-log",             icon: Shield,         label: "Audit Log",                    roles: ["admin"], keywords: "audit log auditoria registo acções segurança historico" },
-  { id: "turmas",                icon: Info,           label: "Nota — Turmas",                roles: ["formador", "admin"], keywords: "turmas legado antigo" },
 ];
 
 const ACCENT_MAP: Record<string, string> = {
@@ -613,17 +612,6 @@ export default function ManualPage() {
           </div>
           <p className="text-sm c-tx3">Registo cronológico de tudo o que acontece na plataforma — logins, uploads, aprovações, eliminações, mudanças de cargo — com autor, alvo, IP e data.</p>
           <p className="text-xs c-tx3">Vista em cartões (por utilizador) ou lista (tabela paginada, com filtros). Serve para rastreabilidade e auditoria de segurança.</p>
-        </section>
-
-        {/* Turmas */}
-        <section id="turmas" hidden={!isSectionVisible("turmas")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-base font-semibold c-tx">Nota — Turmas</h2>
-            <RoleTag role="formador" /><RoleTag role="admin" />
-          </div>
-          <Callout warn>
-            Ainda encontra uma funcionalidade mais antiga chamada <strong>Turmas</strong> no menu — é anterior às Acções de Formação e já não está ligada ao Repositório nem à Agenda. A gestão de grupos de formandos deve ser feita através de Acções de Formação.
-          </Callout>
         </section>
 
         <div className="flex items-center gap-1.5 text-[11px] c-tx5 pt-4">
