@@ -4,15 +4,10 @@ import { useEffect, useState } from "react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   Users, FolderOpen, Calendar, Loader2, HardDrive,
-  TrendingUp, Upload, BarChart3, MessageSquare, LifeBuoy,
+  MessageSquare, LifeBuoy,
   ClipboardList, Bell, Mail, CalendarClock, ArrowRight, GraduationCap,
 } from "lucide-react";
 import Link from "next/link";
-
-const AREA_COLORS = [
-  "bg-blue-500", "bg-emerald-500", "bg-purple-500",
-  "bg-amber-500", "bg-red-500", "bg-pink-500",
-];
 
 function fmt(bytes: number) {
   if (bytes >= 1e12) return (bytes / 1e12).toFixed(1) + " TB";
@@ -79,11 +74,7 @@ export default function DashboardPage() {
   }
 
   const t = analytics?.totals ?? {};
-  const topUploaders: any[] = analytics?.topUploaders ?? [];
-  const topAreas: any[] = analytics?.topAreas ?? [];
   const eventos: any[] = analytics?.eventosRecentes ?? [];
-  const maxArea = topAreas[0]?.total ? Number(topAreas[0].total) : 1;
-  const maxUpload = topUploaders[0]?.total ? Number(topUploaders[0].total) : 1;
 
   const tarefasPendentes = isFormando
     ? tarefas.filter(x => x.estado === "pendente" || !x.estado)
@@ -220,68 +211,6 @@ export default function DashboardPage() {
           </Link>
         ))}
       </div>
-
-      {/* Linha 2: Rankings — só relevante para quem gere conteúdo/plataforma */}
-      {isStaff && (
-      <div id="tour-rankings" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        {/* Top Uploaders */}
-        <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Upload size={14} className="text-emerald-400" />
-            <h3 className="text-sm font-semibold c-tx">Quem mais contribui</h3>
-          </div>
-          {topUploaders.length === 0 ? (
-            <p className="text-xs c-tx4 py-4 text-center">Sem dados ainda.</p>
-          ) : (
-            <ol className="space-y-3">
-              {topUploaders.map((u, i) => (
-                <li key={i} className="flex items-center gap-3">
-                  <span className={`text-xs font-bold w-5 text-center shrink-0 ${i === 0 ? "text-amber-400" : i === 1 ? "c-tx3" : i === 2 ? "text-amber-700" : "c-tx4"}`}>
-                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i+1}.`}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs c-tx2 truncate">{u.first_name} {u.last_name}</span>
-                      <span className="text-xs c-tx3 shrink-0 ml-2">{u.total}</span>
-                    </div>
-                    <div className="h-1.5 c-s2 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500/60 rounded-full" style={{ width: `${(Number(u.total) / maxUpload) * 100}%` }} />
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
-
-        {/* Top Áreas */}
-        <div className="c-bg2 border c-br rounded-xl p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <BarChart3 size={14} className="text-blue-400" />
-            <h3 className="text-sm font-semibold c-tx">Áreas mais activas</h3>
-          </div>
-          {topAreas.length === 0 ? (
-            <p className="text-xs c-tx4 py-4 text-center">Sem dados ainda.</p>
-          ) : (
-            <ol className="space-y-3">
-              {topAreas.map((a, i) => (
-                <li key={i} className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs c-tx2 truncate">{a.area}</span>
-                    <span className="text-xs c-tx3 shrink-0 ml-2">{a.total} fich.</span>
-                  </div>
-                  <div className="h-1.5 c-s2 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${AREA_COLORS[i % AREA_COLORS.length]}/60`}
-                      style={{ width: `${(Number(a.total) / maxArea) * 100}%` }} />
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
-      </div>
-      )}
 
       {/* Linha 3: Próximos eventos + tickets + disco */}
       <div id="tour-dash-stats" className={`grid grid-cols-1 gap-4 ${isStaff ? "lg:grid-cols-3" : ""}`}>
