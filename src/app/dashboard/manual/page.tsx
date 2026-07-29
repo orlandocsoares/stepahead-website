@@ -349,9 +349,9 @@ export default function ManualPage() {
             <h2 className="text-base font-semibold c-tx">Dashboard</h2>
             <RoleTag role="todos" />
           </div>
-          <p className="text-sm c-tx3">Página inicial ao entrar na plataforma — mostra só o que é relevante para o perfil de quem a vê.</p>
+          <p className="text-sm c-tx3">Mostra só o que é relevante para o perfil de quem a vê, com foco no trabalho do dia — o formando entra directamente em "As Minhas Formações"; a Dashboard genérica fica para formador/admin (o formando pode continuar a aceder-lhe se quiser).</p>
+          <p className="text-xs c-tx3">No topo, o <strong className="c-tx2">Centro de Trabalho</strong> mostra sempre: tarefas por entregar/avaliar, notificações por ler, mensagens por ler e próximas formações — cada um com atalho directo. Por baixo, os prazos mais próximos e acessos rápidos às áreas mais usadas.</p>
           <ul className="list-disc list-inside text-xs c-tx3 space-y-1">
-            <li><strong className="c-tx2">Formando</strong> vê ficheiros, eventos e publicações — sem rankings nem estatísticas de gestão.</li>
             <li><strong className="c-tx2">Formador / Admin</strong> vê também os rankings de contribuição e o armazenamento usado.</li>
           </ul>
           <p className="text-xs c-tx3">O selector de modo (canto superior direito) tem várias opções de fundo — o modo por defeito é <strong className="c-tx2">Neutro</strong> (fundo sólido, sem imagem), mas pode trocar-se a qualquer momento; a escolha fica guardada no dispositivo.</p>
