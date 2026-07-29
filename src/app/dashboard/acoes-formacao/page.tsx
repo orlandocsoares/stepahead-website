@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { Plus, Trash2, Pencil, ChevronDown, ChevronUp, Loader2, X, UserPlus, GraduationCap, Calendar, MapPin, Users, FileText, AlertTriangle, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -55,7 +56,16 @@ function fmtData(d: string | null) {
 }
 
 export default function AcoesFormacaoPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 size={24} className="animate-spin text-blue-500" /></div>}>
+      <AcoesFormacaoPageInner />
+    </Suspense>
+  );
+}
+
+function AcoesFormacaoPageInner() {
   const { user } = useAdminUser();
+  const searchParams = useSearchParams();
   const { provincias: PROVINCIAS_ANGOLA } = useLocalidades();
   const [acoes, setAcoes] = useState<AcaoFormacao[]>([]);
   const [formadores, setFormadores] = useState<Pessoa[]>([]);
@@ -126,6 +136,17 @@ export default function AcoesFormacaoPage() {
   }
 
   useEffect(() => { if (user) fetchAll(); }, [user]);
+
+  // Deep-link vindo da Pesquisa Global (?open=<id>) — expande e leva até à acção
+  useEffect(() => {
+    const openId = searchParams.get("open");
+    if (!openId || acoes.length === 0 || expanded === openId) return;
+    toggleExpand(openId);
+    const tab = searchParams.get("tab");
+    if (tab === "materiais" || tab === "utilizadores" || tab === "fotos") setPainelTab(tab);
+    setTimeout(() => document.getElementById(`acao-${openId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, acoes]);
 
   async function toggleExpand(id: string) {
     if (expanded === id) { setExpanded(null); return; }
@@ -630,7 +651,7 @@ export default function AcoesFormacaoPage() {
             const inscritosLista = inscritos[acao.id] ?? [];
 
             return (
-              <motion.div key={acao.id} layout="position" className="c-bg2 border c-br rounded-xl overflow-hidden">
+              <motion.div key={acao.id} id={`acao-${acao.id}`} layout="position" className="c-bg2 border c-br rounded-xl overflow-hidden scroll-mt-4">
                 <div className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-white/[0.015] transition-colors"
                   onClick={() => toggleExpand(acao.id)}>
                   {acao.imagem_url ? (

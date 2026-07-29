@@ -8,7 +8,7 @@ import {
   ClipboardList, Plus, X, Loader2, CheckCircle2, Clock,
   AlertCircle, ChevronDown, ChevronUp, Trash2, Users, User,
   CalendarClock, CheckCheck, RotateCcw, Paperclip, Upload,
-  FileText, ExternalLink
+  FileText, ExternalLink, Search
 } from "lucide-react";
 
 type Tarefa = {
@@ -159,6 +159,7 @@ function TarefasPageInner() {
   const [acoesFormacao, setAcoesFormacao] = useState<{ id: string; designacao: string; total_inscritos: number }[]>([]);
   const [todosFormandos, setTodosFormandos] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
   const [filtroAcao, setFiltroAcao] = useState<string>(() => searchParams.get("acao") ?? "todas");
+  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
 
   async function fetchTarefas() {
     setLoading(true);
@@ -302,10 +303,12 @@ function TarefasPageInner() {
   }, [tarefas]);
 
   const tarefasFiltradas = useMemo(() => {
-    if (filtroAcao === "todas") return tarefas;
-    if (filtroAcao === "sem-acao") return tarefas.filter(t => !t.acao_formacao_id);
-    return tarefas.filter(t => t.acao_formacao_id === filtroAcao);
-  }, [tarefas, filtroAcao]);
+    let list = tarefas;
+    if (filtroAcao === "sem-acao") list = list.filter(t => !t.acao_formacao_id);
+    else if (filtroAcao !== "todas") list = list.filter(t => t.acao_formacao_id === filtroAcao);
+    if (search.trim()) list = list.filter(t => t.titulo.toLowerCase().includes(search.trim().toLowerCase()));
+    return list;
+  }, [tarefas, filtroAcao, search]);
 
   // Formando: kanban por estado pessoal
   const colFormando = useMemo(() => ({
@@ -351,15 +354,24 @@ function TarefasPageInner() {
         )}
       </div>
 
-      {!loading && tarefas.length > 0 && acoesNasTarefas.length > 0 && (
-        <div className="flex items-center gap-2 px-6 py-2.5 border-b c-br shrink-0">
-          <span className="text-[10px] font-medium c-tx5 uppercase tracking-wide">Acção de formação</span>
-          <select value={filtroAcao} onChange={e => setFiltroAcao(e.target.value)}
-            className="text-xs c-s1 border c-br rounded-lg px-2 py-1 c-tx3 outline-none">
-            <option value="todas">Todas</option>
-            {acoesNasTarefas.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao}</option>)}
-            <option value="sem-acao">Sem acção associada</option>
-          </select>
+      {!loading && tarefas.length > 0 && (
+        <div className="flex items-center gap-3 px-6 py-2.5 border-b c-br shrink-0 flex-wrap">
+          <div className="relative">
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 c-tx5" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar tarefas..."
+              className="pl-7 pr-2.5 py-1 rounded-lg c-s1 border c-br text-xs c-tx placeholder:c-tx5 outline-none focus:border-blue-500/50 w-44 transition-colors" />
+          </div>
+          {acoesNasTarefas.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-medium c-tx5 uppercase tracking-wide">Acção de formação</span>
+              <select value={filtroAcao} onChange={e => setFiltroAcao(e.target.value)}
+                className="text-xs c-s1 border c-br rounded-lg px-2 py-1 c-tx3 outline-none">
+                <option value="todas">Todas</option>
+                {acoesNasTarefas.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao}</option>)}
+                <option value="sem-acao">Sem acção associada</option>
+              </select>
+            </div>
+          )}
         </div>
       )}
 

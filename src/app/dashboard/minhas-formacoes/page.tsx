@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   GraduationCap, Loader2, Calendar, MapPin, Laptop, User, Users,
@@ -61,7 +62,16 @@ function formatPeriodo(a: Acao) {
 }
 
 export default function MinhasFormacoesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 size={24} className="animate-spin text-blue-500" /></div>}>
+      <MinhasFormacoesPageInner />
+    </Suspense>
+  );
+}
+
+function MinhasFormacoesPageInner() {
   const { user, loading: userLoading } = useAdminUser();
+  const searchParams = useSearchParams();
   const isFormando = user?.role === "formando";
   const [acoes, setAcoes] = useState<Acao[]>([]);
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
@@ -87,6 +97,13 @@ export default function MinhasFormacoesPage() {
     }
     if (user) load();
   }, [user]);
+
+  // Deep-link vindo da Pesquisa Global (?acao=<id>) — leva até à acção e destaca-a
+  useEffect(() => {
+    const acaoId = searchParams.get("acao");
+    if (!acaoId || acoes.length === 0) return;
+    setTimeout(() => document.getElementById(`acao-${acaoId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+  }, [searchParams, acoes]);
 
   async function toggleMateriais(acaoId: string) {
     if (expandedId === acaoId) { setExpandedId(null); return; }
@@ -142,8 +159,9 @@ export default function MinhasFormacoesPage() {
               const nTarefas = tarefasDaAcao(a.id).length;
               const isExpanded = expandedId === a.id;
               const mats = materiais[a.id];
+              const isHighlighted = searchParams.get("acao") === a.id;
               return (
-                <div key={a.id} className="c-bg2 border c-br rounded-xl overflow-hidden">
+                <div key={a.id} id={`acao-${a.id}`} className={`c-bg2 border rounded-xl overflow-hidden scroll-mt-4 transition-colors ${isHighlighted ? "border-blue-500/60 ring-1 ring-blue-500/40" : "c-br"}`}>
                   <div className="p-4 space-y-3">
                     <div className="flex items-start gap-4">
                       {a.imagem_url ? (

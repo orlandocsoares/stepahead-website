@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { Search, X, GraduationCap, FileText, ClipboardList, User, Loader2, CornerDownLeft } from "lucide-react";
+import { useAdminUser } from "@/hooks/useAdminUser";
 
 type Results = {
   acoes: { id: string; designacao: string; estado?: string }[];
@@ -16,6 +17,8 @@ const EMPTY: Results = { acoes: [], documentos: [], tarefas: [], utilizadores: [
 
 export function GlobalSearch() {
   const router = useRouter();
+  const { user } = useAdminUser();
+  const isStaff = user?.role === "formador" || user?.role === "admin" || user?.role === "super-admin";
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Results>(EMPTY);
@@ -100,7 +103,8 @@ export function GlobalSearch() {
                     <ResultGroup label="Acções de Formação">
                       {results.acoes.map(a => (
                         <ResultRow key={a.id} icon={<GraduationCap size={14} className="text-purple-400" />}
-                          title={a.designacao} subtitle={a.estado} onClick={() => go(`/dashboard/minhas-formacoes`)} />
+                          title={a.designacao} subtitle={a.estado}
+                          onClick={() => go(isStaff ? `/dashboard/acoes-formacao?open=${a.id}` : `/dashboard/minhas-formacoes?acao=${a.id}`)} />
                       ))}
                     </ResultGroup>
                   )}
@@ -108,7 +112,7 @@ export function GlobalSearch() {
                     <ResultGroup label="Documentos">
                       {results.documentos.map(d => (
                         <ResultRow key={d.id} icon={<FileText size={14} className="text-teal-400" />}
-                          title={d.label} subtitle={d.area} onClick={() => go(`/dashboard/ficheiros`)} />
+                          title={d.label} subtitle={d.area} onClick={() => go(`/dashboard/ficheiros?q=${encodeURIComponent(d.label)}`)} />
                       ))}
                     </ResultGroup>
                   )}
@@ -116,7 +120,7 @@ export function GlobalSearch() {
                     <ResultGroup label="Tarefas">
                       {results.tarefas.map(t => (
                         <ResultRow key={t.id} icon={<ClipboardList size={14} className="text-blue-400" />}
-                          title={t.titulo} onClick={() => go(`/dashboard/tarefas`)} />
+                          title={t.titulo} onClick={() => go(`/dashboard/tarefas?q=${encodeURIComponent(t.titulo)}`)} />
                       ))}
                     </ResultGroup>
                   )}

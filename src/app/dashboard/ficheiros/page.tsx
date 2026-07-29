@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   FileText, Search, Download, Loader2, Plus, FolderOpen, Lock,
@@ -126,10 +127,19 @@ function getUploadAreas(role?: string, specialization?: string, allCats?: string
 }
 
 export default function FicheirosPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 size={24} className="animate-spin text-blue-500" /></div>}>
+      <FicheirosPageInner />
+    </Suspense>
+  );
+}
+
+function FicheirosPageInner() {
   const { user } = useAdminUser();
+  const searchParams = useSearchParams();
   const [files, setFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const [activeCategory, setActiveCategory] = useState("Geral");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);

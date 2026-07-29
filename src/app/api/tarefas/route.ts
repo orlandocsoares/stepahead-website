@@ -132,13 +132,14 @@ export async function POST(request: Request) {
     const prazoStr = prazo ? ` — prazo: ${new Date(prazo).toLocaleDateString("pt-PT")}` : "";
     const tituloMsg = titulo.trim();
     const mensagemMsg = `Nova tarefa${prazoStr}`;
+    const linkMsg = `/dashboard/tarefas?q=${encodeURIComponent(tituloMsg)}`;
     const notifValues: unknown[] = [];
     const notifPlaceholders = formandoIds.map((id, i) => {
-      const base = i * 4;
-      notifValues.push(id, "tarefa", tituloMsg, mensagemMsg);
-      return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4})`;
+      const base = i * 5;
+      notifValues.push(id, "tarefa", tituloMsg, mensagemMsg, linkMsg);
+      return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`;
     }).join(", ");
-    await dbQuery(`INSERT INTO notificacoes (user_id, tipo, titulo, mensagem) VALUES ${notifPlaceholders}`, notifValues);
+    await dbQuery(`INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link) VALUES ${notifPlaceholders}`, notifValues);
   }
 
   await auditLog("tarefa_create", {

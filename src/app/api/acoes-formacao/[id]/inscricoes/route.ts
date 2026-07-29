@@ -124,8 +124,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     for (const r of responsaveis.rows) {
       await dbQuery(
         `INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link)
-         VALUES ($1, 'nova_inscricao', 'Nova inscrição pendente', $2, '/dashboard/acoes-formacao')`,
-        [r.id, `${nomeFormando} inscreveu-se em "${designacao}" e aguarda confirmação.`]
+         VALUES ($1, 'nova_inscricao', 'Nova inscrição pendente', $2, $3)`,
+        [r.id, `${nomeFormando} inscreveu-se em "${designacao}" e aguarda confirmação.`, `/dashboard/acoes-formacao?open=${id}&tab=utilizadores`]
       );
     }
   }
