@@ -53,7 +53,7 @@ export default function LoginPage() {
         throw new Error(json.error?.message ?? "Credenciais inválidas. Verifique o seu e-mail e password.");
       }
 
-      router.push("/dashboard");
+      router.push(json.data?.user?.role === "formando" ? "/dashboard/minhas-formacoes" : "/dashboard");
     } catch (err: any) {
       setError(err.message);
       setLoading(false);

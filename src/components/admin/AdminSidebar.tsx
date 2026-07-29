@@ -11,7 +11,7 @@ import { useAdminUser } from "@/hooks/useAdminUser";
 import { useState, useEffect } from "react";
 
 const NAV_TOP = [
-  { label: "Dashboard",  icon: LayoutDashboard, path: "/dashboard" },
+  { label: "Dashboard",  icon: LayoutDashboard, path: "/dashboard", hideForFormando: true },
 ];
 
 const NAV_GERAL = [
@@ -67,6 +67,9 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
   const canSee = (item: any) => {
     if (item.adminOnly) return user?.role === "admin" || user?.role === "super-admin";
     if (item.staffOnly) return user?.role === "admin" || user?.role === "super-admin" || user?.role === "formador";
+    // Formando entra directamente em "As Minhas Formações" — a Dashboard genérica
+    // deixou de fazer sentido como ponto de entrada duplicado.
+    if (item.hideForFormando) return user?.role !== "formando";
     return true;
   };
 

@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     await setSession(user.id);
     await auditLog("login_success", { actorId: user.id, ip });
 
-    return NextResponse.json({ data: { user: { id: user.id, email: user.email } } });
+    return NextResponse.json({ data: { user: { id: user.id, email: user.email, role: profile?.role } } });
   } catch {
     return NextResponse.json({ error: { message: "Falha ao autenticar." } }, { status: 500 });
   }
