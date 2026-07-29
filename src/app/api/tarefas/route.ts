@@ -16,13 +16,14 @@ export async function GET() {
   await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS nota VARCHAR(20)`).catch(() => {});
   await dbQuery(`ALTER TABLE tarefa_destinatarios ADD COLUMN IF NOT EXISTS feedback TEXT`).catch(() => {});
   await dbQuery(`ALTER TABLE tarefas ADD COLUMN IF NOT EXISTS acao_formacao_id UUID REFERENCES acoes_formacao(id) ON DELETE SET NULL`).catch(() => {});
+  await dbQuery(`ALTER TABLE tarefas ADD COLUMN IF NOT EXISTS area TEXT`).catch(() => {});
 
   const profileRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
   const role = profileRes.rows[0]?.role;
 
   if (role === "formando") {
     const res = await dbQuery(
-      `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
+      `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at, t.area,
               t.anexo_url, t.anexo_nome, t.acao_formacao_id, af.designacao AS acao_designacao,
               p.first_name AS criador_nome, p.last_name AS criador_apelido,
               td.estado, td.entregue_at, td.resposta_url, td.resposta_nome,
@@ -39,7 +40,7 @@ export async function GET() {
   } else {
     const isAdmin = role === "admin" || role === "super-admin";
     const res = await dbQuery(
-      `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at,
+      `SELECT t.id, t.titulo, t.descricao, t.prazo, t.created_at, t.area,
               t.anexo_url, t.anexo_nome, t.acao_formacao_id, af.designacao AS acao_designacao,
               p.first_name AS criador_nome, p.last_name AS criador_apelido,
               COUNT(td.formando_id)                                         AS total,
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
   }
 
-  const { titulo, descricao, prazo, destinatarios, anexo_url, anexo_nome } = await request.json();
+  const { titulo, descricao, prazo, destinatarios, anexo_url, anexo_nome, area } = await request.json();
   if (!titulo?.trim()) return NextResponse.json({ error: "Título obrigatório." }, { status: 400 });
 
   // Regista a acção de formação associada quando o destino é "acao:<id>" — permite
@@ -78,8 +79,8 @@ export async function POST(request: Request) {
     : null;
 
   const tarefaRes = await dbQuery(
-    `INSERT INTO tarefas (titulo, descricao, prazo, criador_id, anexo_url, anexo_nome, acao_formacao_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-    [titulo.trim(), descricao?.trim() || null, prazo || null, sessionUser.id, anexo_url ?? null, anexo_nome ?? null, acaoFormacaoId]
+    `INSERT INTO tarefas (titulo, descricao, prazo, criador_id, anexo_url, anexo_nome, acao_formacao_id, area) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+    [titulo.trim(), descricao?.trim() || null, prazo || null, sessionUser.id, anexo_url ?? null, anexo_nome ?? null, acaoFormacaoId, area?.trim() || null]
   );
   const tarefaId = tarefaRes.rows[0].id;
 

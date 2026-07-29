@@ -24,6 +24,9 @@ async function initializeDatabase(pool: Pool) {
     `);
     await pool.query(`ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS pasta_id UUID REFERENCES pastas(id) ON DELETE SET NULL`);
 
+    // --- tarefas: disciplina (mesma taxonomia de "área" usada no Repositório) ---
+    await pool.query(`ALTER TABLE tarefas ADD COLUMN IF NOT EXISTS area TEXT`);
+
     // --- audit_logs: registo de acções críticas ---
     await pool.query(`
       CREATE TABLE IF NOT EXISTS audit_logs (

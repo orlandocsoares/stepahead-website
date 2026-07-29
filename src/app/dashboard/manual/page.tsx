@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useAdminUser } from "@/hooks/useAdminUser";
 import {
   BookOpen, GraduationCap, UserPlus, FolderOpen, ClipboardList, Calendar,
   MessageSquare, Mail, LifeBuoy, UserCircle, Users, Shield, AlertTriangle,
@@ -174,26 +175,30 @@ type Section = {
   icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
   keywords: string;
+  roles: Role[];
 };
 
+// Cada secção só é visível para quem está nos "roles" listados (ou "todos").
+// Um formando nunca vê secções marcadas só para formador/admin — evita a
+// duplicação/confusão de conteúdo que não lhe diz respeito.
 const SECTIONS: Section[] = [
-  { id: "registo",               icon: UserPlus,      label: "Registo e primeiro acesso", keywords: "registo conta criar email confirmar reenviar aprovar formando formador password bilhete identidade escola provincia foto qr spam" },
-  { id: "dashboard",             icon: LayoutDashboard, label: "Dashboard",                 keywords: "dashboard inicio painel modo neutro claro escuro fundo tema perfil" },
-  { id: "pesquisa-global",       icon: Search,         label: "Pesquisa Global",             keywords: "pesquisa global procurar ctrl k atalho acções documentos tarefas utilizadores" },
-  { id: "minhas-formacoes",      icon: BookOpen,       label: "As Minhas Formações",          keywords: "minhas formações acção inscrito lecciona tarefas materiais atalho" },
-  { id: "acoes-formacao",        icon: GraduationCap,  label: "Acções de Formação",         keywords: "acções formação curso designação materiais utilizadores fotos galeria inscrição vagas horario local data" },
-  { id: "formandos-por-validar", icon: UserPlus,       label: "Formandos por Validar",       keywords: "formandos validar aprovar recusar fila caixa entrada pendente activar conta" },
-  { id: "repositorio",           icon: FolderOpen,     label: "Repositório",                 keywords: "repositório ficheiros upload disciplina visibilidade capa pdf miniatura download pastas pasta anexar clonar multiplo varios" },
-  { id: "tarefas",               icon: ClipboardList,  label: "Tarefas",                      keywords: "tarefas entregar avaliar nota observações feedback prazo anexo kanban acção formação filtro etiqueta" },
-  { id: "agenda",                icon: Calendar,       label: "Agenda",                       keywords: "agenda eventos evento inscrição presencial online arquivo calendario cancelar confirmação inscrito" },
-  { id: "comunidade",            icon: MessageSquare,  label: "Comunidade",                   keywords: "comunidade publicação post comentário gosto fixar categoria mural" },
-  { id: "mensagens",             icon: Mail,           label: "Mensagens",                    keywords: "mensagens privadas conversa contactar formador" },
-  { id: "notificacoes",          icon: Bell,           label: "Notificações",                 keywords: "notificações centro sino aviso tarefa documento mensagem anúncio lidas" },
-  { id: "suporte",               icon: LifeBuoy,       label: "Suporte",                      keywords: "suporte ticket pendente resolvido categoria ajuda problema" },
-  { id: "perfil",                icon: UserCircle,     label: "Perfil",                       keywords: "perfil dados pessoais identificação residência habilitações profissional password avatar foto" },
-  { id: "utilizadores",          icon: Users,          label: "Utilizadores",                 keywords: "utilizadores admin cargo estado password csv estatísticas anúncios configurações" },
-  { id: "audit-log",             icon: Shield,         label: "Audit Log",                    keywords: "audit log auditoria registo acções segurança historico" },
-  { id: "turmas",                icon: Info,           label: "Nota — Turmas",                keywords: "turmas legado antigo" },
+  { id: "registo",               icon: UserPlus,      label: "Registo e primeiro acesso", roles: ["todos"], keywords: "registo conta criar email confirmar reenviar aprovar formando formador password bilhete identidade escola provincia foto qr spam" },
+  { id: "dashboard",             icon: LayoutDashboard, label: "Dashboard",                 roles: ["todos"], keywords: "dashboard inicio painel modo neutro claro escuro fundo tema perfil" },
+  { id: "pesquisa-global",       icon: Search,         label: "Pesquisa Global",             roles: ["todos"], keywords: "pesquisa global procurar ctrl k atalho acções documentos tarefas utilizadores" },
+  { id: "minhas-formacoes",      icon: BookOpen,       label: "As Minhas Formações",          roles: ["formando", "formador"], keywords: "minhas formações acção inscrito lecciona tarefas materiais atalho" },
+  { id: "acoes-formacao",        icon: GraduationCap,  label: "Acções de Formação",         roles: ["formador", "admin"], keywords: "acções formação curso designação materiais utilizadores fotos galeria inscrição vagas horario local data" },
+  { id: "formandos-por-validar", icon: UserPlus,       label: "Formandos por Validar",       roles: ["formador", "admin"], keywords: "formandos validar aprovar recusar fila caixa entrada pendente activar conta" },
+  { id: "repositorio",           icon: FolderOpen,     label: "Repositório",                 roles: ["todos"], keywords: "repositório ficheiros upload disciplina visibilidade capa pdf miniatura download pastas pasta anexar clonar multiplo varios" },
+  { id: "tarefas",               icon: ClipboardList,  label: "Tarefas",                      roles: ["todos"], keywords: "tarefas entregar avaliar nota observações feedback prazo anexo kanban acção formação filtro etiqueta pasta disciplina" },
+  { id: "agenda",                icon: Calendar,       label: "Agenda",                       roles: ["todos"], keywords: "agenda eventos evento inscrição presencial online arquivo calendario cancelar confirmação inscrito" },
+  { id: "comunidade",            icon: MessageSquare,  label: "Comunidade",                   roles: ["todos"], keywords: "comunidade publicação post comentário gosto fixar categoria mural" },
+  { id: "mensagens",             icon: Mail,           label: "Mensagens",                    roles: ["todos"], keywords: "mensagens privadas conversa contactar formador" },
+  { id: "notificacoes",          icon: Bell,           label: "Notificações",                 roles: ["todos"], keywords: "notificações centro sino aviso tarefa documento mensagem anúncio lidas" },
+  { id: "suporte",               icon: LifeBuoy,       label: "Suporte",                      roles: ["todos"], keywords: "suporte ticket pendente resolvido categoria ajuda problema" },
+  { id: "perfil",                icon: UserCircle,     label: "Perfil",                       roles: ["todos"], keywords: "perfil dados pessoais identificação residência habilitações profissional password avatar foto" },
+  { id: "utilizadores",          icon: Users,          label: "Utilizadores",                 roles: ["formador", "admin"], keywords: "utilizadores admin cargo estado password csv estatísticas anúncios configurações" },
+  { id: "audit-log",             icon: Shield,         label: "Audit Log",                    roles: ["admin"], keywords: "audit log auditoria registo acções segurança historico" },
+  { id: "turmas",                icon: Info,           label: "Nota — Turmas",                roles: ["formador", "admin"], keywords: "turmas legado antigo" },
 ];
 
 const ACCENT_MAP: Record<string, string> = {
@@ -214,16 +219,28 @@ function normalize(s: string) {
 }
 
 export default function ManualPage() {
+  const { user } = useAdminUser();
   const [active, setActive] = useState("registo");
   const [query, setQuery] = useState("");
+
+  // Secções visíveis para o perfil de quem está a ler — um formando nunca vê
+  // conteúdo marcado só para formador/admin. Admin vê sempre tudo.
+  const visibleSections = useMemo(() => {
+    const role = user?.role;
+    if (role === "admin" || role === "super-admin") return SECTIONS;
+    return SECTIONS.filter(s => s.roles.includes("todos") || (role && s.roles.includes(role as Role)));
+  }, [user?.role]);
 
   const filteredIds = useMemo(() => {
     const q = normalize(query.trim());
     if (!q) return null;
     return new Set(
-      SECTIONS.filter(s => normalize(s.label + " " + s.keywords).includes(q)).map(s => s.id)
+      visibleSections.filter(s => normalize(s.label + " " + s.keywords).includes(q)).map(s => s.id)
     );
-  }, [query]);
+  }, [query, visibleSections]);
+
+  const isSectionVisible = (id: string) =>
+    visibleSections.some(s => s.id === id) && (!filteredIds || filteredIds.has(id));
 
   function scrollTo(id: string) {
     setActive(id);
@@ -244,7 +261,7 @@ export default function ManualPage() {
           />
         </div>
         <div className="space-y-0.5">
-          {SECTIONS.filter(s => !filteredIds || filteredIds.has(s.id)).map(s => (
+          {visibleSections.filter(s => !filteredIds || filteredIds.has(s.id)).map(s => (
             <button
               key={s.id}
               onClick={() => scrollTo(s.id)}
@@ -286,7 +303,7 @@ export default function ManualPage() {
         </div>
 
         {/* Registo */}
-        <section id="registo" hidden={!!filteredIds && !filteredIds.has("registo")} className="scroll-mt-4 space-y-3">
+        <section id="registo" hidden={!isSectionVisible("registo")} className="scroll-mt-4 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Registo e primeiro acesso</h2>
             <RoleTag role="todos" />
@@ -327,7 +344,7 @@ export default function ManualPage() {
         </section>
 
         {/* Dashboard */}
-        <section id="dashboard" hidden={!!filteredIds && !filteredIds.has("dashboard")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="dashboard" hidden={!isSectionVisible("dashboard")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Dashboard</h2>
             <RoleTag role="todos" />
@@ -341,7 +358,7 @@ export default function ManualPage() {
         </section>
 
         {/* Pesquisa Global */}
-        <section id="pesquisa-global" hidden={!!filteredIds && !filteredIds.has("pesquisa-global")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="pesquisa-global" hidden={!isSectionVisible("pesquisa-global")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Pesquisa Global</h2>
             <RoleTag role="todos" />
@@ -353,7 +370,7 @@ export default function ManualPage() {
         </section>
 
         {/* As Minhas Formações */}
-        <section id="minhas-formacoes" hidden={!!filteredIds && !filteredIds.has("minhas-formacoes")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="minhas-formacoes" hidden={!isSectionVisible("minhas-formacoes")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">As Minhas Formações</h2>
             <RoleTag role="formando" /><RoleTag role="formador" />
@@ -363,7 +380,7 @@ export default function ManualPage() {
         </section>
 
         {/* Acções de Formação */}
-        <section id="acoes-formacao" hidden={!!filteredIds && !filteredIds.has("acoes-formacao")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="acoes-formacao" hidden={!isSectionVisible("acoes-formacao")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Acções de Formação</h2>
             <RoleTag role="formador" /><RoleTag role="admin" />
@@ -402,7 +419,7 @@ export default function ManualPage() {
         </section>
 
         {/* Formandos por Validar */}
-        <section id="formandos-por-validar" hidden={!!filteredIds && !filteredIds.has("formandos-por-validar")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="formandos-por-validar" hidden={!isSectionVisible("formandos-por-validar")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Formandos por Validar</h2>
             <RoleTag role="formador" /><RoleTag role="admin" />
@@ -421,7 +438,7 @@ export default function ManualPage() {
         </section>
 
         {/* Repositório */}
-        <section id="repositorio" hidden={!!filteredIds && !filteredIds.has("repositorio")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="repositorio" hidden={!isSectionVisible("repositorio")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Repositório</h2>
             <RoleTag role="todos" />
@@ -471,7 +488,7 @@ export default function ManualPage() {
         </section>
 
         {/* Tarefas */}
-        <section id="tarefas" hidden={!!filteredIds && !filteredIds.has("tarefas")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="tarefas" hidden={!isSectionVisible("tarefas")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Tarefas</h2>
             <RoleTag role="todos" />
@@ -492,10 +509,11 @@ export default function ManualPage() {
           </div>
           <p className="text-xs c-tx3">O formador atribui nota e observações a cada entrega — o formando vê ambas assim que passa a "Avaliado", e recebe uma notificação a avisar.</p>
           <p className="text-xs c-tx3">Uma tarefa criada para uma acção de formação específica mostra uma etiqueta com o nome dessa acção em cada cartão, e aparece um filtro "Acção de formação" por cima do quadro para consultar só as tarefas dessa acção.</p>
+          <p className="text-xs c-tx3">Ao criar uma tarefa, pode também escolher-se uma <strong className="c-tx2">disciplina</strong> (a mesma lista de áreas usada no Repositório) — aparece como etiqueta separada no cartão, para identificar rapidamente a que disciplina pertence.</p>
         </section>
 
         {/* Agenda */}
-        <section id="agenda" hidden={!!filteredIds && !filteredIds.has("agenda")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="agenda" hidden={!isSectionVisible("agenda")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Agenda</h2>
             <RoleTag role="todos" />
@@ -506,7 +524,7 @@ export default function ManualPage() {
         </section>
 
         {/* Comunidade */}
-        <section id="comunidade" hidden={!!filteredIds && !filteredIds.has("comunidade")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="comunidade" hidden={!isSectionVisible("comunidade")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Comunidade</h2>
             <RoleTag role="todos" />
@@ -520,7 +538,7 @@ export default function ManualPage() {
         </section>
 
         {/* Mensagens */}
-        <section id="mensagens" hidden={!!filteredIds && !filteredIds.has("mensagens")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="mensagens" hidden={!isSectionVisible("mensagens")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Mensagens</h2>
             <RoleTag role="todos" />
@@ -532,7 +550,7 @@ export default function ManualPage() {
         </section>
 
         {/* Notificações */}
-        <section id="notificacoes" hidden={!!filteredIds && !filteredIds.has("notificacoes")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="notificacoes" hidden={!isSectionVisible("notificacoes")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Notificações</h2>
             <RoleTag role="todos" />
@@ -547,7 +565,7 @@ export default function ManualPage() {
         </section>
 
         {/* Suporte */}
-        <section id="suporte" hidden={!!filteredIds && !filteredIds.has("suporte")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="suporte" hidden={!isSectionVisible("suporte")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Suporte</h2>
             <RoleTag role="todos" />
@@ -562,7 +580,7 @@ export default function ManualPage() {
         </section>
 
         {/* Perfil */}
-        <section id="perfil" hidden={!!filteredIds && !filteredIds.has("perfil")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="perfil" hidden={!isSectionVisible("perfil")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Perfil</h2>
             <RoleTag role="todos" />
@@ -572,7 +590,7 @@ export default function ManualPage() {
         </section>
 
         {/* Utilizadores */}
-        <section id="utilizadores" hidden={!!filteredIds && !filteredIds.has("utilizadores")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="utilizadores" hidden={!isSectionVisible("utilizadores")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Utilizadores</h2>
             <RoleTag role="formador" /><RoleTag role="admin" />
@@ -588,7 +606,7 @@ export default function ManualPage() {
         </section>
 
         {/* Audit Log */}
-        <section id="audit-log" hidden={!!filteredIds && !filteredIds.has("audit-log")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="audit-log" hidden={!isSectionVisible("audit-log")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Audit Log</h2>
             <RoleTag role="admin" />
@@ -598,7 +616,7 @@ export default function ManualPage() {
         </section>
 
         {/* Turmas */}
-        <section id="turmas" hidden={!!filteredIds && !filteredIds.has("turmas")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
+        <section id="turmas" hidden={!isSectionVisible("turmas")} className="scroll-mt-4 space-y-3 pt-6 border-t c-br">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold c-tx">Nota — Turmas</h2>
             <RoleTag role="formador" /><RoleTag role="admin" />

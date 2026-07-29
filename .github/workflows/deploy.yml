@@ -775,6 +775,9 @@ jobs:
               ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS pasta_id UUID REFERENCES pastas(id) ON DELETE SET NULL;
               CREATE INDEX IF NOT EXISTS idx_arquivos_pasta ON arquivos(pasta_id);
 
+              -- Disciplina de cada tarefa — mesma taxonomia de "área" do Repositório
+              ALTER TABLE tarefas ADD COLUMN IF NOT EXISTS area TEXT;
+
             " || echo "Aviso: migração já aplicada ou erro ignorado"
 
             # docker rm -f devolve o controlo antes do daemon terminar mesmo a remoção

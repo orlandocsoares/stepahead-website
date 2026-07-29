@@ -21,6 +21,7 @@ type Tarefa = {
   anexo_nome?: string;
   acao_formacao_id?: string;
   acao_designacao?: string;
+  area?: string;
   // formando view
   criador_nome?: string;
   criador_apelido?: string;
@@ -147,7 +148,8 @@ function TarefasPageInner() {
 
   // Modal criar tarefa
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState({ titulo: "", descricao: "", prazo: "" });
+  const [form, setForm] = useState({ titulo: "", descricao: "", prazo: "", area: "" });
+  const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
   const [anexoFile, setAnexoFile] = useState<File | null>(null);
   const anexoInputRef = useRef<HTMLInputElement>(null);
   const [destMode, setDestMode] = useState<"meus" | "acao" | "individual" | "todos">("meus");
@@ -179,6 +181,7 @@ function TarefasPageInner() {
       fetch("/api/db/profiles?orderBy=first_name&ascending=true")
         .then(r => r.json())
         .then(j => setTodosFormandos((j.data ?? []).filter((u: any) => u.role === "formando")));
+      fetch("/api/admin/disciplinas").then(r => r.json()).then(j => setDisciplinas((j.disciplinas ?? []).filter((d: any) => d.activo)));
     }
   }, [isStaff]);
 
@@ -241,7 +244,7 @@ function TarefasPageInner() {
   }
 
   function openModal() {
-    setForm({ titulo: "", descricao: "", prazo: "" });
+    setForm({ titulo: "", descricao: "", prazo: "", area: "" });
     setAnexoFile(null);
     setDestMode("meus");
     setDestAcao(acoesFormacao[0]?.id ?? "");
@@ -407,10 +410,19 @@ function TarefasPageInner() {
                         <p className="text-xs font-medium c-tx leading-snug">{t.titulo}</p>
                         <PrazoBadge prazo={t.prazo} />
                       </div>
-                      {t.acao_designacao && (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-1.5 py-0.5">
-                          {t.acao_designacao}
-                        </span>
+                      {(t.acao_designacao || t.area) && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {t.acao_designacao && (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-1.5 py-0.5">
+                              {t.acao_designacao}
+                            </span>
+                          )}
+                          {t.area && (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-1.5 py-0.5">
+                              {t.area}
+                            </span>
+                          )}
+                        </div>
                       )}
                       {t.criador_nome && (
                         <p className="text-[10px] c-tx4 flex items-center gap-1"><User size={9} /> {t.criador_nome} {t.criador_apelido}</p>
@@ -494,10 +506,19 @@ function TarefasPageInner() {
                           <Trash2 size={11} />
                         </button>
                       </div>
-                      {t.acao_designacao && (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-1.5 py-0.5">
-                          {t.acao_designacao}
-                        </span>
+                      {(t.acao_designacao || t.area) && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {t.acao_designacao && (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-1.5 py-0.5">
+                              {t.acao_designacao}
+                            </span>
+                          )}
+                          {t.area && (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-1.5 py-0.5">
+                              {t.area}
+                            </span>
+                          )}
+                        </div>
                       )}
                       {t.criador_nome && (
                         <p className="text-[10px] c-tx4 flex items-center gap-1"><User size={9} /> {t.criador_nome} {t.criador_apelido}</p>
@@ -606,6 +627,15 @@ function TarefasPageInner() {
                   <input type="datetime-local" value={form.prazo} onChange={e => setForm(f => ({ ...f, prazo: e.target.value }))}
                     className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]" />
                 </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Disciplina (opcional)</label>
+                <select value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                  <option value="" className="c-bg">Sem disciplina específica</option>
+                  {disciplinas.map(d => <option key={d.id} value={d.nome} className="c-bg">{d.nome}</option>)}
+                </select>
               </div>
 
               <div className="space-y-1.5">
