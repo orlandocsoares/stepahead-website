@@ -105,7 +105,7 @@ html.light .dashboard-root aside {
 }
 /* Ícones e texto — escuro para contrastar com o fundo claro */
 html.light .dashboard-root aside svg {
-  color: rgba(30,58,138,0.45) !important;
+  color: rgba(29,78,216,0.65) !important;
 }
 html.light .dashboard-root aside button:hover svg,
 html.light .dashboard-root aside a:hover svg {
@@ -123,9 +123,9 @@ html.light .dashboard-root aside [class*="bg-white/40"] {
 html.light .dashboard-root aside [class*="bg-white/10"] {
   background-color: rgba(100,140,200,0.25) !important;
 }
-/* Labels flutuantes */
+/* Labels flutuantes — azul escuro sólido, mesma tonalidade dos botões primários */
 html.light .dashboard-root aside span {
-  color: rgba(29,78,216,0.85) !important;
+  color: #1d4ed8 !important;
 }
 /* Ponto de status */
 html.light .dashboard-root aside .bg-green-500 { box-shadow: 0 0 8px rgba(34,197,94,0.5) !important; }
