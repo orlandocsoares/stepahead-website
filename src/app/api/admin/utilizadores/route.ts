@@ -31,7 +31,7 @@ export async function GET() {
         c.first_name || ' ' || COALESCE(c.last_name, '') AS criado_por_nome,
         al_login.last_login,
         al_last.last_session_seconds,
-        CASE WHEN us.user_id IS NOT NULL THEN true ELSE false END AS online_now
+        CASE WHEN us.user_id IS NOT NULL AND al_login.last_login > NOW() - INTERVAL '15 minutes' THEN true ELSE false END AS online_now
       FROM profiles p
       LEFT JOIN profiles f ON f.id = p.formador_id
       LEFT JOIN profiles c ON c.id = p.criado_por
