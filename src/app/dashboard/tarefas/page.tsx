@@ -246,7 +246,9 @@ function TarefasPageInner() {
   function openModal() {
     let areas: string[] = [];
     try { areas = JSON.parse(user?.specialization || "[]"); } catch { areas = user?.specialization ? [user.specialization] : []; }
-    const disciplinaPreenchida = areas.length === 1 ? areas[0] : "";
+    const nomesDisciplinas = new Set(disciplinas.map(d => d.nome));
+    const areasValidas = areas.filter(a => nomesDisciplinas.has(a));
+    const disciplinaPreenchida = areasValidas.length === 1 ? areasValidas[0] : "";
     setForm({ titulo: "", descricao: "", prazo: "", area: disciplinaPreenchida });
     setAnexoFile(null);
     setDestMode("meus");
