@@ -234,7 +234,7 @@ function FicheirosPageInner() {
     setThumbnailBlob(null);
     setVisibilidade("publico");
     setAcaoFormacaoId(minhasAcoes[0]?.id ?? "");
-    setUploadCategory(uploadAreas?.[0] ?? activeCategory);
+    setUploadCategory(uploadAreas && uploadAreas.includes(activeCategory) ? activeCategory : uploadAreas?.[0] ?? activeCategory);
     setSitePublico(false);
     setSelectedCapa(null);
     setIsModalOpen(true);
@@ -498,7 +498,10 @@ function FicheirosPageInner() {
         const form = new FormData();
         form.append("bucket", "materiais"); form.append("path", fileName); form.append("file", file);
         const uploadRes = await fetch("/api/storage/upload", { method: "POST", body: form });
-        if (!uploadRes.ok) throw new Error(`Erro no upload de "${file.name}".`);
+        if (!uploadRes.ok) {
+          const uploadJson = await uploadRes.json().catch(() => ({}));
+          throw new Error(uploadJson?.error?.message ? `Erro no upload de "${file.name}": ${uploadJson.error.message}` : `Erro no upload de "${file.name}".`);
+        }
 
         // Se ninguém escolheu uma capa manual, usar a miniatura gerada automaticamente a partir da 1ª página do PDF
         // (só se aplicável ao caso de um único ficheiro — com vários, não há pré-visualização individual).
