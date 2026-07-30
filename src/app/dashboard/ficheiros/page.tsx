@@ -365,9 +365,12 @@ function FicheirosPageInner() {
     try {
       const params = new URLSearchParams({ id: pastaId, modo });
       if (destino) params.set("destino", destino);
-      await fetch(`/api/pastas?${params}`, { method: "DELETE" });
+      const res = await fetch(`/api/pastas?${params}`, { method: "DELETE" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(json.error ?? "Erro ao eliminar pasta."); return; }
       if (selectedPasta === pastaId) setSelectedPasta("todas");
       setEliminarPastaModal(null);
+      setPastas(prev => prev.filter(p => p.id !== pastaId));
       fetchPastas();
       fetchFiles();
     } finally {
