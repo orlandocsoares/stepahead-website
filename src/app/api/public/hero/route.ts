@@ -36,7 +36,7 @@ export async function GET() {
     safe(dbQuery(`
       SELECT area, COUNT(*) AS total
       FROM arquivos
-      WHERE visibilidade IN ('publico', 'formadores') AND area IS NOT NULL AND area != ''
+      WHERE visibilidade IN ('publico', 'formadores') AND area IS NOT NULL AND area != '' AND area != 'Fotos'
       GROUP BY area ORDER BY total DESC LIMIT 5
     `)),
     safe(dbQuery(`SELECT COUNT(*) AS total FROM agenda_atividades WHERE data_evento < NOW()`)),

@@ -16,7 +16,7 @@ export async function GET() {
     dbQuery(
       `SELECT area, COUNT(*) AS total
        FROM arquivos
-       WHERE area IS NOT NULL AND area != ''
+       WHERE area IS NOT NULL AND area != '' AND area != 'Fotos'
        GROUP BY area
        ORDER BY total DESC`,
       []
