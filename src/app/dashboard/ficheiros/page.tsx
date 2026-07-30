@@ -330,6 +330,13 @@ function FicheirosPageInner() {
     fetchPastas();
   }, [activeCategory]);
 
+  // Se a página já estava aberta (navegação sem remontar) e chegou um link de
+  // notificação com ?area=..., o estado inicial não apanha o parâmetro — sincroniza aqui.
+  useEffect(() => {
+    const area = searchParams.get("area");
+    if (area && area !== activeCategory) setActiveCategory(area);
+  }, [searchParams]);
+
   // Veio de uma notificação de pedido de eliminação de pasta — abre já o modal (uma única vez).
   const eliminarPastaDaUrlAberta = useRef(false);
   useEffect(() => {
