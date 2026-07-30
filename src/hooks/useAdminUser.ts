@@ -11,7 +11,7 @@ export type AdminUser = {
   role?: string;
   status?: string;
   avatar_url?: string;
-  specialization?: string;
+  specialization?: string; // JSON string[] de áreas/disciplinas seleccionadas no perfil
   province?: string;
   biografia?: string;
   genero?: string;

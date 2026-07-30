@@ -244,8 +244,9 @@ function TarefasPageInner() {
   }
 
   function openModal() {
-    const leccionadas = (user?.disciplinas_lecciona ?? "").toLowerCase();
-    const disciplinaPreenchida = disciplinas.find(d => leccionadas.includes(d.nome.toLowerCase()))?.nome ?? "";
+    let areas: string[] = [];
+    try { areas = JSON.parse(user?.specialization || "[]"); } catch { areas = user?.specialization ? [user.specialization] : []; }
+    const disciplinaPreenchida = areas.length === 1 ? areas[0] : "";
     setForm({ titulo: "", descricao: "", prazo: "", area: disciplinaPreenchida });
     setAnexoFile(null);
     setDestMode("meus");
