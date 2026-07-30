@@ -108,25 +108,43 @@ export async function POST(req: Request) {
   return NextResponse.json({ data: res.rows[0] });
 }
 
-// DELETE /api/pastas?id=... — remover pasta (dono ou admin). Os ficheiros dentro
-// ficam soltos (pasta_id volta a null) — não são eliminados.
+// DELETE /api/pastas?id=...&modo=soltos|eliminar|mover&destino=<pastaId> — remover pasta
+// (dono ou admin). O que acontece aos ficheiros lá dentro depende de "modo":
+//   soltos (default) — ficam soltos na disciplina (pasta_id volta a null)
+//   eliminar          — os ficheiros são eliminados também
+//   mover             — os ficheiros passam para a pasta indicada em "destino"
 export async function DELETE(req: NextRequest) {
   const session = await getSessionUser();
   if (!session) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id obrigatório." }, { status: 400 });
+  const modo = req.nextUrl.searchParams.get("modo") ?? "soltos";
+  const destino = req.nextUrl.searchParams.get("destino");
+  if (modo === "mover" && !destino) {
+    return NextResponse.json({ error: "Pasta de destino obrigatória." }, { status: 400 });
+  }
 
   const roleRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [session.id]);
   const role = roleRes.rows[0]?.role;
   const isAdmin = role === "admin" || role === "super-admin";
 
-  const result = await dbQuery(
-    `DELETE FROM pastas WHERE id = $1 AND ($2::boolean OR criado_por = $3) RETURNING id`,
+  const pastaRes = await dbQuery(
+    `SELECT id FROM pastas WHERE id = $1 AND ($2::boolean OR criado_por = $3)`,
     [id, isAdmin, session.id]
   );
-  if (result.rowCount === 0) return NextResponse.json({ error: "Pasta não encontrada ou sem permissão." }, { status: 404 });
+  if (pastaRes.rowCount === 0) return NextResponse.json({ error: "Pasta não encontrada ou sem permissão." }, { status: 404 });
 
-  await auditLog("pasta_delete", { actorId: session.id, targetId: id });
+  if (modo === "eliminar") {
+    await dbQuery(`DELETE FROM arquivos WHERE pasta_id = $1`, [id]);
+  } else if (modo === "mover") {
+    await dbQuery(`UPDATE arquivos SET pasta_id = $1 WHERE pasta_id = $2`, [destino, id]);
+  } else {
+    await dbQuery(`UPDATE arquivos SET pasta_id = NULL WHERE pasta_id = $1`, [id]);
+  }
+
+  await dbQuery(`DELETE FROM pastas WHERE id = $1`, [id]);
+
+  await auditLog("pasta_delete", { actorId: session.id, targetId: id, details: { modo } });
   return NextResponse.json({ ok: true });
 }
