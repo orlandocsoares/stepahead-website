@@ -10,9 +10,14 @@ export async function gerarMiniaturaPdf(source: File | string, maxWidth = 480): 
     const pdfjsLib = await import("pdfjs-dist");
     pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
-    const loadingTask = source instanceof File
-      ? pdfjsLib.getDocument({ data: await source.arrayBuffer() })
-      : pdfjsLib.getDocument(source);
+    // Mesmo a partir de um URL, carregamos o PDF nós próprios via fetch() e
+    // passamos os bytes directamente (getDocument({ data })) — é o caminho já
+    // testado e fiável; o loader de URL nativo do pdf.js (getDocument(url))
+    // falhava silenciosamente nalguns casos.
+    const arrayBuffer = source instanceof File
+      ? await source.arrayBuffer()
+      : await fetch(source).then(r => r.arrayBuffer());
+    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
 
     const pdf = await loadingTask.promise;
     const page = await pdf.getPage(1);
