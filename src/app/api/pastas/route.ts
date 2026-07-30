@@ -58,8 +58,11 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // $1 só é reservado para session.id quando é mesmo usado (visibilidadeClause) —
+  // para admin não é referenciado em lado nenhum, e o Postgres não consegue inferir
+  // o tipo de um parâmetro bindado mas nunca usado no texto da query (erro 500).
+  const values: unknown[] = isAdmin ? [] : [session.id];
   const area = req.nextUrl.searchParams.get("area");
-  const values: unknown[] = [session.id];
   let areaClause = "";
   if (area) { values.push(area); areaClause = `AND p.area = $${values.length}`; }
 
