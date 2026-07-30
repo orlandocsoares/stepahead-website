@@ -53,6 +53,13 @@ export default function PerfilPage() {
     if (localProfile.role === "formador" && !localProfile.biografia?.trim()) {
       showMsg("error", "Como Formador, é obrigatório preencher a Biografia Profissional."); return;
     }
+    if (localProfile.role === "formador") {
+      let areas: string[] = [];
+      try { areas = JSON.parse(localProfile.specialization || "[]"); } catch { areas = localProfile.specialization ? [localProfile.specialization] : []; }
+      if (areas.length !== 1) {
+        showMsg("error", "Como Formador, é obrigatório seleccionar exactamente uma Área."); return;
+      }
+    }
     setIsSaving(true);
     const res = await fetch("/api/db/profiles", {
       method: "PATCH",
@@ -324,7 +331,7 @@ export default function PerfilPage() {
               </div>
               <div className="space-y-1 col-span-2">
                 <label className="text-[10px] c-tx3 flex items-center justify-between">
-                  <span>Áreas</span>
+                  <span className="flex items-center gap-1">Áreas {localProfile.role === "formador" && <span className="text-amber-400">* Obrigatório</span>}</span>
                   <span className="c-tx5 text-[10px]">
                     {localProfile.role === "formando" ? "definidas pelas acções em que estás inscrito" : "clica para seleccionar"}
                   </span>
@@ -348,10 +355,13 @@ export default function PerfilPage() {
                   );
                 })() : (() => {
                   const AREAS = areasDisponiveis;
+                  const isFormadorRole = localProfile.role === "formador";
                   let selected: string[] = [];
                   try { selected = JSON.parse(localProfile.specialization || "[]"); } catch { selected = localProfile.specialization ? [localProfile.specialization] : []; }
                   const toggle = (area: string) => {
-                    const next = selected.includes(area) ? selected.filter(a => a !== area) : [...selected, area];
+                    const next = isFormadorRole
+                      ? [area]
+                      : (selected.includes(area) ? selected.filter(a => a !== area) : [...selected, area]);
                     setLocalProfile({ ...localProfile, specialization: JSON.stringify(next) });
                   };
                   return (
@@ -374,7 +384,9 @@ export default function PerfilPage() {
                         );
                       })}
                       {selected.length === 0 && (
-                        <p className="text-[10px] c-tx5 self-center ml-1">Nenhuma seleccionada — acesso a todas as áreas</p>
+                        <p className={`text-[10px] self-center ml-1 ${isFormadorRole ? "text-amber-400" : "c-tx5"}`}>
+                          {isFormadorRole ? "Obrigatório seleccionar uma área" : "Nenhuma seleccionada — acesso a todas as áreas"}
+                        </p>
                       )}
                     </div>
                   );
