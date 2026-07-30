@@ -162,7 +162,9 @@ useEffect(() => {
       fetch('/api/hero-stats').then(r => r.json()).catch(() => ({})),
       fetch('/api/recursos').then(r => r.json()).catch(() => ({ data: [] })),
     ]);
-    const recursosPublicos: any[] = recursosJson.data ?? [];
+    // "Fotos" são a galeria de imagens das Acções de Formação, não material
+    // pedagógico — não fazem sentido lado a lado com disciplinas neste widget.
+    const recursosPublicos: any[] = (recursosJson.data ?? []).filter((r: any) => r.area !== "Fotos");
     const areasCounts: Record<string, number> = {};
     for (const r of recursosPublicos) {
       areasCounts[r.area] = (areasCounts[r.area] ?? 0) + 1;

@@ -108,7 +108,9 @@ function RecursosContent() {
   useEffect(() => {
     fetch("/api/recursos")
       .then(r => r.json())
-      .then(j => setRecursos(j.data ?? []))
+      // "Fotos" são a galeria das Acções de Formação, não material pedagógico —
+      // não pertencem a esta lista de recursos por disciplina.
+      .then(j => setRecursos((j.data ?? []).filter((r: Recurso) => r.area !== "Fotos")))
       .finally(() => setLoading(false));
   }, []);
 
