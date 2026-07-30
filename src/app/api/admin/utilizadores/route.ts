@@ -64,11 +64,12 @@ export async function GET() {
     `);
     return NextResponse.json({ data: result.rows });
   } else {
-    // Formador vê todos os formandos activos da plataforma
+    // Formador vê todos os formandos e formadores activos da plataforma (leitura),
+    // mas nunca administradores — controlos de gestão continuam reservados a admins no frontend.
     const result = await dbQuery(`
       SELECT p.*
       FROM profiles p
-      WHERE p.role = 'formando' AND p.status = 'activo'
+      WHERE p.role IN ('formando', 'formador') AND p.status = 'activo'
       ORDER BY p.first_name ASC, p.last_name ASC
     `);
     return NextResponse.json({ data: result.rows });

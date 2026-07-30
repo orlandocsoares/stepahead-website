@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck, Trash2, Calendar, FileText,
-  BarChart3, Loader2, Key, KeyRound, Plus, Clock, X, MapPin, Target,
+  BarChart3, Loader2, Key, KeyRound, Plus, X, MapPin, Target,
   Users, Activity, Database, Search, User, Download, Pencil,
   Eye, EyeOff, CheckCircle2, AlertCircle, Upload, Trophy, LifeBuoy, MessageSquare, TrendingUp, Megaphone, Send,
   LayoutGrid, List
@@ -23,9 +23,7 @@ export default function SuperAdminPage() {
   const router = useRouter();
 
   const [isAgendaModalOpen, setIsAgendaModalOpen] = useState(false);
-  const [isPowerModalOpen, setIsPowerModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const [statsData, setStatsData] = useState<any>(null);
   const [mediaRadar, setMediaRadar] = useState<string>("");
@@ -49,7 +47,6 @@ export default function SuperAdminPage() {
   const [anuncioResult, setAnuncioResult] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const [agendaForm, setAgendaForm] = useState({ titulo: "", local: "Luanda", data_evento: "", tipo: "Global" });
-  const [powerForm, setPowerForm] = useState({ poder: "", data_expiracao: "" });
   const [exportFilters, setExportFilters] = useState({ role: "all", period: "all", startDate: "", endDate: "" });
 
   // Edição de agenda/ficheiros
@@ -306,6 +303,10 @@ export default function SuperAdminPage() {
     }
   }, [profile, profileLoading, router, isStaff]);
 
+  useEffect(() => {
+    if (isFormador) setUserRoleTab("formador");
+  }, [isFormador]);
+
 
   useEffect(() => {
     if (isStaff && activeTab !== "stats" && activeTab !== "config") fetchData();
@@ -410,12 +411,14 @@ export default function SuperAdminPage() {
 
   const userRoleTabs = useMemo(() => {
     if (!allGroupedUsers) return [];
-    return [
+    const tabs = [
       { key: "admin" as const, label: "Administradores", count: allGroupedUsers.filter(g => g.key === "admin").reduce((s, g) => s + g.data.length, 0) },
       { key: "formador" as const, label: "Formadores", count: allGroupedUsers.filter(g => g.key === "formador").reduce((s, g) => s + g.data.length, 0) },
       { key: "formando" as const, label: "Formandos", count: allGroupedUsers.filter(g => g.key === "formando").reduce((s, g) => s + g.data.length, 0) },
     ];
-  }, [allGroupedUsers]);
+    // Formador não vê administradores — a API já nem os devolve.
+    return isFormador ? tabs.filter(t => t.key !== "admin") : tabs;
+  }, [allGroupedUsers, isFormador]);
 
   const groupedUsers = useMemo(() => {
     if (!allGroupedUsers) return null;
@@ -468,7 +471,7 @@ export default function SuperAdminPage() {
     finally { setLoading(false); }
   };
 
-  const handleUpdate = async (id: string, updates: any, closePowerModal = false) => {
+  const handleUpdate = async (id: string, updates: any) => {
     const table = activeTab === "users" ? "profiles" : "agenda_atividades";
     const res = await fetch(`/api/db/${table}`, {
       method: "PATCH",
@@ -476,7 +479,7 @@ export default function SuperAdminPage() {
       body: JSON.stringify({ updates, eq: { id } }),
     });
     const { error } = await res.json();
-    if (!error) { if (closePowerModal) setIsPowerModalOpen(false); fetchData(); }
+    if (!error) fetchData();
     else alert("Erro ao actualizar: " + error);
   };
 
@@ -520,18 +523,6 @@ export default function SuperAdminPage() {
     if (!editItem) return;
     await handleUpdate(editItem.id, editForm);
     setEditItem(null);
-  };
-
-  const openPowerModal = (user: any) => {
-    setSelectedUser(user);
-    setPowerForm({ poder: user.temporary_power || "", data_expiracao: user.power_expires_at ? user.power_expires_at.split("T")[0] : "" });
-    setIsPowerModalOpen(true);
-  };
-
-  const assignTemporaryPower = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedUser) return;
-    handleUpdate(selectedUser.id, { temporary_power: powerForm.poder || null, power_expires_at: powerForm.data_expiracao || null }, true);
   };
 
   if (profileLoading || loading) return (
@@ -1126,9 +1117,6 @@ export default function SuperAdminPage() {
                                     <button onClick={(e) => { e.stopPropagation(); openProfileModal(item); }} className="p-1.5 rounded-lg c-tx5 hover:text-blue-400 hover:bg-blue-500/10 transition-colors" title="Ver/editar perfil">
                                       <User size={13} />
                                     </button>
-                                    <button onClick={() => openPowerModal(item)} className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs transition-colors ${item.temporary_power ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "c-s1 c-tx4 hc-tx"}`}>
-                                      <Clock size={11} /> {item.temporary_power ? "Poder activo" : "Poder"}
-                                    </button>
                                     <button
                                       onClick={async () => {
                                         const nova = prompt(`Nova password para ${item.first_name} ${item.last_name}:\n(mínimo 6 caracteres)`);
@@ -1377,36 +1365,6 @@ export default function SuperAdminPage() {
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setIsAgendaModalOpen(false)} className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3">Cancelar</button>
                 <button type="submit" className="flex-1 py-2.5 rounded-lg bg-blue-600 text-sm c-tx font-medium hover:bg-blue-500 transition-colors">Guardar</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: PODERES TEMPORÁRIOS */}
-      {isPowerModalOpen && selectedUser && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsPowerModalOpen(false)} />
-          <div className="relative w-full max-w-md c-bg border c-br rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b c-br">
-              <div>
-                <h3 className="text-base font-semibold c-tx flex items-center gap-2"><Target size={16} className="text-amber-400" /> Poder Temporário</h3>
-                <p className="text-xs c-tx4 mt-1">{selectedUser.first_name} {selectedUser.last_name}</p>
-              </div>
-              <button onClick={() => setIsPowerModalOpen(false)} className="c-tx4 hc-tx"><X size={18} /></button>
-            </div>
-            <form onSubmit={assignTemporaryPower} className="px-6 py-5 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Privilégio (vazio para remover)</label>
-                <input type="text" value={powerForm.poder} onChange={(e) => setPowerForm({...powerForm, poder: e.target.value})} className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none focus:border-amber-500/50" placeholder="Ex: Gestor_Agenda" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Expira em</label>
-                <input type="date" value={powerForm.data_expiracao} onChange={(e) => setPowerForm({...powerForm, data_expiracao: e.target.value})} className="w-full c-s1 border c-br rounded-lg px-3 py-2.5 text-sm c-tx outline-none [color-scheme:dark]" />
-              </div>
-              <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setIsPowerModalOpen(false)} className="flex-1 py-2.5 rounded-lg border c-br text-sm c-tx3">Cancelar</button>
-                <button type="submit" className="flex-1 py-2.5 rounded-lg bg-amber-500 text-sm text-black font-medium hover:bg-amber-400 transition-colors">Autorizar</button>
               </div>
             </form>
           </div>
