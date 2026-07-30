@@ -17,24 +17,68 @@ async function ensureSchema() {
   await dbQuery(`ALTER TABLE arquivos ADD COLUMN IF NOT EXISTS pasta_id UUID REFERENCES pastas(id) ON DELETE SET NULL`).catch(() => {});
 }
 
-// GET /api/pastas — lista pastas, opcionalmente filtradas por área (disciplina)
+// GET /api/pastas — lista pastas, opcionalmente filtradas por área (disciplina).
+// A contagem de ficheiros (e, para formando, a própria pasta) respeita a mesma
+// visibilidade usada em /api/arquivos/lista — evita mostrar pastas "vazias"
+// só porque os documentos lá dentro não são acessíveis a quem está a ver.
 export async function GET(req: NextRequest) {
   const session = await getSessionUser();
   if (!session) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   await ensureSchema();
 
+  const roleRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [session.id]);
+  const role = roleRes.rows[0]?.role ?? "formando";
+  const isAdmin = role === "admin" || role === "super-admin";
+
+  let visibilidadeClause = "TRUE"; // admin: conta todos os ficheiros
+  if (!isAdmin) {
+    if (role === "formador") {
+      visibilidadeClause = `(
+        a.uploader_id = $1
+        OR (a.visibilidade IN ('publico', 'formadores') AND (
+          a.area = 'Geral'
+          OR a.area IN (
+            SELECT af2.area FROM acao_formadores acf
+            INNER JOIN acoes_formacao af2 ON af2.id = acf.acao_formacao_id
+            WHERE acf.formador_id = $1 AND af2.area IS NOT NULL
+          )
+        ))
+        OR (a.visibilidade IN ('acao_formacao', 'formadores_acao') AND a.acao_formacao_id IN (
+          SELECT acao_formacao_id FROM acao_formadores WHERE formador_id = $1
+        ))
+      )`;
+    } else {
+      visibilidadeClause = `EXISTS (
+        SELECT 1 FROM arquivo_acoes_formacao l
+        INNER JOIN inscricoes_acao ia ON ia.acao_formacao_id = l.acao_formacao_id
+        WHERE l.arquivo_id = a.id AND ia.formando_id = $1 AND ia.status = 'inscrito'
+          AND (l.disponivel_de IS NULL OR l.disponivel_de <= NOW())
+          AND (l.disponivel_ate IS NULL OR l.disponivel_ate >= NOW())
+      )`;
+    }
+  }
+
   const area = req.nextUrl.searchParams.get("area");
+  const values: unknown[] = [session.id];
+  let areaClause = "";
+  if (area) { values.push(area); areaClause = `AND p.area = $${values.length}`; }
+
+  // Formando não pode agir sobre uma pasta sem nada visível lá dentro — não faz
+  // sentido mostrar-lha. Formador/admin continuam a ver todas (podem geri-las).
+  const havingClause = role === "formando" ? `HAVING COUNT(a.id) FILTER (WHERE ${visibilidadeClause}) > 0` : "";
+
   const res = await dbQuery(
     `SELECT p.id, p.nome, p.area, p.acao_formacao_id, p.criado_por, p.created_at,
             af.designacao AS acao_designacao,
-            COUNT(a.id)::int AS total_ficheiros
+            COUNT(a.id) FILTER (WHERE ${visibilidadeClause})::int AS total_ficheiros
      FROM pastas p
      LEFT JOIN acoes_formacao af ON af.id = p.acao_formacao_id
      LEFT JOIN arquivos a ON a.pasta_id = p.id
-     ${area ? "WHERE p.area = $1" : ""}
+     WHERE TRUE ${areaClause}
      GROUP BY p.id, af.designacao
+     ${havingClause}
      ORDER BY p.created_at DESC`,
-    area ? [area] : []
+    values
   );
   return NextResponse.json({ data: res.rows });
 }
