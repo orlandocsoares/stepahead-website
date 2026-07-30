@@ -24,11 +24,17 @@ export async function PATCH(request: Request) {
   const session = await getSessionUser();
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
-  const { id } = await request.json();
+  const { id, linkContains } = await request.json();
   if (id) {
     await dbQuery(
       "UPDATE notificacoes SET lida = TRUE WHERE id = $1 AND user_id = $2",
       [id, session.id]
+    );
+  } else if (linkContains) {
+    // Ex.: ao eliminar uma pasta, marca como lidos todos os pedidos de eliminação dessa pasta.
+    await dbQuery(
+      "UPDATE notificacoes SET lida = TRUE WHERE user_id = $1 AND link LIKE $2",
+      [session.id, `%${linkContains}%`]
     );
   } else {
     await dbQuery(

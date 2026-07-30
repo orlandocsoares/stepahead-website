@@ -330,21 +330,24 @@ function FicheirosPageInner() {
     fetchPastas();
   }, [activeCategory]);
 
-  // Se a página já estava aberta (navegação sem remontar) e chegou um link de
-  // notificação com ?area=..., o estado inicial não apanha o parâmetro — sincroniza aqui.
+  // Veio de uma notificação de pedido de eliminação de pasta — muda para a disciplina
+  // certa e abre já o modal, independentemente do estado (não remonta em navegação SPA).
+  const eliminarPastaDaUrlAberta = useRef<string | null>(null);
   useEffect(() => {
     const area = searchParams.get("area");
-    if (area && area !== activeCategory) setActiveCategory(area);
-  }, [searchParams]);
-
-  // Veio de uma notificação de pedido de eliminação de pasta — abre já o modal (uma única vez).
-  const eliminarPastaDaUrlAberta = useRef(false);
-  useEffect(() => {
     const pastaId = searchParams.get("eliminarPasta");
-    if (!pastaId || pastas.length === 0 || eliminarPastaDaUrlAberta.current) return;
-    const pasta = pastas.find(p => p.id === pastaId);
-    if (pasta) { eliminarPastaDaUrlAberta.current = true; handleEliminarPasta(pasta.id, pasta.nome); }
-  }, [pastas]);
+    if (area && area !== activeCategory) setActiveCategory(area);
+    if (!pastaId || eliminarPastaDaUrlAberta.current === pastaId) return;
+    eliminarPastaDaUrlAberta.current = pastaId;
+    fetch(`/api/pastas?area=${encodeURIComponent(area ?? activeCategory)}`)
+      .then(r => r.json())
+      .then(j => {
+        setPastas(j.data ?? []);
+        const pasta = (j.data ?? []).find((p: any) => p.id === pastaId);
+        if (pasta) handleEliminarPasta(pasta.id, pasta.nome, pasta);
+      })
+      .catch(() => {});
+  }, [searchParams]);
 
   async function handleCriarPasta(e: React.FormEvent) {
     e.preventDefault();
@@ -369,8 +372,8 @@ function FicheirosPageInner() {
     }
   }
 
-  function handleEliminarPasta(pastaId: string, nome: string) {
-    const pasta = pastas.find(p => p.id === pastaId);
+  function handleEliminarPasta(pastaId: string, nome: string, pastaOverride?: any) {
+    const pasta = pastaOverride ?? pastas.find(p => p.id === pastaId);
     const semPermissao = !isAdmin && !!pasta?.criado_por && pasta.criado_por !== user?.id;
     setEliminarPastaModal({ pastaId, nome, totalFicheiros: pasta?.total_ficheiros ?? 0, semPermissao, donoNome: pasta?.criado_por_nome || "outro utilizador" });
     setEliminarPastaModo("soltos");
@@ -407,6 +410,11 @@ function FicheirosPageInner() {
       setPastas(prev => prev.filter(p => p.id !== pastaId));
       fetchPastas();
       fetchFiles();
+      fetch("/api/notificacoes", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ linkContains: `eliminarPasta=${pastaId}` }),
+      }).catch(() => {});
       showToast("success", "Pasta eliminada.");
     } finally {
       setEliminandoPasta(false);
