@@ -24,6 +24,13 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+const IMAGE_EXT = ["jpg", "jpeg", "png", "gif", "webp"];
+
+function getExtInfo(nomeArquivo?: string) {
+  const ext = (nomeArquivo?.split(".").pop() ?? "").toLowerCase();
+  return { ext, isImage: IMAGE_EXT.includes(ext), isPdf: ext === "pdf", label: ext ? ext.toUpperCase() : "DOC" };
+}
+
 const AREA_COLORS: Record<string, string> = {
   "Língua Portuguesa": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   "Matemática":        "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -272,6 +279,8 @@ function RecursosContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {items.map(r => {
                       const accent = AREA_ACCENT[r.area] ?? "#6b7280";
+                      const info = getExtInfo(r.nome_arquivo);
+                      const fileUrl = r.nome_arquivo ? `/storage/v1/object/public/materiais/${encodeURIComponent(r.nome_arquivo)}` : undefined;
                       return (
                         <button
                           key={r.id}
@@ -282,7 +291,7 @@ function RecursosContent() {
                           <div className="h-0.5 w-full shrink-0" style={{ background: accent }} />
 
                           {/* Miniatura */}
-                          <div className={`w-full flex items-center justify-center relative overflow-hidden ${r.thumbnail_url ? "bg-white" : "bg-black/30"}`} style={{ aspectRatio: "640/905" }}>
+                          <div className={`w-full flex items-center justify-center relative overflow-hidden ${r.thumbnail_url || info.isImage ? "bg-white" : "bg-black/30"}`} style={{ aspectRatio: "640/905" }}>
                             {r.thumbnail_url ? (
                               <>
                                 <img src={r.thumbnail_url} alt={r.label} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
@@ -292,17 +301,19 @@ function RecursosContent() {
                                   </p>
                                 )}
                               </>
-                            ) : r.nome_arquivo ? (
+                            ) : info.isImage && fileUrl ? (
+                              <img src={fileUrl} alt={r.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            ) : info.isPdf && r.nome_arquivo ? (
                               <CapaAutomatica nomeArquivo={r.nome_arquivo} label={r.label} />
                             ) : (
                               <div className="flex flex-col items-center gap-2 opacity-25">
-                                <FileText size={36} strokeWidth={1} className="text-red-400" />
-                                <span className="text-[10px] text-white/50 uppercase tracking-widest">PDF</span>
+                                <FileText size={36} strokeWidth={1} className="text-white" />
+                                <span className="text-[10px] text-white/50 uppercase tracking-widest">{info.label}</span>
                               </div>
                             )}
 
                             {/* Badge tipo */}
-                            <span className="absolute top-2 right-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-red-400">PDF</span>
+                            <span className={`absolute top-2 right-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm ${info.isPdf ? "text-red-400" : info.isImage ? "text-pink-400" : "text-blue-400"}`}>{info.label}</span>
 
                             {/* Hover overlay */}
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -383,16 +394,42 @@ function RecursosContent() {
           </div>
 
           {/* PDF via pdf.js (canvas) — sem barra de ferramentas nativa do browser, funciona igual em todos (incl. Safari) */}
-          {viewing.nome_arquivo ? (
-            <div className="flex-1 w-full overflow-y-auto py-6">
-              <PdfViewer url={`/storage/v1/object/public/materiais/${encodeURIComponent(viewing.nome_arquivo)}`} />
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-white/20">
-              <FileText size={48} strokeWidth={1} />
-              <p className="text-sm">Ficheiro não disponível.</p>
-            </div>
-          )}
+          {(() => {
+            const info = getExtInfo(viewing.nome_arquivo);
+            const fileUrl = viewing.nome_arquivo ? `/storage/v1/object/public/materiais/${encodeURIComponent(viewing.nome_arquivo)}` : undefined;
+            if (info.isPdf && fileUrl) {
+              return (
+                <div className="flex-1 w-full overflow-y-auto py-6">
+                  <PdfViewer url={fileUrl} />
+                </div>
+              );
+            }
+            if (info.isImage && fileUrl) {
+              return (
+                <div className="flex-1 w-full overflow-y-auto flex items-center justify-center p-6">
+                  <img src={fileUrl} alt={viewing.label} className="max-w-full max-h-full object-contain rounded-lg" />
+                </div>
+              );
+            }
+            if (fileUrl) {
+              return (
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 text-white/40">
+                  <FileText size={48} strokeWidth={1} />
+                  <p className="text-sm">Este tipo de ficheiro ({info.label}) não tem pré-visualização — faça download para abrir.</p>
+                  <a href={fileUrl} download target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 text-white text-xs font-semibold hover:bg-blue-500 transition-colors">
+                    <ExternalLink size={13} /> Transferir ficheiro
+                  </a>
+                </div>
+              );
+            }
+            return (
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 text-white/20">
+                <FileText size={48} strokeWidth={1} />
+                <p className="text-sm">Ficheiro não disponível.</p>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
