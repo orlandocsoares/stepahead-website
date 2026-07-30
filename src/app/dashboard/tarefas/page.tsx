@@ -154,6 +154,7 @@ function TarefasPageInner() {
   const anexoInputRef = useRef<HTMLInputElement>(null);
   const [destMode, setDestMode] = useState<"meus" | "acao" | "individual" | "todos">("meus");
   const [destAcao, setDestAcao] = useState("");
+  const [acaoDropdownOpen, setAcaoDropdownOpen] = useState(false);
   const [destIds, setDestIds] = useState<string[]>([]);
   const [formandoSearch, setFormandoSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -253,6 +254,7 @@ function TarefasPageInner() {
     setAnexoFile(null);
     setDestMode("meus");
     setDestAcao(acoesFormacao[0]?.id ?? "");
+    setAcaoDropdownOpen(false);
     setDestIds([]);
     setFormandoSearch("");
     setError(null);
@@ -700,15 +702,38 @@ function TarefasPageInner() {
                 </div>
 
                 {destMode === "acao" && (
-                  <div className="space-y-1.5 pt-1">
+                  <div className="space-y-1.5 pt-1 relative">
                     <label className="text-xs c-tx3">Selecciona a acção de formação</label>
-                    <select value={destAcao} onChange={e => setDestAcao(e.target.value)}
-                      className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
-                      {acoesFormacao.length === 0
-                        ? <option value="">Sem acções de formação criadas</option>
-                        : acoesFormacao.map(a => <option key={a.id} value={a.id} className="c-bg">{a.designacao} ({a.total_inscritos} inscritos)</option>)
-                      }
-                    </select>
+                    {acoesFormacao.length === 0 ? (
+                      <div className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx4">Sem acções de formação criadas</div>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => setAcaoDropdownOpen(o => !o)}
+                          className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors flex items-center justify-between gap-2">
+                          <span className="truncate">
+                            {(() => {
+                              const a = acoesFormacao.find(a => a.id === destAcao);
+                              return a ? `${a.designacao} (${a.total_inscritos} inscritos)` : "Selecciona...";
+                            })()}
+                          </span>
+                          <ChevronDown size={14} className="shrink-0 c-tx4" />
+                        </button>
+                        {acaoDropdownOpen && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setAcaoDropdownOpen(false)} />
+                            <div className="absolute z-20 top-full mt-1 w-full max-h-56 overflow-y-auto c-bg border c-br rounded-lg shadow-lg">
+                              {acoesFormacao.map(a => (
+                                <button type="button" key={a.id} title={`${a.designacao} (${a.total_inscritos} inscritos)`}
+                                  onClick={() => { setDestAcao(a.id); setAcaoDropdownOpen(false); }}
+                                  className={`w-full text-left px-3 py-2 text-sm truncate transition-colors ${a.id === destAcao ? "bg-blue-500/10 text-blue-400" : "c-tx2 hover:bg-white/5"}`}>
+                                  {a.designacao} ({a.total_inscritos} inscritos)
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
 
