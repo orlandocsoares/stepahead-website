@@ -155,6 +155,8 @@ function TarefasPageInner() {
   const [destMode, setDestMode] = useState<"meus" | "acao" | "individual" | "todos">("meus");
   const [destAcao, setDestAcao] = useState("");
   const [acaoDropdownOpen, setAcaoDropdownOpen] = useState(false);
+  const [acaoDropdownUp, setAcaoDropdownUp] = useState(false);
+  const acaoDropdownBtnRef = useRef<HTMLButtonElement>(null);
   const [destIds, setDestIds] = useState<string[]>([]);
   const [formandoSearch, setFormandoSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -708,7 +710,13 @@ function TarefasPageInner() {
                       <div className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx4">Sem acções de formação criadas</div>
                     ) : (
                       <>
-                        <button type="button" onClick={() => setAcaoDropdownOpen(o => !o)}
+                        <button ref={acaoDropdownBtnRef} type="button" onClick={() => {
+                            if (!acaoDropdownOpen && acaoDropdownBtnRef.current) {
+                              const rect = acaoDropdownBtnRef.current.getBoundingClientRect();
+                              setAcaoDropdownUp(window.innerHeight - rect.bottom < rect.top);
+                            }
+                            setAcaoDropdownOpen(o => !o);
+                          }}
                           className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors flex items-center justify-between gap-2">
                           <span className="truncate">
                             {(() => {
@@ -721,7 +729,7 @@ function TarefasPageInner() {
                         {acaoDropdownOpen && (
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setAcaoDropdownOpen(false)} />
-                            <div className="absolute z-20 top-full mt-1 w-full max-h-56 overflow-y-auto c-bg border c-br rounded-lg shadow-lg">
+                            <div className={`absolute z-20 w-full max-h-56 overflow-y-auto c-bg border c-br rounded-lg shadow-lg ${acaoDropdownUp ? "bottom-full mb-1" : "top-full mt-1"}`}>
                               {acoesFormacao.map(a => (
                                 <button type="button" key={a.id}
                                   onClick={() => { setDestAcao(a.id); setAcaoDropdownOpen(false); }}
