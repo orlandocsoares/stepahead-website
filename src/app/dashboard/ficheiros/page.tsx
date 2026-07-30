@@ -141,7 +141,7 @@ function FicheirosPageInner() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const [publicoFilter, setPublicoFilter] = useState<"todos" | "publico" | "nao-publico">("todos");
-  const [activeCategory, setActiveCategory] = useState("Geral");
+  const [activeCategory, setActiveCategory] = useState(() => searchParams.get("area") || "Geral");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [title, setTitle] = useState("");
@@ -167,10 +167,15 @@ function FicheirosPageInner() {
   const [novaPastaOpen, setNovaPastaOpen] = useState(false);
   const [novaPastaNome, setNovaPastaNome] = useState("");
   const [criandoPasta, setCriandoPasta] = useState(false);
-  const [eliminarPastaModal, setEliminarPastaModal] = useState<{ pastaId: string; nome: string; totalFicheiros: number } | null>(null);
+  const [eliminarPastaModal, setEliminarPastaModal] = useState<{ pastaId: string; nome: string; totalFicheiros: number; semPermissao: boolean; donoNome: string } | null>(null);
   const [eliminarPastaModo, setEliminarPastaModo] = useState<"soltos" | "eliminar" | "mover">("soltos");
   const [eliminarPastaDestino, setEliminarPastaDestino] = useState("");
   const [eliminandoPasta, setEliminandoPasta] = useState(false);
+  const [toast, setToast] = useState<{ type: "error" | "success"; text: string } | null>(null);
+  const showToast = (type: "error" | "success", text: string) => {
+    setToast({ type, text });
+    setTimeout(() => setToast(null), 4000);
+  };
   const [acaoModal, setAcaoModal] = useState<{ modo: "anexar" | "clonar"; pastaId: string } | null>(null);
   const [acaoSelecionada, setAcaoSelecionada] = useState("");
   const [processandoAcao, setProcessandoAcao] = useState(false);
@@ -325,6 +330,15 @@ function FicheirosPageInner() {
     fetchPastas();
   }, [activeCategory]);
 
+  // Veio de uma notificação de pedido de eliminação de pasta — abre já o modal (uma única vez).
+  const eliminarPastaDaUrlAberta = useRef(false);
+  useEffect(() => {
+    const pastaId = searchParams.get("eliminarPasta");
+    if (!pastaId || pastas.length === 0 || eliminarPastaDaUrlAberta.current) return;
+    const pasta = pastas.find(p => p.id === pastaId);
+    if (pasta) { eliminarPastaDaUrlAberta.current = true; handleEliminarPasta(pasta.id, pasta.nome); }
+  }, [pastas]);
+
   async function handleCriarPasta(e: React.FormEvent) {
     e.preventDefault();
     if (!novaPastaNome.trim()) return;
@@ -350,14 +364,27 @@ function FicheirosPageInner() {
 
   function handleEliminarPasta(pastaId: string, nome: string) {
     const pasta = pastas.find(p => p.id === pastaId);
-    if (!pasta || pasta.total_ficheiros === 0) {
-      if (!confirm(`Eliminar a pasta "${nome}"?`)) return;
-      executarEliminarPasta(pastaId, "soltos");
-      return;
-    }
-    setEliminarPastaModal({ pastaId, nome, totalFicheiros: pasta.total_ficheiros });
+    const semPermissao = !isAdmin && !!pasta?.criado_por && pasta.criado_por !== user?.id;
+    setEliminarPastaModal({ pastaId, nome, totalFicheiros: pasta?.total_ficheiros ?? 0, semPermissao, donoNome: pasta?.criado_por_nome || "outro utilizador" });
     setEliminarPastaModo("soltos");
     setEliminarPastaDestino("");
+  }
+
+  async function pedirEliminacaoPasta(pastaId: string) {
+    setEliminandoPasta(true);
+    try {
+      const res = await fetch("/api/pastas/pedir-eliminacao", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pastaId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { showToast("error", json.error ?? "Erro ao enviar pedido."); return; }
+      setEliminarPastaModal(null);
+      showToast("success", "Pedido enviado a quem criou a pasta.");
+    } finally {
+      setEliminandoPasta(false);
+    }
   }
 
   async function executarEliminarPasta(pastaId: string, modo: "soltos" | "eliminar" | "mover", destino?: string) {
@@ -367,12 +394,13 @@ function FicheirosPageInner() {
       if (destino) params.set("destino", destino);
       const res = await fetch(`/api/pastas?${params}`, { method: "DELETE" });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) { alert(json.error ?? "Erro ao eliminar pasta."); return; }
+      if (!res.ok) { showToast("error", json.error ?? "Erro ao eliminar pasta."); return; }
       if (selectedPasta === pastaId) setSelectedPasta("todas");
       setEliminarPastaModal(null);
       setPastas(prev => prev.filter(p => p.id !== pastaId));
       fetchPastas();
       fetchFiles();
+      showToast("success", "Pasta eliminada.");
     } finally {
       setEliminandoPasta(false);
     }
@@ -543,6 +571,14 @@ function FicheirosPageInner() {
 
   return (
     <div className="flex gap-4 h-full w-full min-h-0">
+
+      {toast && (
+        <div className={`fixed bottom-5 right-5 z-[200] px-4 py-3 rounded-xl border shadow-2xl text-sm max-w-sm ${
+          toast.type === "error" ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+        }`}>
+          {toast.text}
+        </div>
+      )}
 
       {/* ── Sidebar de navegação ── */}
       <aside className="hidden lg:flex flex-col gap-1 w-52 shrink-0 min-h-0">
@@ -1115,40 +1151,58 @@ function FicheirosPageInner() {
             <DialogTitle className="text-sm font-semibold flex items-center gap-2"><Trash2 size={15} className="text-red-400" /> Eliminar Pasta</DialogTitle>
           </DialogHeader>
           <div className="px-6 py-5 space-y-4">
-            <p className="text-xs c-tx4 leading-relaxed">
-              "{eliminarPastaModal?.nome}" tem <strong className="c-tx2">{eliminarPastaModal?.totalFicheiros}</strong> ficheiro{eliminarPastaModal?.totalFicheiros === 1 ? "" : "s"} dentro. O que fazer com {eliminarPastaModal?.totalFicheiros === 1 ? "ele" : "eles"}?
-            </p>
-            <div className="space-y-2">
-              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border c-br hc-s2 cursor-pointer">
-                <input type="radio" name="modo-eliminar-pasta" className="mt-0.5" checked={eliminarPastaModo === "soltos"} onChange={() => setEliminarPastaModo("soltos")} />
-                <div><p className="text-xs font-medium c-tx">Deixar soltos em "{activeCategory}"</p><p className="text-[10px] c-tx5">Os ficheiros mantêm-se, só deixam de estar numa pasta.</p></div>
-              </label>
-              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border c-br hc-s2 cursor-pointer">
-                <input type="radio" name="modo-eliminar-pasta" className="mt-0.5" checked={eliminarPastaModo === "mover"} onChange={() => setEliminarPastaModo("mover")} />
-                <div className="flex-1"><p className="text-xs font-medium c-tx">Mover para outra pasta</p>
-                  {eliminarPastaModo === "mover" && (
-                    <select value={eliminarPastaDestino} onChange={e => setEliminarPastaDestino(e.target.value)}
-                      className="w-full mt-1.5 c-s1 border c-br rounded-lg px-2.5 py-1.5 text-xs c-tx outline-none">
-                      <option value="" className="c-bg">Seleccionar pasta...</option>
-                      {pastas.filter(p => p.id !== eliminarPastaModal?.pastaId).map(p => (
-                        <option key={p.id} value={p.id} className="c-bg">{p.nome}</option>
-                      ))}
-                    </select>
-                  )}
+            {eliminarPastaModal?.semPermissao ? (
+              <p className="text-xs c-tx4 leading-relaxed">
+                A pasta "{eliminarPastaModal.nome}" foi criada por <strong className="c-tx2">{eliminarPastaModal.donoNome}</strong>, por isso não a podes eliminar directamente. Queres enviar-lhe um pedido para a eliminar?
+              </p>
+            ) : eliminarPastaModal && eliminarPastaModal.totalFicheiros > 0 ? (
+              <>
+                <p className="text-xs c-tx4 leading-relaxed">
+                  "{eliminarPastaModal.nome}" tem <strong className="c-tx2">{eliminarPastaModal.totalFicheiros}</strong> ficheiro{eliminarPastaModal.totalFicheiros === 1 ? "" : "s"} dentro. O que fazer com {eliminarPastaModal.totalFicheiros === 1 ? "ele" : "eles"}?
+                </p>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-2.5 p-2.5 rounded-lg border c-br hc-s2 cursor-pointer">
+                    <input type="radio" name="modo-eliminar-pasta" className="mt-0.5" checked={eliminarPastaModo === "soltos"} onChange={() => setEliminarPastaModo("soltos")} />
+                    <div><p className="text-xs font-medium c-tx">Deixar soltos em "{activeCategory}"</p><p className="text-[10px] c-tx5">Os ficheiros mantêm-se, só deixam de estar numa pasta.</p></div>
+                  </label>
+                  <label className="flex items-start gap-2.5 p-2.5 rounded-lg border c-br hc-s2 cursor-pointer">
+                    <input type="radio" name="modo-eliminar-pasta" className="mt-0.5" checked={eliminarPastaModo === "mover"} onChange={() => setEliminarPastaModo("mover")} />
+                    <div className="flex-1"><p className="text-xs font-medium c-tx">Mover para outra pasta</p>
+                      {eliminarPastaModo === "mover" && (
+                        <select value={eliminarPastaDestino} onChange={e => setEliminarPastaDestino(e.target.value)}
+                          className="w-full mt-1.5 c-s1 border c-br rounded-lg px-2.5 py-1.5 text-xs c-tx outline-none">
+                          <option value="" className="c-bg">Seleccionar pasta...</option>
+                          {pastas.filter(p => p.id !== eliminarPastaModal?.pastaId).map(p => (
+                            <option key={p.id} value={p.id} className="c-bg">{p.nome}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-2.5 p-2.5 rounded-lg border c-br hc-s2 cursor-pointer">
+                    <input type="radio" name="modo-eliminar-pasta" className="mt-0.5" checked={eliminarPastaModo === "eliminar"} onChange={() => setEliminarPastaModo("eliminar")} />
+                    <div><p className="text-xs font-medium text-red-400">Eliminar também os ficheiros</p><p className="text-[10px] c-tx5">Acção irreversível.</p></div>
+                  </label>
                 </div>
-              </label>
-              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border c-br hc-s2 cursor-pointer">
-                <input type="radio" name="modo-eliminar-pasta" className="mt-0.5" checked={eliminarPastaModo === "eliminar"} onChange={() => setEliminarPastaModo("eliminar")} />
-                <div><p className="text-xs font-medium text-red-400">Eliminar também os ficheiros</p><p className="text-[10px] c-tx5">Acção irreversível.</p></div>
-              </label>
-            </div>
+              </>
+            ) : (
+              <p className="text-xs c-tx4 leading-relaxed">Tens a certeza que queres eliminar a pasta "{eliminarPastaModal?.nome}"?</p>
+            )}
             <div className="flex gap-3 pt-1">
               <button type="button" onClick={() => setEliminarPastaModal(null)} className="flex-1 py-2.5 rounded-xl border c-br text-sm c-tx3 hc-tx transition-colors">Cancelar</button>
-              <button type="button" disabled={eliminandoPasta || (eliminarPastaModo === "mover" && !eliminarPastaDestino)}
-                onClick={() => eliminarPastaModal && executarEliminarPasta(eliminarPastaModal.pastaId, eliminarPastaModo, eliminarPastaDestino || undefined)}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 text-sm text-white font-medium hover:bg-red-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-                {eliminandoPasta ? <><Loader2 size={14} className="animate-spin" /> A eliminar...</> : "Eliminar Pasta"}
-              </button>
+              {eliminarPastaModal?.semPermissao ? (
+                <button type="button" disabled={eliminandoPasta}
+                  onClick={() => eliminarPastaModal && pedirEliminacaoPasta(eliminarPastaModal.pastaId)}
+                  className="flex-1 py-2.5 rounded-xl bg-blue-600 text-sm text-white font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {eliminandoPasta ? <><Loader2 size={14} className="animate-spin" /> A enviar...</> : "Enviar pedido"}
+                </button>
+              ) : (
+                <button type="button" disabled={eliminandoPasta || (eliminarPastaModo === "mover" && !eliminarPastaDestino)}
+                  onClick={() => eliminarPastaModal && executarEliminarPasta(eliminarPastaModal.pastaId, eliminarPastaModo, eliminarPastaDestino || undefined)}
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 text-sm text-white font-medium hover:bg-red-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {eliminandoPasta ? <><Loader2 size={14} className="animate-spin" /> A eliminar...</> : "Eliminar Pasta"}
+                </button>
+              )}
             </div>
           </div>
         </DialogContent>

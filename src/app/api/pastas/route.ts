@@ -70,12 +70,14 @@ export async function GET(req: NextRequest) {
   const res = await dbQuery(
     `SELECT p.id, p.nome, p.area, p.acao_formacao_id, p.criado_por, p.created_at,
             af.designacao AS acao_designacao,
+            TRIM(CONCAT(dono.first_name, ' ', COALESCE(dono.last_name, ''))) AS criado_por_nome,
             COUNT(a.id) FILTER (WHERE ${visibilidadeClause})::int AS total_ficheiros
      FROM pastas p
      LEFT JOIN acoes_formacao af ON af.id = p.acao_formacao_id
      LEFT JOIN arquivos a ON a.pasta_id = p.id
+     LEFT JOIN profiles dono ON dono.id = p.criado_por
      WHERE TRUE ${areaClause}
-     GROUP BY p.id, af.designacao
+     GROUP BY p.id, af.designacao, dono.first_name, dono.last_name
      ${havingClause}
      ORDER BY p.created_at DESC`,
     values
