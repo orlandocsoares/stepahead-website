@@ -5,6 +5,7 @@ import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { usePathname } from "next/navigation";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
+import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { ShieldAlert, Key, Loader2, Eye, EyeOff } from "lucide-react";
 import { DashboardTour, shouldShowDashboardTour } from "@/components/dashboard/DashboardTour";
@@ -73,6 +74,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { warning, countdown, stayLoggedIn } = useInactivityLogout();
   const { user } = useAdminUser();
+  useHeartbeat();
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 

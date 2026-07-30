@@ -45,6 +45,9 @@ async function initializeDatabase(pool: Pool) {
     // --- limpeza de sessões expiradas (corre uma vez ao arrancar) ---
     await pool.query(`DELETE FROM user_sessions WHERE expires_at < NOW()`);
 
+    // --- heartbeat: última actividade real da sessão, para saber quem está online agora ---
+    await pool.query(`ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
+
     console.log("[db] schema initialised");
   } catch (error) {
     console.error("[db] schema init error:", error);

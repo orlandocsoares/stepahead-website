@@ -31,7 +31,7 @@ export async function GET() {
         c.first_name || ' ' || COALESCE(c.last_name, '') AS criado_por_nome,
         al_login.last_login,
         al_last.last_session_seconds,
-        CASE WHEN us.user_id IS NOT NULL AND al_login.last_login > NOW() - INTERVAL '15 minutes' THEN true ELSE false END AS online_now
+        CASE WHEN us.last_seen_at > NOW() - INTERVAL '2 minutes' THEN true ELSE false END AS online_now
       FROM profiles p
       LEFT JOIN profiles f ON f.id = p.formador_id
       LEFT JOIN profiles c ON c.id = p.criado_por
@@ -58,7 +58,9 @@ export async function GET() {
         ORDER BY l.actor_id, l.created_at DESC
       ) al_last ON al_last.actor_id = p.id
       LEFT JOIN (
-        SELECT DISTINCT user_id FROM user_sessions WHERE expires_at > NOW()
+        SELECT user_id, MAX(last_seen_at) AS last_seen_at
+        FROM user_sessions WHERE expires_at > NOW()
+        GROUP BY user_id
       ) us ON us.user_id = p.id
       ORDER BY p.created_at DESC
     `);
