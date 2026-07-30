@@ -62,22 +62,31 @@ type Profile = { first_name?: string; last_name?: string; avatar_url?: string };
 const capaAutoCache = new Map<string, string>();
 
 // Quando um documento não tem capa definida, gera-se uma miniatura da 1ª página
-// do PDF via <canvas> (pdf.js) — nunca via <embed>, que dispara downloads automáticos.
+// do PDF via <canvas> (pdf.js) — preferível a <embed>, que nalguns browsers
+// dispara o download automático. Se a geração falhar (ex: PDF protegido ou
+// malformado), cai-se para <embed> mesmo assim — mostrar algo é melhor do
+// que um ícone genérico eterno.
 function CapaAutomatica({ nomeArquivo, label }: { nomeArquivo: string; label: string }) {
   const [url, setUrl] = useState<string | null>(capaAutoCache.get(nomeArquivo) ?? null);
+  const [falhou, setFalhou] = useState(false);
+  const fileUrl = `/storage/v1/object/public/materiais/${encodeURIComponent(nomeArquivo)}`;
 
   useEffect(() => {
     if (url) return;
     let cancelado = false;
-    const fileUrl = `/storage/v1/object/public/materiais/${encodeURIComponent(nomeArquivo)}`;
     gerarMiniaturaPdf(fileUrl).then((blob) => {
-      if (cancelado || !blob) return;
+      if (cancelado) return;
+      if (!blob) { setFalhou(true); return; }
       const objUrl = URL.createObjectURL(blob);
       capaAutoCache.set(nomeArquivo, objUrl);
       setUrl(objUrl);
     });
     return () => { cancelado = true; };
   }, [nomeArquivo, url]);
+
+  if (falhou) {
+    return <embed src={fileUrl} type="application/pdf" className="w-full h-full pointer-events-none" />;
+  }
 
   if (!url) {
     return (
