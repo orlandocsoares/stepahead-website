@@ -198,10 +198,19 @@ function FicheirosPageInner() {
     return c;
   }, [files]);
 
+  // "Geral" fica sempre primeiro; as restantes disciplinas ordenadas alfabeticamente.
+  function ordenarComGeralPrimeiro(cats: string[]) {
+    return [...cats].sort((a, b) => {
+      if (a === "Geral") return -1;
+      if (b === "Geral") return 1;
+      return a.localeCompare(b, "pt");
+    });
+  }
+
   const visibleCategories = useMemo(() => {
     // formando: só vê disciplinas onde tem, de facto, ficheiros publicados numa Acção de Formação
-    if (user?.role === "formando") return allCatNames.filter(cat => (catCounts[cat] ?? 0) > 0);
-    return getVisibleCategories(user?.role, user?.specialization, allCatNames);
+    if (user?.role === "formando") return ordenarComGeralPrimeiro(allCatNames.filter(cat => (catCounts[cat] ?? 0) > 0));
+    return ordenarComGeralPrimeiro(getVisibleCategories(user?.role, user?.specialization, allCatNames));
   }, [user?.role, user?.specialization, allCatNames, catCounts]);
   const uploadAreas = useMemo(() => getUploadAreas(user?.role, user?.specialization, allCatNames), [user?.role, user?.specialization, allCatNames]);
   const isRestricted = user?.role === "formador" && uploadAreas !== null;
