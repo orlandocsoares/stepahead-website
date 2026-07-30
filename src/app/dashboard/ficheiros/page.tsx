@@ -140,6 +140,7 @@ function FicheirosPageInner() {
   const [files, setFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
+  const [publicoFilter, setPublicoFilter] = useState<"todos" | "publico" | "nao-publico">("todos");
   const [activeCategory, setActiveCategory] = useState("Geral");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -391,6 +392,8 @@ function FicheirosPageInner() {
       if (search && !f.label?.toLowerCase().includes(search.toLowerCase())) return false;
       if (selectedPasta === "soltos" && f.pasta_id) return false;
       if (selectedPasta !== "todas" && selectedPasta !== "soltos" && f.pasta_id !== selectedPasta) return false;
+      if (publicoFilter === "publico" && !f.site_publico) return false;
+      if (publicoFilter === "nao-publico" && f.site_publico) return false;
       return true;
     }).sort((a, b) => {
       let cmp = 0;
@@ -400,7 +403,7 @@ function FicheirosPageInner() {
       else if (sortCol === "data") cmp = new Date(a.criado_em ?? 0).getTime() - new Date(b.criado_em ?? 0).getTime();
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [files, search, activeCategory, visibleCategories, user, sortCol, sortDir, selectedPasta]);
+  }, [files, search, activeCategory, visibleCategories, user, sortCol, sortDir, selectedPasta, publicoFilter]);
 
   function toggleSort(col: typeof sortCol) {
     if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -579,6 +582,16 @@ function FicheirosPageInner() {
             ].map(([v,l]) => <option key={v} value={v} className="c-bg">{l}</option>)}
           </select>
 
+          {/* Filtro Público/Privado — só quem gere conteúdo */}
+          {canUpload && (
+            <select value={publicoFilter} onChange={e => setPublicoFilter(e.target.value as any)}
+              className="c-s1 border c-br rounded-lg px-3 py-2 text-xs c-tx outline-none hidden sm:block">
+              <option value="todos" className="c-bg">Público e privado</option>
+              <option value="publico" className="c-bg">Só públicos (site)</option>
+              <option value="nao-publico" className="c-bg">Só não públicos</option>
+            </select>
+          )}
+
           {/* View toggle */}
           <div className="flex items-center gap-0.5 c-s1 border c-br rounded-lg p-1">
             <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-blue-600 text-white" : "c-tx4 hc-tx2"}`}><LayoutGrid size={14} /></button>
@@ -740,6 +753,11 @@ function FicheirosPageInner() {
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-[9px] c-tx5 truncate">{f.tamanho ?? "—"} · {formatDate(f.criado_em ?? f.created_at)}</p>
                           <div className="flex items-center gap-1 shrink-0">
+                            {f.site_publico && (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] text-cyan-400" title="Visível no site público">
+                                <Globe size={9} />
+                              </span>
+                            )}
                             <DisponibilidadeBadge disponivel_de={f.disponivel_de} disponivel_ate={f.disponivel_ate} />
                             <VisibilidadeBadge v={f.visibilidade ?? "publico"} small acaoNome={f.acao_formacao_id ? acoesNomes[f.acao_formacao_id] : undefined} />
                           </div>
