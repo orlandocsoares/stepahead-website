@@ -244,7 +244,9 @@ function TarefasPageInner() {
   }
 
   function openModal() {
-    setForm({ titulo: "", descricao: "", prazo: "", area: "" });
+    const leccionadas = (user?.disciplinas_lecciona ?? "").toLowerCase();
+    const disciplinaPreenchida = disciplinas.find(d => leccionadas.includes(d.nome.toLowerCase()))?.nome ?? "";
+    setForm({ titulo: "", descricao: "", prazo: "", area: disciplinaPreenchida });
     setAnexoFile(null);
     setDestMode("meus");
     setDestAcao(acoesFormacao[0]?.id ?? "");
@@ -630,12 +632,16 @@ function TarefasPageInner() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Disciplina (opcional)</label>
-                <select value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))}
-                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
-                  <option value="" className="c-bg">Sem disciplina específica</option>
-                  {disciplinas.map(d => <option key={d.id} value={d.nome} className="c-bg">{d.nome}</option>)}
-                </select>
+                <label className="text-xs c-tx3">Disciplina</label>
+                {form.area ? (
+                  <div className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx2">{form.area}</div>
+                ) : (
+                  <select value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))}
+                    className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 transition-colors">
+                    <option value="" className="c-bg">Sem disciplina específica</option>
+                    {disciplinas.map(d => <option key={d.id} value={d.nome} className="c-bg">{d.nome}</option>)}
+                  </select>
+                )}
               </div>
 
               <div className="space-y-1.5">
