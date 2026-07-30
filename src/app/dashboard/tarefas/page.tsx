@@ -611,7 +611,7 @@ function TarefasPageInner() {
       {modalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
-          <div className="relative c-bg border c-br rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+          <div className="relative c-bg border c-br rounded-2xl w-full max-w-lg shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b c-br">
               <div className="flex items-center gap-2">
                 <ClipboardList size={15} className="text-blue-400" />
@@ -723,9 +723,9 @@ function TarefasPageInner() {
                             <div className="fixed inset-0 z-10" onClick={() => setAcaoDropdownOpen(false)} />
                             <div className="absolute z-20 top-full mt-1 w-full max-h-56 overflow-y-auto c-bg border c-br rounded-lg shadow-lg">
                               {acoesFormacao.map(a => (
-                                <button type="button" key={a.id} title={`${a.designacao} (${a.total_inscritos} inscritos)`}
+                                <button type="button" key={a.id}
                                   onClick={() => { setDestAcao(a.id); setAcaoDropdownOpen(false); }}
-                                  className={`w-full text-left px-3 py-2 text-sm truncate transition-colors ${a.id === destAcao ? "bg-blue-500/10 text-blue-400" : "c-tx2 hover:bg-white/5"}`}>
+                                  className={`w-full text-left px-3 py-2 text-sm leading-snug transition-colors ${a.id === destAcao ? "bg-blue-500/10 text-blue-400" : "c-tx2 hover:bg-white/5"}`}>
                                   {a.designacao} ({a.total_inscritos} inscritos)
                                 </button>
                               ))}
