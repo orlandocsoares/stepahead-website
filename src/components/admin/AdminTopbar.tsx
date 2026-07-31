@@ -208,9 +208,9 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
   return (
     <>
     {showBanner && (
-      <div className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-2.5 flex items-center gap-3">
-        <AlertTriangle size={15} className="text-blue-500 shrink-0" />
-        <p className="text-xs text-blue-700 flex-1">
+      <div className="bg-blue-600 px-4 py-2.5 flex items-center gap-3 shadow-sm">
+        <AlertTriangle size={15} className="text-white shrink-0" />
+        <p className="text-xs text-white flex-1">
           {pendingFormandosCount > 0 && (
             <><span className="font-semibold">{pendingFormandosCount} formando{pendingFormandosCount > 1 ? "s" : ""}</span>{pendingFormandosCount > 1 ? " aguardam" : " aguarda"} aprovação. </>
           )}
@@ -220,11 +220,11 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
         </p>
         <button
           onClick={() => { setBannerDismissed(false); router.push(pendingFormandosCount > 0 ? "/dashboard/formandos-por-validar" : "/dashboard/admin"); }}
-          className="flex items-center gap-1 text-[11px] text-blue-600 font-medium hover:text-blue-700 transition-colors shrink-0"
+          className="flex items-center gap-1 text-[11px] text-white font-semibold underline underline-offset-2 hover:no-underline transition-colors shrink-0"
         >
           Ver agora <ArrowRight size={12} />
         </button>
-        <button onClick={() => setBannerDismissed(true)} className="c-tx5 hover:c-tx4 transition-colors shrink-0">
+        <button onClick={() => setBannerDismissed(true)} className="text-white/70 hover:text-white transition-colors shrink-0">
           <X size={14} />
         </button>
       </div>
