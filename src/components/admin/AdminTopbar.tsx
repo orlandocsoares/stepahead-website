@@ -385,7 +385,12 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
                     <Bell size={28} className="mx-auto c-tx5 mb-2" />
                     <p className="text-sm c-tx4">Sem notificações</p>
                   </div>
-                ) : notifs.map(n => {
+                ) : notifs.filter(n => !n.lida).length === 0 ? (
+                  <div className="py-10 text-center">
+                    <CheckCheck size={28} className="mx-auto c-tx5 mb-2" />
+                    <p className="text-sm c-tx4">Sem notificações por ler</p>
+                  </div>
+                ) : notifs.filter(n => !n.lida).map(n => {
                   const isExpanded = expandedId === n.id;
                   const iconBg = n.tipo === "novo_formando" ? "bg-emerald-500/10" : n.tipo === "novo_formador" ? "bg-amber-500/10" : n.tipo === "anuncio" ? "bg-purple-500/10" : n.tipo === "documento" ? "bg-teal-500/10" : n.tipo === "mensagem" ? "bg-pink-500/10" : "bg-blue-500/10";
                   const icon = n.tipo === "novo_formando" ? <UserCheck size={16} className="text-emerald-400" /> : n.tipo === "novo_formador" ? <ShieldCheck size={16} className="text-amber-400" /> : n.tipo === "anuncio" ? <Megaphone size={16} className="text-purple-400" /> : n.tipo === "tarefa" ? <ClipboardList size={16} className="text-blue-400" /> : n.tipo === "documento" ? <FileText size={16} className="text-teal-400" /> : n.tipo === "mensagem" ? <MessageSquare size={16} className="text-pink-400" /> : <Bell size={16} className="text-blue-400" />;
