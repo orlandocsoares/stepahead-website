@@ -468,6 +468,28 @@ function TarefasPageInner() {
                       {col.key === "entregue" && (
                         <div className="space-y-1.5 pt-1">
                           {t.resposta_url && <AnexoLink url={t.resposta_url} nome={t.resposta_nome} />}
+                          <input type="file" className="hidden"
+                            ref={el => { respostaInputRefs.current[t.id] = el; }}
+                            onChange={e => setRespostaFiles(prev => ({ ...prev, [t.id]: e.target.files?.[0] ?? null }))} />
+                          {respostaFiles[t.id] ? (
+                            <div className="flex items-center gap-1.5 text-[10px] c-tx3 c-s2 border c-br rounded px-2 py-1">
+                              <FileText size={10} className="shrink-0 text-blue-400" />
+                              <span className="truncate flex-1">{respostaFiles[t.id]!.name}</span>
+                              <button type="button" onClick={() => setRespostaFiles(prev => ({ ...prev, [t.id]: null }))}
+                                className="c-tx5 hover:text-red-400 transition-colors"><X size={10} /></button>
+                            </div>
+                          ) : (
+                            <button type="button" onClick={() => respostaInputRefs.current[t.id]?.click()}
+                              className="w-full py-1 rounded border border-dashed c-br c-tx5 text-[10px] hover:c-tx3 transition-colors flex items-center justify-center gap-1">
+                              <Paperclip size={9} /> {t.resposta_url ? "Substituir ficheiro" : "Anexar resposta"}
+                            </button>
+                          )}
+                          {respostaFiles[t.id] && (
+                            <button onClick={() => marcarEntregue(t.id, "entregue")} disabled={updatingId === t.id}
+                              className="w-full py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
+                              {updatingId === t.id ? <Loader2 size={10} className="animate-spin" /> : <><Upload size={10} /> Actualizar resposta</>}
+                            </button>
+                          )}
                           <button onClick={() => marcarEntregue(t.id, "pendente")} disabled={updatingId === t.id}
                             className="w-full py-1.5 rounded-lg c-s2 border c-br c-tx4 text-[10px] hover:c-tx3 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
                             <RotateCcw size={10} /> Retirar entrega
