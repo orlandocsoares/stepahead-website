@@ -676,6 +676,21 @@ export default function HeroSection() {
 
     setLoading(true);
 
+    // Upload do avatar do formador ANTES de criar a conta — sync-profile já não
+    // aceita uma segunda chamada para a mesma conta (só cria contas novas).
+    let avatarUrl: string | undefined;
+    if (userRole === 'formador' && avatarFile) {
+      const form = new FormData();
+      form.append("bucket", "avatars");
+      form.append("path", `formadores/${Math.random().toString(36).slice(2)}.${avatarFile.name.split('.').pop()}`);
+      form.append("file", avatarFile);
+      const upRes = await fetch("/api/storage/upload", { method: "POST", body: form });
+      const upData = await upRes.json();
+      if (upRes.ok && upData.data?.path) {
+        avatarUrl = `/storage/v1/object/public/avatars/${upData.data.path}`;
+      }
+    }
+
     // Registo na nossa API local
     const syncRes = await fetch("/api/auth/sync-profile", {
       method: "POST",
@@ -686,28 +701,11 @@ export default function HeroSection() {
         first_name: firstName,
         last_name: lastName,
         role: userRole,
-        ...(userRole === 'formando' ? { provincia, municipio, escola, nivel_ensino: nivelEnsino } : { especialidade, biografia: bio }),
+        ...(userRole === 'formando' ? { provincia, municipio, escola, nivel_ensino: nivelEnsino } : { especialidade, biografia: bio, avatar_url: avatarUrl ?? remoteImageUrl }),
       }),
     });
     const syncData = await syncRes.json();
     if (!syncRes.ok) { setError(syncData.error ?? "Erro ao criar conta."); setLoading(false); return; }
-
-    // Upload do avatar do formador para a nossa API de storage
-    if (userRole === 'formador' && avatarFile) {
-      const form = new FormData();
-      form.append("bucket", "avatars");
-      form.append("path", `formadores/${Math.random().toString(36).slice(2)}.${avatarFile.name.split('.').pop()}`);
-      form.append("file", avatarFile);
-      const upRes = await fetch("/api/storage/upload", { method: "POST", body: form });
-      const upData = await upRes.json();
-      if (upRes.ok && upData.data?.path) {
-        await fetch("/api/auth/sync-profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, role: userRole, avatar_url: `/storage/v1/object/public/avatars/${upData.data.path}` }),
-        });
-      }
-    }
 
     setIsSuccess(true);
     setLoading(false);

@@ -13,48 +13,28 @@ export async function POST(request: Request) {
 
     const clean = String(email).trim().toLowerCase();
 
-    // Criar auth_user se não existir
+    // Este endpoint não exige sessão autenticada (é usado no formulário público de
+    // registo, antes de existir sessão) — por isso NUNCA pode alterar uma conta já
+    // existente: só cria contas novas. Sem esta verificação, bastava conhecer o
+    // email de alguém para reescrever a password e o role da conta dessa pessoa.
     const existing = await dbQuery<{ id: string }>(
       "SELECT id FROM auth_users WHERE email = $1 LIMIT 1",
       [clean]
     );
-
-    let userId: string;
-    let isNewUser = false;
-    const passwordHash = hashPassword(password || randomBytes(16).toString("hex"));
-
     if (existing.rows[0]) {
-      userId = existing.rows[0].id;
-      // Actualizar password real se foi fornecida
-      if (password) {
-        await dbQuery("UPDATE auth_users SET password_hash = $1 WHERE id = $2", [passwordHash, userId]);
-      }
-    } else {
-      const created = await dbQuery<{ id: string }>(
-        `INSERT INTO auth_users (email, password_hash) VALUES ($1, $2)
-         ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email
-         RETURNING id`,
-        [clean, passwordHash]
-      );
-      userId = created.rows[0].id;
-      isNewUser = true;
+      return NextResponse.json({ error: "Já existe uma conta com este email." }, { status: 409 });
     }
 
-    // Criar ou actualizar profiles
+    const passwordHash = hashPassword(password || randomBytes(16).toString("hex"));
+    const created = await dbQuery<{ id: string }>(
+      `INSERT INTO auth_users (email, password_hash) VALUES ($1, $2) RETURNING id`,
+      [clean, passwordHash]
+    );
+    const userId = created.rows[0].id;
+
     await dbQuery(
       `INSERT INTO profiles (id, email, first_name, last_name, role, status, provincia, municipio_residencia, escola, nivel_ensino, especialidade, biografia, avatar_url)
-       VALUES ($1,$2,$3,$4,$5,'pendente',$6,$7,$8,$9,$10,$11,$12)
-       ON CONFLICT (email) DO UPDATE SET
-         role                  = EXCLUDED.role,
-         first_name            = COALESCE(EXCLUDED.first_name,            profiles.first_name),
-         last_name             = COALESCE(EXCLUDED.last_name,             profiles.last_name),
-         provincia             = COALESCE(EXCLUDED.provincia,             profiles.provincia),
-         municipio_residencia  = COALESCE(EXCLUDED.municipio_residencia,  profiles.municipio_residencia),
-         escola                = COALESCE(EXCLUDED.escola,                profiles.escola),
-         nivel_ensino          = COALESCE(EXCLUDED.nivel_ensino,          profiles.nivel_ensino),
-         especialidade         = COALESCE(EXCLUDED.especialidade,         profiles.especialidade),
-         biografia             = COALESCE(EXCLUDED.biografia,             profiles.biografia),
-         avatar_url            = COALESCE(EXCLUDED.avatar_url,            profiles.avatar_url)`,
+       VALUES ($1,$2,$3,$4,$5,'pendente',$6,$7,$8,$9,$10,$11,$12)`,
       [userId, clean, first_name || null, last_name || null, role,
        provincia || null, municipio || null, escola || null, nivel_ensino || null, especialidade || null, biografia || null, avatar_url || null]
     );

@@ -485,12 +485,17 @@ export default function SuperAdminPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Confirma a eliminação irreversível?")) return;
-    const table = activeTab === "users" ? "profiles" : "agenda_atividades";
-    await fetch(`/api/db/${table}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eq: { id } }),
-    });
+    if (activeTab === "users") {
+      // Elimina a conta por completo (auth_users, cascateia para profiles) — não só o
+      // perfil, para não deixar o email preso numa conta órfã que bloqueia um novo registo.
+      await fetch(`/api/admin/utilizadores?id=${id}`, { method: "DELETE" });
+    } else {
+      await fetch(`/api/db/agenda_atividades`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eq: { id } }),
+      });
+    }
     fetchData();
   };
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 import { getSessionUser } from "@/lib/server-auth";
+import { auditLog } from "@/lib/audit";
 
 export async function GET() {
   const sessionUser = await getSessionUser();
@@ -104,4 +105,26 @@ export async function GET() {
     `);
     return NextResponse.json({ data: result.rows });
   }
+}
+
+// DELETE /api/admin/utilizadores?id=... — elimina a conta por completo (admin/super-admin).
+// Apaga de auth_users, que cascateia para profiles — ao contrário de apagar só
+// "profiles" (via /api/db/profiles), isto não deixa o email preso numa conta
+// órfã que depois bloqueia um novo registo com o mesmo email.
+export async function DELETE(req: Request) {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+
+  const meRes = await dbQuery(`SELECT role FROM profiles WHERE id = $1 LIMIT 1`, [sessionUser.id]);
+  const isAdmin = meRes.rows[0]?.role === "admin" || meRes.rows[0]?.role === "super-admin";
+  if (!isAdmin) return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+
+  const id = new URL(req.url).searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "id obrigatório." }, { status: 400 });
+
+  const result = await dbQuery(`DELETE FROM auth_users WHERE id = $1 RETURNING id`, [id]);
+  if (result.rowCount === 0) return NextResponse.json({ error: "Utilizador não encontrado." }, { status: 404 });
+
+  await auditLog("user_delete", { actorId: sessionUser.id, targetId: id });
+  return NextResponse.json({ ok: true });
 }
