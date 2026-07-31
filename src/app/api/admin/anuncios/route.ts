@@ -68,12 +68,13 @@ export async function POST(request: Request) {
     for (const u of users.rows) {
       if (!u.email) continue;
       try {
-        await resend.emails.send({
+        const { error } = await resend.emails.send({
           from: "SaberMais <notificacoes@sabermais.edu.ao>",
           to: u.email,
           subject: `[Saber Mais] ${titulo}`,
           html: emailHtml(u.first_name ?? "Utilizador"),
         });
+        if (error) throw new Error(error.message ?? JSON.stringify(error));
         emailsEnviados++;
       } catch (err) {
         console.error("[anuncios] email falhou para", u.email, err);

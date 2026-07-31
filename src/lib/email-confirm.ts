@@ -21,7 +21,7 @@ export async function sendConfirmEmail(email: string, userId: string, firstName:
 
   const confirmUrl = `${BASE}/api/auth/confirm-email?token=${token}`;
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: "SaberMais <notificacoes@sabermais.edu.ao>",
     to: email,
     subject: "Confirme o seu email — SaberMais",
@@ -41,4 +41,12 @@ export async function sendConfirmEmail(email: string, userId: string, firstName:
       </div>
     `,
   });
+
+  // O SDK do Resend não rejeita a promise em erros da API (ex.: domínio não
+  // verificado, remetente inválido) — só em falhas de rede. Sem isto, esses
+  // erros ficam completamente silenciosos: sem excepção, sem registo no
+  // dashboard do Resend, sem log nenhum.
+  if (error) {
+    throw new Error(`Resend: ${error.message ?? JSON.stringify(error)}`);
+  }
 }
