@@ -208,9 +208,9 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
   return (
     <>
     {showBanner && (
-      <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 flex items-center gap-3">
-        <AlertTriangle size={15} className="text-amber-400 shrink-0" />
-        <p className="text-xs text-amber-200 flex-1">
+      <div className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-2.5 flex items-center gap-3">
+        <AlertTriangle size={15} className="text-blue-500 shrink-0" />
+        <p className="text-xs text-blue-700 flex-1">
           {pendingFormandosCount > 0 && (
             <><span className="font-semibold">{pendingFormandosCount} formando{pendingFormandosCount > 1 ? "s" : ""}</span>{pendingFormandosCount > 1 ? " aguardam" : " aguarda"} aprovação. </>
           )}
@@ -220,7 +220,7 @@ export function AdminTopbar({ onMobileMenuToggle, onStartTour }: Props) {
         </p>
         <button
           onClick={() => { setBannerDismissed(false); router.push(pendingFormandosCount > 0 ? "/dashboard/formandos-por-validar" : "/dashboard/admin"); }}
-          className="flex items-center gap-1 text-[11px] text-amber-400 font-medium hover:text-amber-300 transition-colors shrink-0"
+          className="flex items-center gap-1 text-[11px] text-blue-600 font-medium hover:text-blue-700 transition-colors shrink-0"
         >
           Ver agora <ArrowRight size={12} />
         </button>
