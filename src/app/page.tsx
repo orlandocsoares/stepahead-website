@@ -187,6 +187,37 @@ function FormadorMiniCard({ data, onOpen }: { data: FormadorData; onOpen: () => 
   );
 }
 
+const COORDENACAO_AREA = "Coordenação Geral";
+
+function CoordenacaoGeralCard({ data, onOpen }: { data: FormadorData; onOpen: () => void }) {
+  const iniciais = data.nome.split(" ").filter(Boolean).slice(0, 2).map(s => s[0]).join("").toUpperCase();
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="text-left w-full backdrop-blur-md border rounded-2xl px-5 py-4 transition-colors bg-gradient-to-r from-blue-500/15 via-blue-500/5 to-transparent border-blue-400/30 hover:border-blue-400/50 mb-3"
+    >
+      <div className="flex items-start gap-4">
+        {data.avatar_url ? (
+          <img src={data.avatar_url} alt={data.nome} className="w-16 h-16 rounded-xl object-cover shrink-0 border border-blue-400/40" />
+        ) : (
+          <div className="w-16 h-16 rounded-xl bg-blue-500/25 border border-blue-400/40 flex items-center justify-center shrink-0 text-lg font-bold text-blue-200">
+            {iniciais}
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="text-[9px] font-bold text-blue-300 uppercase tracking-[0.2em] mb-0.5">{COORDENACAO_AREA}</p>
+          <p className="text-sm font-bold text-white truncate">{data.nome}</p>
+          {data.biografia && (
+            <p className="text-[11px] text-white/60 mt-1.5 leading-relaxed line-clamp-3">{data.biografia}</p>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
 type EventoItem = {
   id: string;
   agenda_evento_id: string | null;
@@ -962,6 +993,8 @@ export default function HeroSection() {
         };
       }
       case 3: {
+        const coordenacao = formadoresData.filter(f => f.area === COORDENACAO_AREA);
+        const resto = formadoresData.filter(f => f.area !== COORDENACAO_AREA);
         return {
           ...base,
           name: "Formadores",
@@ -971,12 +1004,19 @@ export default function HeroSection() {
               <p className={defaultTextClass}>
                 A promoção da formação e supervisão apoia-se em <strong className="text-blue-300">{formadoresData.length}</strong> formador{formadoresData.length === 1 ? "" : "es"} de excelência.
               </p>
+              {coordenacao.map((f) => (
+                <CoordenacaoGeralCard
+                  key={f.id}
+                  data={f}
+                  onOpen={() => setFormadorAbertoId(f.id)}
+                />
+              ))}
               <div id="tour-formadores-grid" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2.5 max-h-[58vh] overflow-y-auto pr-1">
                 {formadoresLoading && <p className="text-sm text-white/40 col-span-full">A carregar…</p>}
                 {!formadoresLoading && formadoresData.length === 0 && (
                   <p className="text-sm text-white/40 col-span-full">Sem formadores activos registados.</p>
                 )}
-                {formadoresData.map((f) => (
+                {resto.map((f) => (
                   <FormadorMiniCard
                     key={f.id}
                     data={f}
