@@ -394,7 +394,7 @@ export default function PerfilPage() {
               </div>
               <div className="space-y-1 col-span-2">
                 <label className="text-[10px] c-tx3 flex items-center justify-between">
-                  <span>Biografia profissional</span>
+                  <span>{localProfile.destaque_cargo ? "Nota de boas-vindas" : "Biografia profissional"}</span>
                   {localProfile.role === "formador" && (
                     <span className="text-amber-400 text-[10px]">* Obrigatório</span>
                   )}

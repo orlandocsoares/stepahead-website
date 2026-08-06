@@ -25,7 +25,7 @@ export async function GET() {
               p.habilitacoes_academicas, p.curso_concluido, p.agregacao_pedagogica,
               p.municipio_escola, p.ciclo_ensino, p.anos_servico_docente,
               p.disciplinas_lecciona, p.classes_lecciona, p.cargos_pedagogicos,
-              p.must_change_password
+              p.destaque_cargo, p.must_change_password
        FROM profiles p
        JOIN auth_users u ON u.id = p.id
        WHERE p.id = $1
