@@ -88,6 +88,7 @@ export default function SuperAdminPage() {
       escola: item.escola || "",
       especialidade: (() => { try { const v = item.especialidade || item.specialization || ""; const p = JSON.parse(v); return Array.isArray(p) ? p : [v].filter(Boolean); } catch { return (item.especialidade || item.specialization || "").split(",").map((s: string) => s.trim()).filter(Boolean); } })(),
       biografia: item.biografia || "",
+      destaque_cargo: item.destaque_cargo || "",
     });
   }
 
