@@ -29,7 +29,7 @@ const ALLOWED_COLUMNS: Record<string, Set<string> | null> = {
   profiles: new Set([
     "id", "email", "first_name", "last_name", "role", "status",
     "avatar_url", "provincia", "escola", "especialidade", "biografia",
-    "specialization", "genero", "bi_number", "cv_summary", "created_at", "updated_at",
+    "specialization", "genero", "bi_number", "cv_summary", "destaque_cargo", "created_at", "updated_at",
   ]),
   // Tabelas sem dados sensíveis — sem restrição de colunas
   hero_telemetria:      null,
@@ -368,7 +368,7 @@ export async function POST(request: Request, context: { params: Promise<{ table:
 }
 
 // Campos que nunca podem ser alterados por utilizadores não-admin
-const PROTECTED_FIELDS = new Set(["role", "status", "id", "email"]);
+const PROTECTED_FIELDS = new Set(["role", "status", "id", "email", "destaque_cargo"]);
 
 // Tabelas onde o utilizador só pode editar os seus próprios registos
 const OWNED_TABLES: Record<string, string> = {

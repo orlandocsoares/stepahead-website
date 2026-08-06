@@ -65,6 +65,9 @@ jobs:
               ALTER TABLE profiles ADD COLUMN IF NOT EXISTS biografia TEXT;
               ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
               ALTER TABLE profiles ADD COLUMN IF NOT EXISTS formador_id UUID REFERENCES profiles(id) ON DELETE SET NULL;
+              -- Cargo institucional de destaque (ex.: "Coordenação Geral"), separado da
+              -- especialidade/área pedagógica — não deve aparecer em filtros/estatísticas por área.
+              ALTER TABLE profiles ADD COLUMN IF NOT EXISTS destaque_cargo TEXT;
 
               -- Criação de novas tabelas
               CREATE TABLE IF NOT EXISTS password_reset_tokens (

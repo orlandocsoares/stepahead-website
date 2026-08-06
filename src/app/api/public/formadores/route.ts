@@ -11,8 +11,10 @@ function parseArea(raw: string | null): string {
 }
 
 export async function GET() {
+  await dbQuery(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS destaque_cargo TEXT`).catch(() => {});
+
   const result = await dbQuery(`
-    SELECT id, first_name, last_name, specialization, biografia, avatar_url, provincia
+    SELECT id, first_name, last_name, specialization, biografia, avatar_url, provincia, destaque_cargo
     FROM profiles
     WHERE role = 'formador' AND status IN ('activo', 'email_confirmado')
   `).catch(() => ({ rows: [] }));
@@ -25,6 +27,7 @@ export async function GET() {
       biografia: f.biografia ?? null,
       avatar_url: f.avatar_url ?? null,
       provincia: f.provincia ?? null,
+      destaque_cargo: f.destaque_cargo ?? null,
     }))
     .sort((a, b) => a.area.localeCompare(b.area, "pt") || a.nome.localeCompare(b.nome, "pt"));
 

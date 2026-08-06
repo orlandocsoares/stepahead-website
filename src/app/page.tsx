@@ -159,6 +159,7 @@ type FormadorData = {
   biografia: string | null;
   avatar_url: string | null;
   provincia: string | null;
+  destaque_cargo: string | null;
 };
 
 function FormadorMiniCard({ data, onOpen }: { data: FormadorData; onOpen: () => void }) {
@@ -187,9 +188,7 @@ function FormadorMiniCard({ data, onOpen }: { data: FormadorData; onOpen: () => 
   );
 }
 
-const COORDENACAO_AREA = "Coordenação Geral";
-
-function CoordenacaoGeralCard({ data, onOpen }: { data: FormadorData; onOpen: () => void }) {
+function DestaqueCargoCard({ data, onOpen }: { data: FormadorData; onOpen: () => void }) {
   const iniciais = data.nome.split(" ").filter(Boolean).slice(0, 2).map(s => s[0]).join("").toUpperCase();
 
   return (
@@ -207,7 +206,7 @@ function CoordenacaoGeralCard({ data, onOpen }: { data: FormadorData; onOpen: ()
           </div>
         )}
         <div className="min-w-0">
-          <p className="text-[9px] font-bold text-blue-300 uppercase tracking-[0.2em] mb-0.5">{COORDENACAO_AREA}</p>
+          <p className="text-[9px] font-bold text-blue-300 uppercase tracking-[0.2em] mb-0.5">{data.destaque_cargo}</p>
           <p className="text-sm font-bold text-white truncate">{data.nome}</p>
           {data.biografia && (
             <p className="text-[11px] text-white/60 mt-1.5 leading-relaxed line-clamp-3">{data.biografia}</p>
@@ -993,8 +992,8 @@ export default function HeroSection() {
         };
       }
       case 3: {
-        const coordenacao = formadoresData.filter(f => f.area === COORDENACAO_AREA);
-        const resto = formadoresData.filter(f => f.area !== COORDENACAO_AREA);
+        const destacados = formadoresData.filter(f => f.destaque_cargo);
+        const resto = formadoresData.filter(f => !f.destaque_cargo);
         return {
           ...base,
           name: "Formadores",
@@ -1004,8 +1003,8 @@ export default function HeroSection() {
               <p className={defaultTextClass}>
                 A promoção da formação e supervisão apoia-se em <strong className="text-blue-300">{formadoresData.length}</strong> formador{formadoresData.length === 1 ? "" : "es"} de excelência.
               </p>
-              {coordenacao.map((f) => (
-                <CoordenacaoGeralCard
+              {destacados.map((f) => (
+                <DestaqueCargoCard
                   key={f.id}
                   data={f}
                   onOpen={() => setFormadorAbertoId(f.id)}

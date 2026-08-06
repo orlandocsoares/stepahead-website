@@ -1708,10 +1708,17 @@ export default function SuperAdminPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs c-tx3">Biografia</label>
+                <label className="text-xs c-tx3">{profileForm.destaque_cargo ? "Nota de boas-vindas" : "Biografia"}</label>
                 <textarea value={profileForm.biografia} onChange={e => setProfileForm((f: any) => ({ ...f, biografia: e.target.value }))}
                   rows={3}
                   className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50 resize-none" />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs c-tx3">Cargo de destaque (opcional)</label>
+                <input value={profileForm.destaque_cargo ?? ""} onChange={e => setProfileForm((f: any) => ({ ...f, destaque_cargo: e.target.value }))}
+                  className="w-full c-s1 border c-br rounded-lg px-3 py-2 text-sm c-tx outline-none focus:border-blue-500/50" />
+                <p className="text-[10px] c-tx5">Independente da Especialidade/Área — não afecta filtros nem estatísticas por área. Deixe vazio para não destacar.</p>
               </div>
 
               {/* Info só de leitura */}
